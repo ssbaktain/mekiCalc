@@ -9,6 +9,10 @@ out/
 ### Claude Code ###
 .claude/
 
+### Build output ###
+dist/
+build/
+
 ### Eclipse ###
 .apt_generated
 .classpath
