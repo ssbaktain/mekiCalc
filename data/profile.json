@@ -1,0 +1,16 @@
+{
+  "_comment": "데미지 공식 상수. 기준 시나리오 = 일반몹 대상 기본 공격. 일반/보스는 따로 계산, 스킬데미지%는 미적용.",
+
+  "enemyDefense": 0.5,
+  "skillLevelBase": 2.9,
+  "skillLevelPerLevel": 0.004,
+
+  "additiveDamage": false,
+
+  "_notes": {
+    "enemyDefense": "※확인필요. 적 방어력(0~1). 방어관통력 데미지 환산에만 사용(현재 방관 미환산).",
+    "skillLevelBase": "기본 공격 계수 base. 계수 = base × (1 + perLevel × 스킬레벨). 사용자 제공 2.9.",
+    "skillLevelPerLevel": "스킬 레벨 1당 계수 증가율(분수). 사용자 제공 0.004(=0.4%).",
+    "additiveDamage": "false=카테고리 곱연산(mode A), true=데미지 옵션 합연산+최종만 곱(mode B)."
+  }
+}

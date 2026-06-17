@@ -1,0 +1,68 @@
+[
+  {
+    "id": "weapon_top",
+    "name": "무기 윗잠",
+    "type": "POTENTIAL",
+    "costPerRoll": { "currency": "명장의큐브", "amount": 1 },
+    "lines": [
+      { "stat": "BOSS_DMG",  "amount": 9, "prob": 0.05, "label": "보스 몬스터 데미지% +9" },
+      { "stat": "ATK_PCT",   "amount": 6, "prob": 0.10, "label": "공격력% +6" },
+      { "stat": "SKILL_DMG", "amount": 8, "prob": 0.06, "special": true, "label": "스킬 데미지% +8 (무기 전용)" }
+    ]
+  },
+  {
+    "id": "armor_bottom",
+    "name": "방어구 아랫잠",
+    "type": "POTENTIAL",
+    "costPerRoll": { "currency": "큐브", "amount": 1 },
+    "lines": [
+      { "stat": "MAIN_STAT_FLAT", "amount": 300, "prob": 0.12, "label": "주스탯 +300" },
+      { "stat": "DMG",            "amount": 15,  "prob": 0.08, "label": "데미지% +15" },
+      { "stat": "DEF_PEN",        "amount": 10,  "prob": 0.07, "special": true, "label": "방어 관통력% +10 (방어구 전용)" }
+    ]
+  },
+  {
+    "id": "ability",
+    "name": "어빌리티",
+    "type": "POTENTIAL",
+    "costPerRoll": { "currency": "어빌리티재설정", "amount": 1 },
+    "lines": [
+      { "stat": "ATK_PCT",    "amount": 10, "prob": 0.04, "label": "공격력% +10" },
+      { "stat": "CRIT_RATE",  "amount": 8,  "prob": 0.09, "label": "크리티컬 확률% +8" },
+      { "stat": "ATK_SPEED",  "amount": 12, "prob": 0.06, "label": "공격 속도% +12" }
+    ]
+  },
+  {
+    "id": "hero_journey",
+    "name": "용사의 여정",
+    "type": "POTENTIAL",
+    "costPerRoll": { "currency": "용사메달", "amount": 5 },
+    "lines": [
+      { "stat": "FINAL_DMG",   "amount": 3, "prob": 0.20, "label": "최종 데미지% +3" },
+      { "stat": "DMG",         "amount": 5, "prob": 0.15, "label": "데미지% +5" }
+    ]
+  },
+  {
+    "id": "relic",
+    "name": "유물 잠재",
+    "type": "POTENTIAL",
+    "costPerRoll": { "currency": "유물재화", "amount": 10 },
+    "lines": [
+      { "stat": "DMG_AMP",        "amount": 10, "prob": 0.05, "label": "데미지 증폭% +10" },
+      { "stat": "MAIN_STAT_FLAT", "amount": 500, "prob": 0.10, "label": "주스탯 +500" }
+    ]
+  },
+  {
+    "id": "scroll_weapon",
+    "name": "무기 주흔작",
+    "type": "ENHANCE",
+    "costPerScroll": { "currency": "주문서", "amount": 1 },
+    "targetLevel": 10,
+    "baseSuccess": 0.45,
+    "primeCoat": true,
+    "membershipBonus": 0.05,
+    "guildBonus": 0.03,
+    "milestoneBonus": { "5": 0.10, "10": 0.15 },
+    "rewardPerLevel": { "stat": "ATK_PCT", "amount": 1.5, "label": "공격력% +15" }
+  }
+]

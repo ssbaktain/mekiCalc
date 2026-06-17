@@ -1,0 +1,30 @@
+{
+  "_comment": "유저 개인 스탯(표시값). --input 또는 직접 편집. 공속/방관은 현재 유효값.",
+  "_userEntered": true,
+  "stats": {
+    "ATK_FLAT": 627413,
+    "ATK_PCT": 24778.8,
+    "CRIT_RATE": 115.4,
+    "CRIT_DMG": 296.9,
+    "ATK_SPEED": 69.2,
+    "MAIN_STAT_FLAT": 34741,
+    "MAIN_STAT_PCT": 233,
+    "STAT_PROP_DMG": 1156.88,
+    "DMG": 676.4,
+    "DMG_AMP": 55.1,
+    "BASIC_ATK_DMG": 74.3,
+    "SKILL_DMG": 70,
+    "DEF_PEN": 24.2,
+    "BOSS_DMG": 103.5,
+    "NORMAL_DMG": 252.2,
+    "MIN_DMG_MULT": 200.9,
+    "MAX_DMG_MULT": 354.6,
+    "FINAL_DMG": 65.5,
+    "BASIC_ATK_TARGETS": 3,
+    "COOLDOWN_REDUCTION": 0,
+    "SKILL_LEVELS": 50,
+    "MAIN_STAT_PER_LEVEL": 0,
+    "BUFF_DURATION": 0,
+    "SUMMON_DURATION": 60
+  }
+}

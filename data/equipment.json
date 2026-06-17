@@ -1,0 +1,44 @@
+{
+  "_comment": "장비 윗잠/아랫잠 잠재 옵션 생성 스펙. 윗잠/아랫잠은 옵션 확률·수치 동일(재화만 다름). 실제 표는 이 스펙에서 생성되며 SelfTest가 붙여준 원본 숫자와 대조 검증함.",
+
+  "grades": ["NORMAL", "RARE", "EPIC", "UNIQUE", "LEGENDARY", "MYTHIC"],
+
+  "_slotProbComment": "슬롯별 확률 배수. 1슬롯은 노란만, 2·3슬롯은 흰+노란. 등급 무관.",
+  "slotProb": {
+    "slot1": { "yellow": 1.0 },
+    "slot2": { "white": 0.76, "yellow": 0.24 },
+    "slot3": { "white": 0.92, "yellow": 0.08 }
+  },
+
+  "_commonComment": "공통 옵션. values는 등급별 [흰, 노란](노말은 [단일]). baseProb는 1슬롯 노란/2·3슬롯 합의 기준 확률.",
+  "commonOptions": [
+    { "stat": "CRIT_RATE",     "baseProb": 2.5, "values": { "NORMAL": [3],  "RARE": [3, 4.5], "EPIC": [4.5, 6], "UNIQUE": [6, 9],  "LEGENDARY": [9, 12],  "MYTHIC": [12, 15] } },
+    { "stat": "ATK_SPEED",     "baseProb": 2.5, "values": { "NORMAL": [3],  "RARE": [3, 3.5], "EPIC": [3.5, 4], "UNIQUE": [4, 5],  "LEGENDARY": [5, 7],   "MYTHIC": [7, 10] } },
+    { "stat": "DMG",           "baseProb": 4.0, "values": { "NORMAL": [5],  "RARE": [5, 8],   "EPIC": [8, 12],  "UNIQUE": [12, 18], "LEGENDARY": [18, 25], "MYTHIC": [25, 35] } },
+    { "stat": "MIN_DMG_MULT",  "baseProb": 4.0, "values": { "NORMAL": [3],  "RARE": [3, 6],   "EPIC": [6, 8],   "UNIQUE": [8, 10],  "LEGENDARY": [10, 15], "MYTHIC": [15, 25] } },
+    { "stat": "MAX_DMG_MULT",  "baseProb": 4.0, "values": { "NORMAL": [3],  "RARE": [3, 6],   "EPIC": [6, 8],   "UNIQUE": [8, 10],  "LEGENDARY": [10, 15], "MYTHIC": [15, 25] } },
+    { "stat": "MAIN_STAT_PCT", "baseProb": 4.5, "values": { "NORMAL": [3],  "RARE": [3, 4.5], "EPIC": [4.5, 6], "UNIQUE": [6, 9],  "LEGENDARY": [9, 12],  "MYTHIC": [12, 15] } },
+    { "stat": "MAIN_STAT_FLAT","baseProb": 9.5, "specialCarve": true, "values": { "NORMAL": [50], "RARE": [50, 100], "EPIC": [100, 200], "UNIQUE": [200, 400], "LEGENDARY": [400, 600], "MYTHIC": [600, 1000] } }
+  ],
+
+  "_specialComment": "특옵. baseProb 1.0, 같은 슬롯배수. 첫 등급(firstGrade)은 노란만, 그 위부터 흰+노란. carveFromMainStatFlat: 특옵 확률의 이 비율만큼 주스탯+에서 차감.",
+  "special": {
+    "baseProb": 1.0,
+    "carveFromMainStatFlat": 0.25,
+    "parts": {
+      "상의":     { "stat": "BASIC_ATK_TARGETS", "firstGrade": "UNIQUE", "values": { "UNIQUE": [1],    "LEGENDARY": [1, 2],   "MYTHIC": [2, 3] } },
+      "어깨장식": { "stat": "DEF_PEN",                "firstGrade": "UNIQUE", "values": { "UNIQUE": [8],    "LEGENDARY": [8, 12],  "MYTHIC": [12, 20] } },
+      "모자":     { "stat": "COOLDOWN_REDUCTION",     "firstGrade": "EPIC",   "values": { "EPIC": [0.5],  "UNIQUE": [0.5, 1],    "LEGENDARY": [1, 1.5], "MYTHIC": [1.5, 2] } },
+      "하의":     { "stat": "FINAL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
+      "장갑":     { "stat": "CRIT_DMG",               "firstGrade": "EPIC",   "values": { "EPIC": [10],   "UNIQUE": [10, 20],    "LEGENDARY": [20, 30], "MYTHIC": [30, 50] } },
+      "반지":     { "stat": "SKILL_LEVELS",           "firstGrade": "EPIC",   "values": { "EPIC": [5],    "UNIQUE": [5, 8],      "LEGENDARY": [8, 12],  "MYTHIC": [12, 16] } },
+      "눈장식":   { "stat": "MAIN_STAT_PER_LEVEL",    "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
+      "귀고리":   { "stat": "SKILL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [8],    "UNIQUE": [8, 14],     "LEGENDARY": [14, 21], "MYTHIC": [21, 30] } },
+      "망토":     { "stat": "FINAL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
+      "벨트":     { "stat": "BUFF_DURATION",          "firstGrade": "EPIC",   "values": { "EPIC": [5],    "UNIQUE": [5, 8],      "LEGENDARY": [8, 12],  "MYTHIC": [12, 20] } },
+      "신발":     { "stat": "SUMMON_DURATION",        "firstGrade": "EPIC",   "values": { "EPIC": [5],    "UNIQUE": [5, 8],      "LEGENDARY": [8, 12],  "MYTHIC": [12, 20] } },
+      "목걸이":   { "stat": "SKILL_LEVELS",           "firstGrade": "EPIC",   "values": { "EPIC": [5],    "UNIQUE": [5, 8],      "LEGENDARY": [8, 12],  "MYTHIC": [12, 16] } },
+      "얼굴장식": { "stat": "FINAL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } }
+    }
+  }
+}
