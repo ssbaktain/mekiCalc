@@ -30,6 +30,7 @@ import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import mekicalc.config.ConversionIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.engine.equip.PotentialDraw;
 import mekicalc.model.StatDef;
@@ -55,6 +56,9 @@ public final class MainWindow extends JFrame {
     // 스탯 입력
     private final Map<String, JTextField> statFields = new LinkedHashMap<>();
     private final JLabel statDamage = new JLabel();
+    // 딜 환산 설정(정성적·스킬레벨): 스탯별 체크박스 + 값 입력칸
+    private final Map<String, JCheckBox> convChecks = new LinkedHashMap<>();
+    private final Map<String, JTextField> convFields = new LinkedHashMap<>();
     // 스탯 프리셋 선택 (스탯만 프리셋, 큐브는 단일)
     private final JComboBox<String> presetCombo = new JComboBox<>();
     /** 프리셋 콤보를 코드로 갱신할 때 선택 이벤트(전환)를 무시하기 위한 가드. */
@@ -64,6 +68,8 @@ public final class MainWindow extends JFrame {
     private static final String COPY_PREFIX = "복사: ";
     /** 스탯 저장 버튼(변경 없을 때 비활성화). */
     private StyledButton saveStatsBtn;
+    /** 딜 환산 설정 저장 버튼(변경 없을 때 비활성화). */
+    private StyledButton convSaveBtn;
 
     // 큐브 딜 증가량 비교 (좌/우 각각 부위·등급 따로 선택)
     private final JComboBox<String> leftPart = new JComboBox<>();
@@ -117,6 +123,7 @@ public final class MainWindow extends JFrame {
         root.add(buildCubeExpected(), "cubeExpected");
         root.add(buildCubeRecommend(), "cubeRecommend");
         root.add(buildCubeInput(), "cubeInput");
+        root.add(buildConversionPage(), "conversion");
         root.add(buildPlaceholder(), "placeholder");
         add(root);
 
@@ -139,6 +146,7 @@ public final class MainWindow extends JFrame {
         int w, h;
         if (name.equals("cubeRecommend")) { w = 860; h = 760; }
         else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
+        else if (name.equals("conversion")) { w = 500; h = 700; }
         else { w = 470; h = 700; }
         if (getWidth() != w || getHeight() != h) setSize(w, h);
     }
@@ -201,8 +209,23 @@ public final class MainWindow extends JFrame {
         JLabel title = new JLabel("MekiCalc", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 36f));
         title.setForeground(Theme.TEXT);
-        title.setBorder(BorderFactory.createEmptyBorder(6, 0, 26, 0));
-        p.add(title, BorderLayout.NORTH);
+
+        // 타이틀 우측 '딜 환산 설정' — 메인 버튼과 구분되는 작은 아웃라인(설정류) 디자인.
+        JButton convBtn = settingsLink("딜 환산 설정");
+        convBtn.addActionListener(e -> { populateConversion(); show("conversion"); });
+        JPanel rightWrap = screen(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        rightWrap.add(convBtn);
+        JPanel leftWrap = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JLabel spacer = new JLabel();
+        spacer.setPreferredSize(convBtn.getPreferredSize());   // 좌우 대칭 → 타이틀은 화면 정중앙 유지
+        leftWrap.add(spacer);
+
+        JPanel header = screen(new BorderLayout());
+        header.setBorder(BorderFactory.createEmptyBorder(6, 0, 26, 0));
+        header.add(leftWrap, BorderLayout.WEST);
+        header.add(title, BorderLayout.CENTER);
+        header.add(rightWrap, BorderLayout.EAST);
+        p.add(header, BorderLayout.NORTH);
 
         // 버튼 그리드(위로)
         JPanel grid = new JPanel(new GridBagLayout());
@@ -988,7 +1011,7 @@ public final class MainWindow extends JFrame {
                 "<html><body style='margin:0'>"
                 + "· 모든 수치는 게임 <b>표시값</b> 기준입니다.<br>"
                 + "· <font color='#8A919C'>회색</font> 스탯(방어 관통 · 대상 수 · 쿨타임 감소 등)은 "
-                + "데미지로 환산되지 않아 비교 · 추천에서 제외됩니다.<br>"
+                + "기본적으로 비교 · 추천에서 제외되지만, <b>딜 환산 설정</b>에서 환산값을 지정하면 반영됩니다.<br>"
                 + "· 아래 <b>예상 데미지</b>는 참고용이며 실제 게임 값과 정확히 일치하지 않을 수 있습니다."
                 + "</body></html>");
         desc.setEditable(false);
@@ -1053,10 +1076,7 @@ public final class MainWindow extends JFrame {
         dmgRow.add(dmgBox);
         JButton reset = new JButton("초기화");
         reset.addActionListener(e -> resetStats());
-        saveStatsBtn = new StyledButton("저장", true);
-        saveStatsBtn.setFont(saveStatsBtn.getFont().deriveFont(Font.BOLD, 15f));
-        saveStatsBtn.setPreferredSize(new Dimension(120, 44));
-        saveStatsBtn.addActionListener(e -> saveStats());
+        saveStatsBtn = standardSaveButton(this::saveStats);
         JPanel btnRow = screen(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
         btnRow.add(reset);
         btnRow.add(saveStatsBtn);
@@ -1366,6 +1386,153 @@ public final class MainWindow extends JFrame {
         }
     }
 
+    // ──────────────────── 딜 환산 설정 (정성적 스탯 · 스킬 레벨 커스텀) ────────────────────
+    private JPanel buildConversionPage() {
+        JPanel p = screen(new BorderLayout(10, 10));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
+        p.add(topBar("home", "딜 환산 설정"), BorderLayout.NORTH);
+
+        JPanel card = new JPanel(new BorderLayout(0, 0));
+        card.setBackground(Theme.CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+
+        javax.swing.JEditorPane desc = new javax.swing.JEditorPane("text/html",
+                "<html><body style='margin:0'>"
+                + "· <b>체크한</b> 스탯은 입력한 <b>1단위당 딜 증가율</b>로 환산되어 비교 · 추천에 반영됩니다.<br>"
+                + "· 체크 해제 시 <b>기본값</b>으로 처리됩니다"
+                + "(방어 관통 · 대상 수 · 쿨타임 감소 등은 계산 안 함, 스킬 레벨은 기본 공격 계수 공식)."
+                + " 값이 남아 있어도 무시됩니다.<br>"
+                + "· 예: <b>방어 관통력</b>에 <b>0.5</b> → 방관 1%당 딜 +0.5%로 환산.<br>"
+                + "· 전체 프리셋 <b>공용</b> 설정입니다."
+                + "</body></html>");
+        desc.setEditable(false);
+        desc.setOpaque(false);
+        desc.setForeground(Theme.MUTED);
+        desc.putClientProperty(javax.swing.JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        desc.setFont(new JLabel().getFont().deriveFont(12f));
+        desc.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        card.add(desc, BorderLayout.NORTH);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(4, 4, 4, 6);
+        c.anchor = GridBagConstraints.WEST;
+        javax.swing.event.DocumentListener live = new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateConvSaveEnabled(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateConvSaveEnabled(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateConvSaveEnabled(); }
+        };
+        int row = 0;
+        for (StatDef def : model.convertibleStats()) {
+            c.gridx = 0; c.gridy = row; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+            JCheckBox cb = new JCheckBox(def.name);
+            cb.setOpaque(false);
+            cb.setForeground(Theme.TEXT);
+            form.add(cb, c);
+
+            c.gridx = 1; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+            JTextField tf = new JTextField(6);
+            tf.setHorizontalAlignment(SwingConstants.RIGHT);
+            tf.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Theme.BORDER),
+                    BorderFactory.createEmptyBorder(4, 9, 4, 9)));
+            tf.setDisabledTextColor(Theme.MUTED);
+            installComma(tf);
+            tf.getDocument().addDocumentListener(live);
+            cb.addItemListener(e -> { setConvFieldLocked(tf, cb.isSelected()); updateConvSaveEnabled(); });
+            form.add(tf, c);
+
+            c.gridx = 2;
+            JLabel suf = new JLabel(perUnitSuffix(def.unit));
+            suf.setForeground(Theme.MUTED);
+            form.add(suf, c);
+
+            convChecks.put(def.id, cb);
+            convFields.put(def.id, tf);
+            row++;
+        }
+        JPanel formWrap = new JPanel(new BorderLayout());
+        formWrap.setOpaque(false);
+        formWrap.add(form, BorderLayout.NORTH);
+        JScrollPane sp = new JScrollPane(formWrap);
+        sp.setBorder(null);
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
+        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        card.add(sp, BorderLayout.CENTER);
+        p.add(card, BorderLayout.CENTER);
+
+        convSaveBtn = standardSaveButton(this::saveConversionsUI);
+        JPanel btnRow = screen(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        btnRow.add(convSaveBtn);
+        p.add(btnRow, BorderLayout.SOUTH);
+        return p;
+    }
+
+    /** 화면 입력이 저장된 환산 설정과 하나라도 다르면 변경됨(dirty). */
+    private boolean isConvDirty() {
+        for (StatDef def : model.convertibleStats()) {
+            ConversionIO.Conv saved = model.conversionOf(def.id);
+            JCheckBox cb = convChecks.get(def.id);
+            JTextField tf = convFields.get(def.id);
+            if (cb.isSelected() != saved.enabled()) return true;
+            if (Math.abs(parseField(tf) - saved.perUnit()) > 1e-9) return true;
+        }
+        return false;
+    }
+
+    private void updateConvSaveEnabled() {
+        if (convSaveBtn != null) convSaveBtn.setEnabled(isConvDirty());
+    }
+
+    /** 환산 입력칸 잠금/해제: 해제(체크 OFF)면 회색 배경 + 비활성(입력 불가). */
+    private void setConvFieldLocked(JTextField f, boolean unlocked) {
+        f.setEnabled(unlocked);
+        f.setBackground(unlocked ? Color.WHITE : new Color(0xEC, 0xEF, 0xF3));
+    }
+
+    /** 스탯 단위별 '1단위당' 접미사. */
+    private static String perUnitSuffix(String unit) {
+        switch (unit) {
+            case "LEVEL": return "% / 1레벨";
+            case "SEC":   return "% / 1초";
+            case "FLAT":  return "% / 1개";
+            default:       return "% / 1%";   // PCT
+        }
+    }
+
+    private void populateConversion() {
+        for (StatDef def : model.convertibleStats()) {
+            ConversionIO.Conv conv = model.conversionOf(def.id);
+            JCheckBox cb = convChecks.get(def.id);
+            JTextField tf = convFields.get(def.id);
+            cb.setSelected(conv.enabled());
+            tf.setText(fmtComma(conv.perUnit()));
+            setConvFieldLocked(tf, conv.enabled());
+        }
+        updateConvSaveEnabled();   // 막 불러온 직후엔 변경 없음 → 비활성
+    }
+
+    private void saveConversionsUI() {
+        try {
+            Map<String, ConversionIO.Conv> map = new LinkedHashMap<>();
+            for (StatDef def : model.convertibleStats()) {
+                boolean en = convChecks.get(def.id).isSelected();
+                double v = parseField(convFields.get(def.id));
+                map.put(def.id, new ConversionIO.Conv(en, v));
+            }
+            model.saveConversions(map);
+            updateConvSaveEnabled();   // 저장 후 변경 없음 → 버튼 비활성화
+            Toast.show(this, "저장되었습니다");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "저장 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     // ──────────────────── 준비중 ────────────────────
     private JPanel buildPlaceholder() {
         JPanel p = screen(new BorderLayout(8, 8));
@@ -1407,6 +1574,30 @@ public final class MainWindow extends JFrame {
         b.addActionListener(e -> onClick.run());
         c.gridx = x; c.gridy = y; c.gridwidth = 1;
         grid.add(b, c);
+    }
+
+    /** 설정류 작은 아웃라인 버튼: 채움 없는 라운드 테두리 + 액센트 글자(메인 버튼과 시각적으로 구분). */
+    private JButton settingsLink(String text) {
+        JButton b = new JButton(text);
+        b.setFont(b.getFont().deriveFont(Font.BOLD, 12f));
+        b.setForeground(Theme.ACCENT_DARK);
+        b.setFocusPainted(false);
+        b.setContentAreaFilled(false);
+        b.setOpaque(false);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.ACCENT, 1, true),
+                BorderFactory.createEmptyBorder(4, 12, 4, 12)));
+        b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        return b;
+    }
+
+    /** 표준 저장 버튼: 액센트 색·고정 크기. 변경 없으면 비활성, 저장 시 토스트(공통 규칙). */
+    private StyledButton standardSaveButton(Runnable onSave) {
+        StyledButton b = new StyledButton("저장", true);
+        b.setFont(b.getFont().deriveFont(Font.BOLD, 15f));
+        b.setPreferredSize(new Dimension(120, 44));
+        b.addActionListener(e -> onSave.run());
+        return b;
     }
 
     /** 하단: 구분선 + 큰 액센트 버튼(주요 액션). */

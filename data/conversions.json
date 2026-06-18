@@ -1,0 +1,13 @@
+{
+  "_comment": "정성적·스킬레벨 스탯의 커스텀 딜 환산. enabled=true면 (1 + perUnit/100 × 스탯값) 곱연산, false면 디폴트.",
+  "DEF_PEN": { "enabled": false, "perUnit": 0 },
+  "BASIC_ATK_TARGETS": { "enabled": false, "perUnit": 0 },
+  "COOLDOWN_REDUCTION": { "enabled": false, "perUnit": 0 },
+  "SKILL_LEVEL_1": { "enabled": false, "perUnit": 0 },
+  "SKILL_LEVEL_2": { "enabled": false, "perUnit": 0 },
+  "SKILL_LEVEL_3": { "enabled": false, "perUnit": 0 },
+  "SKILL_LEVEL_4": { "enabled": false, "perUnit": 0 },
+  "SKILL_LEVELS": { "enabled": false, "perUnit": 0 },
+  "BUFF_DURATION": { "enabled": false, "perUnit": 0 },
+  "SUMMON_DURATION": { "enabled": false, "perUnit": 0 }
+}

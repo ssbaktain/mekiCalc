@@ -37,13 +37,13 @@ public final class GameData {
 
     private GameData(Map<String, StatDef> stats, Profile profile,
                      Map<String, Double> currencyValues, List<StatSource> sources,
-                     StatBlock current) {
+                     StatBlock current, Map<String, Double> customConv) {
         this.stats = stats;
         this.profile = profile;
         this.currencyValues = currencyValues;
         this.sources = sources;
         this.current = current;
-        this.model = new DamageModel(stats, profile);
+        this.model = new DamageModel(stats, profile, customConv);
     }
 
     public static GameData load(Path dataDir) throws IOException {
@@ -77,7 +77,10 @@ public final class GameData {
             if (e.getValue() instanceof Double) current.with(e.getKey(), (Double) e.getValue());
         }
 
-        return new GameData(stats, profile, currency, sources, current);
+        // 정성적·스킬레벨 커스텀 딜 환산(전체 공용). 없으면 모두 디폴트.
+        Map<String, Double> customConv = ConversionIO.enabledPerUnit(dataDir);
+
+        return new GameData(stats, profile, currency, sources, current, customConv);
     }
 
     private static Object read(Path dir, String file) throws IOException {

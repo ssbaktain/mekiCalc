@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import mekicalc.config.CharacterIO;
+import mekicalc.config.ConversionIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.config.GameData;
 import mekicalc.config.PresetIO;
@@ -40,6 +41,9 @@ public final class AppModel {
     private List<PresetIO.Preset> presets;
     private String activeName;
 
+    // 정성적·스킬레벨 커스텀 딜 환산(전체 공용, conversions.json).
+    private Map<String, ConversionIO.Conv> conversions;
+
     public AppModel(Path dataDir) throws IOException {
         this.dataDir = dataDir;
         reload();
@@ -54,6 +58,7 @@ public final class AppModel {
         presets = new ArrayList<>(store.presets());
         activeName = store.active();
         current = new StatBlock(activeStats());
+        conversions = ConversionIO.load(dataDir);
     }
 
     // ──────────────────── 스탯 프리셋 ────────────────────
@@ -143,6 +148,35 @@ public final class AppModel {
             current = new StatBlock(activeStats());
         }
         writePresets();
+    }
+
+    // ──────────────────── 정성적·스킬레벨 커스텀 딜 환산 ────────────────────
+
+    /** 커스텀 환산을 설정할 수 있는 스탯들(정성적 스탯 + 1~4차/모든 스킬 레벨), stats.json 순서. */
+    public List<StatDef> convertibleStats() {
+        List<StatDef> out = new ArrayList<>();
+        for (StatDef d : g.stats.values()) {
+            if (d.qualitative || ConversionIO.SKILL_LEVEL_IDS.contains(d.id)) out.add(d);
+        }
+        return out;
+    }
+
+    /** 스탯의 현재 환산 설정(없으면 디폴트: 사용 안 함). */
+    public ConversionIO.Conv conversionOf(String id) {
+        return conversions.getOrDefault(id, ConversionIO.Conv.DEFAULT);
+    }
+
+    /** 스탯의 표시 단위(LEVEL/SEC/PCT/FLAT 등). 환산 입력칸의 접미사에 쓰인다. */
+    public String statUnit(String id) {
+        StatDef d = g.stats.get(id);
+        return d != null ? d.unit : "";
+    }
+
+    /** 환산 설정을 저장(conversions.json)하고 데미지 모델을 즉시 갱신. current(스탯)는 보존. */
+    public void saveConversions(Map<String, ConversionIO.Conv> map) throws IOException {
+        ConversionIO.save(dataDir, map);
+        conversions = new LinkedHashMap<>(map);
+        g = GameData.load(dataDir);   // 새 환산값으로 DamageModel 재조립(current는 그대로)
     }
 
     /** 이미지 등 정적 자원(아이콘/배경) 폴더 — data 폴더와 같은 위치의 icon/. */

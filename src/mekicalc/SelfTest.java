@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.nio.file.Files;
 import mekicalc.config.CharacterIO;
+import mekicalc.config.ConversionIO;
 import mekicalc.config.GameData;
 import mekicalc.engine.AcquisitionOption;
 import mekicalc.engine.DamageModel;
@@ -41,6 +42,8 @@ public final class SelfTest {
         testPerLevelMainStat();
         testCrit();
         testQualitativeStats();
+        testCustomConversion();
+        testConversionIO();
         testAttackSpeed();
         testFinalAndSkillLevels();
         testSkillLevelByTier();
@@ -147,6 +150,64 @@ public final class SelfTest {
         checkTrue("qual.flagTruePen", m.hasQualitative(new StatBlock().with("DEF_PEN", 10)));
         checkTrue("qual.flagFalseSpeed", !m.hasQualitative(new StatBlock().with("ATK_SPEED", 10)));
         checkTrue("qual.flagFalse", !m.hasQualitative(new StatBlock().with("ATK_PCT", 10)));
+    }
+
+    /**
+     * 커스텀 딜 환산: 환산 ON이면 정성적 스탯도 (1 + perUnit/100 × 값) 곱연산으로 데미지에 반영되고
+     * 더 이상 '정성적(계산 불가)'이 아니다. 스킬 레벨은 기본공격계수에서 빠지고 환산으로만 반영(중복 금지).
+     */
+    private static void testCustomConversion() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("DEF_PEN", "방관", "PCT", StatDef.Combine.DIMINISHING, 100, true),
+                new StatDef("ATK_PCT", "공%", "PCT", StatDef.Combine.SUM, 0, false));
+
+        // 방관 1%당 딜 +0.5% 환산 ON
+        DamageModel m = new DamageModel(stats, neutral(), Map.of("DEF_PEN", 0.5));
+        // 1타 데미지에 반영: 방관 30 → ×(1+0.005×30)=1.15 → 115
+        check("conv.pen.damage", m.finalDamage(baseBlock(100).with("DEF_PEN", 30)), 115.0);
+        // 더 이상 정성적 아님 → 효율로 환산(방관 0→30, DIMINISHING이라 30 그대로) → +15%
+        check("conv.pen.inc", m.increase(baseBlock(100), new StatBlock().with("DEF_PEN", 30)), 0.15);
+        checkTrue("conv.pen.notQual", !m.hasQualitative(new StatBlock().with("DEF_PEN", 10)));
+
+        // 환산 OFF(기본): 정성적 그대로 → 데미지 미반영, 정성적 플래그 유지
+        DamageModel off = new DamageModel(stats, neutral());
+        check("conv.pen.off.damage", off.finalDamage(baseBlock(100).with("DEF_PEN", 30)), 100.0);
+        checkTrue("conv.pen.off.qual", off.hasQualitative(new StatBlock().with("DEF_PEN", 10)));
+
+        // 스킬 레벨 중복 계산 방지: 4차 레벨110 + 모든스킬5, '모든 스킬 레벨' 환산 ON(레벨당 +1%)
+        Map<String, StatDef> sl = makeStats(
+                new StatDef("LEVEL", "레벨", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVELS", "모든스킬", "LEVEL", StatDef.Combine.SUM, 0, false));
+        StatBlock b = baseBlock(100).with("LEVEL", 110).with("SKILL_LEVELS", 5);
+        // 기본(환산 OFF): E = 3×(110-100) + 5 = 35 → 2.9×(1+0.004×35)=3.306 → 330.6
+        DamageModel base = new DamageModel(sl, new Profile(0, 2.9, 0.004, false));
+        check("conv.skill.default", base.finalDamage(b), 330.6);
+        // 환산 ON: 모든스킬은 계수에서 제외(E=30 → 3.248), 대신 ×(1+0.01×5)=1.05 → 3.248×1.05×100=341.04
+        DamageModel cv = new DamageModel(sl, new Profile(0, 2.9, 0.004, false), Map.of("SKILL_LEVELS", 1.0));
+        check("conv.skill.noDoubleCount", cv.finalDamage(b), 341.04);
+    }
+
+    /** conversions.json 저장/로드 라운드트립 + enabledPerUnit 필터. */
+    private static void testConversionIO() throws Exception {
+        java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-conv");
+        Map<String, ConversionIO.Conv> map = new LinkedHashMap<>();
+        map.put("DEF_PEN", new ConversionIO.Conv(true, 0.5));
+        map.put("SKILL_LEVELS", new ConversionIO.Conv(false, 2));
+        ConversionIO.save(tmp, map);
+
+        Map<String, ConversionIO.Conv> loaded = ConversionIO.load(tmp);
+        checkTrue("conv.io.penEnabled", loaded.get("DEF_PEN").enabled());
+        check("conv.io.penVal", loaded.get("DEF_PEN").perUnit(), 0.5);
+        checkTrue("conv.io.skillDisabled", !loaded.get("SKILL_LEVELS").enabled());
+
+        Map<String, Double> en = ConversionIO.enabledPerUnit(tmp);
+        checkTrue("conv.io.enabledOnly", en.containsKey("DEF_PEN") && !en.containsKey("SKILL_LEVELS"));
+        check("conv.io.enabledVal", en.get("DEF_PEN"), 0.5);
+
+        // 없는 폴더 → 빈 맵(모두 디폴트)
+        checkTrue("conv.io.missing", ConversionIO.load(Files.createTempDirectory("mekicalc-conv2")).isEmpty());
+        Files.deleteIfExists(tmp.resolve(ConversionIO.FILE));
+        Files.deleteIfExists(tmp);
     }
 
     /** 공속: 1타 데미지엔 미포함, 효율/비교엔 DPS 배수(1+공속/100)로 반영. 누적은 DIMINISHING(cap150). */

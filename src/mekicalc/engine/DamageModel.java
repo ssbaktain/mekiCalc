@@ -68,10 +68,34 @@ public final class DamageModel {
 
     private final Map<String, StatDef> stats;
     private final Profile profile;
+    /** 커스텀 환산 사용 스탯 → 1단위당 딜 증가율(%). 비어 있으면 모두 디폴트 처리. */
+    private final Map<String, Double> customConv;
 
     public DamageModel(Map<String, StatDef> stats, Profile profile) {
+        this(stats, profile, Map.of());
+    }
+
+    public DamageModel(Map<String, StatDef> stats, Profile profile, Map<String, Double> customConv) {
         this.stats = stats;
         this.profile = profile;
+        this.customConv = (customConv == null) ? Map.of() : customConv;
+    }
+
+    /** 해당 스탯이 커스텀 환산(체크 ON)으로 설정됐는지. */
+    private boolean custom(String id) {
+        return customConv.containsKey(id);
+    }
+
+    /**
+     * 커스텀 환산 곱연산 배수 = ∏ (1 + perUnit/100 × 스탯값). 환산 ON인 스탯만 곱한다.
+     * 정성적 스탯(방관/대상수/쿨감 등)·스킬 레벨을 유저 지정 효율로 데미지에 반영하는 자리.
+     */
+    public double conversionFactor(StatBlock b) {
+        double f = 1.0;
+        for (Map.Entry<String, Double> e : customConv.entrySet()) {
+            f *= 1 + e.getValue() / 100.0 * v(b, e.getKey());
+        }
+        return f;
     }
 
     /** 기준 데미지 = 일반몹 대상 기본 공격(예상 데미지 기준). */
@@ -140,14 +164,20 @@ public final class DamageModel {
         out.put("데미지범위", fRange);
         out.put("최종데미지", fFinal);
         out.put("기본공격계수", fSkillLevel);
+        // 커스텀 환산(정성적·스킬레벨 유저 지정 효율)이 있으면 곱연산으로 반영.
+        double conv = conversionFactor(b);
+        if (Math.abs(conv - 1.0) > 1e-12) out.put("커스텀환산", conv);
         return out;
     }
 
-    /** delta 안에 데미지로 환산하지 않는 정성적 스탯(공속/방관 등)이 포함됐는지. */
+    /**
+     * delta 안에 데미지로 환산하지 않는 정성적 스탯(공속/방관 등)이 포함됐는지.
+     * 단, 커스텀 환산이 켜진(custom) 정성적 스탯은 이제 수치로 환산되므로 제외한다.
+     */
     public boolean hasQualitative(StatBlock delta) {
         for (String id : delta.asMap().keySet()) {
             StatDef def = stats.get(id);
-            if (def != null && def.qualitative) return true;
+            if (def != null && def.qualitative && !custom(id)) return true;
         }
         return false;
     }
@@ -256,13 +286,17 @@ public final class DamageModel {
      */
     private double effectiveSkillLevel(StatBlock b) {
         double level = v(b, LEVEL);
-        double levelDerived, tierStat;
-        if (level >= 100)     { levelDerived = 3 * (level - 100); tierStat = v(b, SKILL_LEVEL_4); }
-        else if (level >= 60) { levelDerived = 3 * (level - 60);  tierStat = v(b, SKILL_LEVEL_3); }
-        else if (level >= 30) { levelDerived = 3 * (level - 30);  tierStat = v(b, SKILL_LEVEL_2); }
-        else if (level >= 10) { levelDerived = 3 * (level - 10);  tierStat = v(b, SKILL_LEVEL_1); }
-        else                  { levelDerived = 0;                 tierStat = 0; } // 미전직
-        return levelDerived + tierStat + v(b, SKILL_LEVELS);
+        double levelDerived; String tierId;
+        if (level >= 100)     { levelDerived = 3 * (level - 100); tierId = SKILL_LEVEL_4; }
+        else if (level >= 60) { levelDerived = 3 * (level - 60);  tierId = SKILL_LEVEL_3; }
+        else if (level >= 30) { levelDerived = 3 * (level - 30);  tierId = SKILL_LEVEL_2; }
+        else if (level >= 10) { levelDerived = 3 * (level - 10);  tierId = SKILL_LEVEL_1; }
+        else                  { levelDerived = 0;                 tierId = null; } // 미전직
+        // 커스텀 환산이 켜진 스킬 레벨 스탯은 기본공격계수에서 빼고(conversionFactor로 반영) 중복 계산을 막는다.
+        // 레벨로 인한 현재 차수 스킬 레벨(levelDerived)은 LEVEL에서 파생되므로 항상 기본 공식에 둔다.
+        double tierStat = (tierId != null && !custom(tierId)) ? v(b, tierId) : 0;
+        double allLevels = custom(SKILL_LEVELS) ? 0 : v(b, SKILL_LEVELS);
+        return levelDerived + tierStat + allLevels;
     }
 
     private double v(StatBlock b, String id) {
