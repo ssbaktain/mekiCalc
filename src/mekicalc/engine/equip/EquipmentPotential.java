@@ -100,6 +100,12 @@ public final class EquipmentPotential {
         return (g > 0) ? (1.0 - Math.pow(1.0 - g, remaining)) / g : remaining;
     }
 
+    /** 한 큐브가 다음 등급으로 승급할 (자연) 확률 g. 승급 정의 없으면(최상위) 0. */
+    public double gradeUpProb(String grade) {
+        double[] v = gradeUp.get(grade);
+        return v != null ? v[0] : 0.0;
+    }
+
     /**
      * 한 번 굴림 시 나오는 3개 슬롯 각각의 옵션 분포.
      * @return 크기 3 리스트. 각 원소는 그 슬롯에 뜰 수 있는 후보(PotentialDraw) 목록.

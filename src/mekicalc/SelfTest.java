@@ -48,6 +48,7 @@ public final class SelfTest {
         testConversionIO();
         testRangeConstraint();
         testParetoAxisVerify();
+        testCrossGradeProbBounded();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -253,11 +254,13 @@ public final class SelfTest {
     }
 
     /**
-     * 파레토 추천 선정이 '동일 옵션 등장 확률 총합(arrangeSum)'을 쓰는지, 단일 등장확률을 쓰는지 객관 검증.
-     * 슬롯 3개에 동일 옵션 W(40%) → 후보는 {W},{W,W},{W,W,W} 셋뿐.
-     *   총합:  {W}=0.432  {W,W}=0.576  {W,W,W}=0.384  → 딜 내림차순 파레토 시 {W} 숨김(0.432<0.576)
-     *   단일:  {W}=0.144  {W,W}=0.096  {W,W,W}=0.064  → 단일이면 {W} 표시(0.144>0.096)
-     * 즉 {W}가 숨겨지면(=shown 2개) 총합 기준, {W}가 보이면(=shown 3개) 단일 기준.
+     * (1) 동일 옵션 중복 보정: 같은 옵션이 여러 슬롯에 있어도 arrangeSum이 순열만큼 부풀지 않음(∏ mi!로 나눔).
+     * (2) 파레토 선정이 단일이 아니라 '동일 옵션 등장 확률 총합'을 씀.
+     * (3) 확률 총합이 100%를 넘지 않음(사용자 보고 버그).
+     * 슬롯 [P],[P],[]에 P(60%) → 후보 {P}(딜100), {P,P}(딜200) 둘뿐.
+     *   총합: {P}=2·0.6·0.4=0.48, {P,P}=0.6²=0.36 (순열 0.72 아님)
+     *   단일: {P}=0.24, {P,P}=0.36
+     *   총합 기준이면 낮은딜 {P}(0.48>0.36)도 표시(size 2). 단일 기준이면 {P}(0.24<0.36) 숨김(size 1).
      */
     private static void testParetoAxisVerify() {
         Map<String, StatDef> stats = makeStats(
@@ -267,33 +270,41 @@ public final class SelfTest {
                 new StatDef("DMG", "뎀", "PCT", StatDef.Combine.SUM, 0, false));
         DamageModel m = new DamageModel(stats, neutral());
         StatBlock current = baseBlock(100);
-        PotentialDraw W = new PotentialDraw("DMG", 100, 40, false, false);   // 등장확률 40%
-        List<List<PotentialDraw>> slots = List.of(List.of(W), List.of(W), List.of(W));
+        PotentialDraw P = new PotentialDraw("DMG", 100, 60, false, false);   // 등장확률 60%
+        List<List<PotentialDraw>> slots = List.of(List.of(P), List.of(P), List.of());
         PotentialDraw[] curDraws = { null, null, null };
         CubeRecommender.EquipOpts eo = CubeRecommender.analyze(m, current, slots, curDraws, "x", true, 1.0);
 
-        double tW   = CubeRecommender.arrangeSum(List.of(W), slots);
-        double tWW  = CubeRecommender.arrangeSum(List.of(W, W), slots);
-        double tWWW = CubeRecommender.arrangeSum(List.of(W, W, W), slots);
-        System.out.println("  [검증] 총합(arrangeSum):  {W}=" + tW + "  {W,W}=" + tWW + "  {W,W,W}=" + tWWW);
-        System.out.println("  [검증] 단일(이론):        {W}=" + (0.4 * 0.36) + "  {W,W}=" + (0.16 * 0.6) + "  {W,W,W}=" + 0.064);
-        System.out.println("  [검증] shown(딜 오름차순):");
-        boolean singleWShown = false;
+        // (1) 동일 옵션 중복 보정
+        check("arrangeSum.identicalCorrected", CubeRecommender.arrangeSum(List.of(P, P), slots), 0.6 * 0.6);
+        check("arrangeSum.singleTwoSlots", CubeRecommender.arrangeSum(List.of(P), slots), 2 * 0.6 * 0.4);
+
+        // (2) 총합 기준이면 낮은딜 단일 {P}도 표시
+        boolean singlePShown = false;
         for (CubeRecommender.OptSet s : eo.shown()) {
             int cnt = 0; for (PotentialDraw d : s.rep()) if (d != null) cnt++;
-            if (cnt == 1) singleWShown = true;
-            System.out.println("        W개수=" + cnt + " deal=" + s.deal()
-                    + " prob필드=" + s.prob() + " repProb=" + s.repProb());
+            if (cnt == 1) singlePShown = true;
         }
-        // 핵심: 단일W가 숨겨졌으면 총합 기준이 맞다(단일 기준이면 0.144>0.096이라 보여야 함).
-        checkTrue("paretoAxis.singleW_hidden", !singleWShown);
-        checkTrue("paretoAxis.shownSize2", eo.shown().size() == 2);
-        // 보조: shown의 prob 필드가 총합과 일치하고 단일(repProb)과는 다름.
-        for (CubeRecommender.OptSet s : eo.shown()) {
-            int cnt = 0; for (PotentialDraw d : s.rep()) if (d != null) cnt++;
-            check("paretoAxis.probIsTotal.W" + cnt, s.prob(), cnt == 3 ? tWWW : tWW);
-            checkTrue("paretoAxis.probNotSingle.W" + cnt, Math.abs(s.prob() - s.repProb()) > 1e-9);
-        }
+        checkTrue("paretoAxis.usesTotal", singlePShown && eo.shown().size() == 2);
+
+        // (3) 확률 총합 100% 초과 금지
+        checkTrue("prob.totalUnder100", eo.totalProb() <= 1.0 + 1e-9);
+    }
+
+    /** 승급(상위 등급) 후보가 섞여도 '전체 딜 증가 확률 총합'은 같은 등급만 합산해 100%를 넘지 않는다. */
+    private static void testCrossGradeProbBounded() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        EquipmentPotential ep = EquipmentPotential.load(Path.of("data"));
+        String part = "장갑";
+        List<List<PotentialDraw>> slots = ep.slots(part, "NORMAL");
+        PotentialDraw[] curDraws = { null, null, null };   // 현재 비어 있음 → 승급 후보 다수 생성
+        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
+                g.model, g.current, slots, curDraws, part, true, 1.0,
+                java.util.Map.of(), null, "NORMAL", 0, ep);
+        boolean hasCross = false;
+        for (CubeRecommender.OptSet s : eo.shown()) if (!"NORMAL".equals(s.grade())) hasCross = true;
+        checkTrue("crossGrade.present", hasCross);                       // 승급 후보가 실제로 섞임
+        checkTrue("crossGrade.totalUnder100", eo.totalProb() <= 1.0 + 1e-9);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

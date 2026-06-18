@@ -43,8 +43,8 @@ public final class CubeRecommender {
         public double recCubes() { return recProbSum > 0 ? 1.0 / recProbSum : Double.POSITIVE_INFINITY; }
         public double curEff() { return curDeal * curProbSum / cost; }
         public double recEff() { return recDeal * recProbSum / cost; }
-        /** 최종 효율 = 딜 증가량 차이 × 남은 딜 증가 확률합(이 옵션 이상 등장 확률) ÷ 큐브가격. */
-        public double gainEff() { return dealDiff * remainProb / cost; }
+        /** 최종 효율 = 딜 증가량 차이 × 등장 확률(동일 옵션 등장 확률 총합, 승급 반영) ÷ 큐브가격. */
+        public double gainEff() { return dealDiff * recProbSum / cost; }
     }
 
     private CubeRecommender() {}
@@ -141,6 +141,8 @@ public final class CubeRecommender {
         //   E_reach = 현재 등급 → 목표 등급까지 단계별 승급 기대 큐브의 '합'(선형성).
         //   −1: 승급시키는 마지막 큐브가 목표 등급의 첫 옵션 굴림도 겸함 → 옵션 뽑기에서 1큐브 공짜(음수 방지로 0 floor).
         //   같은 등급 후보의 prob(=1/기대큐브)와 같은 단위라 그대로 섞어서 파레토 비교 가능.
+        // 다음 등급(한 단계 위) 한 큐브 후보 (deal, arrangeSum) — '한 큐브 스펙업 확률'의 승급 1단계 반영용.
+        List<double[]> nextStep = new ArrayList<>();
         if (ep != null && grade != null && ep.gradeIndex(grade) >= 0) {
             StatBlock fullDelta = new StatBlock();   // 이 층의 현재 모든 옵션(승급 시 전부 새로 굴림)
             for (PotentialDraw d : curDraws) if (d != null) fullDelta.set(d.statId(), fullDelta.get(d.statId()) + d.value());
@@ -167,34 +169,49 @@ public final class CubeRecommender {
                     double repP = pBest > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pBest - 1.0)) : 0;
                     PotentialDraw[] rep = buildRep(new boolean[]{true, true, true}, null, opts, new PotentialDraw[3], tg);
                     all.add(new OptSet(rep, e.getValue(), reach, repP, to));
+                    if (gi == ci) nextStep.add(new double[]{e.getValue(), pSum});   // 한 단계 위 한 큐브 확률
                 }
             }
         }
 
         all.sort(Comparator.comparingDouble(OptSet::deal));   // 딜 오름차순
 
-        // 전체/접미 확률합
-        int n = all.size();
-        double[] suffix = new double[n];
-        double run = 0;
-        for (int i = n - 1; i >= 0; i--) { run += all.get(i).prob(); suffix[i] = run; }
-        double totalProb = n > 0 ? suffix[0] : 0;
+        // 전체/잔여 = '한 큐브 리롤'로 더 좋은 옵션이 나올 확률(승급 1단계 반영, 항상 0~100%).
+        //   g = 이 큐브가 승급할 확률(천장 도달 시 1). 한 큐브 = (1−g)×같은 등급 + g×다음 등급.
+        double gEff = 0.0;
+        if (ep != null && grade != null && ep.gradeIndex(grade) >= 0) {
+            double gRaw = ep.gradeUpProb(grade);
+            int ceil = ep.gradeUpCeiling(grade);
+            if (gRaw > 0) gEff = (ceil > 0 && stack >= ceil) ? 1.0 : gRaw;
+        }
+        double sameAll = 0;   // 같은 등급 개선 후보 per-cube 확률 합
+        for (OptSet o : all) if (java.util.Objects.equals(o.grade(), curGrade)) sameAll += o.prob();
+        double nextAll = 0;   // 다음 등급 한 큐브 개선 확률 합
+        for (double[] ns : nextStep) nextAll += ns[1];
+        // 전체 = 기존 옵션(현재)보다 좋은 옵션이 한 큐브에 나올 확률(모든 후보가 현재보다 좋음).
+        double totalProb = (1 - gEff) * sameAll + gEff * nextAll;
 
-        // 파레토 지배 숨김: 딜 높은 쪽부터 내려오며 maxProb 초과만 표시
+        int n = all.size();
+        // 파레토 지배 숨김 + 각 표시 옵션의 '잔여(추천 옵션보다 좋은) 한 큐브 확률'.
         List<OptSet> shown = new ArrayList<>();
-        List<Double> shownSuffixL = new ArrayList<>();
+        List<Double> shownRemainL = new ArrayList<>();
         double maxProb = -1;
         for (int i = n - 1; i >= 0; i--) {
             if (all.get(i).prob() > maxProb + 1e-15) {
                 shown.add(all.get(i));
-                shownSuffixL.add(suffix[i]);
+                double d = all.get(i).deal();
+                double sameGt = 0, nextGt = 0;
+                for (OptSet o : all)
+                    if (java.util.Objects.equals(o.grade(), curGrade) && o.deal() > d + 1e-12) sameGt += o.prob();
+                for (double[] ns : nextStep) if (ns[0] > d + 1e-12) nextGt += ns[1];
+                shownRemainL.add((1 - gEff) * sameGt + gEff * nextGt);
                 maxProb = all.get(i).prob();
             }
         }
         Collections.reverse(shown);                           // 딜 오름차순으로
-        Collections.reverse(shownSuffixL);
+        Collections.reverse(shownRemainL);
         double[] shownSuffix = new double[shown.size()];
-        for (int i = 0; i < shownSuffix.length; i++) shownSuffix[i] = shownSuffixL.get(i);
+        for (int i = 0; i < shownSuffix.length; i++) shownSuffix[i] = shownRemainL.get(i);
 
         return new EquipOpts(part, upper, cost, curDraws, curDeal, curProbSingle, curProbSum,
                 shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3], curGrade);
@@ -407,7 +424,18 @@ public final class CubeRecommender {
      * 슬롯마다 옵션 테이블·확률이 달라 배치마다 확률이 다르므로 전부 더한다(각 배치는 상호배타).
      */
     public static double arrangeSum(List<PotentialDraw> opts, List<List<PotentialDraw>> slotTables) {
-        return arrange(opts, 0, new boolean[slotTables.size()], slotTables);
+        // arrange()는 옵션 리스트의 '순서'대로 슬롯에 배치하므로, 동일 옵션(스탯+수치)이 여럿이면
+        // 같은 결과를 순열 수만큼 중복으로 더한다 → ∏(mi!)로 나눠 보정(안 하면 확률 합이 100%를 넘음).
+        return arrange(opts, 0, new boolean[slotTables.size()], slotTables) / identicalPermFactor(opts);
+    }
+
+    /** 동일 옵션(스탯+수치) 중복 보정 배수 ∏(mi!). 모두 서로 다르면 1. */
+    private static double identicalPermFactor(List<PotentialDraw> opts) {
+        Map<String, Integer> cnt = new LinkedHashMap<>();
+        for (PotentialDraw d : opts) cnt.merge(d.statId() + "=" + d.value(), 1, Integer::sum);
+        double f = 1.0;
+        for (int mlt : cnt.values()) for (int k = 2; k <= mlt; k++) f *= k;
+        return f;
     }
 
     private static double arrange(List<PotentialDraw> opts, int idx, boolean[] used,

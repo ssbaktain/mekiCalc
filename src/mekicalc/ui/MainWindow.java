@@ -127,10 +127,13 @@ public final class MainWindow extends JFrame {
     private String placeholderBack = "home";
 
     // 큐브 우선순위 추천
+    /** 한 큐브 스펙업 확률 라벨(읽으면 바로 이해되므로 별도 설명 없음). */
+    private static final String PROB_TOTAL = "1회 리롤 시 기존 옵션보다 좋은 옵션이 등장할 확률";
+    private static final String PROB_REMAIN = "1회 리롤 시 추천 옵션보다 좋은 옵션이 등장할 확률";
     private final JCheckBox recUpper = new JCheckBox("윗잠", true);
     private final JCheckBox recLower = new JCheckBox("아랫잠", true);
     private final JComboBox<String> recSort = new JComboBox<>(
-            new String[]{"전체 딜 증가 확률합", "남은 딜 증가 확률합", "딜 증가량", "최종 효율"});
+            new String[]{"딜 증가량", "등장 확률", "1회 리롤", "최종 효율"});
     private final JSlider recSlider = new JSlider(0, 1, 0);
     private final RecListPanel recList = new RecListPanel();
     private JLabel recNote;   // 추천 목록 맨 위 안내(스크롤되며 같이 올라감)
@@ -996,9 +999,9 @@ public final class MainWindow extends JFrame {
         // 설명은 추천 박스와 같은 스크롤 영역 맨 위에 둬서, 스크롤 내리면 같이 올라가 가려진다(공간 절약).
         recNote = noteLabel("※ 슬라이더 = 목표 딜 순위 (왼쪽 쉬운 개선 → 오른쪽 종결)<br>"
                 + "· 딜 증가량 차이 = 추천 딜 증가량 − 기존 딜 증가량<br>"
-                + "· 최종 효율 = 딜 증가량 차이 × 남은 딜 증가 확률합 ÷ 큐브 가격<br>"
-                + "· 전체 딜 증가 확률합 = 한 큐브에 현재보다 나은 옵션이 나올 확률 (고정)<br>"
-                + "· 남은 딜 증가 확률합 = 슬라이더 딜(이 옵션) 이상이 나올 확률<br>"
+                + "· 등장 확률 = 동일 옵션 등장 확률 총합 (승급 추천이면 승급 기댓값 반영)<br>"
+                + "· 1회 리롤 = 한 큐브 리롤 시 기존 옵션보다 좋은 옵션이 등장할 확률 (승급 1단계 반영)<br>"
+                + "· 최종 효율 = 딜 증가량 차이 × 등장 확률 ÷ 큐브 가격<br>"
                 + "※ 아랫잠은 큐브 가격 2배 → 효율·정렬에 반영");
         recNote.setBorder(BorderFactory.createEmptyBorder(2, 8, 8, 8));
         recNote.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
@@ -1074,7 +1077,23 @@ public final class MainWindow extends JFrame {
             titleBar.add(arr);
             titleBar.add(gradeChip(r.grade()));
         }
-        box.add(titleBar, BorderLayout.NORTH);
+        // 우상단 작은 박스: 한 큐브 리롤 스펙업 확률(부위 단위 값이라 칼럼 밖, 타이틀 오른쪽).
+        JLabel probBox = new JLabel(String.format(
+                "<html>" + PROB_TOTAL + " <b>%s%%</b><br>" + PROB_REMAIN + " <b>%s%%</b></html>",
+                fmtPercentPrecise(r.totalProb() * 100), fmtPercentPrecise(r.remainProb() * 100)));
+        probBox.setFont(probBox.getFont().deriveFont(Font.BOLD, 13f));
+        probBox.setForeground(Theme.TEXT);
+        probBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(5, 9, 5, 9)));
+        JPanel topRow = new JPanel(new BorderLayout(8, 0));
+        topRow.setOpaque(false);
+        topRow.add(titleBar, BorderLayout.WEST);
+        JPanel ne = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        ne.setOpaque(false);
+        ne.add(probBox);
+        topRow.add(ne, BorderLayout.EAST);
+        box.add(topRow, BorderLayout.NORTH);
 
         JPanel cols = new JPanel(new GridBagLayout());
         cols.setOpaque(false);
@@ -1100,27 +1119,7 @@ public final class MainWindow extends JFrame {
                 SwingConstants.CENTER);
         diff.setFont(diff.getFont().deriveFont(Font.BOLD, 15f));
         diff.setForeground(Theme.ACCENT);
-
-        // 우하단 작은 박스: 남은/전체 딜 증가 확률 총합(부위 단위 값이라 칼럼 밖으로 뺌).
-        JLabel probBox = new JLabel(String.format(
-                "<html>남은 딜 증가 확률 총합 <b>%s%%</b><br>전체 딜 증가 확률 총합 <b>%s%%</b></html>",
-                fmtPercentCore(r.remainProb() * 100), fmtPercentCore(r.totalProb() * 100)));
-        probBox.setFont(probBox.getFont().deriveFont(Font.BOLD, 13f));
-        probBox.setForeground(Theme.TEXT);
-        probBox.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(5, 9, 5, 9)));
-
-        JPanel south = new JPanel(new BorderLayout());
-        south.setOpaque(false);
-        JPanel se = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        se.setOpaque(false);
-        se.add(probBox);
-        // diff를 우하단 박스와 무관하게 박스 전체 기준 가운데로: 오른쪽 박스 폭만큼 왼쪽에 동일 폭 스페이서.
-        south.add(Box.createHorizontalStrut(se.getPreferredSize().width), BorderLayout.WEST);
-        south.add(diff, BorderLayout.CENTER);
-        south.add(se, BorderLayout.EAST);     // 우하단
-        box.add(south, BorderLayout.SOUTH);
+        box.add(diff, BorderLayout.SOUTH);   // 확률 박스가 위로 올라가 하단은 가운데 정렬만
 
         JPanel wrap = screen(new BorderLayout());
         wrap.add(box, BorderLayout.CENTER);
@@ -1206,9 +1205,9 @@ public final class MainWindow extends JFrame {
         boolean gu = rec && r.grade() != null && !r.grade().equals(r.curGrade());
         String sfx = gu ? "(승급 기댓값 반영)" : "";
         String html = String.format(
-                "<html>딜 증가량 <b>%s</b>"
+                "<html>딜 증가량 %s"
                 + "<br>동일 옵션 등장 확률 총합%s %s"
-                + "<br>동일 옵션 큐브 기댓값%s %s"
+                + "<br>동일 옵션 큐브 기댓값%s <b>%s</b>"
                 + "<br>효율 <b>%s</b></html>",
                 fmtSignedPercent(deal),
                 sfx, fmtPercentCore(probSum * 100) + "%",
@@ -2583,6 +2582,18 @@ public final class MainWindow extends JFrame {
         // 2) 표시용으로 2 유효숫자까지 줄일 땐 반올림이 아니라 버림(truncate)한다.
         if (bd.precision() > 3) {
             bd = bd.round(new java.math.MathContext(2, java.math.RoundingMode.DOWN)).stripTrailingZeros();
+        }
+        return bd.toPlainString();
+    }
+
+    /** 신뢰도가 중요한 퍼센트(전체/잔여 확률 총합): 유효숫자 4자리까지 보존(버림), 끝 0 제거. */
+    private static String fmtPercentPrecise(double pct) {
+        java.math.BigDecimal bd = new java.math.BigDecimal(pct)
+                .round(new java.math.MathContext(12))
+                .stripTrailingZeros();
+        if (bd.signum() == 0) return "0";
+        if (bd.precision() > 4) {
+            bd = bd.round(new java.math.MathContext(4, java.math.RoundingMode.DOWN)).stripTrailingZeros();
         }
         return bd.toPlainString();
     }

@@ -526,8 +526,10 @@ public final class AppModel {
     }
 
     /**
-     * 슬라이더 값(0~분기수-1)·정렬키·층 필터로 추천을 반환. 정렬키: 0=전체확률합 1=남은확률합
-     * 2=딜증가량 3=효율(내림차순). 아랫잠은 정렬에서만 ÷2(효율은 이미 /cost 반영).
+     * 슬라이더 값(0~분기수-1)·정렬키·층 필터로 추천을 반환. 정렬키(내림차순):
+     * 0=딜 증가량, 1=등장 확률(동일 옵션 등장 확률 총합·승급 반영),
+     * 2=1회 리롤(기존보다 좋은 옵션 등장 확률), 3=최종 효율.
+     * 아랫잠은 정렬에서만 ÷2(최종 효율은 이미 /cost 반영).
      */
     public List<CubeRecommender.Rec> recommend(int sliderValue, int sortKey, boolean upper, boolean lower) {
         if (recCache == null) buildRecommendations();
@@ -545,10 +547,10 @@ public final class AppModel {
 
     private static double sortValue(CubeRecommender.Rec r, int key) {
         switch (key) {
-            case 0: return r.totalProb() / r.cost();     // 전체 딜증가 확률합 (아랫잠 ÷2)
-            case 2: return r.dealDiff() / r.cost();       // 딜 증가량 (아랫잠 ÷2)
-            case 3: return r.gainEff();                   // 효율 (최종 효율=딜차이×확률, 이미 /cost)
-            default: return r.remainProb() / r.cost();    // 1: 남은 딜증가 확률합 (아랫잠 ÷2)
+            case 0: return r.dealDiff() / r.cost();        // 딜 증가량 (아랫잠 ÷2)
+            case 1: return r.recProbSum() / r.cost();      // 등장 확률(동일 옵션 등장 확률 총합·승급 반영, 아랫잠 ÷2)
+            case 2: return r.totalProb() / r.cost();       // 1회 리롤(기존보다 좋은 옵션 등장 확률, 아랫잠 ÷2)
+            default: return r.gainEff();                   // 3: 최종 효율 (딜차이×등장확률, 이미 /cost)
         }
     }
 
