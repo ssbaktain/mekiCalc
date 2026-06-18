@@ -20,8 +20,14 @@ public final class CubeStateIO {
     /** 한 슬롯에 박힌 옵션. 비움이면 슬롯 배열에서 null. */
     public record Slot(String stat, double value) {}
 
-    /** 한 잠재 줄(윗잠 또는 아랫잠): 등급 + 3슬롯(null 허용). */
-    public record Line(String grade, Slot[] slots) {}
+    /**
+     * 한 잠재 줄(윗잠 또는 아랫잠): 등급 + 3슬롯(null 허용) + 슬롯별 잠금(추천이 못 돌리게 고정).
+     * 잠금은 슬롯 위치별(빈 슬롯도 잠글 수 있음).
+     */
+    public record Line(String grade, Slot[] slots, boolean[] locked) {
+        public Line(String grade, Slot[] slots) { this(grade, slots, new boolean[3]); }
+        public boolean lockedAt(int i) { return locked != null && i < locked.length && locked[i]; }
+    }
 
     /** 한 부위: 윗잠 + 아랫잠(각각 null 가능). */
     public record PartCube(Line upper, Line lower) {}
@@ -56,7 +62,12 @@ public final class CubeStateIO {
             Map<String, Object> sm = Json.asMap(el);
             slots[i] = new Slot(Json.str(sm, "stat"), Json.num(sm, "value"));
         }
-        return new Line(Json.str(m, "grade"), slots);
+        boolean[] locked = new boolean[3];
+        if (m.get("locked") instanceof List) {
+            List<Object> la = Json.asList(m.get("locked"));
+            for (int i = 0; i < 3 && i < la.size(); i++) locked[i] = Boolean.TRUE.equals(la.get(i));
+        }
+        return new Line(Json.str(m, "grade"), slots, locked);
     }
 
     public static void save(Path dataDir, Map<String, PartCube> map) throws IOException {
@@ -84,6 +95,8 @@ public final class CubeStateIO {
             if (s == null) sb.append("null");
             else sb.append("{ \"stat\": \"").append(s.stat()).append("\", \"value\": ").append(fmt(s.value())).append(" }");
         }
+        sb.append("], \"locked\": [");
+        for (int i = 0; i < 3; i++) sb.append(i > 0 ? ", " : "").append(line.lockedAt(i));
         sb.append("] }");
         return sb.toString();
     }

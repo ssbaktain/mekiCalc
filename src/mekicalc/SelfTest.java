@@ -47,6 +47,8 @@ public final class SelfTest {
         testCustomConversion();
         testConversionIO();
         testRangeConstraint();
+        testRangeBestEffort();
+        testSlotLock();
         testRangeIO();
         testCubePresetIO();
         testAttackSpeed();
@@ -261,6 +263,55 @@ public final class SelfTest {
         return false;
     }
 
+    /** 잠금/현재 상태로 범위를 만족할 후보가 없으면 범위를 무시하고라도 추천(best-effort). */
+    private static void testRangeBestEffort() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("ATK_FLAT", "공", "FLAT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_RATE", "크확", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_DMG", "크뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("DMG", "뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MIN_DMG_MULT", "최소", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAX_DMG_MULT", "최대", "PCT", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, neutral());
+        StatBlock current = baseBlock(100).with("CRIT_RATE", 50).with("CRIT_DMG", 100);
+        List<List<PotentialDraw>> slots = List.of(
+                List.of(new PotentialDraw("DMG", 100, 50, false, false)),
+                List.of(), List.of());
+        PotentialDraw[] curDraws = { null, null, null };
+        // 불가능한 범위(크확이 -50이 되라) → 만족 후보 0 → best-effort로 DMG 추천이 떠야 함
+        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
+                m, current, slots, curDraws, "x", true, 1.0, Map.of("CRIT_RATE", new double[]{-100, -100}), null);
+        checkTrue("range.bestEffort", !eo.shown().isEmpty());
+    }
+
+    /** 슬롯 잠금: 잠긴 슬롯은 추천이 돌리지 못하므로 그대로 유지된다(크확 슬롯 잠그면 크확 보존). */
+    private static void testSlotLock() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("ATK_FLAT", "공", "FLAT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_RATE", "크확", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_DMG", "크뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("DMG", "뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MIN_DMG_MULT", "최소", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAX_DMG_MULT", "최대", "PCT", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, neutral());
+        StatBlock current = baseBlock(100).with("CRIT_RATE", 50).with("CRIT_DMG", 100);
+        List<List<PotentialDraw>> slots = List.of(
+                List.of(new PotentialDraw("CRIT_RATE", 20, 50, false, false),
+                        new PotentialDraw("DMG", 100, 50, false, false)),
+                List.of(new PotentialDraw("DMG", 100, 50, false, false)),
+                List.of());
+        PotentialDraw[] curDraws = { new PotentialDraw("CRIT_RATE", 20, 50, false, false), null, null };
+
+        // 잠금 없음(범위 없음) → 0번 슬롯의 크확이 더 나은 뎀으로 교체됨(크확 버려짐)
+        CubeRecommender.EquipOpts free = CubeRecommender.analyze(m, current, slots, curDraws, "x", true, 1.0);
+        checkTrue("lock.freeDropsCrit", !topShownHasStat(free, "CRIT_RATE"));
+
+        // 0번 슬롯 잠금 → 크확 고정 → 추천이 크확 유지
+        CubeRecommender.EquipOpts locked = CubeRecommender.analyze(
+                m, current, slots, curDraws, "x", true, 1.0, Map.of(), new boolean[]{true, false, false});
+        checkTrue("lock.keepsCrit", topShownHasStat(locked, "CRIT_RATE"));
+    }
+
     /** ranges.json(컨텐츠별) 저장/로드 라운드트립 + enabledOffsets 필터 + 구버전 마이그레이션. */
     private static void testRangeIO() throws Exception {
         java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-range");
@@ -280,6 +331,18 @@ public final class SelfTest {
         Map<String, double[]> off = RangeIO.enabledOffsets(tmp, RangeIO.CUBE);
         checkTrue("range.io.enabledOnly", off.containsKey("CRIT_RATE") && !off.containsKey("ATK_SPEED"));
         check("range.io.offLo", off.get("CRIT_RATE")[0], -10);
+
+        // 제한없음(±무한대) 라운드트립 + 엔진 오프셋
+        Map<String, Map<String, RangeIO.Range>> all2 = new LinkedHashMap<>();
+        Map<String, RangeIO.Range> cube2 = new LinkedHashMap<>();
+        cube2.put("DEF_PEN", new RangeIO.Range(true, 0, 10, true, false));   // 하한 없음 ~ +10
+        all2.put(RangeIO.CUBE, cube2);
+        RangeIO.save(tmp, all2);
+        RangeIO.Range pen = RangeIO.load(tmp, RangeIO.CUBE).get("DEF_PEN");
+        checkTrue("range.io.noLow", pen.noLow() && !pen.noHigh());
+        double[] po = RangeIO.enabledOffsets(tmp, RangeIO.CUBE).get("DEF_PEN");
+        checkTrue("range.io.infLo", po[0] == Double.NEGATIVE_INFINITY);
+        check("range.io.infHi", po[1], 10);
 
         // 구버전 플랫 형식 → cube로 마이그레이션
         Files.writeString(tmp.resolve(RangeIO.FILE),
@@ -635,7 +698,8 @@ public final class SelfTest {
         java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-cube");
         var up = new mekicalc.config.CubeStateIO.Line("MYTHIC", new mekicalc.config.CubeStateIO.Slot[]{
                 new mekicalc.config.CubeStateIO.Slot("DMG", 35), null,
-                new mekicalc.config.CubeStateIO.Slot("FINAL_DMG", 12)});
+                new mekicalc.config.CubeStateIO.Slot("FINAL_DMG", 12)},
+                new boolean[]{true, false, false});   // 0번 슬롯 잠금
         var lo = new mekicalc.config.CubeStateIO.Line("UNIQUE", new mekicalc.config.CubeStateIO.Slot[]{
                 null, new mekicalc.config.CubeStateIO.Slot("CRIT_DMG", 20), null});
         Map<String, mekicalc.config.CubeStateIO.PartCube> m = new java.util.LinkedHashMap<>();
@@ -648,6 +712,8 @@ public final class SelfTest {
         checkTrue("cubestate.upSlot0", pc.upper().slots()[0].stat().equals("DMG"));
         check("cubestate.upSlot0v", pc.upper().slots()[0].value(), 35);
         checkTrue("cubestate.upSlot1null", pc.upper().slots()[1] == null);
+        checkTrue("cubestate.upLock0", pc.upper().lockedAt(0));        // 잠금 라운드트립
+        checkTrue("cubestate.upLock1", !pc.upper().lockedAt(1));
         checkTrue("cubestate.loGrade", "UNIQUE".equals(pc.lower().grade()));
         checkTrue("cubestate.loSlot1", pc.lower().slots()[1].stat().equals("CRIT_DMG"));
         Files.deleteIfExists(tmp.resolve(mekicalc.config.CubeStateIO.FILE));

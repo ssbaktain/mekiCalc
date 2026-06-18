@@ -37,9 +37,17 @@ public final class RangeIO {
     /** 정성적 스탯 외에 항상 범위 설정 대상에 포함하는 스탯(크확·공속). */
     public static final List<String> EXTRA_IDS = List.of("CRIT_RATE", "ATK_SPEED");
 
-    /** 한 스탯의 범위 설정: 고려 여부 + 현재값 기준 상대 오프셋(lo ~ hi). */
-    public record Range(boolean enabled, double lo, double hi) {
-        public static final Range DEFAULT = new Range(false, 0, 0);
+    /**
+     * 한 스탯의 범위 설정: 고려 여부 + 현재값 기준 상대 오프셋(lo ~ hi).
+     * noLow=true면 하한 없음(-무한대), noHigh=true면 상한 없음(+무한대).
+     */
+    public record Range(boolean enabled, double lo, double hi, boolean noLow, boolean noHigh) {
+        public static final Range DEFAULT = new Range(false, 0, 0, false, false);
+        public Range(boolean enabled, double lo, double hi) { this(enabled, lo, hi, false, false); }
+        /** 추천 엔진용 하한(없으면 -무한대). */
+        public double loBound() { return noLow ? Double.NEGATIVE_INFINITY : lo; }
+        /** 추천 엔진용 상한(없으면 +무한대). */
+        public double hiBound() { return noHigh ? Double.POSITIVE_INFINITY : hi; }
     }
 
     private RangeIO() {}
@@ -77,7 +85,8 @@ public final class RangeIO {
     }
 
     private static Range parseRange(Map<String, Object> m) {
-        return new Range(Json.bool(m, "enabled", false), Json.num(m, "lo", 0.0), Json.num(m, "hi", 0.0));
+        return new Range(Json.bool(m, "enabled", false), Json.num(m, "lo", 0.0), Json.num(m, "hi", 0.0),
+                Json.bool(m, "noLow", false), Json.bool(m, "noHigh", false));
     }
 
     /** 한 컨텐츠의 스탯→Range. */
@@ -85,11 +94,12 @@ public final class RangeIO {
         return loadAll(dataDir).getOrDefault(content, new LinkedHashMap<>());
     }
 
-    /** 추천 엔진용: 한 컨텐츠에서 고려(enabled)인 항목만 statId→{lo, hi}. */
+    /** 추천 엔진용: 한 컨텐츠에서 고려(enabled)인 항목만 statId→{lo, hi}(없음=±무한대). */
     public static Map<String, double[]> enabledOffsets(Path dataDir, String content) {
         Map<String, double[]> out = new LinkedHashMap<>();
         for (Map.Entry<String, Range> e : load(dataDir, content).entrySet()) {
-            if (e.getValue().enabled()) out.put(e.getKey(), new double[]{e.getValue().lo(), e.getValue().hi()});
+            Range r = e.getValue();
+            if (r.enabled()) out.put(e.getKey(), new double[]{r.loBound(), r.hiBound()});
         }
         return out;
     }
@@ -109,6 +119,8 @@ public final class RangeIO {
                 sb.append("\"enabled\": ").append(r.enabled());
                 sb.append(", \"lo\": ").append(fmt(r.lo()));
                 sb.append(", \"hi\": ").append(fmt(r.hi()));
+                sb.append(", \"noLow\": ").append(r.noLow());
+                sb.append(", \"noHigh\": ").append(r.noHigh());
                 sb.append(" }");
             }
             sb.append(first ? "}" : "\n  }");

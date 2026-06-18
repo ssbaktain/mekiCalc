@@ -478,15 +478,17 @@ public final class AppModel {
     }
 
     private void addLayer(String part, CubeStateIO.Line line, boolean upper, double price) {
-        if (line.grade() == null || isLineEmpty(line)) return;   // 등급만 있고 옵션이 전혀 없는(전부 비움) 층은 추천 대상 아님
+        // 실제 옵션이 하나도 없는 층은 추천 대상 아님(잠금만 있는 빈 층도 제외 → 팬텀 추천 방지).
+        if (line.grade() == null || isLineEmpty(line)) return;
         List<List<PotentialDraw>> slots = ep.slots(part, line.grade());
         PotentialDraw[] curDraws = currentDraws(line, slots);
+        boolean[] locked = line.locked() != null ? line.locked() : new boolean[3];
         CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
-                g.model, current, slots, curDraws, part, upper, price, activeRangeOffsets(RangeIO.CUBE));
+                g.model, current, slots, curDraws, part, upper, price, activeRangeOffsets(RangeIO.CUBE), locked);
         if (!eo.shown().isEmpty()) recCache.add(eo);
     }
 
-    /** 층(윗잠/아랫잠)의 모든 슬롯이 비었는지(=사용자가 옵션을 하나도 입력하지 않음). */
+    /** 층(윗잠/아랫잠)에 실제 옵션이 하나도 없는지(잠금만으로는 추천 대상이 되지 않음). */
     private static boolean isLineEmpty(CubeStateIO.Line line) {
         if (line.slots() == null) return true;
         for (CubeStateIO.Slot s : line.slots()) if (s != null) return false;

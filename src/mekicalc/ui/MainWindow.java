@@ -64,10 +64,12 @@ public final class MainWindow extends JFrame {
     // 딜 환산 설정(정성적·스킬레벨): 스탯별 체크박스 + 값 입력칸
     private final Map<String, JCheckBox> convChecks = new LinkedHashMap<>();
     private final Map<String, JTextField> convFields = new LinkedHashMap<>();
-    // 추천 옵션 범위(크확·공속·정성적): 스탯별 체크박스 + lo/hi 입력칸
+    // 추천 옵션 범위(크확·공속·정성적): 스탯별 체크박스 + lo/hi 입력칸 + lo/hi 제한없음 체크박스
     private final Map<String, JCheckBox> rangeChecks = new LinkedHashMap<>();
     private final Map<String, JTextField> rangeLoFields = new LinkedHashMap<>();
     private final Map<String, JTextField> rangeHiFields = new LinkedHashMap<>();
+    private final Map<String, JCheckBox> rangeLoInf = new LinkedHashMap<>();
+    private final Map<String, JCheckBox> rangeHiInf = new LinkedHashMap<>();
     /** 추천 옵션 범위 저장 버튼(변경 없을 때 비활성화). */
     private StyledButton rangeSaveBtn;
     /** 추천 옵션 범위 페이지가 다루는 컨텐츠(현재 큐브). */
@@ -126,7 +128,7 @@ public final class MainWindow extends JFrame {
     private final JCheckBox recUpper = new JCheckBox("윗잠", true);
     private final JCheckBox recLower = new JCheckBox("아랫잠", true);
     private final JComboBox<String> recSort = new JComboBox<>(
-            new String[]{"전체 딜 증가 확률합", "남은 딜 증가 확률합", "딜 증가량", "효율"});
+            new String[]{"전체 딜 증가 확률합", "남은 딜 증가 확률합", "딜 증가량", "최종 효율"});
     private final JSlider recSlider = new JSlider(0, 1, 0);
     private final JPanel recList = new JPanel();
 
@@ -187,7 +189,7 @@ public final class MainWindow extends JFrame {
         if (name.equals("cubeRecommend")) { w = 860; h = 760; }
         else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
         else if (name.equals("conversion")) { w = 500; h = 700; }
-        else if (name.equals("ranges")) { w = 520; h = 700; }
+        else if (name.equals("ranges")) { w = 600; h = 700; }
         else { w = 470; h = 700; }
         // 화면 설정 반영: 픽셀 모드면 고정 픽셀, 퍼센트 모드면 기준 크기 × 배율.
         if (uiCache != null) {
@@ -431,31 +433,36 @@ public final class MainWindow extends JFrame {
         JComboBox<String> loGrade = gradeCombo();
         SearchableCombo[] upSlots = {new SearchableCombo(), new SearchableCombo(), new SearchableCombo()};
         SearchableCombo[] loSlots = {new SearchableCombo(), new SearchableCombo(), new SearchableCombo()};
+        JCheckBox[] upLocks = {new JCheckBox(), new JCheckBox(), new JCheckBox()};
+        JCheckBox[] loLocks = {new JCheckBox(), new JCheckBox(), new JCheckBox()};
 
         CubeStateIO.PartCube saved = model.cubeOf(part);
-        initSection(part, upGrade, upSlots, saved != null ? saved.upper() : null);
-        initSection(part, loGrade, loSlots, saved != null ? saved.lower() : null);
+        initSection(part, upGrade, upSlots, upLocks, saved != null ? saved.upper() : null);
+        initSection(part, loGrade, loSlots, loLocks, saved != null ? saved.lower() : null);
 
         StyledButton save = new StyledButton("저장", true);
         save.setFont(save.getFont().deriveFont(Font.BOLD, 15f));
         save.setPreferredSize(new Dimension(120, 40));
         save.setEnabled(false);   // 변경 없으면 비활성화
-        Runnable updateDirty = () -> save.setEnabled(cubePartChanged(saved, upGrade, upSlots, loGrade, loSlots));
+        Runnable updateDirty = () -> save.setEnabled(
+                cubePartChanged(saved, upGrade, upSlots, upLocks, loGrade, loSlots, loLocks));
         save.addActionListener(e -> {
             try {
                 model.saveCube(part, new CubeStateIO.PartCube(
-                        lineFrom(upGrade, upSlots), lineFrom(loGrade, loSlots)));
+                        lineFrom(upGrade, upSlots, upLocks), lineFrom(loGrade, loSlots, loLocks)));
                 d.dispose();
                 Toast.show(this, "저장되었습니다");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(d, "저장 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
             }
         });
-        // 등급/슬롯 변경 시 dirty 갱신(초기화 이후 등록 → 초기 설정값으로는 미발생)
+        // 등급/슬롯/잠금 변경 시 dirty 갱신(초기화 이후 등록 → 초기 설정값으로는 미발생)
         upGrade.addActionListener(e -> { repopulateSlots(part, upGrade, upSlots); updateDirty.run(); });
         loGrade.addActionListener(e -> { repopulateSlots(part, loGrade, loSlots); updateDirty.run(); });
         for (SearchableCombo s : upSlots) s.setOnChange(updateDirty);
         for (SearchableCombo s : loSlots) s.setOnChange(updateDirty);
+        for (JCheckBox cb : upLocks) cb.addActionListener(e -> updateDirty.run());
+        for (JCheckBox cb : loLocks) cb.addActionListener(e -> updateDirty.run());
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(Theme.BG);
@@ -468,8 +475,8 @@ public final class MainWindow extends JFrame {
         ttl.setForeground(Theme.TEXT);
         ttl.setFont(ttl.getFont().deriveFont(Font.BOLD, 19f));
         c.gridy = 0; form.add(ttl, c);
-        c.gridy = 1; form.add(potSection("윗잠 (미라클 큐브)", upGrade, upSlots), c);
-        c.gridy = 2; form.add(potSection("아랫잠 (에디셔널 큐브)", loGrade, loSlots), c);
+        c.gridy = 1; form.add(potSection("윗잠 (미라클 큐브)", upGrade, upSlots, upLocks), c);
+        c.gridy = 2; form.add(potSection("아랫잠 (에디셔널 큐브)", loGrade, loSlots, loLocks), c);
 
         JPanel sbar = new JPanel(); sbar.setBackground(Theme.BG); sbar.add(save);
         c.gridy = 3; c.fill = GridBagConstraints.NONE; form.add(sbar, c);
@@ -494,7 +501,8 @@ public final class MainWindow extends JFrame {
         for (int i = 0; i < 3; i++) slots[i].setItems(toItems(sl.get(i)));
     }
 
-    private void initSection(String part, JComboBox<String> grade, SearchableCombo[] slots, CubeStateIO.Line saved) {
+    private void initSection(String part, JComboBox<String> grade, SearchableCombo[] slots,
+                             JCheckBox[] locks, CubeStateIO.Line saved) {
         grade.setSelectedItem(saved != null
                 ? AppModel.GRADE_KO.getOrDefault(saved.grade(), saved.grade()) : "미스틱");
         repopulateSlots(part, grade, slots);
@@ -504,9 +512,10 @@ public final class MainWindow extends JFrame {
                 if (s != null) slots[i].select(s.stat(), s.value());
             }
         }
+        if (saved != null) for (int i = 0; i < 3; i++) locks[i].setSelected(saved.lockedAt(i));
     }
 
-    private JPanel potSection(String title, JComboBox<String> grade, SearchableCombo[] slots) {
+    private JPanel potSection(String title, JComboBox<String> grade, SearchableCombo[] slots, JCheckBox[] locks) {
         JPanel sec = new JPanel(new GridBagLayout());
         sec.setBackground(Theme.CARD);
         sec.setBorder(BorderFactory.createTitledBorder(title));
@@ -514,39 +523,53 @@ public final class MainWindow extends JFrame {
         c.gridx = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1;
         c.insets = new Insets(5, 10, 5, 10);
         c.gridy = 0; sec.add(grade, c);
-        for (int i = 0; i < 3; i++) { c.gridy = i + 1; sec.add(slots[i], c); }
+        for (int i = 0; i < 3; i++) {
+            JPanel row = new JPanel(new BorderLayout(6, 0));
+            row.setOpaque(false);
+            row.add(slots[i], BorderLayout.CENTER);
+            locks[i].setText("잠금");
+            locks[i].setOpaque(false);
+            locks[i].setToolTipText("추천 시 이 슬롯을 고정(돌리지 않음)");
+            row.add(locks[i], BorderLayout.EAST);
+            c.gridy = i + 1; sec.add(row, c);
+        }
         return sec;
     }
 
-    private CubeStateIO.Line lineFrom(JComboBox<String> grade, SearchableCombo[] slots) {
+    private CubeStateIO.Line lineFrom(JComboBox<String> grade, SearchableCombo[] slots, JCheckBox[] locks) {
         String code = gradeLabelToCode.get((String) grade.getSelectedItem());
         CubeStateIO.Slot[] arr = new CubeStateIO.Slot[3];
+        boolean[] locked = new boolean[3];
         for (int i = 0; i < 3; i++) {
             PotentialDraw pd = slots[i].selected();
             arr[i] = (pd == null) ? null : new CubeStateIO.Slot(pd.statId(), pd.value());
+            locked[i] = locks[i].isSelected();
         }
-        return new CubeStateIO.Line(code, arr);
+        return new CubeStateIO.Line(code, arr, locked);
     }
 
     /** 현재 다이얼로그 선택이 저장된 부위 큐브와 다른지(윗/아랫 중 하나라도 변경). */
     private boolean cubePartChanged(CubeStateIO.PartCube saved, JComboBox<String> ug, SearchableCombo[] us,
-                                    JComboBox<String> lg, SearchableCombo[] ls) {
-        return !sameLineNorm(lineFrom(ug, us), saved == null ? null : saved.upper())
-                || !sameLineNorm(lineFrom(lg, ls), saved == null ? null : saved.lower());
+                                    JCheckBox[] ul, JComboBox<String> lg, SearchableCombo[] ls, JCheckBox[] ll) {
+        return !sameLineNorm(lineFrom(ug, us, ul), saved == null ? null : saved.upper())
+                || !sameLineNorm(lineFrom(lg, ls, ll), saved == null ? null : saved.lower());
     }
 
-    /** 잠재 줄 비교. 슬롯이 모두 비면 '없음(null)'과 같게 취급(등급만 고른 빈 줄 = 미입력). */
+    /** 잠재 줄 비교. 옵션도 잠금도 모두 없으면 '없음(null)'과 같게 취급(등급만 고른 빈 줄 = 미입력). */
     private static boolean sameLineNorm(CubeStateIO.Line a, CubeStateIO.Line b) {
         boolean ea = isEmptyLine(a), eb = isEmptyLine(b);
         if (ea || eb) return ea && eb;
         if (!java.util.Objects.equals(a.grade(), b.grade())) return false;
-        for (int i = 0; i < 3; i++) if (!slotEq(slotAt(a, i), slotAt(b, i))) return false;
+        for (int i = 0; i < 3; i++) {
+            if (!slotEq(slotAt(a, i), slotAt(b, i))) return false;
+            if (a.lockedAt(i) != b.lockedAt(i)) return false;
+        }
         return true;
     }
 
     private static boolean isEmptyLine(CubeStateIO.Line line) {
         if (line == null) return true;
-        for (int i = 0; i < 3; i++) if (slotAt(line, i) != null) return false;
+        for (int i = 0; i < 3; i++) if (slotAt(line, i) != null || line.lockedAt(i)) return false;
         return true;
     }
 
@@ -863,7 +886,7 @@ public final class MainWindow extends JFrame {
         recUpper.setOpaque(false); recLower.setOpaque(false);
         recUpper.addActionListener(e -> refreshRecommend());
         recLower.addActionListener(e -> refreshRecommend());
-        recSort.setSelectedIndex(3); // 기본: 효율
+        recSort.setSelectedIndex(3); // 기본: 최종 효율
         recSort.addActionListener(e -> refreshRecommend());
         JPanel checks = screen(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 14, 2));
         checks.add(recUpper); checks.add(recLower);
@@ -886,24 +909,28 @@ public final class MainWindow extends JFrame {
         sl.add(right, BorderLayout.EAST);
         north.add(sl);
 
+        p.add(north, BorderLayout.NORTH);
+
+        // 설명은 추천 박스와 같은 스크롤 영역 맨 위에 둬서, 스크롤 내리면 같이 올라가 가려진다(공간 절약).
         JLabel note = new JLabel("<html><div style='text-align:center'>"
                 + "※ 슬라이더 = 목표 딜 순위 (왼쪽 쉬운 개선 → 오른쪽 종결)<br>"
                 + "· 딜 증가량 차이 = 추천 딜 증가량 − 기존 딜 증가량<br>"
-                + "· 최종 효율 = 딜 증가량 차이 × 동일 옵션 등장 확률 총합 ÷ 큐브 가격<br>"
+                + "· 최종 효율 = 딜 증가량 차이 × 남은 딜 증가 확률합 ÷ 큐브 가격<br>"
                 + "· 전체 딜 증가 확률합 = 한 큐브에 현재보다 나은 옵션이 나올 확률 (고정)<br>"
-                + "· 남은 딜 증가 확률합 = 슬라이더 딜 이상이 나올 확률<br>"
+                + "· 남은 딜 증가 확률합 = 슬라이더 딜(이 옵션) 이상이 나올 확률<br>"
                 + "※ 아랫잠은 큐브 가격 2배 → 효율·정렬에 반영</div></html>", SwingConstants.CENTER);
         note.setForeground(Theme.MUTED);
-        note.setBorder(BorderFactory.createEmptyBorder(2, 8, 6, 8));
+        note.setBorder(BorderFactory.createEmptyBorder(2, 8, 8, 8));
         note.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
         note.setMaximumSize(new Dimension(Integer.MAX_VALUE, note.getPreferredSize().height));
-        north.add(note);
-        p.add(north, BorderLayout.NORTH);
 
         recList.setLayout(new BoxLayout(recList, BoxLayout.Y_AXIS));
         recList.setOpaque(false);
-        JPanel wrap = screen(new BorderLayout());
-        wrap.add(recList, BorderLayout.NORTH);
+        recList.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        JPanel wrap = screen(null);
+        wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
+        wrap.add(note);       // 스크롤되는 내용의 맨 위(고정 아님)
+        wrap.add(recList);
         JScrollPane sp = new JScrollPane(wrap);
         sp.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
         sp.setOpaque(false);
@@ -1002,12 +1029,24 @@ public final class MainWindow extends JFrame {
 
         for (var pk : r.picks()) {
             PotentialDraw d = rec ? pk.recommended() : pk.current();
-            JLabel s = new JLabel(d == null ? "(비어 있음)" : (rec && pk.changed() ? "▶ " : "") + optionLabel(d));
-            if (d == null) s.setForeground(Theme.MUTED);
-            else s.setForeground(d.yellow() ? new Color(0xB8, 0x86, 0x0B) : Theme.TEXT);
-            // 노란 옵션은 가시성 위해 굵게(변경된 추천 슬롯도 굵게).
-            boolean bold = (d != null && d.yellow()) || (rec && pk.changed());
-            s.setFont(s.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN, 14f));
+            JLabel s;
+            if (d == null) {
+                s = new JLabel("(비어 있음)");
+                s.setForeground(Theme.MUTED);
+                s.setFont(s.getFont().deriveFont(Font.PLAIN, 14f));
+            } else if (pk.locked()) {
+                // 잠긴 슬롯: 스탯 이름 앞에 빨간 (잠금). 변경 삼각형(▶)과 같은 이치(표시 마커).
+                String optHex = d.yellow() ? "#B8860B" : "#232830";
+                String opt = d.yellow() ? "<b>" + optionLabel(d) + "</b>" : optionLabel(d);
+                s = new JLabel("<html><font color='#C82A2A'><b>(잠금)</b></font> "
+                        + "<font color='" + optHex + "'>" + opt + "</font></html>");
+                s.setFont(s.getFont().deriveFont(Font.PLAIN, 14f));
+            } else {
+                s = new JLabel((rec && pk.changed() ? "▶ " : "") + optionLabel(d));
+                s.setForeground(d.yellow() ? new Color(0xB8, 0x86, 0x0B) : Theme.TEXT);
+                boolean bold = d.yellow() || (rec && pk.changed());   // 노란/변경 슬롯 굵게
+                s.setFont(s.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN, 14f));
+            }
             s.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
             col.add(s);
         }
@@ -1792,13 +1831,14 @@ public final class MainWindow extends JFrame {
         JLabel desc = descLabel(
                 "· 체크한 스탯만 <b>우선 순위 추천</b>에서 범위 제약으로 고려됩니다.<br>"
                 + "· 숫자는 <b>현재값 기준</b>입니다. <b>음수</b> = 그만큼 잃는 것까지 허용, <b>0/양수</b> = 그만큼 얻는 것까지 허용.<br>"
-                + "· 오른쪽 값은 왼쪽 값보다 <b>크거나 같아야</b> 합니다. 예: -10 ~ -5 (현재 100 → 90~95 허용).");
+                + "· 오른쪽 값은 왼쪽 값보다 <b>크거나 같아야</b> 합니다. 예: -10 ~ -5 (현재 100 → 90~95 허용).<br>"
+                + "· 칸 옆 <b>체크박스</b>를 체크하면 그 쪽은 한계가 없습니다(±무한대).");
         card.add(desc, BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(4, 4, 4, 6);
+        c.insets = new Insets(4, 4, 4, 4);
         c.anchor = GridBagConstraints.WEST;
         javax.swing.event.DocumentListener live = new javax.swing.event.DocumentListener() {
             @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateRangeSaveEnabled(); }
@@ -1807,6 +1847,7 @@ public final class MainWindow extends JFrame {
         };
         int row = 0;
         for (StatDef def : model.rangeStats()) {
+            final String id = def.id;
             c.gridx = 0; c.gridy = row; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
             JCheckBox cb = new JCheckBox(def.name);
             cb.setOpaque(false);
@@ -1815,20 +1856,26 @@ public final class MainWindow extends JFrame {
 
             JTextField lo = rangeField(live);
             JTextField hi = rangeField(live);
+            JCheckBox loInf = infCheck();
+            JCheckBox hiInf = infCheck();
             JLabel tilde = new JLabel("~");
             tilde.setForeground(Theme.MUTED);
-            cb.addItemListener(e -> {
-                setConvFieldLocked(lo, cb.isSelected());
-                setConvFieldLocked(hi, cb.isSelected());
-                updateRangeSaveEnabled();
-            });
-            c.gridx = 1; c.weightx = 0; c.fill = GridBagConstraints.NONE; form.add(lo, c);
-            c.gridx = 2; form.add(tilde, c);
-            c.gridx = 3; form.add(hi, c);
+            cb.addItemListener(e -> { refreshRangeRow(id); updateRangeSaveEnabled(); });
+            loInf.addActionListener(e -> { refreshRangeRow(id); updateRangeSaveEnabled(); });
+            hiInf.addActionListener(e -> { refreshRangeRow(id); updateRangeSaveEnabled(); });
 
-            rangeChecks.put(def.id, cb);
-            rangeLoFields.put(def.id, lo);
-            rangeHiFields.put(def.id, hi);
+            c.weightx = 0; c.fill = GridBagConstraints.NONE; c.anchor = GridBagConstraints.WEST;
+            c.gridx = 1; form.add(loInf, c);   // 칸 왼쪽 가운데 체크박스
+            c.gridx = 2; form.add(lo, c);
+            c.gridx = 3; form.add(tilde, c);
+            c.gridx = 4; form.add(hiInf, c);
+            c.gridx = 5; form.add(hi, c);
+
+            rangeChecks.put(id, cb);
+            rangeLoFields.put(id, lo);
+            rangeHiFields.put(id, hi);
+            rangeLoInf.put(id, loInf);
+            rangeHiInf.put(id, hiInf);
             row++;
         }
         JPanel formWrap = new JPanel(new BorderLayout());
@@ -1848,6 +1895,49 @@ public final class MainWindow extends JFrame {
         btnRow.add(rangeSaveBtn);
         p.add(btnRow, BorderLayout.SOUTH);
         return p;
+    }
+
+    /** '제한없음'(±무한대) 체크박스 — 칸 왼쪽에 글자 없이. */
+    private JCheckBox infCheck() {
+        JCheckBox cb = new JCheckBox();
+        cb.setOpaque(false);
+        cb.setToolTipText("체크 시 그쪽 한계 없음(±무한대)");
+        return cb;
+    }
+
+    /** 한 행의 입력 가능 상태 갱신: 스탯 미체크면 모두 잠금, 제한없음이면 그쪽 칸은 -∞/+∞ 표시 + 잠금. */
+    private void refreshRangeRow(String id) {
+        boolean on = rangeChecks.get(id).isSelected();
+        JCheckBox loInf = rangeLoInf.get(id), hiInf = rangeHiInf.get(id);
+        JTextField lo = rangeLoFields.get(id), hi = rangeHiFields.get(id);
+        loInf.setEnabled(on);
+        hiInf.setEnabled(on);
+        applyInf(lo, on && loInf.isSelected(), "-∞");
+        applyInf(hi, on && hiInf.isSelected(), "+∞");
+        setConvFieldLocked(lo, on && !loInf.isSelected());
+        setConvFieldLocked(hi, on && !hiInf.isSelected());
+    }
+
+    /** 제한없음이면 칸에 -∞/+∞를 표시(숫자는 백업), 해제되면 백업한 숫자로 복원. */
+    private void applyInf(JTextField f, boolean showInf, String infText) {
+        boolean cur = "∞".equals(f.getClientProperty("inf"));
+        if (showInf) {
+            if (!cur) { f.putClientProperty("numText", f.getText()); f.putClientProperty("inf", "∞"); }
+            setFieldRaw(f, infText);
+        } else if (cur) {
+            f.putClientProperty("inf", null);
+            Object n = f.getClientProperty("numText");
+            setFieldRaw(f, n != null ? n.toString() : "0");
+        }
+    }
+
+    /** 천단위 쉼표 필터를 우회해 임의 텍스트(예: -∞)를 칸에 직접 설정. */
+    private static void setFieldRaw(JTextField f, String text) {
+        javax.swing.text.AbstractDocument doc = (javax.swing.text.AbstractDocument) f.getDocument();
+        javax.swing.text.DocumentFilter old = doc.getDocumentFilter();
+        doc.setDocumentFilter(null);
+        f.setText(text);
+        doc.setDocumentFilter(old);
     }
 
     /** 범위 입력칸(쉼표/부호 처리, 우측 정렬, 잠금 시 회색). */
@@ -1873,14 +1963,15 @@ public final class MainWindow extends JFrame {
     private void populateRanges() {
         for (StatDef def : model.rangeStats()) {
             mekicalc.config.RangeIO.Range r = model.rangeOf(rangeContent, def.id);
-            JCheckBox cb = rangeChecks.get(def.id);
-            JTextField lo = rangeLoFields.get(def.id);
-            JTextField hi = rangeHiFields.get(def.id);
-            cb.setSelected(r.enabled());
+            JTextField lo = rangeLoFields.get(def.id), hi = rangeHiFields.get(def.id);
+            lo.putClientProperty("inf", null);   // ∞ 표시 상태 초기화 후 숫자부터 채움
+            hi.putClientProperty("inf", null);
+            rangeChecks.get(def.id).setSelected(r.enabled());
             lo.setText(fmtComma(r.lo()));
             hi.setText(fmtComma(r.hi()));
-            setConvFieldLocked(lo, r.enabled());
-            setConvFieldLocked(hi, r.enabled());
+            rangeLoInf.get(def.id).setSelected(r.noLow());
+            rangeHiInf.get(def.id).setSelected(r.noHigh());
+            refreshRangeRow(def.id);   // noLow/noHigh면 여기서 -∞/+∞ 표시
         }
         updateRangeSaveEnabled();
     }
@@ -1889,6 +1980,8 @@ public final class MainWindow extends JFrame {
         for (StatDef def : model.rangeStats()) {
             mekicalc.config.RangeIO.Range saved = model.rangeOf(rangeContent, def.id);
             if (rangeChecks.get(def.id).isSelected() != saved.enabled()) return true;
+            if (rangeLoInf.get(def.id).isSelected() != saved.noLow()) return true;
+            if (rangeHiInf.get(def.id).isSelected() != saved.noHigh()) return true;
             if (Math.abs(parseField(rangeLoFields.get(def.id)) - saved.lo()) > 1e-9) return true;
             if (Math.abs(parseField(rangeHiFields.get(def.id)) - saved.hi()) > 1e-9) return true;
         }
@@ -1903,15 +1996,18 @@ public final class MainWindow extends JFrame {
         Map<String, mekicalc.config.RangeIO.Range> map = new LinkedHashMap<>();
         for (StatDef def : model.rangeStats()) {
             boolean en = rangeChecks.get(def.id).isSelected();
+            boolean noLow = rangeLoInf.get(def.id).isSelected();
+            boolean noHigh = rangeHiInf.get(def.id).isSelected();
             double lo = parseField(rangeLoFields.get(def.id));
             double hi = parseField(rangeHiFields.get(def.id));
-            if (en && hi < lo - 1e-9) {
+            // 양쪽 다 한계가 있을 때만 좌≤우 검증(제한없음이면 항상 통과).
+            if (en && !noLow && !noHigh && hi < lo - 1e-9) {
                 JOptionPane.showMessageDialog(this,
                         "'" + def.name + "': 오른쪽 값이 왼쪽 값보다 작습니다.\n오른쪽 값은 왼쪽 값보다 크거나 같아야 합니다.",
                         "범위 오류", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            map.put(def.id, new mekicalc.config.RangeIO.Range(en, lo, hi));
+            map.put(def.id, new mekicalc.config.RangeIO.Range(en, lo, hi, noLow, noHigh));
         }
         try {
             model.saveRanges(rangeContent, map);
