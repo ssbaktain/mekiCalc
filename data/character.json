@@ -2,6 +2,7 @@
   "_comment": "유저 개인 스탯(표시값). --input 또는 직접 편집. 공속/방관은 현재 유효값.",
   "_userEntered": true,
   "stats": {
+    "LEVEL": 111,
     "ATK_FLAT": 627413,
     "ATK_PCT": 24778.8,
     "CRIT_RATE": 115.4,
@@ -22,6 +23,10 @@
     "FINAL_DMG": 65.5,
     "BASIC_ATK_TARGETS": 3,
     "COOLDOWN_REDUCTION": 0,
+    "SKILL_LEVEL_1": 22,
+    "SKILL_LEVEL_2": 14,
+    "SKILL_LEVEL_3": 37,
+    "SKILL_LEVEL_4": 71,
     "SKILL_LEVELS": 50,
     "MAIN_STAT_PER_LEVEL": 0,
     "BUFF_DURATION": 0,

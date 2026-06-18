@@ -59,6 +59,12 @@ public final class DamageModel {
     private static final String FINAL_DMG = "FINAL_DMG";
     private static final String SKILL_LEVELS = "SKILL_LEVELS";
     private static final String ATK_SPEED = "ATK_SPEED";
+    private static final String LEVEL = "LEVEL";
+    private static final String MAIN_STAT_PER_LEVEL = "MAIN_STAT_PER_LEVEL";
+    private static final String SKILL_LEVEL_1 = "SKILL_LEVEL_1";
+    private static final String SKILL_LEVEL_2 = "SKILL_LEVEL_2";
+    private static final String SKILL_LEVEL_3 = "SKILL_LEVEL_3";
+    private static final String SKILL_LEVEL_4 = "SKILL_LEVEL_4";
 
     private final Map<String, StatDef> stats;
     private final Profile profile;
@@ -96,13 +102,13 @@ public final class DamageModel {
      * 기준 시나리오가 기본 공격이라 스킬 데미지%는 포함하지 않는다.
      */
     public Map<String, Double> breakdown(StatBlock b) {
-        double mainStat = mainStat(b);
         // 공격력(깡)에는 주스탯이 이미 포함(표시값)이라 여기서 또 더하지 않는다.
         // (주스탯 옵션을 더할 때의 깡공 상승분은 combine()에서 ATK_FLAT에 반영된다.)
         double baseAtk = v(b, ATK_FLAT) * (1 + v(b, ATK_PCT) / 100.0);
 
-        // 스탯 비례 데미지% = 주스탯/100, 숨은 100% 방식 → factor = 1 + 스탯비례%/100 = 1 + 주스탯/10000.
-        double statPropFrac = mainStat / 10000.0;
+        // 스탯 비례 데미지%는 유저 입력값을 그대로 사용한다(패시브 등으로 주스탯/100과 소폭 다를 수 있음).
+        // 숨은 100% 방식 → factor = 1 + 스탯비례%/100. 주스탯이 옵션으로 늘면 combine()에서 함께 보정한다.
+        double statPropFrac = v(b, STAT_PROP_DMG) / 100.0;
         double basicPct = v(b, BASIC_ATK_DMG); // 기본 공격 데미지%만 (스킬 데미지% 제외)
 
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
@@ -112,8 +118,8 @@ public final class DamageModel {
         double fRange = (minMult > maxMult) ? minMult / 100.0 : (minMult + maxMult) / 200.0;
 
         double fFinal = 1 + v(b, FINAL_DMG) / 100.0;
-        // 기본 공격 계수 = base × (1 + 레벨당증가 × 스킬레벨). 결과를 그대로 직접 곱함.
-        double fSkillLevel = profile.skillLevelBase * (1 + profile.skillLevelPerLevel * v(b, SKILL_LEVELS));
+        // 기본 공격 계수 = base × (1 + 레벨당증가 × 유효 스킬 레벨). 결과를 그대로 직접 곱함.
+        double fSkillLevel = profile.skillLevelBase * (1 + profile.skillLevelPerLevel * effectiveSkillLevel(b));
 
         Map<String, Double> out = new LinkedHashMap<>();
         out.put("기본공격력", baseAtk);
@@ -176,11 +182,19 @@ public final class DamageModel {
                     : cur + e.getValue(); // 정의 없으면 합산 폴백
             r.set(e.getKey(), merged);
         }
+        // '1레벨당 주스탯' 옵션은 누적 스탯이 아니라, 즉시 (레벨 × 값)만큼 깡주스탯으로 환산한다.
+        double perLevelDelta = delta.get(MAIN_STAT_PER_LEVEL);
+        if (perLevelDelta != 0) {
+            r.set(MAIN_STAT_PER_LEVEL, current.get(MAIN_STAT_PER_LEVEL)); // 누적 취소(기준 유지)
+            r.set(MAIN_STAT_FLAT, r.get(MAIN_STAT_FLAT) + current.get(LEVEL) * perLevelDelta);
+        }
         // 주스탯(주스탯깡/주스탯%)이 바뀌면 게임처럼 늘어난 주스탯만큼 공격력(깡)에도 1:1 반영한다.
         // 입력 공격력은 현재 주스탯이 이미 포함된 표시값이라, '증가분'만 더하면 baseline은 그대로 유지된다.
         double mainDelta = mainStat(r) - mainStat(current);
         if (mainDelta != 0) {
             r.set(ATK_FLAT, r.get(ATK_FLAT) + mainDelta);
+            // 늘어난 주스탯은 스탯 비례 데미지%도 함께 올린다(주스탯 100당 1%).
+            r.set(STAT_PROP_DMG, r.get(STAT_PROP_DMG) + mainDelta / 100.0);
         }
         return r;
     }
@@ -190,19 +204,32 @@ public final class DamageModel {
      * 주스탯 변화로 인한 공격력 가산까지 되돌린다. 부위 옵션 제거(교체 비교)에 쓰인다.
      */
     public StatBlock uncombine(StatBlock r, StatBlock delta) {
-        double mainAfter = mainStat(r);
+        double mainAfter = mainStat(r);             // r의 주스탯(레벨당 환산 반영 후)
+        double level = r.get(LEVEL);                // 레벨은 combine으로 변하지 않음
+        double perLevelDelta = delta.get(MAIN_STAT_PER_LEVEL);
         StatBlock before = new StatBlock(r);
-        // 공격력(ATK_FLAT)을 제외한 모든 delta 스탯을 역연산(주스탯 포함 → before 주스탯 복원).
+        // 공격력(ATK_FLAT)/레벨당주스탯을 제외한 모든 delta 스탯을 역연산(주스탯 포함 → before 주스탯 복원).
         for (Map.Entry<String, Double> e : delta.asMap().entrySet()) {
             String id = e.getKey();
-            if (id.equals(ATK_FLAT)) continue;
+            if (id.equals(ATK_FLAT) || id.equals(MAIN_STAT_PER_LEVEL)) continue;
             StatDef def = stats.get(id);
-            double un = (def != null) ? def.unmerge(r.get(id), e.getValue()) : r.get(id) - e.getValue();
-            before.set(id, un);
+            if (id.equals(MAIN_STAT_FLAT)) {
+                // 레벨당 환산으로 더해졌던 깡주스탯을 먼저 빼고, MAIN_STAT_FLAT 옵션(SUM)을 역연산.
+                double flat = r.get(MAIN_STAT_FLAT) - level * perLevelDelta;
+                before.set(MAIN_STAT_FLAT, def != null ? def.unmerge(flat, e.getValue()) : flat - e.getValue());
+            } else {
+                double un = (def != null) ? def.unmerge(r.get(id), e.getValue()) : r.get(id) - e.getValue();
+                before.set(id, un);
+            }
         }
-        // 주스탯 증가분만큼 더해졌던 공격력 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
+        // delta에 MAIN_STAT_FLAT가 없는데 레벨당 옵션만 있었다면 환산분을 따로 제거.
+        if (perLevelDelta != 0 && !delta.asMap().containsKey(MAIN_STAT_FLAT)) {
+            before.set(MAIN_STAT_FLAT, before.get(MAIN_STAT_FLAT) - level * perLevelDelta);
+        }
+        // 주스탯 증가분만큼 더해졌던 공격력 가산·스탯비례 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
         double mainDelta = mainAfter - mainStat(before);
         before.set(ATK_FLAT, r.get(ATK_FLAT) - mainDelta - delta.get(ATK_FLAT));
+        before.set(STAT_PROP_DMG, before.get(STAT_PROP_DMG) - mainDelta / 100.0);
         return before;
     }
 
@@ -214,6 +241,28 @@ public final class DamageModel {
     /** 표시 주스탯 = 주스탯깡 × (1 + 주스탯%/100). 스탯비례 데미지·공격력 가산에 쓰인다. */
     private double mainStat(StatBlock b) {
         return v(b, MAIN_STAT_FLAT) * (1 + v(b, MAIN_STAT_PCT) / 100.0);
+    }
+
+    /**
+     * 기본 공격 스킬 데미지 계수에 쓰이는 '유효 스킬 레벨'.
+     *
+     * <p>= 레벨로 인한 현재 차수 기본 공격 스킬 레벨 + 현재 차수 스킬 레벨(+) + 모든 스킬 레벨(+).
+     * <ul>
+     *   <li>전직 차수: ≤9 미전직 / 10~29 1차 / 30~59 2차 / 60~99 3차 / 100~ 4차.</li>
+     *   <li>레벨업마다 현재 차수 스킬이 3씩 오르고, 전직 직후 레벨(예: 100)에는 현재 차수 스킬이 0이다.
+     *       → 레벨로 인한 현재 차수 스킬 레벨 = 3 × (레벨 − 차수시작레벨).</li>
+     *   <li>미전직(≤9)은 스킬 레벨 의미가 없어 레벨/차수분은 0(모든 스킬 레벨만 합산).</li>
+     * </ul>
+     */
+    private double effectiveSkillLevel(StatBlock b) {
+        double level = v(b, LEVEL);
+        double levelDerived, tierStat;
+        if (level >= 100)     { levelDerived = 3 * (level - 100); tierStat = v(b, SKILL_LEVEL_4); }
+        else if (level >= 60) { levelDerived = 3 * (level - 60);  tierStat = v(b, SKILL_LEVEL_3); }
+        else if (level >= 30) { levelDerived = 3 * (level - 30);  tierStat = v(b, SKILL_LEVEL_2); }
+        else if (level >= 10) { levelDerived = 3 * (level - 10);  tierStat = v(b, SKILL_LEVEL_1); }
+        else                  { levelDerived = 0;                 tierStat = 0; } // 미전직
+        return levelDerived + tierStat + v(b, SKILL_LEVELS);
     }
 
     private double v(StatBlock b, String id) {

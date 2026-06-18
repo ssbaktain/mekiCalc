@@ -52,6 +52,8 @@ public final class SearchableCombo extends JLabel {
 
     private List<Item> all = new ArrayList<>(List.of(EMPTY));
     private Item current = EMPTY;
+    /** 사용자가 직접 선택을 바꿀 때만 호출되는 콜백(프로그램적 setItems/select에서는 미호출). */
+    private Runnable onChange;
 
     private final JPopupMenu popup = new JPopupMenu();
     private final JTextField search = new JTextField();
@@ -150,27 +152,34 @@ public final class SearchableCombo extends JLabel {
         choose(listModel.get(i < 0 ? 0 : i));
     }
 
-    private void choose(Item it) {
+    /** 변경 콜백 등록(사용자 선택 변경 시에만 호출). */
+    public void setOnChange(Runnable r) { this.onChange = r; }
+
+    /** 사용자 선택 경로: 콜백 발생. */
+    private void choose(Item it) { choose(it, true); }
+
+    private void choose(Item it, boolean notify) {
         current = it;
         setText(it.label);
         setForeground(it.draw == null ? GRY : (it.yellow ? YEL : WHT));
         popup.setVisible(false);
+        if (notify && onChange != null) onChange.run();
     }
 
-    /** 후보 목록 교체(맨 앞 비움 자동). 선택은 비움으로 초기화. */
+    /** 후보 목록 교체(맨 앞 비움 자동). 선택은 비움으로 초기화(프로그램적 → 콜백 없음). */
     public void setItems(List<Item> items) {
         all = new ArrayList<>();
         all.add(EMPTY);
         all.addAll(items);
-        choose(EMPTY);
+        choose(EMPTY, false);
     }
 
-    /** 저장된 stat+value 항목을 선택. */
+    /** 저장된 stat+value 항목을 선택(프로그램적 → 콜백 없음). */
     public void select(String stat, double value) {
         for (Item it : all) {
             if (it.draw != null && it.draw.statId().equals(stat)
                     && Math.abs(it.draw.value() - value) < 1e-9) {
-                choose(it);
+                choose(it, false);
                 return;
             }
         }

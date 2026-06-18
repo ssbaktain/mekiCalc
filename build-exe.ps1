@@ -25,6 +25,11 @@ if ($LASTEXITCODE -ne 0) { Write-Error "JAR 생성 실패"; exit 1 }
 # 3) jpackage app-image (JRE 번들, GUI 모드 = 콘솔 없음)
 if (Test-Path "$dist\mekiCalc") { Remove-Item -Recurse -Force "$dist\mekiCalc" }
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
+# 앱 아이콘(.ico)이 있으면 적용
+$iconArgs = @()
+$icoPath = "$root\icon\maple.ico"
+if (Test-Path $icoPath) { $iconArgs = @('--icon', $icoPath) }
+
 & jpackage `
     --type app-image `
     --name mekiCalc `
@@ -32,11 +37,13 @@ New-Item -ItemType Directory -Path $dist -Force | Out-Null
     --main-jar mekiCalc.jar `
     --main-class mekicalc.ui.App `
     --app-version 0.1.0 `
+    @iconArgs `
     --dest $dist
 if ($LASTEXITCODE -ne 0) { Write-Error "jpackage 실패"; exit 1 }
 
-# 4) data 폴더를 exe 옆에 동봉 (앱이 실행 위치 기준으로 data를 찾음)
+# 4) data / icon 폴더를 exe 옆에 동봉 (앱이 실행 위치 기준으로 찾음)
 Copy-Item -Recurse -Force "$root\data" "$dist\mekiCalc\data"
+if (Test-Path "$root\icon") { Copy-Item -Recurse -Force "$root\icon" "$dist\mekiCalc\icon" }
 Copy-Item -Force "$root\README.md" "$dist\mekiCalc\README.md"
 
 Write-Host "완료: $dist\mekiCalc\mekiCalc.exe"

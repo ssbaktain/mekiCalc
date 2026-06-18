@@ -10,6 +10,7 @@ import java.util.Map;
 import mekicalc.config.CharacterIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.config.GameData;
+import mekicalc.config.PresetIO;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.EquipmentPotential;
@@ -35,6 +36,10 @@ public final class AppModel {
     private StatBlock current;
     private Map<String, CubeStateIO.PartCube> cubeState;
 
+    // 스탯 프리셋: 목록(가변) + 활성 프리셋 이름. current는 활성 프리셋의 편집용 사본.
+    private List<PresetIO.Preset> presets;
+    private String activeName;
+
     public AppModel(Path dataDir) throws IOException {
         this.dataDir = dataDir;
         reload();
@@ -44,9 +49,104 @@ public final class AppModel {
     public void reload() throws IOException {
         g = GameData.load(dataDir);
         ep = EquipmentPotential.load(dataDir);
-        current = CharacterIO.load(dataDir);
         cubeState = CubeStateIO.load(dataDir);
+        PresetIO.Store store = PresetIO.load(dataDir);
+        presets = new ArrayList<>(store.presets());
+        activeName = store.active();
+        current = new StatBlock(activeStats());
     }
+
+    // ──────────────────── 스탯 프리셋 ────────────────────
+
+    /** 활성 프리셋의 (저장된) 스탯. */
+    private StatBlock activeStats() {
+        int i = indexOf(activeName);
+        return presets.get(i >= 0 ? i : 0).stats();
+    }
+
+    private int indexOf(String name) {
+        for (int i = 0; i < presets.size(); i++) if (presets.get(i).name().equals(name)) return i;
+        return -1;
+    }
+
+    /** 프리셋 이름 목록(저장 순서). */
+    public List<String> presetNames() {
+        List<String> out = new ArrayList<>();
+        for (PresetIO.Preset p : presets) out.add(p.name());
+        return out;
+    }
+
+    /** 현재 활성 프리셋 이름. */
+    public String activePreset() { return activeName; }
+
+    /** 해당 이름의 프리셋이 있는지. */
+    public boolean hasPreset(String name) { return indexOf(name) >= 0; }
+
+    /** presets.json + character.json(활성 미러)을 기록. */
+    private void writePresets() throws IOException {
+        PresetIO.save(dataDir, new PresetIO.Store(presets, activeName), g.stats.keySet());
+        // CLI/GameData가 읽는 character.json은 활성 프리셋을 그대로 미러링한다.
+        CharacterIO.save(dataDir, current, g.stats.keySet());
+    }
+
+    /** 활성 프리셋을 name으로 전환(미저장 편집은 버림). 필드는 호출측에서 다시 채운다. */
+    public void switchPreset(String name) throws IOException {
+        if (indexOf(name) < 0 || name.equals(activeName)) return;
+        activeName = name;
+        current = new StatBlock(activeStats());
+        writePresets();
+    }
+
+    /** 현재 화면 스탯(current)을 사본으로 하는 새 프리셋을 만들고 활성으로 전환. */
+    public void addPreset(String name) throws IOException {
+        if (name == null || name.isEmpty() || hasPreset(name)) return;
+        presets.add(new PresetIO.Preset(name, new StatBlock(current)));
+        activeName = name;
+        current = new StatBlock(current);
+        writePresets();
+    }
+
+    /** 기존 프리셋(srcName)의 저장된 스탯을 복사한 새 프리셋을 만들고 활성으로 전환. */
+    public void addPresetFrom(String name, String srcName) throws IOException {
+        int i = indexOf(srcName);
+        if (name == null || name.isEmpty() || hasPreset(name) || i < 0) return;
+        presets.add(new PresetIO.Preset(name, new StatBlock(presets.get(i).stats())));
+        activeName = name;
+        current = new StatBlock(activeStats());
+        writePresets();
+    }
+
+    /** 빈 값(모두 0) 새 프리셋을 만들고 활성으로 전환. */
+    public void addPresetBlank(String name) throws IOException {
+        if (name == null || name.isEmpty() || hasPreset(name)) return;
+        presets.add(new PresetIO.Preset(name, new StatBlock()));
+        activeName = name;
+        current = new StatBlock();
+        writePresets();
+    }
+
+    /** 프리셋 이름 변경(스탯 보존). 활성이면 활성 이름도 갱신. */
+    public void renamePreset(String oldName, String newName) throws IOException {
+        int i = indexOf(oldName);
+        if (i < 0 || newName == null || newName.isEmpty() || hasPreset(newName)) return;
+        presets.set(i, new PresetIO.Preset(newName, presets.get(i).stats()));
+        if (activeName.equals(oldName)) activeName = newName;
+        writePresets();
+    }
+
+    /** 프리셋 삭제. 마지막 하나는 삭제 불가. 활성을 지우면 첫 프리셋으로 전환. */
+    public void deletePreset(String name) throws IOException {
+        if (presets.size() <= 1 || indexOf(name) < 0) return;
+        presets.removeIf(p -> p.name().equals(name));
+        if (activeName.equals(name)) {
+            activeName = presets.get(0).name();
+            current = new StatBlock(activeStats());
+        }
+        writePresets();
+    }
+
+    /** 이미지 등 정적 자원(아이콘/배경) 폴더 — data 폴더와 같은 위치의 icon/. */
+    public Path iconDir() { return dataDir.resolveSibling("icon"); }
 
     /** 부위의 저장된 내 큐브 옵션(없으면 null). */
     public CubeStateIO.PartCube cubeOf(String part) { return cubeState.get(part); }
@@ -69,17 +169,28 @@ public final class AppModel {
     public double value(String id) { return current.get(id); }
     public void setValue(String id, double v) { current.set(id, v); }
 
+    /** 임의의 입력값 묶음으로부터 예상 데미지 {일반몹, 보스몹}을 계산(current 미변경, 라이브 미리보기용). */
+    public double[] previewDamage(Map<String, Double> values) {
+        StatBlock b = new StatBlock();
+        for (Map.Entry<String, Double> e : values.entrySet()) b.set(e.getKey(), e.getValue());
+        return new double[]{ g.model.finalDamageNormal(b), g.model.finalDamageBoss(b) };
+    }
+
     public double currentDamage() { return g.model.finalDamage(current); }
     /** 일반 몬스터 대상 데미지(예상 데미지 기준). */
     public double currentDamageNormal() { return g.model.finalDamageNormal(current); }
     /** 보스 몬스터 대상 데미지. */
     public double currentDamageBoss() { return g.model.finalDamageBoss(current); }
 
-    /** 현재 스탯을 character.json으로 저장. */
-    public void save() throws IOException { CharacterIO.save(dataDir, current, g.stats.keySet()); }
+    /** 현재 스탯을 활성 프리셋에 반영하고 presets.json(+character.json 미러)으로 저장. */
+    public void save() throws IOException {
+        int i = indexOf(activeName);
+        if (i >= 0) presets.set(i, new PresetIO.Preset(activeName, new StatBlock(current)));
+        writePresets();
+    }
 
-    /** 유저가 한 번이라도 스탯을 직접 저장했는지(첫 실행이면 false). */
-    public boolean isUserEntered() { return CharacterIO.isUserEntered(dataDir); }
+    /** 유저가 한 번이라도 스탯을 직접 저장했는지(첫 실행이면 false). 프리셋 파일이 있으면 입력된 것으로 본다. */
+    public boolean isUserEntered() { return CharacterIO.isUserEntered(dataDir) || PresetIO.exists(dataDir); }
 
     /** 부위·등급의 슬롯별(0=1슬롯…) 옵션 후보 목록. 1슬롯은 노란만 들어있다. */
     public List<List<PotentialDraw>> slotDraws(String part, String grade) {

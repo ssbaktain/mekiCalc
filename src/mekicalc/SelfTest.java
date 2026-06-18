@@ -36,12 +36,14 @@ public final class SelfTest {
         testJsonParser();
         testNeutralBaseline();
         testDamageAmp();
-        testMainStatConversion();
+        testStatPropDamage();
         testMainStatBoostsAttack();
+        testPerLevelMainStat();
         testCrit();
         testQualitativeStats();
         testAttackSpeed();
         testFinalAndSkillLevels();
+        testSkillLevelByTier();
         testDamageRange();
         testCombineModes();
         testUncombine();
@@ -51,6 +53,7 @@ public final class SelfTest {
         testEquipmentPotential();
         testCubeMath();
         testCharacterIO();
+        testPresetIO();
         testAppModel();
         testFirstRunMarker();
         testCompareDraws();
@@ -75,11 +78,33 @@ public final class SelfTest {
         check("amp", m.finalDamage(b), 300.0);
     }
 
-    private static void testMainStatConversion() {
+    /** 스탯 비례 데미지%는 유저 입력값(STAT_PROP_DMG)을 그대로 factor로 쓴다. 주스탯 자체는 1타에 직접 영향 X. */
+    private static void testStatPropDamage() {
         DamageModel m = new DamageModel(Map.of(), neutral());
-        // 주스탯깡100×(1+100%)=200. 공격력엔 주스탯 미가산(baseAtk=100). 스탯비례=1+200/10000=1.02 → 102
-        StatBlock b = baseBlock(100).with("MAIN_STAT_FLAT", 100).with("MAIN_STAT_PCT", 100);
-        check("mainstat", m.finalDamage(b), 102.0);
+        // 스탯비례 2% → factor 1.02 → 102
+        check("statprop.field", m.finalDamage(baseBlock(100).with("STAT_PROP_DMG", 2)), 102.0);
+        // 주스탯깡/%만 있고 STAT_PROP_DMG=0이면 1타 데미지 영향 없음(스탯비례는 STAT_PROP_DMG로만 들어감).
+        check("statprop.mainNoDirect",
+                m.finalDamage(baseBlock(100).with("MAIN_STAT_FLAT", 100).with("MAIN_STAT_PCT", 100)), 100.0);
+    }
+
+    /** '1레벨당 주스탯' 큐브 옵션 = 즉시 (레벨×값) 깡주스탯 환산 → 깡공·스탯비례 동반 상승, 누적 안 됨. */
+    private static void testPerLevelMainStat() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("LEVEL", "레벨", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAIN_STAT_FLAT", "주스탯깡", "FLAT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAIN_STAT_PER_LEVEL", "레벨당주스탯", "FLAT", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, neutral());
+        StatBlock cur = baseBlock(10000).with("LEVEL", 200).with("STAT_PROP_DMG", 0);
+        StatBlock c = m.combine(cur, new StatBlock().with("MAIN_STAT_PER_LEVEL", 5));
+        check("perlevel.flat", c.get("MAIN_STAT_FLAT"), 1000);      // 200 × 5
+        check("perlevel.atk", c.get("ATK_FLAT"), 11000);            // 10000 + 1000
+        check("perlevel.statprop", c.get("STAT_PROP_DMG"), 10);     // 1000 / 100
+        check("perlevel.notKept", c.get("MAIN_STAT_PER_LEVEL"), 0); // 누적 스탯 아님
+        StatBlock back = m.uncombine(c, new StatBlock().with("MAIN_STAT_PER_LEVEL", 5));
+        check("perlevel.un.flat", back.get("MAIN_STAT_FLAT"), 0);
+        check("perlevel.un.atk", back.get("ATK_FLAT"), 10000);
+        check("perlevel.un.statprop", back.get("STAT_PROP_DMG"), 0);
     }
 
     /**
@@ -88,11 +113,11 @@ public final class SelfTest {
      */
     private static void testMainStatBoostsAttack() {
         DamageModel m = new DamageModel(Map.of(), neutral());
-        // current: 깡공 10000, 주스탯 100(=깡100×(1+0%)) → 예상 10000×(1+100/10000)=10100
-        StatBlock cur = baseBlock(10000).with("MAIN_STAT_FLAT", 100).with("MAIN_STAT_PCT", 0);
-        check("mainstat.baseline", m.finalDamage(cur), 10100.0); // 입력 그대로(깡공에 주스탯 재가산 X)
+        // current: 깡공 10000, 주스탯 100, 스탯비례 base 1%(=주스탯100/100) → 예상 10000×(1+1/100)=10100
+        StatBlock cur = baseBlock(10000).with("MAIN_STAT_FLAT", 100).with("MAIN_STAT_PCT", 0).with("STAT_PROP_DMG", 1);
+        check("mainstat.baseline", m.finalDamage(cur), 10100.0);
 
-        // 주스탯깡 +100 → 주스탯 200. 늘어난 100은 깡공에도 더해짐 → 10100×(1+200/10000)=10302
+        // 주스탯깡 +100 → 늘어난 100이 깡공(+100)·스탯비례(+1%)에 동반 반영 → 10100×(1+2/100)=10302
         StatBlock delta = new StatBlock().with("MAIN_STAT_FLAT", 100);
         check("mainstat.boostsAtk", m.finalDamage(m.combine(cur, delta)), 10302.0);
         // 증가량 = 10302/10100 - 1 = 정확히 2% (깡공 +1% × 스탯비례 +0.99%)
@@ -156,6 +181,37 @@ public final class SelfTest {
         check("target.boss", m2.finalDamageBoss(t), 300.0);      // 100×3
         check("target.default", m2.finalDamage(t), 150.0);       // 기본=일반
         check("skilldmg.ignored", m2.finalDamage(baseBlock(100).with("SKILL_DMG", 500)), 100.0);
+    }
+
+    /**
+     * 레벨/전직 차수 기반 유효 스킬 레벨 → 기본 공격 계수.
+     * 계수 = 2.9 × (1 + 0.004 × (레벨로인한현재차수스킬 + 현재차수스킬레벨 + 모든스킬레벨)).
+     */
+    private static void testSkillLevelByTier() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("LEVEL", "레벨", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVELS", "모든스킬", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVEL_1", "1차", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVEL_2", "2차", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVEL_3", "3차", "LEVEL", StatDef.Combine.SUM, 0, false),
+                new StatDef("SKILL_LEVEL_4", "4차", "LEVEL", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, new Profile(0, 2.9, 0.004, false));
+
+        // 미전직(레벨 5): 스킬 레벨 의미 없음 → 290%
+        check("skill.tier.preJob", m.finalDamage(baseBlock(100).with("LEVEL", 5)), 290.0);
+        // 막 전직(레벨 100, 4차): 현재차수 스킬 0 → 290%
+        check("skill.tier.justAdvanced", m.finalDamage(baseBlock(100).with("LEVEL", 100)), 290.0);
+        // 4차 레벨 110: 3×(110-100)=30 → 2.9×(1+0.004×30)=2.9×1.12=3.248 → 324.8
+        check("skill.tier.lv110", m.finalDamage(baseBlock(100).with("LEVEL", 110)), 324.8);
+        // 4차 레벨 110 + 4차 스킬 20 + 모든 스킬 5 → 30+20+5=55 → 2.9×1.22=3.538 → 353.8
+        check("skill.tier.lv110bonus", m.finalDamage(baseBlock(100)
+                .with("LEVEL", 110).with("SKILL_LEVEL_4", 20).with("SKILL_LEVELS", 5)), 353.8);
+        // 2차 레벨 45: 3×(45-30)=45 → +2차 스킬 10 = 55 → 353.8
+        check("skill.tier.2nd", m.finalDamage(baseBlock(100)
+                .with("LEVEL", 45).with("SKILL_LEVEL_2", 10)), 353.8);
+        // 차수 격리: 2차에서 4차 스킬은 무시 → 레벨분 45만 → 2.9×1.18=3.422 → 342.2
+        check("skill.tier.isolated", m.finalDamage(baseBlock(100)
+                .with("LEVEL", 45).with("SKILL_LEVEL_4", 100)), 342.2);
     }
 
     private static void testDamageRange() {
@@ -336,6 +392,47 @@ public final class SelfTest {
         check("chario.zero", loaded.get("DMG"), 0); // 0도 기록되어 로드됨
         Files.deleteIfExists(tmp.resolve("character.json"));
         Files.deleteIfExists(tmp);
+    }
+
+    /** 스탯 프리셋 저장/로드 + character.json 마이그레이션 라운드트립(임시 폴더). */
+    private static void testPresetIO() throws Exception {
+        java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-preset");
+        List<String> order = List.of("ATK_FLAT", "BOSS_DMG", "DMG");
+
+        // 1) presets.json 없음 + character.json 있음 → "기본" 1개로 마이그레이션
+        CharacterIO.save(tmp, new StatBlock().with("ATK_FLAT", 555), order);
+        var migrated = mekicalc.config.PresetIO.load(tmp);
+        checkTrue("preset.migrate.one", migrated.presets().size() == 1);
+        checkTrue("preset.migrate.active", migrated.active().equals(migrated.presets().get(0).name()));
+        check("preset.migrate.stat", migrated.presets().get(0).stats().get("ATK_FLAT"), 555);
+
+        // 2) 여러 프리셋 저장 → 재로드 시 개수·활성·스탯·0값 보존
+        List<mekicalc.config.PresetIO.Preset> list = new ArrayList<>();
+        list.add(new mekicalc.config.PresetIO.Preset("기본", new StatBlock().with("ATK_FLAT", 100)));
+        list.add(new mekicalc.config.PresetIO.Preset("보스", new StatBlock().with("ATK_FLAT", 200).with("BOSS_DMG", 300)));
+        mekicalc.config.PresetIO.save(tmp, new mekicalc.config.PresetIO.Store(list, "보스"), order);
+        checkTrue("preset.exists", mekicalc.config.PresetIO.exists(tmp));
+
+        var r = mekicalc.config.PresetIO.load(tmp);
+        checkTrue("preset.count", r.presets().size() == 2);
+        checkTrue("preset.active", r.active().equals("보스"));
+        check("preset.boss.boss", findPreset(r, "보스").stats().get("BOSS_DMG"), 300);
+        check("preset.base.atk", findPreset(r, "기본").stats().get("ATK_FLAT"), 100);
+        check("preset.base.zero", findPreset(r, "기본").stats().get("DMG"), 0); // 0도 기록·로드
+
+        // 3) 알 수 없는 active는 첫 프리셋으로 폴백
+        mekicalc.config.PresetIO.save(tmp, new mekicalc.config.PresetIO.Store(list, "없는이름"), order);
+        check("preset.activeFallback", 0,
+                mekicalc.config.PresetIO.load(tmp).active().equals("기본") ? 0 : 1);
+
+        Files.deleteIfExists(tmp.resolve(mekicalc.config.PresetIO.FILE));
+        Files.deleteIfExists(tmp.resolve("character.json"));
+        Files.deleteIfExists(tmp);
+    }
+
+    private static mekicalc.config.PresetIO.Preset findPreset(mekicalc.config.PresetIO.Store s, String name) {
+        for (mekicalc.config.PresetIO.Preset p : s.presets()) if (p.name().equals(name)) return p;
+        throw new IllegalStateException("프리셋 없음: " + name);
     }
 
     private static CubeEvaluator.Result findRes(List<CubeEvaluator.Result> res, String stat, double value) {

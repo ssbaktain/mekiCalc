@@ -34,13 +34,30 @@ public final class StatDef {
     public final boolean qualitative;
     /** true면 다른 스탯에서 자동 파생되어 표시(직접 입력 X). 예: 스탯 비례 데미지←주스탯. */
     public final boolean derived;
+    /**
+     * true면 스탯 입력 화면에 표시하지 않는다(직접 입력 대상이 아님).
+     * 예: 1레벨당 주스탯 — 큐브 옵션으로만 들어오고 즉시 레벨×값의 깡주스탯으로 환산된다.
+     */
+    public final boolean hidden;
+    /** 스탯 입력 화면에서 섹션 묶음 표시용 그룹 이름(예: 공격력/치명타/스킬 레벨). */
+    public final String group;
 
     public StatDef(String id, String name, String unit, Combine combine, double max, boolean qualitative) {
-        this(id, name, unit, combine, max, qualitative, false);
+        this(id, name, unit, combine, max, qualitative, false, false, "기타");
     }
 
     public StatDef(String id, String name, String unit, Combine combine, double max,
                    boolean qualitative, boolean derived) {
+        this(id, name, unit, combine, max, qualitative, derived, false, "기타");
+    }
+
+    public StatDef(String id, String name, String unit, Combine combine, double max,
+                   boolean qualitative, boolean derived, boolean hidden) {
+        this(id, name, unit, combine, max, qualitative, derived, hidden, "기타");
+    }
+
+    public StatDef(String id, String name, String unit, Combine combine, double max,
+                   boolean qualitative, boolean derived, boolean hidden, String group) {
         this.id = id;
         this.name = name;
         this.unit = unit;
@@ -48,6 +65,8 @@ public final class StatDef {
         this.max = max;
         this.qualitative = qualitative;
         this.derived = derived;
+        this.hidden = hidden;
+        this.group = group;
     }
 
     /** 현재값 cur 에 옵션값 delta 를 combine 규칙으로 합친 새 값. */
@@ -90,6 +109,8 @@ public final class StatDef {
                 Combine.valueOf(Json.str(m, "combine", "SUM")),
                 Json.num(m, "max", 0.0),
                 Json.bool(m, "qualitative", false),
-                Json.bool(m, "derived", false));
+                Json.bool(m, "derived", false),
+                Json.bool(m, "hidden", false),
+                Json.str(m, "group", "기타"));
     }
 }

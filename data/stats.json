@@ -1,4 +1,5 @@
 [
+  { "id": "LEVEL",            "name": "레벨",                   "unit": "LEVEL", "combine": "SUM" },
   { "id": "ATK_FLAT",         "name": "공격력(+)",              "unit": "FLAT",  "combine": "SUM" },
   { "id": "ATK_PCT",          "name": "공격력%",                "unit": "PCT",   "combine": "SUM" },
   { "id": "CRIT_RATE",        "name": "크리티컬 확률%",          "unit": "PCT",   "combine": "SUM" },
@@ -6,7 +7,7 @@
   { "id": "ATK_SPEED",        "name": "공격 속도%",             "unit": "PCT",   "combine": "DIMINISHING", "max": 150 },
   { "id": "MAIN_STAT_FLAT",   "name": "주스탯(+)",              "unit": "FLAT",  "combine": "SUM" },
   { "id": "MAIN_STAT_PCT",    "name": "주스탯%",                "unit": "PCT",   "combine": "SUM" },
-  { "id": "STAT_PROP_DMG",    "name": "스탯 비례 데미지%",        "unit": "PCT",   "combine": "SUM", "derived": true },
+  { "id": "STAT_PROP_DMG",    "name": "스탯 비례 데미지%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG",              "name": "데미지%",                "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG_AMP",          "name": "데미지 증폭%",            "unit": "PCT",   "combine": "SUM" },
   { "id": "BASIC_ATK_DMG",    "name": "기본 공격 데미지%",        "unit": "PCT",   "combine": "SUM" },
@@ -19,8 +20,12 @@
   { "id": "FINAL_DMG",        "name": "최종 데미지%",            "unit": "PCT",   "combine": "MULT_PCT" },
   { "id": "BASIC_ATK_TARGETS","name": "기본 공격 대상 수 증가(+)", "unit": "FLAT", "combine": "SUM", "qualitative": true },
   { "id": "COOLDOWN_REDUCTION","name": "스킬 재사용 대기시간 감소(+초)", "unit": "SEC", "combine": "SUM", "qualitative": true },
+  { "id": "SKILL_LEVEL_1",    "name": "1차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
+  { "id": "SKILL_LEVEL_2",    "name": "2차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
+  { "id": "SKILL_LEVEL_3",    "name": "3차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
+  { "id": "SKILL_LEVEL_4",    "name": "4차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVELS",     "name": "모든 스킬 레벨(+)",        "unit": "LEVEL", "combine": "SUM" },
-  { "id": "MAIN_STAT_PER_LEVEL","name": "1레벨당 주스탯(+)",       "unit": "FLAT",  "combine": "SUM" },
+  { "id": "MAIN_STAT_PER_LEVEL","name": "1레벨당 주스탯(+)",       "unit": "FLAT",  "combine": "SUM", "hidden": true },
   { "id": "BUFF_DURATION",    "name": "버프 지속시간 증가%",       "unit": "PCT",   "combine": "SUM", "qualitative": true },
   { "id": "SUMMON_DURATION",  "name": "동료 소환 지속시간 증가%",   "unit": "PCT",   "combine": "SUM", "qualitative": true }
 ]
