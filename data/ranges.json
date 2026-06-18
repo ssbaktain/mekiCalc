@@ -1,0 +1,10 @@
+{
+  "_comment": "추천 옵션 범위. enabled=true면 우선순위 추천에서 그 스탯을 현재값+lo ~ 현재값+hi 범위로 제한.",
+  "CRIT_RATE": { "enabled": true, "lo": 0, "hi": 0 },
+  "ATK_SPEED": { "enabled": false, "lo": 0, "hi": 0 },
+  "DEF_PEN": { "enabled": false, "lo": 0, "hi": 0 },
+  "BASIC_ATK_TARGETS": { "enabled": false, "lo": 0, "hi": 0 },
+  "COOLDOWN_REDUCTION": { "enabled": false, "lo": 0, "hi": 0 },
+  "BUFF_DURATION": { "enabled": false, "lo": 0, "hi": 0 },
+  "SUMMON_DURATION": { "enabled": false, "lo": 0, "hi": 0 }
+}

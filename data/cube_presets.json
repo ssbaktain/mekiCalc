@@ -1,0 +1,24 @@
+{
+  "_comment": "큐브 옵션 프리셋(독립). active=현재 활성. 활성 프리셋은 mycube.json에도 미러링.",
+  "active": "테스트",
+  "presets": [
+    { "name": "기본", "cubes": {
+      "모자": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 12 }, { "stat": "MAIN_STAT_PCT", "value": 9 }, { "stat": "MIN_DMG_MULT", "value": 10 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 6 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }, { "stat": "MAIN_STAT_FLAT", "value": 100 }] } },
+      "망토": { "윗잠": { "grade": "MYTHIC", "slots": [null, { "stat": "FINAL_DMG", "value": 12 }, { "stat": "MAX_DMG_MULT", "value": 25 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "DMG", "value": 12 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }, { "stat": "CRIT_RATE", "value": 4.5 }] } },
+      "상의": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "ATK_SPEED", "value": 10 }, { "stat": "BASIC_ATK_TARGETS", "value": 2 }, { "stat": "MAIN_STAT_PCT", "value": 12 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 6 }, null, { "stat": "MAIN_STAT_PCT", "value": 4.5 }] } },
+      "어깨장식": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 12 }, { "stat": "MIN_DMG_MULT", "value": 15 }, { "stat": "MAX_DMG_MULT", "value": 15 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MAX_DMG_MULT", "value": 8 }, null, { "stat": "CRIT_RATE", "value": 4.5 }] } },
+      "하의": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "MAX_DMG_MULT", "value": 25 }, { "stat": "CRIT_RATE", "value": 12 }, { "stat": "FINAL_DMG", "value": 12 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "DMG", "value": 12 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }, { "stat": "MAX_DMG_MULT", "value": 8 }] } },
+      "벨트": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 15 }, { "stat": "DMG", "value": 35 }, null] }, "아랫잠": { "grade": "EPIC", "slots": [null, { "stat": "MIN_DMG_MULT", "value": 6 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }] } },
+      "장갑": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "MIN_DMG_MULT", "value": 25 }, { "stat": "CRIT_DMG", "value": 50 }, null] }, "아랫잠": { "grade": "LEGENDARY", "slots": [{ "stat": "CRIT_DMG", "value": 30 }, { "stat": "MAIN_STAT_PCT", "value": 9 }, { "stat": "MAIN_STAT_FLAT", "value": 400 }] } },
+      "신발": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "SUMMON_DURATION", "value": 20 }, null, { "stat": "CRIT_RATE", "value": 12 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MAX_DMG_MULT", "value": 8 }, { "stat": "MAIN_STAT_FLAT", "value": 100 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }] } },
+      "반지": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "MIN_DMG_MULT", "value": 15 }, { "stat": "MAX_DMG_MULT", "value": 15 }, { "stat": "SKILL_LEVELS", "value": 8 }] }, "아랫잠": { "grade": "EPIC", "slots": [null, { "stat": "CRIT_RATE", "value": 4.5 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }] } },
+      "목걸이": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "SKILL_LEVELS", "value": 12 }, { "stat": "MAX_DMG_MULT", "value": 10 }, null] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "CRIT_RATE", "value": 6 }, { "stat": "MAX_DMG_MULT", "value": 6 }, { "stat": "DMG", "value": 8 }] } },
+      "눈장식": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 12 }, null, { "stat": "MAIN_STAT_PCT", "value": 9 }] }, "아랫잠": { "grade": "UNIQUE", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 9 }, { "stat": "MAX_DMG_MULT", "value": 8 }, { "stat": "MAX_DMG_MULT", "value": 8 }] } },
+      "얼굴장식": { "윗잠": { "grade": "LEGENDARY", "slots": [{ "stat": "FINAL_DMG", "value": 8 }, null, { "stat": "MAIN_STAT_PCT", "value": 9 }] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MIN_DMG_MULT", "value": 8 }, { "stat": "MIN_DMG_MULT", "value": 6 }, { "stat": "MAIN_STAT_PCT", "value": 4.5 }] } },
+      "귀고리": { "윗잠": { "grade": "MYTHIC", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 15 }, { "stat": "MAIN_STAT_PCT", "value": 12 }, null] }, "아랫잠": { "grade": "EPIC", "slots": [{ "stat": "MAIN_STAT_PCT", "value": 6 }, { "stat": "MIN_DMG_MULT", "value": 8 }, null] } }
+    } },
+    { "name": "테스트", "cubes": {
+      "모자": { "윗잠": { "grade": "MYTHIC", "slots": [null, null, null] }, "아랫잠": { "grade": "MYTHIC", "slots": [null, null, null] } }
+    } }
+  ]
+}

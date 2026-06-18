@@ -45,7 +45,7 @@ public final class CubeStateIO {
         return out;
     }
 
-    private static Line parseLine(Object o) {
+    static Line parseLine(Object o) {
         if (o == null) return null;
         Map<String, Object> m = Json.asMap(o);
         List<Object> arr = Json.asList(m.get("slots"));
@@ -74,7 +74,7 @@ public final class CubeStateIO {
         Files.writeString(dataDir.resolve(FILE), sb.toString());
     }
 
-    private static String lineJson(Line line) {
+    static String lineJson(Line line) {
         if (line == null) return "null";
         StringBuilder sb = new StringBuilder();
         sb.append("{ \"grade\": \"").append(line.grade()).append("\", \"slots\": [");

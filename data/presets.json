@@ -63,6 +63,37 @@
       "MAIN_STAT_PER_LEVEL": 0,
       "BUFF_DURATION": 0,
       "SUMMON_DURATION": 60
+    } },
+    { "name": "테스트", "stats": {
+      "LEVEL": 0,
+      "ATK_FLAT": 11,
+      "ATK_PCT": 0,
+      "CRIT_RATE": 0,
+      "CRIT_DMG": 0,
+      "ATK_SPEED": 0,
+      "MAIN_STAT_FLAT": 0,
+      "MAIN_STAT_PCT": 0,
+      "STAT_PROP_DMG": 0,
+      "DMG": 0,
+      "DMG_AMP": 0,
+      "BASIC_ATK_DMG": 0,
+      "SKILL_DMG": 0,
+      "DEF_PEN": 0,
+      "BOSS_DMG": 0,
+      "NORMAL_DMG": 0,
+      "MIN_DMG_MULT": 0,
+      "MAX_DMG_MULT": 0,
+      "FINAL_DMG": 0,
+      "BASIC_ATK_TARGETS": 0,
+      "COOLDOWN_REDUCTION": 0,
+      "SKILL_LEVEL_1": 0,
+      "SKILL_LEVEL_2": 0,
+      "SKILL_LEVEL_3": 0,
+      "SKILL_LEVEL_4": 0,
+      "SKILL_LEVELS": 0,
+      "MAIN_STAT_PER_LEVEL": 0,
+      "BUFF_DURATION": 0,
+      "SUMMON_DURATION": 0
     } }
   ]
 }

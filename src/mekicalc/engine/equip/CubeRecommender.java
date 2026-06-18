@@ -51,6 +51,16 @@ public final class CubeRecommender {
     /** 한 장비를 분석해 EquipOpts 생성(조합 전부 → dedup → 정렬 → 파레토 → 확률합). */
     public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost) {
+        return analyze(model, current, slots, curDraws, part, upper, cost, java.util.Map.of());
+    }
+
+    /**
+     * 범위 제약 포함 분석. ranges = statId→{lo, hi}(현재값 기준 상대 오프셋, 고려 대상만).
+     * 추천 후보의 그 스탯 결과값이 [현재값+lo, 현재값+hi]를 벗어나면 후보에서 제외한다.
+     */
+    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+                                    PotentialDraw[] curDraws, String part, boolean upper, double cost,
+                                    Map<String, double[]> ranges) {
         double curFull = model.output(current);
         // 정성적 슬롯(재획득 고정) vs 풀 슬롯(비정성: 옵션 또는 빈). 각 슬롯은 (1−옵션확률합)의 확률로 빈.
         List<Integer> pool = new ArrayList<>();
@@ -86,7 +96,7 @@ public final class CubeRecommender {
         Map<String, Double> setDeal = new LinkedHashMap<>();
         Map<String, List<PotentialDraw>> setOpts = new LinkedHashMap<>();
         genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                new java.util.HashSet<>(), setDeal, setOpts);
+                new java.util.HashSet<>(), setDeal, setOpts, current, ranges);
 
         List<OptSet> all = new ArrayList<>();
         for (Map.Entry<String, Double> e : setDeal.entrySet()) {
@@ -150,7 +160,8 @@ public final class CubeRecommender {
     private static void genSets(DamageModel model, StatBlock baseline, double curBase, double curDeal,
                                 List<Integer> pool, List<List<PotentialDraw>> slots, int depth, PotentialDraw[] chosen,
                                 java.util.Set<String> seen, Map<String, Double> setDeal,
-                                Map<String, List<PotentialDraw>> setOpts) {
+                                Map<String, List<PotentialDraw>> setOpts,
+                                StatBlock current, Map<String, double[]> ranges) {
         if (depth == pool.size()) {
             List<PotentialDraw> opts = new ArrayList<>();
             for (PotentialDraw d : chosen) if (d != null) opts.add(d);
@@ -159,19 +170,35 @@ public final class CubeRecommender {
             if (!seen.add(key)) return;
             StatBlock delta = new StatBlock();
             for (PotentialDraw d : opts) delta.set(d.statId(), delta.get(d.statId()) + d.value());
-            double deal = curBase > 0 ? model.output(model.combine(baseline, delta)) / curBase - 1.0 : 0;
+            StatBlock combined = model.combine(baseline, delta);
+            if (!withinRanges(combined, current, ranges)) return;   // 허용 범위 밖 후보 제외
+            double deal = curBase > 0 ? model.output(combined) / curBase - 1.0 : 0;
             if (deal - curDeal <= 1e-12) return;
             setDeal.put(key, deal);
             setOpts.put(key, opts);
             return;
         }
         chosen[depth] = null;   // 이 풀 슬롯은 빈
-        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts);
+        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges);
         for (PotentialDraw d : slots.get(pool.get(depth))) {
             chosen[depth] = d;
-            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts);
+            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges);
         }
         chosen[depth] = null;
+    }
+
+    /**
+     * 추천 후보(combined)의 각 고려 스탯 결과값이 [현재값+lo, 현재값+hi] 안인지.
+     * ranges가 비어 있으면 항상 true(기존 동작).
+     */
+    private static boolean withinRanges(StatBlock combined, StatBlock current, Map<String, double[]> ranges) {
+        if (ranges == null || ranges.isEmpty()) return true;
+        for (Map.Entry<String, double[]> e : ranges.entrySet()) {
+            double val = combined.get(e.getKey());
+            double base = current.get(e.getKey());
+            if (val < base + e.getValue()[0] - 1e-9 || val > base + e.getValue()[1] + 1e-9) return false;
+        }
+        return true;
     }
 
     /** 옵션 구성 키(슬롯 무관): 옵션들을 정렬해 합침. */

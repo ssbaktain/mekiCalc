@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.Map;
 import mekicalc.config.CharacterIO;
 import mekicalc.config.ConversionIO;
+import mekicalc.config.CubePresetIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.config.GameData;
 import mekicalc.config.PresetIO;
+import mekicalc.config.RangeIO;
+import mekicalc.config.UISettingsIO;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.EquipmentPotential;
@@ -35,14 +38,22 @@ public final class AppModel {
     private GameData g;
     private EquipmentPotential ep;
     private StatBlock current;
-    private Map<String, CubeStateIO.PartCube> cubeState;
+    private Map<String, CubeStateIO.PartCube> cubeState;   // 활성 큐브 프리셋의 편집용 사본
 
     // 스탯 프리셋: 목록(가변) + 활성 프리셋 이름. current는 활성 프리셋의 편집용 사본.
     private List<PresetIO.Preset> presets;
     private String activeName;
 
+    // 큐브 프리셋(스탯과 별개의 독립 프리셋).
+    private List<CubePresetIO.CubePreset> cubePresets;
+    private String cubeActiveName;
+
     // 정성적·스킬레벨 커스텀 딜 환산(전체 공용, conversions.json).
     private Map<String, ConversionIO.Conv> conversions;
+    // 추천 옵션 범위(컨텐츠→스탯→Range, ranges.json).
+    private Map<String, Map<String, RangeIO.Range>> ranges;
+    // 화면 설정(폰트 배율·창 크기, ui.json).
+    private UISettingsIO.UISettings ui;
 
     public AppModel(Path dataDir) throws IOException {
         this.dataDir = dataDir;
@@ -53,12 +64,17 @@ public final class AppModel {
     public void reload() throws IOException {
         g = GameData.load(dataDir);
         ep = EquipmentPotential.load(dataDir);
-        cubeState = CubeStateIO.load(dataDir);
         PresetIO.Store store = PresetIO.load(dataDir);
         presets = new ArrayList<>(store.presets());
         activeName = store.active();
         current = new StatBlock(activeStats());
+        CubePresetIO.Store cubeStore = CubePresetIO.load(dataDir);
+        cubePresets = new ArrayList<>(cubeStore.presets());
+        cubeActiveName = cubeStore.active();
+        cubeState = new LinkedHashMap<>(activeCubes());
         conversions = ConversionIO.load(dataDir);
+        ranges = RangeIO.loadAll(dataDir);
+        ui = UISettingsIO.load(dataDir);
     }
 
     // ──────────────────── 스탯 프리셋 ────────────────────
@@ -179,16 +195,146 @@ public final class AppModel {
         g = GameData.load(dataDir);   // 새 환산값으로 DamageModel 재조립(current는 그대로)
     }
 
+    // ──────────────────── 추천 옵션 범위 (크확·공속·정성적) ────────────────────
+
+    /** 범위를 설정할 수 있는 스탯들: 크확·공속 + 정성적 스탯 전부(이 순서). */
+    public List<StatDef> rangeStats() {
+        List<StatDef> out = new ArrayList<>();
+        for (String id : RangeIO.EXTRA_IDS) {
+            StatDef d = g.stats.get(id);
+            if (d != null) out.add(d);
+        }
+        for (StatDef d : g.stats.values()) {
+            if (d.qualitative && !RangeIO.EXTRA_IDS.contains(d.id)) out.add(d);
+        }
+        return out;
+    }
+
+    /** 컨텐츠·스탯의 현재 범위 설정(없으면 디폴트: 고려 안 함, 0~0). */
+    public RangeIO.Range rangeOf(String content, String id) {
+        Map<String, RangeIO.Range> cm = ranges.get(content);
+        return cm == null ? RangeIO.Range.DEFAULT : cm.getOrDefault(id, RangeIO.Range.DEFAULT);
+    }
+
+    /** 한 컨텐츠의 범위 설정 저장(ranges.json) 후 추천 캐시 무효화. */
+    public void saveRanges(String content, Map<String, RangeIO.Range> map) throws IOException {
+        ranges.put(content, new LinkedHashMap<>(map));
+        RangeIO.save(dataDir, ranges);
+        recCache = null;
+    }
+
+    /** 추천 엔진에 넘길 고려 대상 범위 오프셋(statId→{lo, hi}) — 해당 컨텐츠. */
+    private Map<String, double[]> activeRangeOffsets(String content) {
+        Map<String, double[]> out = new LinkedHashMap<>();
+        Map<String, RangeIO.Range> cm = ranges.get(content);
+        if (cm == null) return out;
+        for (Map.Entry<String, RangeIO.Range> e : cm.entrySet()) {
+            if (e.getValue().enabled()) out.put(e.getKey(), new double[]{e.getValue().lo(), e.getValue().hi()});
+        }
+        return out;
+    }
+
+    // ──────────────────── 화면 설정(폰트·창 크기) ────────────────────
+
+    public UISettingsIO.UISettings uiSettings() { return ui; }
+
+    public void saveUISettings(UISettingsIO.UISettings s) throws IOException {
+        UISettingsIO.save(dataDir, s);
+        ui = s;
+    }
+
     /** 이미지 등 정적 자원(아이콘/배경) 폴더 — data 폴더와 같은 위치의 icon/. */
     public Path iconDir() { return dataDir.resolveSibling("icon"); }
+
+    // ──────────────────── 큐브 프리셋(독립) ────────────────────
+
+    /** 활성 큐브 프리셋의 (저장된) 부위별 큐브. */
+    private Map<String, CubeStateIO.PartCube> activeCubes() {
+        int i = cubeIndexOf(cubeActiveName);
+        return cubePresets.get(i >= 0 ? i : 0).cubes();
+    }
+
+    private int cubeIndexOf(String name) {
+        for (int i = 0; i < cubePresets.size(); i++) if (cubePresets.get(i).name().equals(name)) return i;
+        return -1;
+    }
+
+    public List<String> cubePresetNames() {
+        List<String> out = new ArrayList<>();
+        for (CubePresetIO.CubePreset p : cubePresets) out.add(p.name());
+        return out;
+    }
+
+    public String activeCubePreset() { return cubeActiveName; }
+
+    public boolean hasCubePreset(String name) { return cubeIndexOf(name) >= 0; }
+
+    /** 현재 편집 중인 큐브(cubeState)를 활성 프리셋에 반영하고 cube_presets.json(+mycube.json 미러)으로 기록. */
+    private void writeCubePresets() throws IOException {
+        int i = cubeIndexOf(cubeActiveName);
+        if (i >= 0) cubePresets.set(i, new CubePresetIO.CubePreset(cubeActiveName, new LinkedHashMap<>(cubeState)));
+        CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
+        CubeStateIO.save(dataDir, cubeState);   // 활성 미러(기존 코드 호환)
+        recCache = null;
+    }
+
+    public void switchCubePreset(String name) throws IOException {
+        if (cubeIndexOf(name) < 0 || name.equals(cubeActiveName)) return;
+        cubeActiveName = name;
+        cubeState = new LinkedHashMap<>(activeCubes());
+        CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
+        CubeStateIO.save(dataDir, cubeState);
+        recCache = null;
+    }
+
+    /** 현재 큐브를 사본으로 하는 새 프리셋 생성 후 활성 전환. */
+    public void addCubePresetFrom(String name, String srcName) throws IOException {
+        int i = cubeIndexOf(srcName);
+        if (name == null || name.isEmpty() || hasCubePreset(name) || i < 0) return;
+        cubePresets.add(new CubePresetIO.CubePreset(name, deepCopy(cubePresets.get(i).cubes())));
+        cubeActiveName = name;
+        cubeState = new LinkedHashMap<>(activeCubes());
+        writeCubePresets();
+    }
+
+    /** 빈 큐브 새 프리셋 생성 후 활성 전환. */
+    public void addCubePresetBlank(String name) throws IOException {
+        if (name == null || name.isEmpty() || hasCubePreset(name)) return;
+        cubePresets.add(new CubePresetIO.CubePreset(name, new LinkedHashMap<>()));
+        cubeActiveName = name;
+        cubeState = new LinkedHashMap<>();
+        writeCubePresets();
+    }
+
+    public void renameCubePreset(String oldName, String newName) throws IOException {
+        int i = cubeIndexOf(oldName);
+        if (i < 0 || newName == null || newName.isEmpty() || hasCubePreset(newName)) return;
+        cubePresets.set(i, new CubePresetIO.CubePreset(newName, cubePresets.get(i).cubes()));
+        if (cubeActiveName.equals(oldName)) cubeActiveName = newName;
+        CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
+    }
+
+    public void deleteCubePreset(String name) throws IOException {
+        if (cubePresets.size() <= 1 || cubeIndexOf(name) < 0) return;
+        cubePresets.removeIf(p -> p.name().equals(name));
+        if (cubeActiveName.equals(name)) {
+            cubeActiveName = cubePresets.get(0).name();
+            cubeState = new LinkedHashMap<>(activeCubes());
+        }
+        writeCubePresets();
+    }
+
+    private static Map<String, CubeStateIO.PartCube> deepCopy(Map<String, CubeStateIO.PartCube> src) {
+        return new LinkedHashMap<>(src);   // PartCube/Line/Slot은 불변 record라 얕은 복사로 충분
+    }
 
     /** 부위의 저장된 내 큐브 옵션(없으면 null). */
     public CubeStateIO.PartCube cubeOf(String part) { return cubeState.get(part); }
 
-    /** 한 부위의 내 큐브 옵션(윗잠+아랫잠)을 저장. */
+    /** 한 부위의 내 큐브 옵션(윗잠+아랫잠)을 저장(활성 큐브 프리셋에 반영). */
     public void saveCube(String part, CubeStateIO.PartCube pc) throws IOException {
         cubeState.put(part, pc);
-        CubeStateIO.save(dataDir, cubeState);
+        writeCubePresets();
     }
 
     public Collection<StatDef> stats() { return g.stats.values(); }
@@ -332,11 +478,19 @@ public final class AppModel {
     }
 
     private void addLayer(String part, CubeStateIO.Line line, boolean upper, double price) {
-        if (line.grade() == null) return;
+        if (line.grade() == null || isLineEmpty(line)) return;   // 등급만 있고 옵션이 전혀 없는(전부 비움) 층은 추천 대상 아님
         List<List<PotentialDraw>> slots = ep.slots(part, line.grade());
         PotentialDraw[] curDraws = currentDraws(line, slots);
-        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(g.model, current, slots, curDraws, part, upper, price);
+        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
+                g.model, current, slots, curDraws, part, upper, price, activeRangeOffsets(RangeIO.CUBE));
         if (!eo.shown().isEmpty()) recCache.add(eo);
+    }
+
+    /** 층(윗잠/아랫잠)의 모든 슬롯이 비었는지(=사용자가 옵션을 하나도 입력하지 않음). */
+    private static boolean isLineEmpty(CubeStateIO.Line line) {
+        if (line.slots() == null) return true;
+        for (CubeStateIO.Slot s : line.slots()) if (s != null) return false;
+        return true;
     }
 
     /** 슬라이더 분기 수(표시 옵션 수 최대). */

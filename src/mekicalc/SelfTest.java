@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import mekicalc.config.CharacterIO;
 import mekicalc.config.ConversionIO;
 import mekicalc.config.GameData;
+import mekicalc.config.RangeIO;
+import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.AcquisitionOption;
 import mekicalc.engine.DamageModel;
 import mekicalc.engine.Recommender;
@@ -44,6 +46,9 @@ public final class SelfTest {
         testQualitativeStats();
         testCustomConversion();
         testConversionIO();
+        testRangeConstraint();
+        testRangeIO();
+        testCubePresetIO();
         testAttackSpeed();
         testFinalAndSkillLevels();
         testSkillLevelByTier();
@@ -208,6 +213,113 @@ public final class SelfTest {
         checkTrue("conv.io.missing", ConversionIO.load(Files.createTempDirectory("mekicalc-conv2")).isEmpty());
         Files.deleteIfExists(tmp.resolve(ConversionIO.FILE));
         Files.deleteIfExists(tmp);
+    }
+
+    /**
+     * 추천 옵션 범위: 크확을 '현재값 유지(0~0)'로 고려하면, 크확을 버리는(잃는) 추천 후보가 제외된다.
+     * 결과: 달성 가능한 최대 딜 증가량이 줄고(크확 칸을 다른 옵션에 못 씀), 추천은 크확을 유지한다.
+     */
+    private static void testRangeConstraint() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("ATK_FLAT", "공", "FLAT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_RATE", "크확", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("CRIT_DMG", "크뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("DMG", "뎀", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MIN_DMG_MULT", "최소", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAX_DMG_MULT", "최대", "PCT", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, neutral());
+        StatBlock current = baseBlock(100).with("CRIT_RATE", 50).with("CRIT_DMG", 100);
+
+        // slot0: 크확+20 또는 뎀+100 / slot1: 뎀+100 / slot2: 없음. 현재 slot0에 크확+20.
+        List<List<PotentialDraw>> slots = List.of(
+                List.of(new PotentialDraw("CRIT_RATE", 20, 50, false, false),
+                        new PotentialDraw("DMG", 100, 50, false, false)),
+                List.of(new PotentialDraw("DMG", 100, 50, false, false)),
+                List.of());
+        PotentialDraw[] curDraws = { new PotentialDraw("CRIT_RATE", 20, 50, false, false), null, null };
+
+        CubeRecommender.EquipOpts noR = CubeRecommender.analyze(m, current, slots, curDraws, "x", true, 1.0);
+        CubeRecommender.EquipOpts wR = CubeRecommender.analyze(m, current, slots, curDraws, "x", true, 1.0,
+                Map.of("CRIT_RATE", new double[]{0, 0}));
+
+        double noMax = maxShownDeal(noR), wMax = maxShownDeal(wR);
+        checkTrue("range.lowersMaxDeal", noMax > wMax + 1e-6);   // 제약이 최대 딜을 낮춤
+        checkTrue("range.topKeepsCrit", topShownHasStat(wR, "CRIT_RATE"));  // 추천이 크확 유지
+        checkTrue("range.noRangeDropsCrit", !topShownHasStat(noR, "CRIT_RATE")); // 제약 없으면 크확 버림
+    }
+
+    private static double maxShownDeal(CubeRecommender.EquipOpts eo) {
+        double mx = -1;
+        for (CubeRecommender.OptSet s : eo.shown()) mx = Math.max(mx, s.deal());
+        return mx;
+    }
+
+    private static boolean topShownHasStat(CubeRecommender.EquipOpts eo, String statId) {
+        if (eo.shown().isEmpty()) return false;
+        CubeRecommender.OptSet top = eo.shown().get(eo.shown().size() - 1);   // 최대 딜 세트
+        for (PotentialDraw d : top.rep()) if (d != null && d.statId().equals(statId)) return true;
+        return false;
+    }
+
+    /** ranges.json(컨텐츠별) 저장/로드 라운드트립 + enabledOffsets 필터 + 구버전 마이그레이션. */
+    private static void testRangeIO() throws Exception {
+        java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-range");
+        Map<String, Map<String, RangeIO.Range>> all = new LinkedHashMap<>();
+        Map<String, RangeIO.Range> cube = new LinkedHashMap<>();
+        cube.put("CRIT_RATE", new RangeIO.Range(true, -10, -5));
+        cube.put("ATK_SPEED", new RangeIO.Range(false, 0, 20));
+        all.put(RangeIO.CUBE, cube);
+        RangeIO.save(tmp, all);
+
+        Map<String, RangeIO.Range> loaded = RangeIO.load(tmp, RangeIO.CUBE);
+        checkTrue("range.io.critEnabled", loaded.get("CRIT_RATE").enabled());
+        check("range.io.critLo", loaded.get("CRIT_RATE").lo(), -10);
+        check("range.io.critHi", loaded.get("CRIT_RATE").hi(), -5);
+        checkTrue("range.io.speedDisabled", !loaded.get("ATK_SPEED").enabled());
+
+        Map<String, double[]> off = RangeIO.enabledOffsets(tmp, RangeIO.CUBE);
+        checkTrue("range.io.enabledOnly", off.containsKey("CRIT_RATE") && !off.containsKey("ATK_SPEED"));
+        check("range.io.offLo", off.get("CRIT_RATE")[0], -10);
+
+        // 구버전 플랫 형식 → cube로 마이그레이션
+        Files.writeString(tmp.resolve(RangeIO.FILE),
+                "{ \"CRIT_RATE\": { \"enabled\": true, \"lo\": 0, \"hi\": 0 } }");
+        checkTrue("range.io.migrate", RangeIO.load(tmp, RangeIO.CUBE).get("CRIT_RATE").enabled());
+
+        Files.deleteIfExists(tmp.resolve(RangeIO.FILE));
+        Files.deleteIfExists(tmp);
+    }
+
+    /** 큐브 프리셋 저장/로드 라운드트립(부위·슬롯 보존). */
+    private static void testCubePresetIO() throws Exception {
+        java.nio.file.Path tmp = Files.createTempDirectory("mekicalc-cubepreset");
+        var up = new mekicalc.config.CubeStateIO.Line("MYTHIC", new mekicalc.config.CubeStateIO.Slot[]{
+                new mekicalc.config.CubeStateIO.Slot("DMG", 35), null,
+                new mekicalc.config.CubeStateIO.Slot("FINAL_DMG", 12)});
+        Map<String, mekicalc.config.CubeStateIO.PartCube> cubesA = new LinkedHashMap<>();
+        cubesA.put("장갑", new mekicalc.config.CubeStateIO.PartCube(up, null));
+        Map<String, mekicalc.config.CubeStateIO.PartCube> cubesB = new LinkedHashMap<>();
+
+        java.util.List<mekicalc.config.CubePresetIO.CubePreset> presets = new ArrayList<>();
+        presets.add(new mekicalc.config.CubePresetIO.CubePreset("기본", cubesA));
+        presets.add(new mekicalc.config.CubePresetIO.CubePreset("보스", cubesB));
+        mekicalc.config.CubePresetIO.save(tmp, new mekicalc.config.CubePresetIO.Store(presets, "보스"));
+
+        mekicalc.config.CubePresetIO.Store loaded = mekicalc.config.CubePresetIO.load(tmp);
+        checkTrue("cubepreset.count", loaded.presets().size() == 2);
+        checkTrue("cubepreset.active", "보스".equals(loaded.active()));
+        mekicalc.config.CubeStateIO.PartCube pc = findCubePreset(loaded, "기본").cubes().get("장갑");
+        checkTrue("cubepreset.slot0", pc.upper().slots()[0].stat().equals("DMG"));
+        check("cubepreset.slot0v", pc.upper().slots()[0].value(), 35);
+        checkTrue("cubepreset.slot1null", pc.upper().slots()[1] == null);
+        Files.deleteIfExists(tmp.resolve(mekicalc.config.CubePresetIO.FILE));
+        Files.deleteIfExists(tmp);
+    }
+
+    private static mekicalc.config.CubePresetIO.CubePreset findCubePreset(
+            mekicalc.config.CubePresetIO.Store s, String name) {
+        for (mekicalc.config.CubePresetIO.CubePreset p : s.presets()) if (p.name().equals(name)) return p;
+        throw new IllegalStateException("큐브 프리셋 없음: " + name);
     }
 
     /** 공속: 1타 데미지엔 미포함, 효율/비교엔 DPS 배수(1+공속/100)로 반영. 누적은 DIMINISHING(cap150). */

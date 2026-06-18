@@ -19,6 +19,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -50,8 +51,12 @@ public final class MainWindow extends JFrame {
 
     private final AppModel model;
     private final CardLayout cards = new CardLayout();
-    private final JPanel root = new JPanel(cards);
+    private final ScrollPanel root = new ScrollPanel(cards);
     private final Map<String, String> gradeLabelToCode;
+    /** 화면 설정 캐시(폰트 배율·창 크기). show()/적용에서 사용. */
+    private mekicalc.config.UISettingsIO.UISettings uiCache;
+    /** 현재 보이는 카드 이름(창 크기 재적용용). */
+    private String currentCard = "home";
 
     // 스탯 입력
     private final Map<String, JTextField> statFields = new LinkedHashMap<>();
@@ -59,10 +64,23 @@ public final class MainWindow extends JFrame {
     // 딜 환산 설정(정성적·스킬레벨): 스탯별 체크박스 + 값 입력칸
     private final Map<String, JCheckBox> convChecks = new LinkedHashMap<>();
     private final Map<String, JTextField> convFields = new LinkedHashMap<>();
-    // 스탯 프리셋 선택 (스탯만 프리셋, 큐브는 단일)
+    // 추천 옵션 범위(크확·공속·정성적): 스탯별 체크박스 + lo/hi 입력칸
+    private final Map<String, JCheckBox> rangeChecks = new LinkedHashMap<>();
+    private final Map<String, JTextField> rangeLoFields = new LinkedHashMap<>();
+    private final Map<String, JTextField> rangeHiFields = new LinkedHashMap<>();
+    /** 추천 옵션 범위 저장 버튼(변경 없을 때 비활성화). */
+    private StyledButton rangeSaveBtn;
+    /** 추천 옵션 범위 페이지가 다루는 컨텐츠(현재 큐브). */
+    private String rangeContent = mekicalc.config.RangeIO.CUBE;
+    /** 설정 허브 톱니바퀴 아이콘(없으면 ⚙ 텍스트). */
+    private java.awt.Image gearIcon;
+    // 스탯 프리셋 선택
     private final JComboBox<String> presetCombo = new JComboBox<>();
     /** 프리셋 콤보를 코드로 갱신할 때 선택 이벤트(전환)를 무시하기 위한 가드. */
     private boolean presetSwitching = false;
+    // 큐브 프리셋 선택(스탯과 별개의 독립 프리셋)
+    private final JComboBox<String> cubePresetCombo = new JComboBox<>();
+    private boolean cubePresetSwitching = false;
     /** 프리셋 추가 다이얼로그의 시작값 옵션 라벨. */
     private static final String BLANK_SOURCE = "빈 값으로 시작";
     private static final String COPY_PREFIX = "복사: ";
@@ -70,6 +88,13 @@ public final class MainWindow extends JFrame {
     private StyledButton saveStatsBtn;
     /** 딜 환산 설정 저장 버튼(변경 없을 때 비활성화). */
     private StyledButton convSaveBtn;
+    // 화면 설정 페이지 컨트롤
+    private JLabel fontPctLabel;
+    private javax.swing.JRadioButton winPercentRadio;
+    private javax.swing.JRadioButton winPixelRadio;
+    private JTextField winWField;
+    private JTextField winHField;
+    private JLabel winPctLabel;
 
     // 큐브 딜 증가량 비교 (좌/우 각각 부위·등급 따로 선택)
     private final JComboBox<String> leftPart = new JComboBox<>();
@@ -123,13 +148,27 @@ public final class MainWindow extends JFrame {
         root.add(buildCubeExpected(), "cubeExpected");
         root.add(buildCubeRecommend(), "cubeRecommend");
         root.add(buildCubeInput(), "cubeInput");
+        root.add(buildCubeSettings(), "cubeSettings");
+        root.add(buildSettingsHub(), "settings");
         root.add(buildConversionPage(), "conversion");
+        root.add(buildRangePage(), "ranges");
+        root.add(buildFontPage(), "font");
+        root.add(buildWindowPage(), "window");
         root.add(buildPlaceholder(), "placeholder");
-        add(root);
 
-        setMinimumSize(new Dimension(440, 560));
+        // 픽셀 창 축소 시 컨텐츠가 잘리면 상하좌우 스크롤바로 볼 수 있게 루트를 스크롤로 감쌈.
+        JScrollPane scroll = new JScrollPane(root,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getHorizontalScrollBar().setUnitIncrement(16);
+        add(scroll);
+
+        uiCache = model.uiSettings();
+        setMinimumSize(new Dimension(360, 420));
         setSize(470, 700);
         setLocationRelativeTo(null);
+        applyFontScale(uiCache.fontScale());   // 저장된 폰트 배율 적용
 
         if (model.isUserEntered()) {
             show("home");
@@ -141,20 +180,56 @@ public final class MainWindow extends JFrame {
     }
 
     private void show(String name) {
+        currentCard = name;
         cards.show(root, name);
-        // 화면별 권장 크기: 추천(좌우 비교)은 더 넓게, 표/비교는 넓게, 나머지는 좁게.
+        // 화면별 기준 크기: 추천(좌우 비교)은 더 넓게, 표/비교는 넓게, 나머지는 좁게.
         int w, h;
         if (name.equals("cubeRecommend")) { w = 860; h = 760; }
         else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
         else if (name.equals("conversion")) { w = 500; h = 700; }
+        else if (name.equals("ranges")) { w = 520; h = 700; }
         else { w = 470; h = 700; }
+        // 화면 설정 반영: 픽셀 모드면 고정 픽셀, 퍼센트 모드면 기준 크기 × 배율.
+        if (uiCache != null) {
+            if (mekicalc.config.UISettingsIO.MODE_PIXEL.equals(uiCache.windowMode())
+                    && uiCache.windowW() > 0 && uiCache.windowH() > 0) {
+                w = uiCache.windowW(); h = uiCache.windowH();
+            } else {
+                w = (int) Math.round(w * uiCache.windowPercent());
+                h = (int) Math.round(h * uiCache.windowPercent());
+            }
+        }
         if (getWidth() != w || getHeight() != h) setSize(w, h);
+    }
+
+    /** 전체 UI 폰트 배율 적용(1.0=100%). 각 컴포넌트의 기준 크기를 client property에 저장해 누적 오차 방지. */
+    private void applyFontScale(double scale) {
+        scaleTree(getRootPane(), scale);
+        revalidate();
+        repaint();
+    }
+
+    private static void scaleTree(java.awt.Component c, double scale) {
+        if (c instanceof javax.swing.JComponent) {
+            javax.swing.JComponent jc = (javax.swing.JComponent) c;
+            java.awt.Font f = jc.getFont();
+            if (f != null) {
+                Object o = jc.getClientProperty("baseFontSz");
+                float base = (o instanceof Float) ? (Float) o : f.getSize2D();
+                if (!(o instanceof Float)) jc.putClientProperty("baseFontSz", base);
+                jc.setFont(f.deriveFont((float) (base * scale)));
+            }
+        }
+        if (c instanceof java.awt.Container) {
+            for (java.awt.Component k : ((java.awt.Container) c).getComponents()) scaleTree(k, scale);
+        }
     }
 
     /** 아이콘/배경 이미지 로드(icon 폴더). 창 아이콘은 maple.png. */
     private void loadIconAssets() {
         java.nio.file.Path dir = model.iconDir();
         homeBg = loadImage(dir, "background.png");
+        gearIcon = loadImage(dir, "gear.jpg");
         java.awt.Image icon = loadImage(dir, "maple.png");
         if (icon != null) setIconImage(icon);
     }
@@ -201,27 +276,48 @@ public final class MainWindow extends JFrame {
         }
     }
 
+    /**
+     * CardLayout 컨테이너 겸 Scrollable. 선호 크기는 '현재 보이는 카드' 기준이라
+     * 큐브 화면(큰 카드) 때문에 다른 화면에 스크롤바가 생기지 않는다. 뷰포트가 카드보다
+     * 크면 카드가 뷰포트를 채우고(평소), 작으면(픽셀 창 축소) 상하좌우 스크롤바가 생긴다.
+     */
+    private static final class ScrollPanel extends JPanel implements javax.swing.Scrollable {
+        ScrollPanel(java.awt.LayoutManager lm) { super(lm); }
+
+        @Override public Dimension getPreferredSize() {
+            for (java.awt.Component c : getComponents()) if (c.isVisible()) return c.getPreferredSize();
+            return super.getPreferredSize();
+        }
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public int getScrollableUnitIncrement(java.awt.Rectangle r, int o, int d) { return 16; }
+        @Override public int getScrollableBlockIncrement(java.awt.Rectangle r, int o, int d) { return 120; }
+        // 가로·세로 모두 뷰포트에 맞춤 → 각 화면이 창 크기에 맞게 배치되고(하단 버튼 고정 등),
+        // 넘치는 표/폼은 화면 내부의 자체 스크롤이 처리한다. 루트 자체는 스크롤되지 않는다.
+        @Override public boolean getScrollableTracksViewportWidth() { return true; }
+        @Override public boolean getScrollableTracksViewportHeight() { return true; }
+    }
+
     // ──────────────────── 홈 (시안: 메인 화면) ────────────────────
     private JPanel buildHome() {
         JPanel p = screen(new BorderLayout());
-        p.setBorder(BorderFactory.createEmptyBorder(18, 26, 14, 26));
+        p.setBorder(BorderFactory.createEmptyBorder(12, 18, 14, 18));
 
         JLabel title = new JLabel("MekiCalc", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 36f));
         title.setForeground(Theme.TEXT);
 
-        // 타이틀 우측 '딜 환산 설정' — 메인 버튼과 구분되는 작은 아웃라인(설정류) 디자인.
-        JButton convBtn = settingsLink("딜 환산 설정");
-        convBtn.addActionListener(e -> { populateConversion(); show("conversion"); });
-        JPanel rightWrap = screen(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        rightWrap.add(convBtn);
-        JPanel leftWrap = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        // 타이틀 우측 상단 톱니바퀴(⚙) — 설정 허브 진입(우상단 모서리에 붙임).
+        JButton gearBtn = gearButton();
+        gearBtn.addActionListener(e -> show("settings"));
+        JPanel rightWrap = screen(new BorderLayout());
+        rightWrap.add(gearBtn, BorderLayout.NORTH);             // 위로 붙임
+        JPanel leftWrap = screen(new BorderLayout());
         JLabel spacer = new JLabel();
-        spacer.setPreferredSize(convBtn.getPreferredSize());   // 좌우 대칭 → 타이틀은 화면 정중앙 유지
-        leftWrap.add(spacer);
+        spacer.setPreferredSize(gearBtn.getPreferredSize());   // 좌우 대칭 → 타이틀은 화면 정중앙 유지
+        leftWrap.add(spacer, BorderLayout.NORTH);
 
         JPanel header = screen(new BorderLayout());
-        header.setBorder(BorderFactory.createEmptyBorder(6, 0, 26, 0));
+        header.setBorder(BorderFactory.createEmptyBorder(0, 0, 22, 0));
         header.add(leftWrap, BorderLayout.WEST);
         header.add(title, BorderLayout.CENTER);
         header.add(rightWrap, BorderLayout.EAST);
@@ -270,8 +366,8 @@ public final class MainWindow extends JFrame {
     // ──────────────────── 큐브 메뉴 (시안: 큐브) ────────────────────
     private JPanel buildCubeMenu() {
         JPanel p = screen(new BorderLayout());
-        p.setBorder(BorderFactory.createEmptyBorder(8, 24, 16, 24));
-        p.add(topBar("home", "큐브"), BorderLayout.NORTH);
+        p.setBorder(BorderFactory.createEmptyBorder(12, 18, 16, 18));
+        p.add(topBarGear("home", "큐브", "cubeSettings"), BorderLayout.NORTH);
 
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
@@ -292,7 +388,7 @@ public final class MainWindow extends JFrame {
         wrap.add(center, BorderLayout.NORTH);
         p.add(wrap, BorderLayout.CENTER);
 
-        p.add(bottomBig("내 큐브 옵션 입력", () -> show("cubeInput")), BorderLayout.SOUTH);
+        p.add(bottomBig("큐브 옵션 입력", () -> { refreshCubePresetCombo(); show("cubeInput"); }), BorderLayout.SOUTH);
         return p;
     }
 
@@ -315,11 +411,10 @@ public final class MainWindow extends JFrame {
         sp.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         sp.getVerticalScrollBar().setUnitIncrement(16);
 
-        JLabel hint = new JLabel("부위를 선택하세요", SwingConstants.CENTER);
-        hint.setForeground(Theme.MUTED);
-        JPanel top = screen(new BorderLayout());
-        top.add(topBar("cubeMenu", "큐브 옵션 입력", true), BorderLayout.NORTH);
-        top.add(hint, BorderLayout.SOUTH);
+        JPanel top = screen(null);
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.add(topBar("cubeMenu", "큐브 옵션 입력", true));
+        top.add(buildCubePresetBar());
 
         JPanel p = screen(new BorderLayout(8, 8));
         p.setBorder(BorderFactory.createEmptyBorder(8, 16, 16, 16));
@@ -481,10 +576,9 @@ public final class MainWindow extends JFrame {
         compare.setPreferredSize(new Dimension(0, 64));
         compare.addActionListener(e -> doCompare());
 
-        JLabel note = new JLabel("<html><div style='text-align:center'>"
-                + "효율 = 등장확률 × 딜증가량 점수 (큐브 1개당 기대 딜 증가량, 클수록 우선)<br>"
-                + "※ '계산 불가' = 데미지 환산에 필요한 데이터가 아직 없는 옵션 (방어 관통력 · 대상 수 · 쿨타임 감소 등)"
-                + "</div></html>", SwingConstants.CENTER);
+        JLabel note = noteLabel(
+                "효율 = 등장확률 × 딜증가량 점수 (큐브 1개당 기대 딜 증가량, 클수록 우선)<br>"
+                + "※ '계산 불가' = 데미지 환산에 필요한 데이터가 아직 없는 옵션 (방어 관통력 · 대상 수 · 쿨타임 감소 등)");
         note.setForeground(Theme.MUTED);
         note.setBorder(BorderFactory.createEmptyBorder(8, 4, 0, 4));
 
@@ -643,9 +737,9 @@ public final class MainWindow extends JFrame {
         }
         JScrollPane sp = new JScrollPane(table);
 
-        JLabel note = new JLabel("<html>큐브 기댓값 = 3줄 중 한 줄에라도 그 옵션이 뜰 때까지 평균 큐브 수(1/P)  ·  ★=특옵"
+        JLabel note = noteLabel("큐브 기댓값 = 3줄 중 한 줄에라도 그 옵션이 뜰 때까지 평균 큐브 수(1/P)  ·  ★=특옵"
                 + "<br>효율 = 등장확률 × 딜증가량 점수 (큐브 1개당 기대 딜 증가량, 클수록 우선)"
-                + "<br>※ '계산 불가' = 데미지 환산에 필요한 데이터가 아직 없는 옵션 (방어 관통력 · 대상 수 · 쿨타임 감소 등)</html>");
+                + "<br>※ '계산 불가' = 데미지 환산에 필요한 데이터가 아직 없는 옵션 (방어 관통력 · 대상 수 · 쿨타임 감소 등)");
         note.setForeground(Theme.MUTED);
         note.setBorder(BorderFactory.createEmptyBorder(6, 4, 2, 4));
 
@@ -825,10 +919,8 @@ public final class MainWindow extends JFrame {
                 recSlider.getValue(), recSort.getSelectedIndex(), recUpper.isSelected(), recLower.isSelected());
         recList.removeAll();
         if (recs.isEmpty()) {
-            JLabel empty = new JLabel("<html><div style='text-align:center'>추천할 항목이 없습니다.<br>"
-                    + "내 큐브 옵션을 입력했는지, 현재보다 나은 조합이 있는지 확인하세요.</div></html>",
-                    SwingConstants.CENTER);
-            empty.setForeground(Theme.MUTED);
+            JLabel empty = noteLabel("추천할 항목이 없습니다.<br>"
+                    + "내 스탯 및 큐브 옵션을 입력했는지, 프리셋을 제대로 선택했는지 확인하세요.");
             empty.setBorder(BorderFactory.createEmptyBorder(30, 8, 8, 8));
             empty.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
             recList.add(empty);
@@ -1006,20 +1098,12 @@ public final class MainWindow extends JFrame {
                 BorderFactory.createLineBorder(Theme.BORDER),
                 BorderFactory.createEmptyBorder(14, 18, 14, 18)));
 
-        // 설명: JEditorPane은 폭에 맞춰 자동 줄바꿈되어 잘리지 않는다.
-        javax.swing.JEditorPane desc = new javax.swing.JEditorPane("text/html",
-                "<html><body style='margin:0'>"
-                + "· 모든 수치는 게임 <b>표시값</b> 기준입니다.<br>"
+        // 설명: 폭에 맞춰 자동 줄바꿈되는 라벨(세로로 잘리지 않음).
+        JLabel desc = descLabel(
+                "· 모든 수치는 게임 <b>표시값</b> 기준입니다.<br>"
                 + "· <font color='#8A919C'>회색</font> 스탯(방어 관통 · 대상 수 · 쿨타임 감소 등)은 "
                 + "기본적으로 비교 · 추천에서 제외되지만, <b>딜 환산 설정</b>에서 환산값을 지정하면 반영됩니다.<br>"
-                + "· 아래 <b>예상 데미지</b>는 참고용이며 실제 게임 값과 정확히 일치하지 않을 수 있습니다."
-                + "</body></html>");
-        desc.setEditable(false);
-        desc.setOpaque(false);
-        desc.setForeground(Theme.MUTED);
-        desc.putClientProperty(javax.swing.JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-        desc.setFont(new JLabel().getFont().deriveFont(12f));
-        desc.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+                + "· 아래 <b>예상 데미지</b>는 참고용이며 실제 게임 값과 정확히 일치하지 않을 수 있습니다.");
         card.add(desc, BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -1386,11 +1470,179 @@ public final class MainWindow extends JFrame {
         }
     }
 
-    // ──────────────────── 딜 환산 설정 (정성적 스탯 · 스킬 레벨 커스텀) ────────────────────
+    // ──────────────────── 큐브 프리셋 바 (스탯과 동일 방식, 독립) ────────────────────
+
+    private JPanel buildCubePresetBar() {
+        JPanel bar = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 2));
+        JLabel lbl = new JLabel("프리셋");
+        lbl.setForeground(Theme.TEXT);
+        bar.add(lbl);
+        cubePresetCombo.setPreferredSize(new Dimension(130, cubePresetCombo.getPreferredSize().height));
+        cubePresetCombo.addActionListener(e -> onCubePresetSelected());
+        bar.add(cubePresetCombo);
+        bar.add(presetButton("추가", this::newCubePreset));
+        bar.add(presetButton("이름변경", this::renameCubePreset));
+        bar.add(presetButton("삭제", this::deleteCubePreset));
+        return bar;
+    }
+
+    private void refreshCubePresetCombo() {
+        cubePresetSwitching = true;
+        cubePresetCombo.removeAllItems();
+        for (String name : model.cubePresetNames()) cubePresetCombo.addItem(name);
+        cubePresetCombo.setSelectedItem(model.activeCubePreset());
+        cubePresetSwitching = false;
+    }
+
+    private void onCubePresetSelected() {
+        if (cubePresetSwitching) return;
+        String name = (String) cubePresetCombo.getSelectedItem();
+        if (name == null || name.equals(model.activeCubePreset())) return;
+        try {
+            model.switchCubePreset(name);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "큐브 프리셋 전환 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void newCubePreset() {
+        JTextField nameF = new JTextField(14);
+        JComboBox<String> sourceBox = new JComboBox<>();
+        sourceBox.addItem(BLANK_SOURCE);
+        for (String n : model.cubePresetNames()) sourceBox.addItem(COPY_PREFIX + n);
+        sourceBox.setSelectedItem(COPY_PREFIX + model.activeCubePreset());
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(4, 4, 4, 4); g.anchor = GridBagConstraints.WEST;
+        g.gridx = 0; g.gridy = 0; panel.add(new JLabel("이름"), g);
+        g.gridx = 1; g.fill = GridBagConstraints.HORIZONTAL; g.weightx = 1; panel.add(nameF, g);
+        g.gridx = 0; g.gridy = 1; g.fill = GridBagConstraints.NONE; g.weightx = 0; panel.add(new JLabel("시작값"), g);
+        g.gridx = 1; g.fill = GridBagConstraints.HORIZONTAL; g.weightx = 1; panel.add(sourceBox, g);
+
+        int ok = JOptionPane.showConfirmDialog(this, panel, "큐브 프리셋 추가",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (ok != JOptionPane.OK_OPTION) return;
+        String name = nameF.getText().trim();
+        if (name.isEmpty()) return;
+        if (model.hasCubePreset(name)) {
+            JOptionPane.showMessageDialog(this, "같은 이름의 프리셋이 이미 있습니다.", "이름 중복", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String src = (String) sourceBox.getSelectedItem();
+        try {
+            if (src != null && src.startsWith(COPY_PREFIX)) {
+                model.addCubePresetFrom(name, src.substring(COPY_PREFIX.length()));
+            } else {
+                model.addCubePresetBlank(name);
+            }
+            refreshCubePresetCombo();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "큐브 프리셋 추가 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void renameCubePreset() {
+        String cur = model.activeCubePreset();
+        String name = JOptionPane.showInputDialog(this, "새 이름", cur);
+        if (name == null) return;
+        name = name.trim();
+        if (name.isEmpty() || name.equals(cur)) return;
+        if (model.hasCubePreset(name)) {
+            JOptionPane.showMessageDialog(this, "같은 이름의 프리셋이 이미 있습니다.", "이름 중복", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            model.renameCubePreset(cur, name);
+            refreshCubePresetCombo();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "이름 변경 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteCubePreset() {
+        if (model.cubePresetNames().size() <= 1) {
+            JOptionPane.showMessageDialog(this, "마지막 프리셋은 삭제할 수 없습니다.", "삭제 불가", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String cur = model.activeCubePreset();
+        int ok = JOptionPane.showConfirmDialog(this, "'" + cur + "' 큐브 프리셋을 삭제할까요?",
+                "프리셋 삭제", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (ok != JOptionPane.OK_OPTION) return;
+        try {
+            model.deleteCubePreset(cur);
+            refreshCubePresetCombo();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "삭제 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ──────────────────── 큐브탭 설정 (톱니바퀴 진입) ────────────────────
+    private JPanel buildCubeSettings() {
+        JPanel p = screen(new BorderLayout());
+        p.setBorder(BorderFactory.createEmptyBorder(8, 24, 16, 24));
+        p.add(topBar("cubeMenu", "큐브탭 설정", true), BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 8, 10, 8);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1; c.ipady = 22; c.gridx = 0;
+        c.gridy = 0; center.add(wideRounded("추천 옵션 범위", () -> openRanges(mekicalc.config.RangeIO.CUBE, "cubeSettings")), c);
+        JPanel wrap = screen(new BorderLayout());
+        wrap.add(center, BorderLayout.NORTH);
+        p.add(wrap, BorderLayout.CENTER);
+        return p;
+    }
+
+    // ──────────────────── 설정 허브 (톱니바퀴 진입) ────────────────────
+    private JPanel buildSettingsHub() {
+        JPanel p = screen(new BorderLayout());
+        p.setBorder(BorderFactory.createEmptyBorder(8, 24, 16, 24));
+        p.add(topBar("home", "공용 설정"), BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        int row = 0;
+
+        c.gridy = row++; c.insets = new Insets(2, 4, 4, 4); center.add(sectionHeader("딜 계산"), c);
+        c.insets = new Insets(6, 8, 6, 8); c.ipady = 18;
+        c.gridy = row++; center.add(wideRounded("특정 스탯 딜 환산 비율", () -> { populateConversion(); show("conversion"); }), c);
+
+        c.ipady = 0; c.insets = new Insets(16, 4, 4, 4);
+        c.gridy = row++; center.add(sectionHeader("화면"), c);
+        c.insets = new Insets(6, 8, 6, 8); c.ipady = 18;
+        c.gridy = row++; center.add(wideRounded("폰트", () -> { populateFont(); show("font"); }), c);
+        c.gridy = row++; center.add(wideRounded("창 크기", () -> { populateWindow(); show("window"); }), c);
+
+        JPanel wrap = screen(new BorderLayout());
+        wrap.add(center, BorderLayout.NORTH);
+        p.add(wrap, BorderLayout.CENTER);
+        return p;
+    }
+
+    /** 설정 섹션 헤더: 굵은 라벨 + 아래 구분선. */
+    private JComponent sectionHeader(String title) {
+        JPanel hp = screen(new BorderLayout());
+        JLabel l = new JLabel(title);
+        l.setFont(l.getFont().deriveFont(Font.BOLD, 13f));
+        l.setForeground(Theme.MUTED);
+        l.setBorder(BorderFactory.createEmptyBorder(0, 2, 4, 0));
+        hp.add(l, BorderLayout.NORTH);
+        JSeparator sep = new JSeparator();
+        sep.setForeground(Theme.BORDER);
+        hp.add(sep, BorderLayout.SOUTH);
+        return hp;
+    }
+
+    // ──────────────────── 특정 스탯 딜 환산 비율 (정성적 스탯 · 스킬 레벨 커스텀) ────────────────────
     private JPanel buildConversionPage() {
         JPanel p = screen(new BorderLayout(10, 10));
         p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
-        p.add(topBar("home", "딜 환산 설정"), BorderLayout.NORTH);
+        p.add(topBar("settings", "특정 스탯 딜 환산 비율", true), BorderLayout.NORTH);
 
         JPanel card = new JPanel(new BorderLayout(0, 0));
         card.setBackground(Theme.CARD);
@@ -1398,21 +1650,13 @@ public final class MainWindow extends JFrame {
                 BorderFactory.createLineBorder(Theme.BORDER),
                 BorderFactory.createEmptyBorder(14, 18, 14, 18)));
 
-        javax.swing.JEditorPane desc = new javax.swing.JEditorPane("text/html",
-                "<html><body style='margin:0'>"
-                + "· <b>체크한</b> 스탯은 입력한 <b>1단위당 딜 증가율</b>로 환산되어 비교 · 추천에 반영됩니다.<br>"
+        JLabel desc = descLabel(
+                "· <b>체크한</b> 스탯은 입력한 <b>1단위당 딜 증가율</b>로 환산되어 비교 · 추천에 반영됩니다.<br>"
                 + "· 체크 해제 시 <b>기본값</b>으로 처리됩니다"
                 + "(방어 관통 · 대상 수 · 쿨타임 감소 등은 계산 안 함, 스킬 레벨은 기본 공격 계수 공식)."
                 + " 값이 남아 있어도 무시됩니다.<br>"
                 + "· 예: <b>방어 관통력</b>에 <b>0.5</b> → 방관 1%당 딜 +0.5%로 환산.<br>"
-                + "· 전체 프리셋 <b>공용</b> 설정입니다."
-                + "</body></html>");
-        desc.setEditable(false);
-        desc.setOpaque(false);
-        desc.setForeground(Theme.MUTED);
-        desc.putClientProperty(javax.swing.JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-        desc.setFont(new JLabel().getFont().deriveFont(12f));
-        desc.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+                + "· 전체 프리셋 <b>공용</b> 설정입니다.");
         card.add(desc, BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -1533,6 +1777,379 @@ public final class MainWindow extends JFrame {
         }
     }
 
+    // ──────────────────── 추천 옵션 범위 (크확·공속·정성적) ────────────────────
+    private JPanel buildRangePage() {
+        JPanel p = screen(new BorderLayout(10, 10));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
+        p.add(topBar("cubeSettings", "추천 옵션 범위", true), BorderLayout.NORTH);
+
+        JPanel card = new JPanel(new BorderLayout(0, 0));
+        card.setBackground(Theme.CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+
+        JLabel desc = descLabel(
+                "· 체크한 스탯만 <b>우선 순위 추천</b>에서 범위 제약으로 고려됩니다.<br>"
+                + "· 숫자는 <b>현재값 기준</b>입니다. <b>음수</b> = 그만큼 잃는 것까지 허용, <b>0/양수</b> = 그만큼 얻는 것까지 허용.<br>"
+                + "· 오른쪽 값은 왼쪽 값보다 <b>크거나 같아야</b> 합니다. 예: -10 ~ -5 (현재 100 → 90~95 허용).");
+        card.add(desc, BorderLayout.NORTH);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(4, 4, 4, 6);
+        c.anchor = GridBagConstraints.WEST;
+        javax.swing.event.DocumentListener live = new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateRangeSaveEnabled(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateRangeSaveEnabled(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateRangeSaveEnabled(); }
+        };
+        int row = 0;
+        for (StatDef def : model.rangeStats()) {
+            c.gridx = 0; c.gridy = row; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+            JCheckBox cb = new JCheckBox(def.name);
+            cb.setOpaque(false);
+            cb.setForeground(Theme.TEXT);
+            form.add(cb, c);
+
+            JTextField lo = rangeField(live);
+            JTextField hi = rangeField(live);
+            JLabel tilde = new JLabel("~");
+            tilde.setForeground(Theme.MUTED);
+            cb.addItemListener(e -> {
+                setConvFieldLocked(lo, cb.isSelected());
+                setConvFieldLocked(hi, cb.isSelected());
+                updateRangeSaveEnabled();
+            });
+            c.gridx = 1; c.weightx = 0; c.fill = GridBagConstraints.NONE; form.add(lo, c);
+            c.gridx = 2; form.add(tilde, c);
+            c.gridx = 3; form.add(hi, c);
+
+            rangeChecks.put(def.id, cb);
+            rangeLoFields.put(def.id, lo);
+            rangeHiFields.put(def.id, hi);
+            row++;
+        }
+        JPanel formWrap = new JPanel(new BorderLayout());
+        formWrap.setOpaque(false);
+        formWrap.add(form, BorderLayout.NORTH);
+        JScrollPane sp = new JScrollPane(formWrap);
+        sp.setBorder(null);
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
+        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        card.add(sp, BorderLayout.CENTER);
+        p.add(card, BorderLayout.CENTER);
+
+        rangeSaveBtn = standardSaveButton(this::saveRangesUI);
+        JPanel btnRow = screen(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        btnRow.add(rangeSaveBtn);
+        p.add(btnRow, BorderLayout.SOUTH);
+        return p;
+    }
+
+    /** 범위 입력칸(쉼표/부호 처리, 우측 정렬, 잠금 시 회색). */
+    private JTextField rangeField(javax.swing.event.DocumentListener live) {
+        JTextField tf = new JTextField(5);
+        tf.setHorizontalAlignment(SwingConstants.RIGHT);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(4, 9, 4, 9)));
+        tf.setDisabledTextColor(Theme.MUTED);
+        installComma(tf);
+        tf.getDocument().addDocumentListener(live);
+        return tf;
+    }
+
+    /** 해당 컨텐츠의 범위 설정 페이지로 이동(현재는 큐브에서만 진입). */
+    private void openRanges(String content, String back) {
+        rangeContent = content;
+        populateRanges();
+        show("ranges");
+    }
+
+    private void populateRanges() {
+        for (StatDef def : model.rangeStats()) {
+            mekicalc.config.RangeIO.Range r = model.rangeOf(rangeContent, def.id);
+            JCheckBox cb = rangeChecks.get(def.id);
+            JTextField lo = rangeLoFields.get(def.id);
+            JTextField hi = rangeHiFields.get(def.id);
+            cb.setSelected(r.enabled());
+            lo.setText(fmtComma(r.lo()));
+            hi.setText(fmtComma(r.hi()));
+            setConvFieldLocked(lo, r.enabled());
+            setConvFieldLocked(hi, r.enabled());
+        }
+        updateRangeSaveEnabled();
+    }
+
+    private boolean isRangeDirty() {
+        for (StatDef def : model.rangeStats()) {
+            mekicalc.config.RangeIO.Range saved = model.rangeOf(rangeContent, def.id);
+            if (rangeChecks.get(def.id).isSelected() != saved.enabled()) return true;
+            if (Math.abs(parseField(rangeLoFields.get(def.id)) - saved.lo()) > 1e-9) return true;
+            if (Math.abs(parseField(rangeHiFields.get(def.id)) - saved.hi()) > 1e-9) return true;
+        }
+        return false;
+    }
+
+    private void updateRangeSaveEnabled() {
+        if (rangeSaveBtn != null) rangeSaveBtn.setEnabled(isRangeDirty());
+    }
+
+    private void saveRangesUI() {
+        Map<String, mekicalc.config.RangeIO.Range> map = new LinkedHashMap<>();
+        for (StatDef def : model.rangeStats()) {
+            boolean en = rangeChecks.get(def.id).isSelected();
+            double lo = parseField(rangeLoFields.get(def.id));
+            double hi = parseField(rangeHiFields.get(def.id));
+            if (en && hi < lo - 1e-9) {
+                JOptionPane.showMessageDialog(this,
+                        "'" + def.name + "': 오른쪽 값이 왼쪽 값보다 작습니다.\n오른쪽 값은 왼쪽 값보다 크거나 같아야 합니다.",
+                        "범위 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            map.put(def.id, new mekicalc.config.RangeIO.Range(en, lo, hi));
+        }
+        try {
+            model.saveRanges(rangeContent, map);
+            updateRangeSaveEnabled();
+            Toast.show(this, "저장되었습니다");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "저장 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ──────────────────── 폰트 (화면 설정) ────────────────────
+    private JPanel buildFontPage() {
+        JPanel p = screen(new BorderLayout(10, 10));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
+        p.add(topBar("settings", "폰트", true), BorderLayout.NORTH);
+
+        JPanel card = settingsCard(
+                "· 전체 UI 폰트 크기를 비율로 변경합니다. 화면도 비율에 맞춰 조정됩니다.<br>"
+                + "· 너무 크게 하면 일부 화면은 스크롤이 생길 수 있습니다.");
+        JPanel body = (JPanel) card.getClientProperty("body");
+
+        fontPctLabel = new JLabel();
+        fontPctLabel.setFont(fontPctLabel.getFont().deriveFont(Font.BOLD, 14f));
+        fontPctLabel.setForeground(Theme.TEXT);
+        fontPctLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        body.add(fontPctLabel);
+        body.add(Box.createVerticalStrut(10));
+
+        JPanel btns = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        btns.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        for (int pct : new int[]{50, 100, 150, 200}) {
+            final double s = pct / 100.0;
+            JButton b = new JButton(pct + "%");
+            b.addActionListener(e -> setFontScale(s));
+            btns.add(b);
+        }
+        body.add(btns);
+
+        p.add(card, BorderLayout.CENTER);
+        return p;
+    }
+
+    private void populateFont() {
+        if (fontPctLabel != null) fontPctLabel.setText("현재 폰트 크기: " + pctStr(uiCache.fontScale()));
+    }
+
+    private void setFontScale(double scale) {
+        try {
+            applyFontScale(scale);
+            model.saveUISettings(new mekicalc.config.UISettingsIO.UISettings(
+                    scale, uiCache.windowMode(), uiCache.windowPercent(), uiCache.windowW(), uiCache.windowH()));
+            uiCache = model.uiSettings();
+            populateFont();
+            Toast.show(this, "폰트 크기 " + pctStr(scale) + " 적용");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "적용 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ──────────────────── 창 크기 (화면 설정) ────────────────────
+    private JPanel buildWindowPage() {
+        JPanel p = screen(new BorderLayout(10, 10));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
+        p.add(topBar("settings", "창 크기", true), BorderLayout.NORTH);
+
+        JPanel card = settingsCard(
+                "· <b>고정 비율</b>: 화면별 기준 크기를 비율로 키우거나 줄입니다.<br>"
+                + "· <b>픽셀 직접 입력</b>: 창 크기를 직접 지정합니다. 내용이 잘리면 상하좌우 스크롤바로 볼 수 있습니다.");
+        JPanel body = (JPanel) card.getClientProperty("body");
+
+        winPercentRadio = new javax.swing.JRadioButton("고정 비율 (%)");
+        winPixelRadio = new javax.swing.JRadioButton("픽셀 직접 입력");
+        for (javax.swing.JRadioButton r : new javax.swing.JRadioButton[]{winPercentRadio, winPixelRadio}) {
+            r.setOpaque(false); r.setForeground(Theme.TEXT);
+            r.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        }
+        javax.swing.ButtonGroup bg = new javax.swing.ButtonGroup();
+        bg.add(winPercentRadio); bg.add(winPixelRadio);
+        winPercentRadio.addActionListener(e -> updateWindowMode());
+        winPixelRadio.addActionListener(e -> updateWindowMode());
+
+        // 비율 행
+        body.add(winPercentRadio);
+        winPctLabel = new JLabel();
+        winPctLabel.setForeground(Theme.MUTED);
+        JPanel pctBtns = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        pctBtns.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        pctBtns.add(winPctLabel);
+        for (int pct : new int[]{50, 100, 150, 200}) {
+            final double s = pct / 100.0;
+            JButton b = new JButton(pct + "%");
+            b.addActionListener(e -> applyWindowPercent(s));
+            pctBtns.add(b);
+        }
+        body.add(pctBtns);
+        body.add(Box.createVerticalStrut(12));
+
+        // 픽셀 행
+        body.add(winPixelRadio);
+        JPanel pxRow = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        pxRow.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        winWField = new JTextField(5); winHField = new JTextField(5);
+        winWField.setHorizontalAlignment(SwingConstants.RIGHT);
+        winHField.setHorizontalAlignment(SwingConstants.RIGHT);
+        installComma(winWField); installComma(winHField);
+        pxRow.add(new JLabel("너비")); pxRow.add(winWField);
+        pxRow.add(new JLabel("높이")); pxRow.add(winHField);
+        JButton applyPx = new JButton("적용");
+        applyPx.addActionListener(e -> applyWindowPixel());
+        pxRow.add(applyPx);
+        body.add(pxRow);
+
+        p.add(card, BorderLayout.CENTER);
+        return p;
+    }
+
+    private void populateWindow() {
+        boolean pixel = mekicalc.config.UISettingsIO.MODE_PIXEL.equals(uiCache.windowMode());
+        winPixelRadio.setSelected(pixel);
+        winPercentRadio.setSelected(!pixel);
+        winPctLabel.setText("현재 " + pctStr(uiCache.windowPercent()) + "   ");
+        int w = uiCache.windowW() > 0 ? uiCache.windowW() : getWidth();
+        int h = uiCache.windowH() > 0 ? uiCache.windowH() : getHeight();
+        winWField.setText(fmtComma(w));
+        winHField.setText(fmtComma(h));
+        updateWindowMode();
+    }
+
+    /** 라디오 선택에 따라 해당 모드 입력만 활성화. */
+    private void updateWindowMode() {
+        boolean pixel = winPixelRadio.isSelected();
+        winWField.setEnabled(pixel); winHField.setEnabled(pixel);
+    }
+
+    private void applyWindowPercent(double scale) {
+        winPercentRadio.setSelected(true);
+        updateWindowMode();
+        saveWindow(new mekicalc.config.UISettingsIO.UISettings(
+                uiCache.fontScale(), mekicalc.config.UISettingsIO.MODE_PERCENT, scale,
+                uiCache.windowW(), uiCache.windowH()), "창 크기 " + pctStr(scale) + " 적용");
+        winPctLabel.setText("현재 " + pctStr(scale) + "   ");
+    }
+
+    private void applyWindowPixel() {
+        int w = (int) Math.round(parseField(winWField));
+        int h = (int) Math.round(parseField(winHField));
+        if (w < 320 || h < 360) {
+            JOptionPane.showMessageDialog(this, "너비 320, 높이 360 이상으로 입력하세요.", "창 크기", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        winPixelRadio.setSelected(true);
+        updateWindowMode();
+        saveWindow(new mekicalc.config.UISettingsIO.UISettings(
+                uiCache.fontScale(), mekicalc.config.UISettingsIO.MODE_PIXEL, uiCache.windowPercent(), w, h),
+                "창 크기 " + w + "×" + h + " 적용");
+    }
+
+    private void saveWindow(mekicalc.config.UISettingsIO.UISettings s, String toast) {
+        try {
+            model.saveUISettings(s);
+            uiCache = model.uiSettings();
+            show(currentCard);   // 현재 화면에 새 창 크기 즉시 반영
+            Toast.show(this, toast);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "적용 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static String pctStr(double scale) {
+        return Math.round(scale * 100) + "%";
+    }
+
+    /** 설명 박스 + 내용(body, BoxLayout Y) 카드. body는 client property "body"로 꺼내 쓴다. */
+    private JPanel settingsCard(String descHtml) {
+        JPanel card = new JPanel(new BorderLayout(0, 0));
+        card.setBackground(Theme.CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+        JLabel desc = descLabel(descHtml);
+        card.add(desc, BorderLayout.NORTH);
+        JPanel body = screen(null);
+        body.setBackground(Theme.CARD);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        card.add(body, BorderLayout.CENTER);
+        card.putClientProperty("body", body);
+        return card;
+    }
+
+    /** 좌측 정렬 설명 라벨(아래 12px 여백). 폭에 맞춰 자동 줄바꿈, 세로로 잘리지 않음. */
+    private JLabel descLabel(String innerHtml) {
+        WrapLabel l = wrapLabel(innerHtml, false);
+        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        return l;
+    }
+
+    /** 가운데 정렬 안내 라벨. 폭에 맞춰 자동 줄바꿈. */
+    private JLabel noteLabel(String innerHtml) {
+        return wrapLabel(innerHtml, true);
+    }
+
+    private WrapLabel wrapLabel(String innerHtml, boolean center) {
+        WrapLabel l = new WrapLabel();
+        l.setForeground(Theme.MUTED);
+        if (center) l.setHorizontalAlignment(SwingConstants.CENTER);
+        l.setFont(new JLabel().getFont().deriveFont(12f));
+        l.setText("<html>" + (center ? "<div style='text-align:center'>" + innerHtml + "</div>" : innerHtml) + "</html>");
+        return l;
+    }
+
+    /**
+     * 현재 폭에 맞춰 HTML 내용을 줄바꿈하고 그 높이를 선호 높이로 보고하는 라벨.
+     * JEditorPane/일반 JLabel과 달리 선호 높이가 실제 줄바꿈 결과로 계산돼 세로로 잘리지 않는다.
+     */
+    private static final class WrapLabel extends JLabel {
+        WrapLabel() {
+            setVerticalAlignment(SwingConstants.TOP);
+            // 폭이 바뀌면 선호 높이를 다시 계산하도록 재검증.
+            addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override public void componentResized(java.awt.event.ComponentEvent e) { revalidate(); }
+            });
+        }
+
+        @Override public Dimension getPreferredSize() {
+            Dimension d = super.getPreferredSize();
+            int w = getWidth();
+            javax.swing.text.View v = (javax.swing.text.View) getClientProperty("html");
+            if (w > 0 && v != null) {
+                java.awt.Insets ins = getInsets();
+                v.setSize(w - ins.left - ins.right, 0);
+                int h = (int) Math.ceil(v.getPreferredSpan(javax.swing.text.View.Y_AXIS));
+                d.height = h + ins.top + ins.bottom;
+                d.width = w;
+            }
+            return d;
+        }
+    }
+
     // ──────────────────── 준비중 ────────────────────
     private JPanel buildPlaceholder() {
         JPanel p = screen(new BorderLayout(8, 8));
@@ -1576,17 +2193,24 @@ public final class MainWindow extends JFrame {
         grid.add(b, c);
     }
 
-    /** 설정류 작은 아웃라인 버튼: 채움 없는 라운드 테두리 + 액센트 글자(메인 버튼과 시각적으로 구분). */
-    private JButton settingsLink(String text) {
-        JButton b = new JButton(text);
-        b.setFont(b.getFont().deriveFont(Font.BOLD, 12f));
-        b.setForeground(Theme.ACCENT_DARK);
+    /** 설정 허브 진입용 톱니바퀴 버튼(아이콘 없으면 ⚙ 텍스트). 테두리 없는 아이콘 버튼. */
+    private JButton gearButton() {
+        JButton b = new JButton();
+        if (gearIcon != null) {
+            java.awt.Image scaled = gearIcon.getScaledInstance(46, 46, java.awt.Image.SCALE_SMOOTH);
+            b.setIcon(new javax.swing.ImageIcon(scaled));
+        } else {
+            b.setText("⚙");
+            b.setFont(b.getFont().deriveFont(Font.BOLD, 32f));
+            b.setForeground(Theme.MUTED);
+        }
+        b.setToolTipText("설정");
         b.setFocusPainted(false);
         b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
         b.setOpaque(false);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.ACCENT, 1, true),
-                BorderFactory.createEmptyBorder(4, 12, 4, 12)));
+        b.setMargin(new Insets(0, 0, 0, 0));
+        b.setPreferredSize(new Dimension(52, 52));
         b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         return b;
     }
@@ -1661,6 +2285,30 @@ public final class MainWindow extends JFrame {
             spacer.setPreferredSize(back.getPreferredSize());
             bar.add(spacer, BorderLayout.EAST);
         }
+        return bar;
+    }
+
+    /** 좌측 [← 뒤로] + 가운데 타이틀 + 우측 톱니바퀴(설정 진입). */
+    private JPanel topBarGear(String backTarget, String title, String gearTarget) {
+        // 홈 헤더와 동일한 구조: 톱니는 우상단에 고정(상단 정렬·52px), 좌측 뒤로·가운데 타이틀.
+        JButton back = new JButton("← 뒤로");
+        back.addActionListener(e -> show(backTarget));
+        JLabel t = new JLabel(title, SwingConstants.CENTER);
+        t.setFont(t.getFont().deriveFont(Font.BOLD, 18f));
+        t.setForeground(Theme.TEXT);
+        JButton gear = gearButton();
+        gear.addActionListener(e -> show(gearTarget));
+
+        JPanel rightWrap = screen(new BorderLayout());
+        rightWrap.add(gear, BorderLayout.NORTH);
+        JPanel leftWrap = screen(new BorderLayout());
+        leftWrap.add(back, BorderLayout.NORTH);
+
+        JPanel bar = screen(new BorderLayout());
+        bar.setBorder(BorderFactory.createEmptyBorder(0, 0, 14, 0));
+        bar.add(leftWrap, BorderLayout.WEST);
+        bar.add(t, BorderLayout.CENTER);
+        bar.add(rightWrap, BorderLayout.EAST);
         return bar;
     }
 

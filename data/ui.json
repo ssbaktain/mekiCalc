@@ -1,0 +1,8 @@
+{
+  "_comment": "화면 설정. fontScale=폰트 배율, windowMode=percent|pixel, windowPercent=창 배율, windowW/H=픽셀.",
+  "fontScale": 1,
+  "windowMode": "percent",
+  "windowPercent": 1,
+  "windowW": 0,
+  "windowH": 0
+}
