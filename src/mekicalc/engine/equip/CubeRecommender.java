@@ -24,20 +24,21 @@ public final class CubeRecommender {
     /** 한 슬롯의 현재→추천. current null=빈 슬롯. locked=사용자가 잠근 슬롯. */
     public record SlotPick(PotentialDraw current, PotentialDraw recommended, boolean changed, boolean locked) {}
 
-    /** dedup된 딜증가 옵션 세트. rep=대표 배치, prob=동일옵션 등장확률 총합, repProb=대표 배치 단일 확률. */
-    public record OptSet(PotentialDraw[] rep, double deal, double prob, double repProb) {}
+    /** dedup된 딜증가 옵션 세트. grade=이 구성의 등급(승급 추천이면 상위 등급). */
+    public record OptSet(PotentialDraw[] rep, double deal, double prob, double repProb, String grade) {}
 
-    /** 한 장비의 분석 결과(슬라이더 무관, 캐시). curProbSingle=현재 배치 확률, curProbSum=동일옵션 총합. */
+    /** 한 장비의 분석 결과(슬라이더 무관, 캐시). curGrade=현재 등급. */
     public record EquipOpts(String part, boolean upper, double cost,
                             PotentialDraw[] curDraws, double curDeal, double curProbSingle, double curProbSum,
                             List<OptSet> shown, double[] shownSuffix, double totalProb, int totalCount,
-                            boolean[] locked) {}
+                            boolean[] locked, String curGrade) {}
 
-    /** 슬라이더 한 지점에서 한 장비의 추천. ProbSingle=단일 배치, ProbSum=동일옵션 등장확률 총합. */
+    /** 슬라이더 한 지점에서 한 장비의 추천. grade=추천 구성 등급, curGrade=현재 등급(다르면 승급 추천). */
     public record Rec(String part, boolean upper, double cost, List<SlotPick> picks,
                       double curDeal, double curProbSingle, double curProbSum,
                       double recDeal, double recProbSingle, double recProbSum,
-                      double dealDiff, double totalProb, double remainProb) {
+                      double dealDiff, double totalProb, double remainProb,
+                      String grade, String curGrade) {
         public double curCubes() { return curProbSum > 0 ? 1.0 / curProbSum : Double.POSITIVE_INFINITY; }
         public double recCubes() { return recProbSum > 0 ? 1.0 / recProbSum : Double.POSITIVE_INFINITY; }
         public double curEff() { return curDeal * curProbSum / cost; }
@@ -51,22 +52,30 @@ public final class CubeRecommender {
     /** 한 장비를 분석해 EquipOpts 생성(조합 전부 → dedup → 정렬 → 파레토 → 확률합). */
     public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost) {
-        return analyze(model, current, slots, curDraws, part, upper, cost, java.util.Map.of(), null);
+        return analyze(model, current, slots, curDraws, part, upper, cost, java.util.Map.of(), null, null, 0, null);
     }
 
     public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost,
                                     Map<String, double[]> ranges) {
-        return analyze(model, current, slots, curDraws, part, upper, cost, ranges, null);
+        return analyze(model, current, slots, curDraws, part, upper, cost, ranges, null, null, 0, null);
     }
 
-    /**
-     * 범위 제약 + 슬롯 잠금 포함 분석. ranges = statId→{lo, hi}(현재값 기준 상대 오프셋, 고려 대상만).
-     * locked[i]=true면 그 슬롯은 추천이 돌리지 못함(고정): 옵션이 있으면 재획득 유지, 비었으면 빈 채로 유지.
-     */
     public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost,
                                     Map<String, double[]> ranges, boolean[] locked) {
+        return analyze(model, current, slots, curDraws, part, upper, cost, ranges, locked, null, 0, null);
+    }
+
+    /**
+     * 범위 제약 + 슬롯 잠금 + 등급업 체인 포함 분석.
+     * grade=현재 등급, stack=현재 스택, ep≠null이면 상위 등급 종결 구성을 "승급 고려 확률"로 후보에 추가.
+     */
+    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+                                    PotentialDraw[] curDraws, String part, boolean upper, double cost,
+                                    Map<String, double[]> ranges, boolean[] locked,
+                                    String grade, int stack, EquipmentPotential ep) {
+        String curGrade = grade != null ? grade : "";
         double curFull = model.output(current);
         // 고정 슬롯(정성적 재획득·잠금) vs 풀 슬롯(돌릴 수 있는 슬롯: 옵션 또는 빈).
         List<Integer> pool = new ArrayList<>();
@@ -75,17 +84,20 @@ public final class CubeRecommender {
         StatBlock normalCurDelta = new StatBlock();
         List<PotentialDraw> normalCurOpts = new ArrayList<>();
         List<PotentialDraw> requiredOpts = new ArrayList<>();   // 잠긴 옵션: 반드시 포함(어느 슬롯이든 재획득)
+        List<String> keptStats = new ArrayList<>();   // 승급해도 유지할 스탯(잠금+정성적 재획득), 개수 보존(멀티셋)
         for (int i = 0; i < 3; i++) {
             PotentialDraw d = curDraws[i];
             boolean lk = locked != null && i < locked.length && locked[i];
             if (lk && d == null) { qualProb *= emptyProb(slots.get(i)); continue; }            // 잠긴 빈 슬롯: 빈 채 유지
-            if (!lk && d != null && isQualitative(model, d)) { qualProb *= d.prob() / 100.0; continue; } // 정성적 재획득
+            if (!lk && d != null && isQualitative(model, d)) {                                  // 정성적 재획득
+                qualProb *= d.prob() / 100.0; keptStats.add(d.statId()); continue;
+            }
             // 일반 슬롯 + 잠긴 옵션 슬롯: 풀에 포함. 잠긴 옵션은 '반드시 포함'으로 표시해 어느 슬롯이든 재획득(any-slot 합산).
             pool.add(i); inPool[i] = true;
             if (d != null) {
                 normalCurDelta.set(d.statId(), normalCurDelta.get(d.statId()) + d.value());
                 normalCurOpts.add(d);
-                if (lk) requiredOpts.add(d);
+                if (lk) { requiredOpts.add(d); keptStats.add(d.statId()); }
             }
         }
         List<List<PotentialDraw>> poolTables = new ArrayList<>();
@@ -107,12 +119,12 @@ public final class CubeRecommender {
         Map<String, Double> setDeal = new LinkedHashMap<>();
         Map<String, List<PotentialDraw>> setOpts = new LinkedHashMap<>();
         genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts);
+                new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of());
         // 잠금/현재 상태 때문에 범위를 만족하는 개선 후보가 하나도 없으면(잠금 > 범위 우선),
         // 범위를 무시하고 다시 생성해 best-effort로 추천한다(정성적 스탯과 같은 취급).
         if (setDeal.isEmpty() && ranges != null && !ranges.isEmpty()) {
             genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                    new java.util.HashSet<>(), setDeal, setOpts, current, java.util.Map.of(), requiredOpts);
+                    new java.util.HashSet<>(), setDeal, setOpts, current, java.util.Map.of(), requiredOpts, java.util.List.of());
         }
 
         List<OptSet> all = new ArrayList<>();
@@ -120,8 +132,45 @@ public final class CubeRecommender {
             List<PotentialDraw> opts = setOpts.get(e.getKey());
             double probSum = qualProb * arrangeSum(opts, poolTables);   // 빈 확률 포함 총합(any-slot)
             Best b = bestArrange(opts, poolTables);                      // 최고 확률 배치(단일 확률용)
-            all.add(new OptSet(buildRep(inPool, locked, opts, curDraws, slots), e.getValue(), probSum, qualProb * b.prob));
+            all.add(new OptSet(buildRep(inPool, locked, opts, curDraws, slots),
+                    e.getValue(), probSum, qualProb * b.prob, curGrade));
         }
+
+        // 등급업 체인: 상위 등급 종결 구성을 후보에 추가.
+        // 비교축(prob) = "승급 + 옵션 뽑기"의 총 기대 큐브의 역수 = 1 / (E_reach + max(0, 1/arrangeSum − 1)).
+        //   E_reach = 현재 등급 → 목표 등급까지 단계별 승급 기대 큐브의 '합'(선형성).
+        //   −1: 승급시키는 마지막 큐브가 목표 등급의 첫 옵션 굴림도 겸함 → 옵션 뽑기에서 1큐브 공짜(음수 방지로 0 floor).
+        //   같은 등급 후보의 prob(=1/기대큐브)와 같은 단위라 그대로 섞어서 파레토 비교 가능.
+        if (ep != null && grade != null && ep.gradeIndex(grade) >= 0) {
+            StatBlock fullDelta = new StatBlock();   // 이 층의 현재 모든 옵션(승급 시 전부 새로 굴림)
+            for (PotentialDraw d : curDraws) if (d != null) fullDelta.set(d.statId(), fullDelta.get(d.statId()) + d.value());
+            StatBlock baseFull = model.uncombine(current, fullDelta);
+            List<String> grs = ep.grades();
+            int ci = ep.gradeIndex(grade);
+            double eReach = 0.0;   // 누적 승급 기대 큐브(현재 등급 → 목표 등급)
+            for (int gi = ci; gi < grs.size() - 1; gi++) {
+                double eStep = ep.gradeUpCubes(grs.get(gi), gi == ci ? Math.max(0, stack) : 0);
+                if (eStep <= 0) break;   // 승급 정의 없음(최상위) → 더 못 올라감
+                eReach += eStep;
+                String to = grs.get(gi + 1);
+                List<List<PotentialDraw>> tg = ep.slots(part, to);
+                Map<String, Double> sd = new LinkedHashMap<>();
+                Map<String, List<PotentialDraw>> so = new LinkedHashMap<>();
+                genSets(model, baseFull, curBase, curDeal, java.util.List.of(0, 1, 2), tg, 0,
+                        new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, ranges, java.util.List.of(), keptStats);
+                for (Map.Entry<String, Double> e : sd.entrySet()) {
+                    List<PotentialDraw> opts = so.get(e.getKey());
+                    double pSum = arrangeSum(opts, tg);              // 목표 등급 동일옵션 등장확률 총합
+                    double pBest = bestArrange(opts, tg).prob;       // 목표 등급 단일 최고배치(표시용)
+                    // 승급시키는 큐브가 새 등급 첫 굴림도 겸함 → 옵션 뽑기에서 1큐브 공짜(−1, 음수 방지).
+                    double reach = pSum > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pSum - 1.0)) : 0;
+                    double repP = pBest > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pBest - 1.0)) : 0;
+                    PotentialDraw[] rep = buildRep(new boolean[]{true, true, true}, null, opts, new PotentialDraw[3], tg);
+                    all.add(new OptSet(rep, e.getValue(), reach, repP, to));
+                }
+            }
+        }
+
         all.sort(Comparator.comparingDouble(OptSet::deal));   // 딜 오름차순
 
         // 전체/접미 확률합
@@ -148,7 +197,7 @@ public final class CubeRecommender {
         for (int i = 0; i < shownSuffix.length; i++) shownSuffix[i] = shownSuffixL.get(i);
 
         return new EquipOpts(part, upper, cost, curDraws, curDeal, curProbSingle, curProbSum,
-                shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3]);
+                shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3], curGrade);
     }
 
     /** 슬라이더 비율 f(0~1)에서 그 장비의 추천 1개. shown 비어있으면 null. */
@@ -159,11 +208,25 @@ public final class CubeRecommender {
         if (idx < 0) idx = 0; if (idx > c - 1) idx = c - 1;
         OptSet set = eo.shown().get(idx);
 
+        boolean crossGrade = set.grade() != null && !set.grade().equals(eo.curGrade());
+        // 잠긴 스탯 개수(승급 추천 표시용): 같은 스탯이라도 잠근 '개수'만큼만 (잠금) 표시.
+        Map<String, Integer> lockLeft = new LinkedHashMap<>();
+        if (eo.locked() != null) {
+            for (int i = 0; i < 3; i++) {
+                if (eo.locked()[i] && eo.curDraws()[i] != null) lockLeft.merge(eo.curDraws()[i].statId(), 1, Integer::sum);
+            }
+        }
         List<SlotPick> picks = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             PotentialDraw cur = eo.curDraws()[i];
             PotentialDraw rec = set.rep()[i];
-            boolean lockedSlot = eo.locked() != null && i < eo.locked().length && eo.locked()[i];
+            boolean lockedSlot;
+            if (crossGrade) {   // 승급: 잠긴 스탯이 올라온 슬롯에 잠근 개수만큼만 표시
+                lockedSlot = rec != null && lockLeft.getOrDefault(rec.statId(), 0) > 0;
+                if (lockedSlot) lockLeft.merge(rec.statId(), -1, Integer::sum);
+            } else {
+                lockedSlot = eo.locked() != null && i < eo.locked().length && eo.locked()[i];
+            }
             boolean changed = !lockedSlot && ((rec == null) != (cur == null)
                     || (rec != null && cur != null && !(rec.statId().equals(cur.statId()) && rec.value() == cur.value())));
             picks.add(new SlotPick(cur, rec, changed, lockedSlot));
@@ -171,7 +234,8 @@ public final class CubeRecommender {
         return new Rec(eo.part(), eo.upper(), eo.cost(), picks,
                 eo.curDeal(), eo.curProbSingle(), eo.curProbSum(),
                 set.deal(), set.repProb(), set.prob(),
-                set.deal() - eo.curDeal(), eo.totalProb(), eo.shownSuffix()[idx]);
+                set.deal() - eo.curDeal(), eo.totalProb(), eo.shownSuffix()[idx],
+                set.grade(), eo.curGrade());
     }
 
     /** 풀 슬롯마다 옵션-or-빈을 모두 시도해 딜증가 세트(비빈 옵션 멀티셋)를 dedup 수집. */
@@ -179,12 +243,14 @@ public final class CubeRecommender {
                                 List<Integer> pool, List<List<PotentialDraw>> slots, int depth, PotentialDraw[] chosen,
                                 java.util.Set<String> seen, Map<String, Double> setDeal,
                                 Map<String, List<PotentialDraw>> setOpts,
-                                StatBlock current, Map<String, double[]> ranges, List<PotentialDraw> required) {
+                                StatBlock current, Map<String, double[]> ranges, List<PotentialDraw> required,
+                                List<String> requiredStats) {
         if (depth == pool.size()) {
             List<PotentialDraw> opts = new ArrayList<>();
             for (PotentialDraw d : chosen) if (d != null) opts.add(d);
             if (opts.isEmpty()) return;
-            if (!containsAllOpts(opts, required)) return;   // 잠긴 옵션은 반드시 포함(재획득)
+            if (!containsAllOpts(opts, required)) return;        // 잠긴 옵션(같은 등급): stat+value로 반드시 포함
+            if (!containsAllStats(opts, requiredStats)) return;  // 유지 스탯(승급): stat만 반드시 포함(수치는 그 등급값)
             String key = setKey(opts);
             if (!seen.add(key)) return;
             StatBlock delta = new StatBlock();
@@ -198,12 +264,25 @@ public final class CubeRecommender {
             return;
         }
         chosen[depth] = null;   // 이 풀 슬롯은 빈
-        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required);
+        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats);
         for (PotentialDraw d : slots.get(pool.get(depth))) {
             chosen[depth] = d;
-            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required);
+            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats);
         }
         chosen[depth] = null;
+    }
+
+    /** opts가 requiredStats의 각 스탯을 '필요 개수만큼'(수치 무관) 포함하는지(멀티셋). */
+    private static boolean containsAllStats(List<PotentialDraw> opts, List<String> requiredStats) {
+        if (requiredStats == null || requiredStats.isEmpty()) return true;
+        Map<String, Integer> need = new LinkedHashMap<>();
+        for (String s : requiredStats) need.merge(s, 1, Integer::sum);
+        Map<String, Integer> have = new LinkedHashMap<>();
+        for (PotentialDraw d : opts) have.merge(d.statId(), 1, Integer::sum);
+        for (Map.Entry<String, Integer> e : need.entrySet()) {
+            if (have.getOrDefault(e.getKey(), 0) < e.getValue()) return false;
+        }
+        return true;
     }
 
     /** opts(멀티셋)가 required 옵션들을 모두 포함하는지(stat+value 기준). */

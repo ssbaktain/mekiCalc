@@ -3,6 +3,15 @@
 
   "grades": ["NORMAL", "RARE", "EPIC", "UNIQUE", "LEGENDARY", "MYTHIC"],
 
+  "_gradeUpComment": "등급업: prob=리롤당 승급 확률, ceiling=천장(이만큼 쓰면 강제 승급, 승급 시 스택 0). 미라클·에디 동일.",
+  "gradeUp": {
+    "NORMAL":    { "prob": 0.06,    "ceiling": 42 },
+    "RARE":      { "prob": 0.03333, "ceiling": 75 },
+    "EPIC":      { "prob": 0.0167,  "ceiling": 120 },
+    "UNIQUE":    { "prob": 0.006,   "ceiling": 333 },
+    "LEGENDARY": { "prob": 0.0021,  "ceiling": 714 }
+  },
+
   "_slotProbComment": "슬롯별 확률 배수. 1슬롯은 노란만, 2·3슬롯은 흰+노란. 등급 무관.",
   "slotProb": {
     "slot1": { "yellow": 1.0 },

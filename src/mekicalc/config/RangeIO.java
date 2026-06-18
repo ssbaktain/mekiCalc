@@ -75,6 +75,31 @@ public final class RangeIO {
         return out;
     }
 
+    /** 임의 객체(스탯→{enabled,lo,hi,...})를 스탯→Range 맵으로 파싱(null/빈 객체면 빈 맵). */
+    public static Map<String, Range> parseContentMap(Object o) {
+        return o == null ? new LinkedHashMap<>() : parseContent(Json.asMap(o));
+    }
+
+    /** 스탯→Range 맵을 JSON 객체 문자열로(한 줄). cube_presets.json 등에 인라인 저장용. */
+    public static String contentJson(Map<String, Range> m) {
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Range> e : m.entrySet()) {
+            Range r = e.getValue();
+            sb.append(first ? " " : ", ");
+            first = false;
+            sb.append("\"").append(e.getKey()).append("\": { ")
+              .append("\"enabled\": ").append(r.enabled())
+              .append(", \"lo\": ").append(fmt(r.lo()))
+              .append(", \"hi\": ").append(fmt(r.hi()))
+              .append(", \"noLow\": ").append(r.noLow())
+              .append(", \"noHigh\": ").append(r.noHigh())
+              .append(" }");
+        }
+        sb.append(m.isEmpty() ? "}" : " }");
+        return sb.toString();
+    }
+
     private static Map<String, Range> parseContent(Map<String, Object> m) {
         Map<String, Range> out = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : m.entrySet()) {

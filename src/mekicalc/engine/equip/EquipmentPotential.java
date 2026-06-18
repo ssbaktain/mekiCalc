@@ -36,6 +36,7 @@ public final class EquipmentPotential {
     private final double specialBaseProb;
     private final double carve;
     private final Map<String, PartSpecial> parts = new LinkedHashMap<>();
+    private final Map<String, double[]> gradeUp = new LinkedHashMap<>(); // grade -> {prob, ceiling}
 
     private static final class Common {
         String stat;
@@ -61,6 +62,43 @@ public final class EquipmentPotential {
 
     public List<String> grades() { return grades; }
     public java.util.Set<String> parts() { return parts.keySet(); }
+    public int gradeIndex(String grade) { return gradeIndex.getOrDefault(grade, -1); }
+
+    /** 그 등급의 다음 등급(없으면 null). */
+    public String nextGrade(String grade) {
+        int i = gradeIndex(grade);
+        return (i >= 0 && i < grades.size() - 1) ? grades.get(i + 1) : null;
+    }
+
+    /** 등급업 천장(이만큼 쓰면 강제 승급). 최상위/미정의는 0. */
+    public int gradeUpCeiling(String grade) {
+        double[] v = gradeUp.get(grade);
+        return v != null ? (int) v[1] : 0;
+    }
+
+    /**
+     * 현재 등급에서 스택 stack일 때 "다음 등급으로 승급까지의 1회당 환산 확률" = 1/E.
+     * E(승급까지 기대 큐브) = 상한(천장−stack) 있는 기하분포의 기대값.
+     * 최상위 등급(다음 없음)이면 0.
+     */
+    public double gradeUpEffProb(String grade, int stack) {
+        double e = gradeUpCubes(grade, stack);
+        return e > 0 ? 1.0 / e : 0.0;
+    }
+
+    /**
+     * 현재 등급에서 스택 stack일 때 다음 등급 승급까지의 <b>기대 큐브 수</b>.
+     * E = (1 − (1−g)^r) / g, r = 천장 − stack (천장 있는 기하분포의 기대값, 항상 1/g 이하).
+     * 최상위 등급(승급 정의 없음)이면 0.
+     */
+    public double gradeUpCubes(String grade, int stack) {
+        double[] v = gradeUp.get(grade);
+        if (v == null) return 0.0;
+        double g = v[0];
+        int n = (int) v[1];
+        int remaining = Math.max(1, n - Math.max(0, stack));
+        return (g > 0) ? (1.0 - Math.pow(1.0 - g, remaining)) / g : remaining;
+    }
 
     /**
      * 한 번 굴림 시 나오는 3개 슬롯 각각의 옵션 분포.
@@ -151,6 +189,14 @@ public final class EquipmentPotential {
             c.specialCarve = Json.bool(m, "specialCarve", false);
             c.values = parseValues(Json.asMap(m.get("values")));
             ep.commons.add(c);
+        }
+
+        Object gu = root.get("gradeUp");
+        if (gu instanceof Map) {
+            for (Map.Entry<String, Object> e : Json.asMap(gu).entrySet()) {
+                Map<String, Object> m = Json.asMap(e.getValue());
+                ep.gradeUp.put(e.getKey(), new double[]{Json.num(m, "prob", 0.0), Json.num(m, "ceiling", 0.0)});
+            }
         }
 
         for (Map.Entry<String, Object> e : Json.asMap(special.get("parts")).entrySet()) {

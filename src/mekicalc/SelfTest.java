@@ -47,8 +47,10 @@ public final class SelfTest {
         testCustomConversion();
         testConversionIO();
         testRangeConstraint();
+        testParetoAxisVerify();
         testRangeBestEffort();
         testSlotLock();
+        testGradeUp();
         testRangeIO();
         testCubePresetIO();
         testAttackSpeed();
@@ -250,6 +252,50 @@ public final class SelfTest {
         checkTrue("range.noRangeDropsCrit", !topShownHasStat(noR, "CRIT_RATE")); // 제약 없으면 크확 버림
     }
 
+    /**
+     * 파레토 추천 선정이 '동일 옵션 등장 확률 총합(arrangeSum)'을 쓰는지, 단일 등장확률을 쓰는지 객관 검증.
+     * 슬롯 3개에 동일 옵션 W(40%) → 후보는 {W},{W,W},{W,W,W} 셋뿐.
+     *   총합:  {W}=0.432  {W,W}=0.576  {W,W,W}=0.384  → 딜 내림차순 파레토 시 {W} 숨김(0.432<0.576)
+     *   단일:  {W}=0.144  {W,W}=0.096  {W,W,W}=0.064  → 단일이면 {W} 표시(0.144>0.096)
+     * 즉 {W}가 숨겨지면(=shown 2개) 총합 기준, {W}가 보이면(=shown 3개) 단일 기준.
+     */
+    private static void testParetoAxisVerify() {
+        Map<String, StatDef> stats = makeStats(
+                new StatDef("ATK_FLAT", "공", "FLAT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MIN_DMG_MULT", "최소", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("MAX_DMG_MULT", "최대", "PCT", StatDef.Combine.SUM, 0, false),
+                new StatDef("DMG", "뎀", "PCT", StatDef.Combine.SUM, 0, false));
+        DamageModel m = new DamageModel(stats, neutral());
+        StatBlock current = baseBlock(100);
+        PotentialDraw W = new PotentialDraw("DMG", 100, 40, false, false);   // 등장확률 40%
+        List<List<PotentialDraw>> slots = List.of(List.of(W), List.of(W), List.of(W));
+        PotentialDraw[] curDraws = { null, null, null };
+        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(m, current, slots, curDraws, "x", true, 1.0);
+
+        double tW   = CubeRecommender.arrangeSum(List.of(W), slots);
+        double tWW  = CubeRecommender.arrangeSum(List.of(W, W), slots);
+        double tWWW = CubeRecommender.arrangeSum(List.of(W, W, W), slots);
+        System.out.println("  [검증] 총합(arrangeSum):  {W}=" + tW + "  {W,W}=" + tWW + "  {W,W,W}=" + tWWW);
+        System.out.println("  [검증] 단일(이론):        {W}=" + (0.4 * 0.36) + "  {W,W}=" + (0.16 * 0.6) + "  {W,W,W}=" + 0.064);
+        System.out.println("  [검증] shown(딜 오름차순):");
+        boolean singleWShown = false;
+        for (CubeRecommender.OptSet s : eo.shown()) {
+            int cnt = 0; for (PotentialDraw d : s.rep()) if (d != null) cnt++;
+            if (cnt == 1) singleWShown = true;
+            System.out.println("        W개수=" + cnt + " deal=" + s.deal()
+                    + " prob필드=" + s.prob() + " repProb=" + s.repProb());
+        }
+        // 핵심: 단일W가 숨겨졌으면 총합 기준이 맞다(단일 기준이면 0.144>0.096이라 보여야 함).
+        checkTrue("paretoAxis.singleW_hidden", !singleWShown);
+        checkTrue("paretoAxis.shownSize2", eo.shown().size() == 2);
+        // 보조: shown의 prob 필드가 총합과 일치하고 단일(repProb)과는 다름.
+        for (CubeRecommender.OptSet s : eo.shown()) {
+            int cnt = 0; for (PotentialDraw d : s.rep()) if (d != null) cnt++;
+            check("paretoAxis.probIsTotal.W" + cnt, s.prob(), cnt == 3 ? tWWW : tWW);
+            checkTrue("paretoAxis.probNotSingle.W" + cnt, Math.abs(s.prob() - s.repProb()) > 1e-9);
+        }
+    }
+
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {
         double mx = -1;
         for (CubeRecommender.OptSet s : eo.shown()) mx = Math.max(mx, s.deal());
@@ -261,6 +307,22 @@ public final class SelfTest {
         CubeRecommender.OptSet top = eo.shown().get(eo.shown().size() - 1);   // 최대 딜 세트
         for (PotentialDraw d : top.rep()) if (d != null && d.statId().equals(statId)) return true;
         return false;
+    }
+
+    /** 등급업 환산 확률(상한 있는 기하분포의 1/E) + 다음 등급. */
+    private static void testGradeUp() throws Exception {
+        EquipmentPotential ep = EquipmentPotential.load(Path.of("data"));
+        check("gradeup.normalCeil", ep.gradeUpEffProb("NORMAL", 42), 1.0);              // 천장 도달 → 다음 1개에 확정
+        checkTrue("gradeup.normal0", ep.gradeUpEffProb("NORMAL", 0) > 0.06 && ep.gradeUpEffProb("NORMAL", 0) < 0.07);
+        checkTrue("gradeup.mono", ep.gradeUpEffProb("NORMAL", 30) > ep.gradeUpEffProb("NORMAL", 0)); // 스택 높을수록↑
+        check("gradeup.mythicNone", ep.gradeUpEffProb("MYTHIC", 0), 0.0);              // 최상위는 승급 없음
+        checkTrue("gradeup.next", "MYTHIC".equals(ep.nextGrade("LEGENDARY")) && ep.nextGrade("MYTHIC") == null);
+
+        // 승급 기대 큐브 E = (1-(1-g)^r)/g : effProb 의 역수와 일치, 그리고 절대 1/g 를 넘지 않음(천장 효과).
+        check("gradeup.cubesInverse", ep.gradeUpCubes("RARE", 10), 1.0 / ep.gradeUpEffProb("RARE", 10));
+        check("gradeup.cubesValue", ep.gradeUpCubes("RARE", 10), (1 - Math.pow(1 - 0.03333, 65)) / 0.03333);
+        checkTrue("gradeup.cubesUnderInvG", ep.gradeUpCubes("RARE", 0) <= 1.0 / 0.03333 + 1e-9);
+        check("gradeup.cubesTopZero", ep.gradeUpCubes("MYTHIC", 0), 0.0);              // 최상위는 0
     }
 
     /** 잠금/현재 상태로 범위를 만족할 후보가 없으면 범위를 무시하고라도 추천(best-effort). */
@@ -363,9 +425,13 @@ public final class SelfTest {
         cubesA.put("장갑", new mekicalc.config.CubeStateIO.PartCube(up, null));
         Map<String, mekicalc.config.CubeStateIO.PartCube> cubesB = new LinkedHashMap<>();
 
+        // 프리셋마다 추천 옵션 수치 범위를 따로 보관 → 라운드트립 보존 확인
+        Map<String, RangeIO.Range> rangesA = new LinkedHashMap<>();
+        rangesA.put("CRIT_RATE", new RangeIO.Range(true, -10, 5, false, true));
+
         java.util.List<mekicalc.config.CubePresetIO.CubePreset> presets = new ArrayList<>();
-        presets.add(new mekicalc.config.CubePresetIO.CubePreset("기본", cubesA));
-        presets.add(new mekicalc.config.CubePresetIO.CubePreset("보스", cubesB));
+        presets.add(new mekicalc.config.CubePresetIO.CubePreset("기본", cubesA, rangesA));
+        presets.add(new mekicalc.config.CubePresetIO.CubePreset("보스", cubesB, new LinkedHashMap<>()));
         mekicalc.config.CubePresetIO.save(tmp, new mekicalc.config.CubePresetIO.Store(presets, "보스"));
 
         mekicalc.config.CubePresetIO.Store loaded = mekicalc.config.CubePresetIO.load(tmp);
@@ -375,6 +441,11 @@ public final class SelfTest {
         checkTrue("cubepreset.slot0", pc.upper().slots()[0].stat().equals("DMG"));
         check("cubepreset.slot0v", pc.upper().slots()[0].value(), 35);
         checkTrue("cubepreset.slot1null", pc.upper().slots()[1] == null);
+        RangeIO.Range rr = findCubePreset(loaded, "기본").ranges().get("CRIT_RATE");
+        checkTrue("cubepreset.range.enabled", rr.enabled());
+        check("cubepreset.range.lo", rr.lo(), -10);
+        checkTrue("cubepreset.range.noHigh", rr.noHigh());
+        checkTrue("cubepreset.range.empty", findCubePreset(loaded, "보스").ranges().isEmpty());
         Files.deleteIfExists(tmp.resolve(mekicalc.config.CubePresetIO.FILE));
         Files.deleteIfExists(tmp);
     }

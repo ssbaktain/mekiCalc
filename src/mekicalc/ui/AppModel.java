@@ -50,8 +50,7 @@ public final class AppModel {
 
     // 정성적·스킬레벨 커스텀 딜 환산(전체 공용, conversions.json).
     private Map<String, ConversionIO.Conv> conversions;
-    // 추천 옵션 범위(컨텐츠→스탯→Range, ranges.json).
-    private Map<String, Map<String, RangeIO.Range>> ranges;
+    // 추천 옵션 수치 범위는 큐브 프리셋마다 따로 보관(cube_presets.json) → 별도 필드 없음.
     // 화면 설정(폰트 배율·창 크기, ui.json).
     private UISettingsIO.UISettings ui;
 
@@ -73,7 +72,6 @@ public final class AppModel {
         cubeActiveName = cubeStore.active();
         cubeState = new LinkedHashMap<>(activeCubes());
         conversions = ConversionIO.load(dataDir);
-        ranges = RangeIO.loadAll(dataDir);
         ui = UISettingsIO.load(dataDir);
     }
 
@@ -210,26 +208,34 @@ public final class AppModel {
         return out;
     }
 
-    /** 컨텐츠·스탯의 현재 범위 설정(없으면 디폴트: 고려 안 함, 0~0). */
-    public RangeIO.Range rangeOf(String content, String id) {
-        Map<String, RangeIO.Range> cm = ranges.get(content);
-        return cm == null ? RangeIO.Range.DEFAULT : cm.getOrDefault(id, RangeIO.Range.DEFAULT);
+    /** 활성 큐브 프리셋의 추천 옵션 수치 범위(스탯→Range). */
+    private Map<String, RangeIO.Range> activeRanges() {
+        int i = cubeIndexOf(cubeActiveName);
+        Map<String, RangeIO.Range> rm = i >= 0 ? cubePresets.get(i).ranges() : null;
+        return rm != null ? rm : new LinkedHashMap<>();
     }
 
-    /** 한 컨텐츠의 범위 설정 저장(ranges.json) 후 추천 캐시 무효화. */
-    public void saveRanges(String content, Map<String, RangeIO.Range> map) throws IOException {
-        ranges.put(content, new LinkedHashMap<>(map));
-        RangeIO.save(dataDir, ranges);
+    /** 활성 큐브 프리셋·스탯의 현재 범위 설정(없으면 디폴트: 고려 안 함, 0~0). */
+    public RangeIO.Range rangeOf(String id) {
+        return activeRanges().getOrDefault(id, RangeIO.Range.DEFAULT);
+    }
+
+    /** 활성 큐브 프리셋의 범위 설정 저장(cube_presets.json) 후 추천 캐시 무효화. */
+    public void saveCubeRanges(Map<String, RangeIO.Range> map) throws IOException {
+        int i = cubeIndexOf(cubeActiveName);
+        if (i < 0) return;
+        cubePresets.set(i, new CubePresetIO.CubePreset(
+                cubeActiveName, new LinkedHashMap<>(cubeState), new LinkedHashMap<>(map)));
+        CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
         recCache = null;
     }
 
-    /** 추천 엔진에 넘길 고려 대상 범위 오프셋(statId→{lo, hi}) — 해당 컨텐츠. */
-    private Map<String, double[]> activeRangeOffsets(String content) {
+    /** 추천 엔진에 넘길 고려 대상 범위 오프셋(statId→{lo, hi}) — 활성 큐브 프리셋. 제한없음은 ±무한대로. */
+    private Map<String, double[]> activeCubeRangeOffsets() {
         Map<String, double[]> out = new LinkedHashMap<>();
-        Map<String, RangeIO.Range> cm = ranges.get(content);
-        if (cm == null) return out;
-        for (Map.Entry<String, RangeIO.Range> e : cm.entrySet()) {
-            if (e.getValue().enabled()) out.put(e.getKey(), new double[]{e.getValue().lo(), e.getValue().hi()});
+        for (Map.Entry<String, RangeIO.Range> e : activeRanges().entrySet()) {
+            RangeIO.Range r = e.getValue();
+            if (r.enabled()) out.put(e.getKey(), new double[]{r.loBound(), r.hiBound()});
         }
         return out;
     }
@@ -272,7 +278,8 @@ public final class AppModel {
     /** 현재 편집 중인 큐브(cubeState)를 활성 프리셋에 반영하고 cube_presets.json(+mycube.json 미러)으로 기록. */
     private void writeCubePresets() throws IOException {
         int i = cubeIndexOf(cubeActiveName);
-        if (i >= 0) cubePresets.set(i, new CubePresetIO.CubePreset(cubeActiveName, new LinkedHashMap<>(cubeState)));
+        if (i >= 0) cubePresets.set(i, new CubePresetIO.CubePreset(
+                cubeActiveName, new LinkedHashMap<>(cubeState), cubePresets.get(i).ranges()));
         CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
         CubeStateIO.save(dataDir, cubeState);   // 활성 미러(기존 코드 호환)
         recCache = null;
@@ -291,7 +298,8 @@ public final class AppModel {
     public void addCubePresetFrom(String name, String srcName) throws IOException {
         int i = cubeIndexOf(srcName);
         if (name == null || name.isEmpty() || hasCubePreset(name) || i < 0) return;
-        cubePresets.add(new CubePresetIO.CubePreset(name, deepCopy(cubePresets.get(i).cubes())));
+        cubePresets.add(new CubePresetIO.CubePreset(name, deepCopy(cubePresets.get(i).cubes()),
+                new LinkedHashMap<>(cubePresets.get(i).ranges())));
         cubeActiveName = name;
         cubeState = new LinkedHashMap<>(activeCubes());
         writeCubePresets();
@@ -300,7 +308,7 @@ public final class AppModel {
     /** 빈 큐브 새 프리셋 생성 후 활성 전환. */
     public void addCubePresetBlank(String name) throws IOException {
         if (name == null || name.isEmpty() || hasCubePreset(name)) return;
-        cubePresets.add(new CubePresetIO.CubePreset(name, new LinkedHashMap<>()));
+        cubePresets.add(new CubePresetIO.CubePreset(name, new LinkedHashMap<>(), new LinkedHashMap<>()));
         cubeActiveName = name;
         cubeState = new LinkedHashMap<>();
         writeCubePresets();
@@ -309,7 +317,7 @@ public final class AppModel {
     public void renameCubePreset(String oldName, String newName) throws IOException {
         int i = cubeIndexOf(oldName);
         if (i < 0 || newName == null || newName.isEmpty() || hasCubePreset(newName)) return;
-        cubePresets.set(i, new CubePresetIO.CubePreset(newName, cubePresets.get(i).cubes()));
+        cubePresets.set(i, new CubePresetIO.CubePreset(newName, cubePresets.get(i).cubes(), cubePresets.get(i).ranges()));
         if (cubeActiveName.equals(oldName)) cubeActiveName = newName;
         CubePresetIO.save(dataDir, new CubePresetIO.Store(cubePresets, cubeActiveName));
     }
@@ -484,7 +492,8 @@ public final class AppModel {
         PotentialDraw[] curDraws = currentDraws(line, slots);
         boolean[] locked = line.locked() != null ? line.locked() : new boolean[3];
         CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
-                g.model, current, slots, curDraws, part, upper, price, activeRangeOffsets(RangeIO.CUBE), locked);
+                g.model, current, slots, curDraws, part, upper, price, activeCubeRangeOffsets(),
+                locked, line.grade(), line.stack(), ep);
         if (!eo.shown().isEmpty()) recCache.add(eo);
     }
 

@@ -57,6 +57,10 @@ public final class MainWindow extends JFrame {
     private mekicalc.config.UISettingsIO.UISettings uiCache;
     /** 현재 보이는 카드 이름(창 크기 재적용용). */
     private String currentCard = "home";
+    /** 우선 순위 추천 화면에서 사용자가 이번 세션에 조절한 창 크기(없으면 기본 크기 사용, 종료 시 사라짐). */
+    private Dimension recUserSize = null;
+    /** show()가 마지막으로 설정한 크기(사용자 리사이즈와 프로그램 리사이즈 구분용). */
+    private Dimension lastProgrammaticSize = null;
 
     // 스탯 입력
     private final Map<String, JTextField> statFields = new LinkedHashMap<>();
@@ -72,8 +76,6 @@ public final class MainWindow extends JFrame {
     private final Map<String, JCheckBox> rangeHiInf = new LinkedHashMap<>();
     /** 추천 옵션 범위 저장 버튼(변경 없을 때 비활성화). */
     private StyledButton rangeSaveBtn;
-    /** 추천 옵션 범위 페이지가 다루는 컨텐츠(현재 큐브). */
-    private String rangeContent = mekicalc.config.RangeIO.CUBE;
     /** 설정 허브 톱니바퀴 아이콘(없으면 ⚙ 텍스트). */
     private java.awt.Image gearIcon;
     // 스탯 프리셋 선택
@@ -130,7 +132,8 @@ public final class MainWindow extends JFrame {
     private final JComboBox<String> recSort = new JComboBox<>(
             new String[]{"전체 딜 증가 확률합", "남은 딜 증가 확률합", "딜 증가량", "최종 효율"});
     private final JSlider recSlider = new JSlider(0, 1, 0);
-    private final JPanel recList = new JPanel();
+    private final RecListPanel recList = new RecListPanel();
+    private JLabel recNote;   // 추천 목록 맨 위 안내(스크롤되며 같이 올라감)
 
     /** 홈 화면 배경 이미지(없으면 null). */
     private java.awt.Image homeBg;
@@ -150,7 +153,6 @@ public final class MainWindow extends JFrame {
         root.add(buildCubeExpected(), "cubeExpected");
         root.add(buildCubeRecommend(), "cubeRecommend");
         root.add(buildCubeInput(), "cubeInput");
-        root.add(buildCubeSettings(), "cubeSettings");
         root.add(buildSettingsHub(), "settings");
         root.add(buildConversionPage(), "conversion");
         root.add(buildRangePage(), "ranges");
@@ -158,18 +160,22 @@ public final class MainWindow extends JFrame {
         root.add(buildWindowPage(), "window");
         root.add(buildPlaceholder(), "placeholder");
 
-        // 픽셀 창 축소 시 컨텐츠가 잘리면 상하좌우 스크롤바로 볼 수 있게 루트를 스크롤로 감쌈.
-        JScrollPane scroll = new JScrollPane(root,
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.getHorizontalScrollBar().setUnitIncrement(16);
-        add(scroll);
+        // 루트를 직접 붙임(각 화면은 자체 스크롤 사용). 전역 스크롤은 페이지 내부 스크롤과 충돌해 제거.
+        add(root);
 
         uiCache = model.uiSettings();
         setMinimumSize(new Dimension(360, 420));
         setSize(470, 700);
         setLocationRelativeTo(null);
+        // 추천 화면에서 사용자가 창을 직접 조절하면 그 크기를 세션 동안 기억(프로그램이 설정한 크기는 제외).
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override public void componentResized(java.awt.event.ComponentEvent e) {
+                if (!"cubeRecommend".equals(currentCard)) return;
+                Dimension cur = getSize();
+                if (lastProgrammaticSize != null && cur.equals(lastProgrammaticSize)) return;
+                recUserSize = cur;   // 사용자가 조절한 크기 기억
+            }
+        });
         applyFontScale(uiCache.fontScale());   // 저장된 폰트 배율 적용
 
         if (model.isUserEntered()) {
@@ -184,24 +190,39 @@ public final class MainWindow extends JFrame {
     private void show(String name) {
         currentCard = name;
         cards.show(root, name);
-        // 화면별 기준 크기: 추천(좌우 비교)은 더 넓게, 표/비교는 넓게, 나머지는 좁게.
         int w, h;
-        if (name.equals("cubeRecommend")) { w = 860; h = 760; }
-        else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
-        else if (name.equals("conversion")) { w = 500; h = 700; }
-        else if (name.equals("ranges")) { w = 600; h = 700; }
-        else { w = 470; h = 700; }
-        // 화면 설정 반영: 픽셀 모드면 고정 픽셀, 퍼센트 모드면 기준 크기 × 배율.
-        if (uiCache != null) {
-            if (mekicalc.config.UISettingsIO.MODE_PIXEL.equals(uiCache.windowMode())
-                    && uiCache.windowW() > 0 && uiCache.windowH() > 0) {
-                w = uiCache.windowW(); h = uiCache.windowH();
-            } else {
-                w = (int) Math.round(w * uiCache.windowPercent());
-                h = (int) Math.round(h * uiCache.windowPercent());
+        // 추천 화면을 이번 세션에 사용자가 조절했다면 그 크기를 그대로 사용(배율·클램프 생략).
+        if (name.equals("cubeRecommend") && recUserSize != null) {
+            w = recUserSize.width; h = recUserSize.height;
+        } else {
+            // 화면별 기준 크기: 추천(좌우 비교)은 더 넓게, 표/비교는 넓게, 나머지는 좁게.
+            if (name.equals("cubeRecommend")) { w = 860; h = 760; }
+            else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
+            else if (name.equals("conversion")) { w = 500; h = 700; }
+            else if (name.equals("ranges")) { w = 600; h = 700; }
+            else { w = 470; h = 700; }
+            // 화면 설정 반영: 픽셀 모드면 고정 픽셀, 퍼센트 모드면 기준 크기 × 배율.
+            boolean pixelMode = false;
+            if (uiCache != null) {
+                if (mekicalc.config.UISettingsIO.MODE_PIXEL.equals(uiCache.windowMode())
+                        && uiCache.windowW() > 0 && uiCache.windowH() > 0) {
+                    w = uiCache.windowW(); h = uiCache.windowH(); pixelMode = true;
+                } else {
+                    w = (int) Math.round(w * uiCache.windowPercent());
+                    h = (int) Math.round(h * uiCache.windowPercent());
+                }
+            }
+            // 화면(작업영역)보다 크면 잘리지 않게 클램프(픽셀 모드는 사용자가 직접 지정한 값이라 존중).
+            if (!pixelMode) {
+                java.awt.Rectangle scr = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+                w = Math.min(w, scr.width);
+                h = Math.min(h, scr.height);
             }
         }
-        if (getWidth() != w || getHeight() != h) setSize(w, h);
+        if (getWidth() != w || getHeight() != h) {
+            lastProgrammaticSize = new Dimension(w, h);   // 사용자 리사이즈와 구분
+            setSize(w, h);
+        }
     }
 
     /** 전체 UI 폰트 배율 적용(1.0=100%). 각 컴포넌트의 기준 크기를 client property에 저장해 누적 오차 방지. */
@@ -369,7 +390,7 @@ public final class MainWindow extends JFrame {
     private JPanel buildCubeMenu() {
         JPanel p = screen(new BorderLayout());
         p.setBorder(BorderFactory.createEmptyBorder(12, 18, 16, 18));
-        p.add(topBarGear("home", "큐브", "cubeSettings"), BorderLayout.NORTH);
+        p.add(topBar("home", "큐브"), BorderLayout.NORTH);
 
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
@@ -422,7 +443,38 @@ public final class MainWindow extends JFrame {
         p.setBorder(BorderFactory.createEmptyBorder(8, 16, 16, 16));
         p.add(top, BorderLayout.NORTH);
         p.add(sp, BorderLayout.CENTER);
+        p.add(cubeRangeBottom(), BorderLayout.SOUTH);
         return p;
+    }
+
+    /**
+     * 큐브 옵션 입력 화면 하단의 '추천 옵션 수치 범위' 진입 버튼.
+     * 부위(장비) 버튼들과 구분되게: 흰 카드형이 아닌 점선 테두리 + 액센트 글자/⚙ 아이콘으로.
+     */
+    private JPanel cubeRangeBottom() {
+        JPanel south = screen(new BorderLayout());
+        JSeparator line = new JSeparator();
+        line.setForeground(Theme.BORDER);
+        JPanel sep = screen(new BorderLayout());
+        sep.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        sep.add(line, BorderLayout.CENTER);
+        south.add(sep, BorderLayout.NORTH);
+
+        // 부위 버튼(흰 카드)과 달리 점선 액센트 테두리 + 액센트 글자(설정성 동작임을 ⚙로 표시).
+        JButton b = new JButton("⚙  추천 옵션 수치 범위");
+        b.setFont(b.getFont().deriveFont(Font.BOLD, 15f));
+        b.setForeground(Theme.ACCENT);
+        b.setFocusPainted(false);
+        b.setContentAreaFilled(false);
+        b.setOpaque(false);
+        b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createDashedBorder(Theme.ACCENT, 1.6f, 6f, 4f, true),
+                BorderFactory.createEmptyBorder(12, 0, 12, 0)));
+        b.addActionListener(e -> openRanges());
+        b.setToolTipText("이 큐브 프리셋의 우선 순위 추천에 쓰는 옵션 수치 범위 설정");
+        south.add(b, BorderLayout.CENTER);
+        return south;
     }
 
     /** 부위 클릭 시: 윗잠/아랫잠 각각 등급+3슬롯을 고르는 모달. 저장 시 mycube.json에 반영. */
@@ -435,34 +487,43 @@ public final class MainWindow extends JFrame {
         SearchableCombo[] loSlots = {new SearchableCombo(), new SearchableCombo(), new SearchableCombo()};
         JCheckBox[] upLocks = {new JCheckBox(), new JCheckBox(), new JCheckBox()};
         JCheckBox[] loLocks = {new JCheckBox(), new JCheckBox(), new JCheckBox()};
+        JTextField upStack = stackField();
+        JTextField loStack = stackField();
 
         CubeStateIO.PartCube saved = model.cubeOf(part);
-        initSection(part, upGrade, upSlots, upLocks, saved != null ? saved.upper() : null);
-        initSection(part, loGrade, loSlots, loLocks, saved != null ? saved.lower() : null);
+        initSection(part, upGrade, upSlots, upLocks, upStack, saved != null ? saved.upper() : null);
+        initSection(part, loGrade, loSlots, loLocks, loStack, saved != null ? saved.lower() : null);
 
         StyledButton save = new StyledButton("저장", true);
         save.setFont(save.getFont().deriveFont(Font.BOLD, 15f));
         save.setPreferredSize(new Dimension(120, 40));
         save.setEnabled(false);   // 변경 없으면 비활성화
         Runnable updateDirty = () -> save.setEnabled(
-                cubePartChanged(saved, upGrade, upSlots, upLocks, loGrade, loSlots, loLocks));
+                cubePartChanged(saved, upGrade, upSlots, upLocks, upStack, loGrade, loSlots, loLocks, loStack));
         save.addActionListener(e -> {
             try {
                 model.saveCube(part, new CubeStateIO.PartCube(
-                        lineFrom(upGrade, upSlots, upLocks), lineFrom(loGrade, loSlots, loLocks)));
+                        lineFrom(upGrade, upSlots, upLocks, upStack), lineFrom(loGrade, loSlots, loLocks, loStack)));
                 d.dispose();
                 Toast.show(this, "저장되었습니다");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(d, "저장 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
             }
         });
-        // 등급/슬롯/잠금 변경 시 dirty 갱신(초기화 이후 등록 → 초기 설정값으로는 미발생)
+        // 등급/슬롯/잠금/스택 변경 시 dirty 갱신(초기화 이후 등록 → 초기 설정값으로는 미발생)
         upGrade.addActionListener(e -> { repopulateSlots(part, upGrade, upSlots); updateDirty.run(); });
         loGrade.addActionListener(e -> { repopulateSlots(part, loGrade, loSlots); updateDirty.run(); });
         for (SearchableCombo s : upSlots) s.setOnChange(updateDirty);
         for (SearchableCombo s : loSlots) s.setOnChange(updateDirty);
         for (JCheckBox cb : upLocks) cb.addActionListener(e -> updateDirty.run());
         for (JCheckBox cb : loLocks) cb.addActionListener(e -> updateDirty.run());
+        javax.swing.event.DocumentListener stackDl = new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateDirty.run(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateDirty.run(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateDirty.run(); }
+        };
+        upStack.getDocument().addDocumentListener(stackDl);
+        loStack.getDocument().addDocumentListener(stackDl);
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(Theme.BG);
@@ -475,8 +536,8 @@ public final class MainWindow extends JFrame {
         ttl.setForeground(Theme.TEXT);
         ttl.setFont(ttl.getFont().deriveFont(Font.BOLD, 19f));
         c.gridy = 0; form.add(ttl, c);
-        c.gridy = 1; form.add(potSection("윗잠 (미라클 큐브)", upGrade, upSlots, upLocks), c);
-        c.gridy = 2; form.add(potSection("아랫잠 (에디셔널 큐브)", loGrade, loSlots, loLocks), c);
+        c.gridy = 1; form.add(potSection("윗잠 (미라클 큐브)", upGrade, upSlots, upLocks, upStack), c);
+        c.gridy = 2; form.add(potSection("아랫잠 (에디셔널 큐브)", loGrade, loSlots, loLocks, loStack), c);
 
         JPanel sbar = new JPanel(); sbar.setBackground(Theme.BG); sbar.add(save);
         c.gridy = 3; c.fill = GridBagConstraints.NONE; form.add(sbar, c);
@@ -501,8 +562,16 @@ public final class MainWindow extends JFrame {
         for (int i = 0; i < 3; i++) slots[i].setItems(toItems(sl.get(i)));
     }
 
+    /** 현재 스택 입력칸(정수, 쉼표 표시). */
+    private JTextField stackField() {
+        JTextField tf = new JTextField(5);
+        tf.setHorizontalAlignment(SwingConstants.RIGHT);
+        installComma(tf);
+        return tf;
+    }
+
     private void initSection(String part, JComboBox<String> grade, SearchableCombo[] slots,
-                             JCheckBox[] locks, CubeStateIO.Line saved) {
+                             JCheckBox[] locks, JTextField stack, CubeStateIO.Line saved) {
         grade.setSelectedItem(saved != null
                 ? AppModel.GRADE_KO.getOrDefault(saved.grade(), saved.grade()) : "미스틱");
         repopulateSlots(part, grade, slots);
@@ -513,9 +582,11 @@ public final class MainWindow extends JFrame {
             }
         }
         if (saved != null) for (int i = 0; i < 3; i++) locks[i].setSelected(saved.lockedAt(i));
+        stack.setText(fmtComma(saved != null ? saved.stack() : 0));
     }
 
-    private JPanel potSection(String title, JComboBox<String> grade, SearchableCombo[] slots, JCheckBox[] locks) {
+    private JPanel potSection(String title, JComboBox<String> grade, SearchableCombo[] slots,
+                              JCheckBox[] locks, JTextField stack) {
         JPanel sec = new JPanel(new GridBagLayout());
         sec.setBackground(Theme.CARD);
         sec.setBorder(BorderFactory.createTitledBorder(title));
@@ -533,10 +604,18 @@ public final class MainWindow extends JFrame {
             row.add(locks[i], BorderLayout.EAST);
             c.gridy = i + 1; sec.add(row, c);
         }
+        JPanel stackRow = new JPanel(new BorderLayout(6, 0));
+        stackRow.setOpaque(false);
+        JLabel sl = new JLabel("현재 스택");
+        sl.setForeground(Theme.MUTED);
+        sl.setToolTipText("이 등급에서 지금까지 쌓인 스택(천장 도달 시 강제 승급). 승급 고려 추천에 사용.");
+        stackRow.add(sl, BorderLayout.WEST);
+        stackRow.add(stack, BorderLayout.CENTER);
+        c.gridy = 4; sec.add(stackRow, c);
         return sec;
     }
 
-    private CubeStateIO.Line lineFrom(JComboBox<String> grade, SearchableCombo[] slots, JCheckBox[] locks) {
+    private CubeStateIO.Line lineFrom(JComboBox<String> grade, SearchableCombo[] slots, JCheckBox[] locks, JTextField stack) {
         String code = gradeLabelToCode.get((String) grade.getSelectedItem());
         CubeStateIO.Slot[] arr = new CubeStateIO.Slot[3];
         boolean[] locked = new boolean[3];
@@ -545,21 +624,24 @@ public final class MainWindow extends JFrame {
             arr[i] = (pd == null) ? null : new CubeStateIO.Slot(pd.statId(), pd.value());
             locked[i] = locks[i].isSelected();
         }
-        return new CubeStateIO.Line(code, arr, locked);
+        int st = (int) Math.round(parseField(stack));
+        return new CubeStateIO.Line(code, arr, locked, Math.max(0, st));
     }
 
     /** 현재 다이얼로그 선택이 저장된 부위 큐브와 다른지(윗/아랫 중 하나라도 변경). */
     private boolean cubePartChanged(CubeStateIO.PartCube saved, JComboBox<String> ug, SearchableCombo[] us,
-                                    JCheckBox[] ul, JComboBox<String> lg, SearchableCombo[] ls, JCheckBox[] ll) {
-        return !sameLineNorm(lineFrom(ug, us, ul), saved == null ? null : saved.upper())
-                || !sameLineNorm(lineFrom(lg, ls, ll), saved == null ? null : saved.lower());
+                                    JCheckBox[] ul, JTextField ust, JComboBox<String> lg, SearchableCombo[] ls,
+                                    JCheckBox[] ll, JTextField lst) {
+        return !sameLineNorm(lineFrom(ug, us, ul, ust), saved == null ? null : saved.upper())
+                || !sameLineNorm(lineFrom(lg, ls, ll, lst), saved == null ? null : saved.lower());
     }
 
-    /** 잠재 줄 비교. 옵션도 잠금도 모두 없으면 '없음(null)'과 같게 취급(등급만 고른 빈 줄 = 미입력). */
+    /** 잠재 줄 비교. 옵션·잠금·스택 모두 없으면 '없음(null)'과 같게 취급(등급만 고른 빈 줄 = 미입력). */
     private static boolean sameLineNorm(CubeStateIO.Line a, CubeStateIO.Line b) {
         boolean ea = isEmptyLine(a), eb = isEmptyLine(b);
         if (ea || eb) return ea && eb;
         if (!java.util.Objects.equals(a.grade(), b.grade())) return false;
+        if (a.stack() != b.stack()) return false;
         for (int i = 0; i < 3; i++) {
             if (!slotEq(slotAt(a, i), slotAt(b, i))) return false;
             if (a.lockedAt(i) != b.lockedAt(i)) return false;
@@ -912,26 +994,20 @@ public final class MainWindow extends JFrame {
         p.add(north, BorderLayout.NORTH);
 
         // 설명은 추천 박스와 같은 스크롤 영역 맨 위에 둬서, 스크롤 내리면 같이 올라가 가려진다(공간 절약).
-        JLabel note = new JLabel("<html><div style='text-align:center'>"
-                + "※ 슬라이더 = 목표 딜 순위 (왼쪽 쉬운 개선 → 오른쪽 종결)<br>"
+        recNote = noteLabel("※ 슬라이더 = 목표 딜 순위 (왼쪽 쉬운 개선 → 오른쪽 종결)<br>"
                 + "· 딜 증가량 차이 = 추천 딜 증가량 − 기존 딜 증가량<br>"
                 + "· 최종 효율 = 딜 증가량 차이 × 남은 딜 증가 확률합 ÷ 큐브 가격<br>"
                 + "· 전체 딜 증가 확률합 = 한 큐브에 현재보다 나은 옵션이 나올 확률 (고정)<br>"
                 + "· 남은 딜 증가 확률합 = 슬라이더 딜(이 옵션) 이상이 나올 확률<br>"
-                + "※ 아랫잠은 큐브 가격 2배 → 효율·정렬에 반영</div></html>", SwingConstants.CENTER);
-        note.setForeground(Theme.MUTED);
-        note.setBorder(BorderFactory.createEmptyBorder(2, 8, 8, 8));
-        note.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
-        note.setMaximumSize(new Dimension(Integer.MAX_VALUE, note.getPreferredSize().height));
+                + "※ 아랫잠은 큐브 가격 2배 → 효율·정렬에 반영");
+        recNote.setBorder(BorderFactory.createEmptyBorder(2, 8, 8, 8));
+        recNote.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
 
         recList.setLayout(new BoxLayout(recList, BoxLayout.Y_AXIS));
         recList.setOpaque(false);
         recList.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
-        JPanel wrap = screen(null);
-        wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
-        wrap.add(note);       // 스크롤되는 내용의 맨 위(고정 아님)
-        wrap.add(recList);
-        JScrollPane sp = new JScrollPane(wrap);
+        // recList를 스크롤 뷰에 직접 연결(중첩 레이아웃이 높이를 줄여 박스를 자르던 문제 제거).
+        JScrollPane sp = new JScrollPane(recList);
         sp.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
         sp.setOpaque(false);
         sp.getViewport().setOpaque(false);
@@ -945,6 +1021,7 @@ public final class MainWindow extends JFrame {
         List<mekicalc.engine.equip.CubeRecommender.Rec> recs = model.recommend(
                 recSlider.getValue(), recSort.getSelectedIndex(), recUpper.isSelected(), recLower.isSelected());
         recList.removeAll();
+        recList.add(recNote);   // 안내는 목록과 함께 스크롤
         if (recs.isEmpty()) {
             JLabel empty = noteLabel("추천할 항목이 없습니다.<br>"
                     + "내 스탯 및 큐브 옵션을 입력했는지, 프리셋을 제대로 선택했는지 확인하세요.");
@@ -977,13 +1054,34 @@ public final class MainWindow extends JFrame {
         JPanel box = new JPanel(new BorderLayout(0, 6));
         box.setBackground(Theme.CARD);
         box.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(r.part() + " (" + (r.upper() ? "윗잠" : "아랫잠") + ")"),
-                BorderFactory.createEmptyBorder(4, 8, 8, 8)));
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(6, 10, 8, 10)));
+        boolean gradeUp = r.grade() != null && !r.grade().equals(r.curGrade());
+
+        // 타이틀: 부위(괄호 붙임·크게·굵게·검정) + (승급이면) 현재등급 → 목표등급(각 등급색), 화살표 검정.
+        JPanel titleBar = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
+        titleBar.setOpaque(false);
+        JLabel partLbl = new JLabel(r.part() + "(" + (r.upper() ? "윗잠" : "아랫잠") + ")");
+        partLbl.setFont(partLbl.getFont().deriveFont(Font.BOLD, 17f));
+        partLbl.setForeground(Theme.TEXT);
+        titleBar.add(partLbl);
+        if (gradeUp) {
+            titleBar.add(Box.createHorizontalStrut(12));   // 괄호와 등급 사이 간격 더 띄움
+            JLabel arr = new JLabel("→");
+            arr.setFont(arr.getFont().deriveFont(Font.BOLD, 15f));
+            arr.setForeground(Theme.TEXT);
+            titleBar.add(gradeChip(r.curGrade()));
+            titleBar.add(arr);
+            titleBar.add(gradeChip(r.grade()));
+        }
+        box.add(titleBar, BorderLayout.NORTH);
 
         JPanel cols = new JPanel(new GridBagLayout());
         cols.setOpaque(false);
         GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.BOTH; c.gridy = 0; c.insets = new Insets(0, 4, 0, 4);
+        // 가로만 채우고 위로 정렬 → 짧은 '기존' 칼럼을 억지로 늘리지 않아 아래 회색 빈공간이 안 생김.
+        c.fill = GridBagConstraints.HORIZONTAL; c.anchor = GridBagConstraints.PAGE_START;
+        c.gridy = 0; c.insets = new Insets(0, 4, 0, 4);
         c.gridx = 0; c.weightx = 1;
         cols.add(recColumn("기존", r, false), c);
         c.gridx = 1; c.weightx = 0;
@@ -1002,13 +1100,45 @@ public final class MainWindow extends JFrame {
                 SwingConstants.CENTER);
         diff.setFont(diff.getFont().deriveFont(Font.BOLD, 15f));
         diff.setForeground(Theme.ACCENT);
-        box.add(diff, BorderLayout.SOUTH);
+
+        // 우하단 작은 박스: 남은/전체 딜 증가 확률 총합(부위 단위 값이라 칼럼 밖으로 뺌).
+        JLabel probBox = new JLabel(String.format(
+                "<html>남은 딜 증가 확률 총합 <b>%s%%</b><br>전체 딜 증가 확률 총합 <b>%s%%</b></html>",
+                fmtPercentCore(r.remainProb() * 100), fmtPercentCore(r.totalProb() * 100)));
+        probBox.setFont(probBox.getFont().deriveFont(Font.BOLD, 13f));
+        probBox.setForeground(Theme.TEXT);
+        probBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(5, 9, 5, 9)));
+
+        JPanel south = new JPanel(new BorderLayout());
+        south.setOpaque(false);
+        JPanel se = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        se.setOpaque(false);
+        se.add(probBox);
+        // diff를 우하단 박스와 무관하게 박스 전체 기준 가운데로: 오른쪽 박스 폭만큼 왼쪽에 동일 폭 스페이서.
+        south.add(Box.createHorizontalStrut(se.getPreferredSize().width), BorderLayout.WEST);
+        south.add(diff, BorderLayout.CENTER);
+        south.add(se, BorderLayout.EAST);     // 우하단
+        box.add(south, BorderLayout.SOUTH);
 
         JPanel wrap = screen(new BorderLayout());
         wrap.add(box, BorderLayout.CENTER);
-        wrap.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrap.getPreferredSize().height));
         wrap.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
         return wrap;
+    }
+
+    /** 타이틀용 등급 칩: 등급 한글명을 등급색·굵게로. */
+    private JLabel gradeChip(String code) {
+        JLabel l = new JLabel(AppModel.GRADE_KO.getOrDefault(code, code == null ? "" : code));
+        l.setFont(l.getFont().deriveFont(Font.BOLD, 15f));
+        l.setForeground(Theme.gradeColor(code));
+        return l;
+    }
+
+    /** 큐브 기댓값 표시(무한대면 "-"). */
+    private static String cubesText(double cubes) {
+        return Double.isInfinite(cubes) || Double.isNaN(cubes) ? "-" : String.format("%,.1f개", cubes);
     }
 
     /** 추천 박스의 한 쪽(기존/추천): 헤더 + 3슬롯 옵션 + 딜/확률/큐브기댓값/효율. */
@@ -1020,11 +1150,21 @@ public final class MainWindow extends JFrame {
                 BorderFactory.createLineBorder(new Color(0xD5, 0xD9, 0xDF)),
                 BorderFactory.createEmptyBorder(6, 10, 6, 10)));
 
+        // 헤더: 좌측 기존/추천 + 우측 등급(등급색). 한눈에 어느 등급인지 보이게.
         JLabel h = new JLabel(header);
         h.setFont(h.getFont().deriveFont(Font.BOLD, 13f));
         h.setForeground(rec ? Theme.ACCENT : Theme.MUTED);
-        h.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        col.add(h);
+        String gradeCode = rec ? r.grade() : r.curGrade();
+        JLabel gl = new JLabel(AppModel.GRADE_KO.getOrDefault(gradeCode, gradeCode == null ? "" : gradeCode));
+        gl.setFont(gl.getFont().deriveFont(Font.BOLD, 13f));
+        gl.setForeground(Theme.gradeColor(gradeCode));
+        JPanel hp = new JPanel(new BorderLayout());
+        hp.setOpaque(false);
+        hp.add(h, BorderLayout.WEST);
+        hp.add(gl, BorderLayout.EAST);
+        hp.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        hp.setMaximumSize(new Dimension(Integer.MAX_VALUE, hp.getPreferredSize().height));
+        col.add(hp);
         col.add(Box.createVerticalStrut(3));
 
         for (var pk : r.picks()) {
@@ -1059,20 +1199,24 @@ public final class MainWindow extends JFrame {
         col.add(Box.createVerticalStrut(4));
 
         double deal = rec ? r.recDeal() : r.curDeal();
-        double probSingle = rec ? r.recProbSingle() : r.curProbSingle();
         double probSum = rec ? r.recProbSum() : r.curProbSum();
-        double cubes = rec ? r.recCubes() : r.curCubes();
         double eff = rec ? r.recEff() : r.curEff();
-        String cubesS = Double.isInfinite(cubes) ? "-" : String.format("%,.1f개", cubes);
-        String top = String.format(
-                "딜 증가량 <b>%s</b><br>등장 확률 %s<br>동일 옵션 등장 확률 총합 %s<br>큐브 기댓값 %s<br>효율 <b>%s</b>",
-                fmtSignedPercent(deal), fmtPercentCore(probSingle * 100) + "%",
-                fmtPercentCore(probSum * 100) + "%", cubesS, fmtScoreCore(eff * REC_EFF_SCALE));
-        String html = rec
-                ? "<html>" + top + "<br><br>남은 딜 증가 확률합 " + fmtPercentCore(r.remainProb() * 100) + "%"
-                  + "<br>전체 딜 증가 확률합 " + fmtPercentCore(r.totalProb() * 100) + "%</html>"
-                : "<html>" + top + "</html>";
-        JLabel m = new JLabel(html);
+        double cubesSum = probSum > 0 ? 1.0 / probSum : Double.POSITIVE_INFINITY;
+        // 추천 칼럼이 승급 추천이면 확률/큐브에 '(승급 기댓값 반영)' 표기(이미 reach에 반영됨).
+        boolean gu = rec && r.grade() != null && !r.grade().equals(r.curGrade());
+        String sfx = gu ? "(승급 기댓값 반영)" : "";
+        String html = String.format(
+                "<html>딜 증가량 <b>%s</b>"
+                + "<br>동일 옵션 등장 확률 총합%s %s"
+                + "<br>동일 옵션 큐브 기댓값%s %s"
+                + "<br>효율 <b>%s</b></html>",
+                fmtSignedPercent(deal),
+                sfx, fmtPercentCore(probSum * 100) + "%",
+                sfx, cubesText(cubesSum),
+                fmtScoreCore(eff * REC_EFF_SCALE));
+        // WrapLabel: 칼럼 폭에 맞춰 줄바꿈하고 그 높이를 선호로 보고 → 긴 글자가 줄바꿈돼도 박스가 안 잘림.
+        WrapLabel m = new WrapLabel();
+        m.setText(html);
         m.setForeground(Theme.TEXT);
         m.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         col.add(m);
@@ -1616,25 +1760,6 @@ public final class MainWindow extends JFrame {
         }
     }
 
-    // ──────────────────── 큐브탭 설정 (톱니바퀴 진입) ────────────────────
-    private JPanel buildCubeSettings() {
-        JPanel p = screen(new BorderLayout());
-        p.setBorder(BorderFactory.createEmptyBorder(8, 24, 16, 24));
-        p.add(topBar("cubeMenu", "큐브탭 설정", true), BorderLayout.NORTH);
-
-        JPanel center = new JPanel(new GridBagLayout());
-        center.setOpaque(false);
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 8, 10, 8);
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 1; c.ipady = 22; c.gridx = 0;
-        c.gridy = 0; center.add(wideRounded("추천 옵션 범위", () -> openRanges(mekicalc.config.RangeIO.CUBE, "cubeSettings")), c);
-        JPanel wrap = screen(new BorderLayout());
-        wrap.add(center, BorderLayout.NORTH);
-        p.add(wrap, BorderLayout.CENTER);
-        return p;
-    }
-
     // ──────────────────── 설정 허브 (톱니바퀴 진입) ────────────────────
     private JPanel buildSettingsHub() {
         JPanel p = screen(new BorderLayout());
@@ -1820,7 +1945,7 @@ public final class MainWindow extends JFrame {
     private JPanel buildRangePage() {
         JPanel p = screen(new BorderLayout(10, 10));
         p.setBorder(BorderFactory.createEmptyBorder(10, 14, 12, 14));
-        p.add(topBar("cubeSettings", "추천 옵션 범위", true), BorderLayout.NORTH);
+        p.add(topBar("cubeInput", "추천 옵션 수치 범위", true), BorderLayout.NORTH);
 
         JPanel card = new JPanel(new BorderLayout(0, 0));
         card.setBackground(Theme.CARD);
@@ -1953,16 +2078,15 @@ public final class MainWindow extends JFrame {
         return tf;
     }
 
-    /** 해당 컨텐츠의 범위 설정 페이지로 이동(현재는 큐브에서만 진입). */
-    private void openRanges(String content, String back) {
-        rangeContent = content;
+    /** 활성 큐브 프리셋의 추천 옵션 수치 범위 설정 페이지로 이동. */
+    private void openRanges() {
         populateRanges();
         show("ranges");
     }
 
     private void populateRanges() {
         for (StatDef def : model.rangeStats()) {
-            mekicalc.config.RangeIO.Range r = model.rangeOf(rangeContent, def.id);
+            mekicalc.config.RangeIO.Range r = model.rangeOf(def.id);
             JTextField lo = rangeLoFields.get(def.id), hi = rangeHiFields.get(def.id);
             lo.putClientProperty("inf", null);   // ∞ 표시 상태 초기화 후 숫자부터 채움
             hi.putClientProperty("inf", null);
@@ -1978,7 +2102,7 @@ public final class MainWindow extends JFrame {
 
     private boolean isRangeDirty() {
         for (StatDef def : model.rangeStats()) {
-            mekicalc.config.RangeIO.Range saved = model.rangeOf(rangeContent, def.id);
+            mekicalc.config.RangeIO.Range saved = model.rangeOf(def.id);
             if (rangeChecks.get(def.id).isSelected() != saved.enabled()) return true;
             if (rangeLoInf.get(def.id).isSelected() != saved.noLow()) return true;
             if (rangeHiInf.get(def.id).isSelected() != saved.noHigh()) return true;
@@ -2010,7 +2134,7 @@ public final class MainWindow extends JFrame {
             map.put(def.id, new mekicalc.config.RangeIO.Range(en, lo, hi, noLow, noHigh));
         }
         try {
-            model.saveRanges(rangeContent, map);
+            model.saveCubeRanges(map);
             updateRangeSaveEnabled();
             Toast.show(this, "저장되었습니다");
         } catch (Exception ex) {
@@ -2244,6 +2368,19 @@ public final class MainWindow extends JFrame {
             }
             return d;
         }
+    }
+
+    /**
+     * 추천 목록을 스크롤 뷰에 직접 쓰는 패널.
+     * 가로는 뷰포트에 맞춰(칼럼이 폭을 받아 WrapLabel 높이가 정확해짐),
+     * 세로는 항상 선호 높이로 보고 → 내용이 길어도 안 잘리고 중첩 레이아웃이 높이를 줄이지 않는다.
+     */
+    private static final class RecListPanel extends JPanel implements javax.swing.Scrollable {
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public int getScrollableUnitIncrement(java.awt.Rectangle r, int o, int d) { return 16; }
+        @Override public int getScrollableBlockIncrement(java.awt.Rectangle r, int o, int d) { return 120; }
+        @Override public boolean getScrollableTracksViewportWidth() { return true; }
+        @Override public boolean getScrollableTracksViewportHeight() { return false; }
     }
 
     // ──────────────────── 준비중 ────────────────────

@@ -24,8 +24,9 @@ public final class CubeStateIO {
      * 한 잠재 줄(윗잠 또는 아랫잠): 등급 + 3슬롯(null 허용) + 슬롯별 잠금(추천이 못 돌리게 고정).
      * 잠금은 슬롯 위치별(빈 슬롯도 잠글 수 있음).
      */
-    public record Line(String grade, Slot[] slots, boolean[] locked) {
-        public Line(String grade, Slot[] slots) { this(grade, slots, new boolean[3]); }
+    public record Line(String grade, Slot[] slots, boolean[] locked, int stack) {
+        public Line(String grade, Slot[] slots) { this(grade, slots, new boolean[3], 0); }
+        public Line(String grade, Slot[] slots, boolean[] locked) { this(grade, slots, locked, 0); }
         public boolean lockedAt(int i) { return locked != null && i < locked.length && locked[i]; }
     }
 
@@ -67,7 +68,8 @@ public final class CubeStateIO {
             List<Object> la = Json.asList(m.get("locked"));
             for (int i = 0; i < 3 && i < la.size(); i++) locked[i] = Boolean.TRUE.equals(la.get(i));
         }
-        return new Line(Json.str(m, "grade"), slots, locked);
+        int stack = (int) Json.num(m, "stack", 0.0);
+        return new Line(Json.str(m, "grade"), slots, locked, stack);
     }
 
     public static void save(Path dataDir, Map<String, PartCube> map) throws IOException {
@@ -97,7 +99,8 @@ public final class CubeStateIO {
         }
         sb.append("], \"locked\": [");
         for (int i = 0; i < 3; i++) sb.append(i > 0 ? ", " : "").append(line.lockedAt(i));
-        sb.append("] }");
+        sb.append("], \"stack\": ").append(line.stack());
+        sb.append(" }");
         return sb.toString();
     }
 
