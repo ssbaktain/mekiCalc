@@ -415,6 +415,17 @@ public final class SelfTest {
         // 종합 DPS: 양수, 일반몹(대상수 곱) > 보스(단일)
         checkTrue("nl.total.pos", nd.totalDps(b, true) > 0);
         checkTrue("nl.total.mobGtBoss", nd.totalDps(b, false) > nd.totalDps(b, true));
+
+        // 회색 스탯 환산: DPS 증가율. 레벨200(전 스킬 개방) 기준.
+        StatBlock big = new StatBlock().set("LEVEL", 200).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        checkTrue("nl.conv.skillLv", nd.increase(big, new StatBlock().set("SKILL_LEVELS", 10), true) > 0);
+        checkTrue("nl.conv.atkSpeed", nd.increase(big, new StatBlock().set("ATK_SPEED", 10), true) > 0);
+        checkTrue("nl.conv.cdrFlat", nd.increase(big, new StatBlock().set("COOLDOWN_REDUCTION", 3), true) > 0);
+        checkTrue("nl.conv.cdrPct", nd.increase(big, new StatBlock().set("COOLDOWN_REDUCTION_PCT", 20), true) > 0);
+        // 대상수: 보스(단일)는 효과 없음(=0), 일반몹은 증가
+        check("nl.conv.targetsBoss", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), true), 0);
+        checkTrue("nl.conv.targetsMob", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), false) > 0);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

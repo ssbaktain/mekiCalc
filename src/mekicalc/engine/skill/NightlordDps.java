@@ -331,6 +331,18 @@ public final class NightlordDps {
         return (baseDps + procDps + venomDps) * recvDmgFactor(eff);
     }
 
+    /**
+     * delta 만큼 스탯을 더했을 때의 종합 DPS 증가율(0.05 == +5%).
+     * 회색 스탯(쿨감·공속·스킬레벨·대상수 등)을 DPS로 환산하는 자리.
+     * 스탯 합성은 기존 {@link DamageModel#combine}(SUM/DIMINISHING/주스탯 전파) 규칙을 그대로 쓴다.
+     */
+    public double increase(StatBlock current, StatBlock delta, boolean boss) {
+        double before = totalDps(current, boss);
+        if (before <= 0) return 0;
+        double after = totalDps(dm.combine(current, delta), boss);
+        return after / before - 1.0;
+    }
+
     /** 버프/스탯패시브 효과의 스킬레벨 스케일 = 1 + 상승비%/100 × 총 스킬레벨. */
     private double scale(String kind, int tier, int charLevel, StatBlock input) {
         int lv = model.totalSkillLevel(tier, charLevel, (int) input.get(SKILL_LEVELS), (int) input.get("SKILL_LEVEL_" + tier));
