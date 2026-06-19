@@ -49,6 +49,7 @@ public final class SelfTest {
         testRangeConstraint();
         testParetoAxisVerify();
         testCrossGradeProbBounded();
+        testCeilingEdgeForcesGradeUp();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -305,6 +306,36 @@ public final class SelfTest {
         for (CubeRecommender.OptSet s : eo.shown()) if (!"NORMAL".equals(s.grade())) hasCross = true;
         checkTrue("crossGrade.present", hasCross);                       // 승급 후보가 실제로 섞임
         checkTrue("crossGrade.totalUnder100", eo.totalProb() <= 1.0 + 1e-9);
+    }
+
+    /** 천장 직전(stack = 천장−1)이면 다음 큐브가 강제 승급 → totalProb이 천장(stack=천장)과 같고, stack=0과는 달라야 한다. */
+    private static void testCeilingEdgeForcesGradeUp() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        EquipmentPotential ep = EquipmentPotential.load(Path.of("data"));
+        String part = "장갑";
+        List<List<PotentialDraw>> slots = ep.slots(part, "NORMAL");
+        // 현재 옵션을 강한 값으로 채워 포화 방지(빈 상태면 모든 결과가 개선이라 확률이 1로 포화됨).
+        PotentialDraw[] curDraws = { bestDraw(slots.get(0)), bestDraw(slots.get(1)), bestDraw(slots.get(2)) };
+        int ceil = ep.gradeUpCeiling("NORMAL");                          // 42
+        double t0    = analyzeTotal(g, ep, part, slots, curDraws, ceil - 1);
+        double tCeil = analyzeTotal(g, ep, part, slots, curDraws, ceil);
+        double tLow  = analyzeTotal(g, ep, part, slots, curDraws, 0);
+        check("ceiling.edgeForced", t0, tCeil);                          // 41 == 42 (둘 다 강제)
+        checkTrue("ceiling.lowDiffers", Math.abs(t0 - tLow) > 1e-6);     // 0 은 자연확률이라 다름
+    }
+
+    /** 한 슬롯 후보 중 딜에 영향 주는 가장 높은 값 한 줄(현재 옵션을 강하게 만들기 위함). */
+    private static PotentialDraw bestDraw(List<PotentialDraw> slot) {
+        PotentialDraw best = null;
+        for (PotentialDraw d : slot)
+            if (d != null && (best == null || d.value() > best.value())) best = d;
+        return best;
+    }
+
+    private static double analyzeTotal(GameData g, EquipmentPotential ep, String part,
+            List<List<PotentialDraw>> slots, PotentialDraw[] curDraws, int stack) {
+        return CubeRecommender.analyze(g.model, g.current, slots, curDraws, part, true, 1.0,
+                java.util.Map.of(), null, "NORMAL", stack, ep).totalProb();
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

@@ -177,12 +177,13 @@ public final class CubeRecommender {
         all.sort(Comparator.comparingDouble(OptSet::deal));   // 딜 오름차순
 
         // 전체/잔여 = '한 큐브 리롤'로 더 좋은 옵션이 나올 확률(승급 1단계 반영, 항상 0~100%).
-        //   g = 이 큐브가 승급할 확률(천장 도달 시 1). 한 큐브 = (1−g)×같은 등급 + g×다음 등급.
+        //   g = 이 큐브가 승급할 확률(천장 직전이면 1). 한 큐브 = (1−g)×같은 등급 + g×다음 등급.
+        //   천장까지 1칸 남았으면(stack ≥ 천장−1) 다음 큐브가 강제 승급 → g = 1.
         double gEff = 0.0;
         if (ep != null && grade != null && ep.gradeIndex(grade) >= 0) {
             double gRaw = ep.gradeUpProb(grade);
             int ceil = ep.gradeUpCeiling(grade);
-            if (gRaw > 0) gEff = (ceil > 0 && stack >= ceil) ? 1.0 : gRaw;
+            if (gRaw > 0) gEff = (ceil > 0 && stack >= ceil - 1) ? 1.0 : gRaw;
         }
         double sameAll = 0;   // 같은 등급 개선 후보 per-cube 확률 합
         for (OptSet o : all) if (java.util.Objects.equals(o.grade(), curGrade)) sameAll += o.prob();
