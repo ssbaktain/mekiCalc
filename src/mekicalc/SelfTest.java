@@ -388,6 +388,33 @@ public final class SelfTest {
 
         // 쿼드러플: 쿨감 마스터리 30% → 10×0.7 = 7초
         check("nl.cd.quad", nd.cooldown(sd.skill("quadThrow"), b), 7);
+
+        // 버프 주입: 레벨100 → 다크사이트(15렙)·아드레날린(66렙)·민첩 활성, 퍼지(110렙)·페이크/세레니티(상시)는 제외.
+        NightlordDps.Buffed bf = nd.buffed(b);
+        // 다크사이트 크확 = 6 × 스케일(statActive 0.4%×스킬레벨60=1.24) × 가동률(12/25=0.48) = 3.5712
+        check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);
+        // 공격력 별도 버킷 = 숙련된표창술(18×1.36=24.48) + 다크사이트(10×1.24×0.48=5.952) = 30.432 → ×1.30432
+        check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);
+        // 아드레날린 최종뎀 = 16 × 스케일(0.3%×120=1.36) × 가동률(15/22) (퍼지 미개방이라 단독)
+        check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), 16 * 1.36 * (15.0 / 22.0));
+        // 공속 = 아드레날린(8×1.36×15/22) DIMINISHING 후 민첩(15×0.25=3.75) DIMINISHING
+        double adrAS = 8 * 1.36 * (15.0 / 22.0);
+        double expAS = adrAS + (150 - adrAS) * ((15 * 0.25) / 150.0);
+        check("nl.buff.atkSpeed", bf.stats.get("ATK_SPEED"), expAS);
+
+        // 특수 스킬 컴포넌트: 통제 블록(공속0 → G=100, 베놈 가동률 0.8) 직접 대입, 공격력 버킷 제외.
+        check("nl.mark", nd.markPerHit(b, true), 3132);          // 100 × 4.35(계수3×1.45) × 1.8 × 4.0
+        check("nl.venom", nd.venomDotDps(b, true), 79.92);       // 100 × 0.666(0.45×1.48) × 1.5(메용) × 0.8(u)
+        check("nl.shadow", nd.shadowExtraPerHit(b, true), 66.6); // 100 × 0.888 × 2.0 × 1.5 × 0.25
+        check("nl.fatal.locked", nd.fatalExtraPerHit(b, true), 0); // 117렙 개방 → 레벨100은 잠김
+        // 레벨120: 페이탈 스킬레벨60 → 계수7.44, = 100 × 7.44 × 2.0 × 0.2 × 0.8 = 238.08
+        StatBlock b120 = new StatBlock().set("LEVEL", 120).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        check("nl.fatal", nd.fatalExtraPerHit(b120, true), 238.08);
+        check("nl.recvDebuff", nd.recvDmgFactor(b), 1.096);      // 베놈약화 0.12×0.8 (퍼지·마크 미개방)
+        // 종합 DPS: 양수, 일반몹(대상수 곱) > 보스(단일)
+        checkTrue("nl.total.pos", nd.totalDps(b, true) > 0);
+        checkTrue("nl.total.mobGtBoss", nd.totalDps(b, false) > nd.totalDps(b, true));
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

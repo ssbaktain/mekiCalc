@@ -77,11 +77,11 @@
       "_comment": "고정값, 스킬레벨 영향 없음. 이속10%는 딜 무관." },
 
     { "id": "darkSight", "name": "다크 사이트", "kind": "statActive", "tier": 1, "open": 15,
-      "critRate": 6, "atkPct": 10, "dur": 8, "durMastery": 50, "cd": 25,
+      "critRate": 6, "atkPct": 10, "dur": 8, "durMasteryPct": 50, "cd": 25,
       "_comment": "마스터리(24렙) 지속+50% → 12초. atkPct는 스킬 공퍼 합산버킷." },
 
     { "id": "adrenaline", "name": "아드레날린", "kind": "statPassive", "tier": 3, "open": 66,
-      "finalDmg": 10, "finalDmgMastery": 6, "atkSpeed": 8, "dur": 10, "durMastery": 5, "triggerCasts": 7,
+      "finalDmg": 10, "finalDmgMastery": 6, "atkSpeed": 8, "dur": 10, "durMasteryFlat": 5, "triggerCasts": 7,
       "_comment": "7발동마다. 가동률 = dur ÷ (dur + 7×평타주기). 마스터리(90렙) 지속+5초·최종뎀+6%p." },
 
     { "id": "purge", "name": "퍼지 에어리어", "kind": "statActive", "tier": 4, "open": 110,
