@@ -364,6 +364,9 @@ public final class SelfTest {
         check("skill.cd.flatFloor", SkillDpsModel.cooldown(8, 0, 5), 5);
         // 베놈 가동률: 지속10, p0.4, 공속100% → 10/11.25 ≈ 0.8889
         check("skill.venomUptime", SkillDpsModel.venomUptime(10, 0.4, 100), 10.0 / 11.25);
+        // 메용 배수: 레벨 120까지 5%, 초과 1% 체감. 레벨157 → 130×(1+6.0+0.37)=958.1
+        check("skill.meyong.break", m.meyongFinalBonus(130, 100, 157, 0), 958.1);
+        check("skill.meyong.under120", m.meyongFinalBonus(130, 100, 105, 0), 812.5); // 105 → 130×6.25
     }
 
     /** 나이트로드 DPS: 통제된 StatBlock(공격력100·배율100, 나머지 0)으로 1타 데미지·DPS 손계산 대조. */
@@ -407,8 +410,8 @@ public final class SelfTest {
         check("nl.buff.atkSpeed", bf.stats.get("ATK_SPEED"), expAS);
 
         // 특수 스킬 컴포넌트(공속0 → G=100, 베놈 가동률 0.8).
-        check("nl.mark.noNightlord", nd.markPerHit(b, true), 783);    // 레벨100: 나이트로드(107렙) 미개방 → ×1.0
-        check("nl.mark.full", nd.markPerHit(b150, true), 3132);       // 레벨150: 나이트로드 최종뎀+300%(×4.0). 마크 스킬레벨 90 고정
+        check("nl.mark.noNightlord", nd.markPerHit(b, true), 734.4);  // 레벨100: 나이트로드(107렙) 미개방, 마크 0.4%
+        check("nl.mark.full", nd.markPerHit(b150, true), 4259.52);    // 레벨150: 나이트로드 최종뎀 300×(1+0.4%×150)=480→×5.8, 마크 0.4%
         check("nl.venom", nd.venomDotDps(b, true), 79.92);
         // 스킬뎀% 적용 검증: SKILL_DMG 100% → 베놈도트 2배
         StatBlock bSkillDmg = new StatBlock().set("LEVEL", 100).set("ATK_FLAT", 100)

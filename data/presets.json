@@ -4,7 +4,7 @@
   "presets": [
     { "name": "자동 사냥", "stats": {
       "JOB": 1,
-      "LEVEL": 111,
+      "LEVEL": 112,
       "ATK_FLAT": 627413,
       "ATK_PCT": 24778.8,
       "CRIT_RATE": 115.4,

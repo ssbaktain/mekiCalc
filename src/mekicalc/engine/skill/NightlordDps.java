@@ -213,8 +213,14 @@ public final class NightlordDps {
     public double markPerHit(StatBlock eff, boolean boss) {
         Skill s = data.skill("markOfAssassin");
         if (s == null || charLevel(eff) < s.open) return 0;
-        double nightlord = charLevel(eff) >= s.num("nightlordOpen", Double.MAX_VALUE)
-                ? 1 + s.num("finalNightlord", 0) / 100.0 : 1.0;
+        // 나이트로드 최종뎀(+300%)은 4차 패시브라 4차 스킬레벨로 0.4% 스케일.
+        double nightlord = 1.0;
+        if (charLevel(eff) >= s.num("nightlordOpen", Double.MAX_VALUE)) {
+            int nlLv = model.totalSkillLevel(data.meyongTier(), charLevel(eff),
+                    (int) eff.get(SKILL_LEVELS), (int) eff.get("SKILL_LEVEL_" + data.meyongTier()));
+            double scaledFinal = s.num("finalNightlord", 0) * (1 + 0.004 * nlLv);
+            nightlord = 1 + scaledFinal / 100.0;
+        }
         return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
                 * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * nightlord;
     }
@@ -302,7 +308,7 @@ public final class NightlordDps {
         double slotsPerSec = 1 + eff.get(ATK_SPEED) / 100.0;
 
         double baseDps = 0;          // 코어(평타+액티브+마크+써든도트), 추가타 제외
-        double hitsPerSec = 0;       // 쉐파/페이탈 적용 대상 타수(대상수 포함)
+        double procActionsPerSec = 0; // 쉐파/페이탈 발동 횟수(시전당 판정, 타수 무관, 대상수 가중)
         double skillActionsPerSec = 0;   // 액티브가 먹는 슬롯
 
         for (Skill s : data.skills()) {
@@ -314,7 +320,10 @@ public final class NightlordDps {
             int hits = hitsPerCast(s, eff);
             double targets = boss ? 1 : s.num("targets", 1);
             baseDps += perHit(s, bf, boss) * hits * targets / cd;
-            hitsPerSec += hits * targets / cd;
+            // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
+            double procAttempts = s.id.equals("darkFlare")
+                    ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
+            procActionsPerSec += procAttempts * targets / cd;
             if (s.id.equals("suddenRaid")) {
                 baseDps += suddenDotPerCast(eff, boss) * atkF * targets / cd;   // 도트는 타수 아님
             }
@@ -327,7 +336,7 @@ public final class NightlordDps {
             int hits = basicHits(basic, eff);
             double targets = boss ? 1 : basicTargets(basic, eff);
             baseDps += perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;
-            hitsPerSec += hits * targets * basicActionsPerSec;
+            procActionsPerSec += targets * basicActionsPerSec;   // 발동은 시전당(타수 무관)
         }
 
         // 마크: 기존 타격에 얹히는 보너스(새 타수 아님). 주기 = period − 주기 마스터리(레벨 게이팅).
@@ -339,9 +348,9 @@ public final class NightlordDps {
             if (period > 0) baseDps += markPerHit(eff, boss) * atkF * targets / period;
         }
 
-        // 추가타(쉐파+페이탈): 모든 타격에 타격당 기대값.
-        double procPerHit = (shadowExtraPerHit(eff, boss) + fatalExtraPerHit(eff, boss)) * atkF;
-        double procDps = hitsPerSec * procPerHit;
+        // 추가타(쉐파+페이탈): 시전(공격)당 발동 — 1차든 4차든 발동 확률 동일(타수 무관).
+        double procPerProc = (shadowExtraPerHit(eff, boss) + fatalExtraPerHit(eff, boss)) * atkF;
+        double procDps = procActionsPerSec * procPerProc;
 
         // 베놈 도트(연속): 타수 아님.
         double venomDps = venomDotDps(eff, boss) * atkF;

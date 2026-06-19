@@ -86,6 +86,9 @@ public final class SkillDpsModel {
     /** 메용 적용계수 = 표기 최종뎀% × (1 + 5%/100 × 메용 스킬레벨). 대상 스킬엔 ×(1 + 이 값/100). */
     public double meyongFinalBonus(double listedFinalPct, int charLevel, int allSkillLevel, int tierSkillLevel) {
         int lv = totalSkillLevel(data.meyongTier(), charLevel, allSkillLevel, tierSkillLevel);
-        return listedFinalPct * (1 + data.growth("meyong") / 100.0 * lv);
+        // 메용 배수: 레벨 120까지 5%/렙, 초과분은 1%/렙로 체감(실측 곡선).
+        double g1 = data.growth("meyong") / 100.0;   // 0.05
+        double mult = 1 + g1 * Math.min(lv, 120) + 0.01 * Math.max(0, lv - 120);
+        return listedFinalPct * mult;
     }
 }

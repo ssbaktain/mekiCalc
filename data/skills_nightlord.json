@@ -5,7 +5,7 @@
   "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
 
   "growth": {
-    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.5, "dealPassiveNoCd": 0.4,
+    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.4, "dealPassiveNoCd": 0.4,
     "statActive": 0.4, "statPassive": 0.3, "meyong": 5
   },
   "meyong": { "tier": 4, "open": 100 },
