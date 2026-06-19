@@ -183,30 +183,30 @@ public final class NightlordDps {
         return SkillDpsModel.venomUptime(Json.num(dot, "dur", 0), p / 100.0, eff.get(ATK_SPEED));
     }
 
-    /** 쉐도우 파트너 타격당 기대 추가(공격력 버킷 제외). */
+    /** 쉐도우 파트너 타격당 기대 추가(공격력 버킷 제외). 평타 외 딜이라 스킬뎀% 적용. */
     public double shadowExtraPerHit(StatBlock eff, boolean boss) {
         Skill s = data.skill("shadowPartner");
         if (s == null || charLevel(eff) < s.open) return 0;
-        return dm.globalMultiplier(eff, boss) * coeffFrac(s, s.num("base", 0), eff)
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
                 * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * meyongFactor(s.num("meyong", 0), eff)
                 * (s.num("proc", 0) / 100.0);
     }
 
-    /** 페이탈 베놈 타격당 기대 추가(중독 가동률 반영, 메용 비대상). */
+    /** 페이탈 베놈 타격당 기대 추가(중독 가동률 반영, 메용 비대상). 스킬뎀% 적용. */
     public double fatalExtraPerHit(StatBlock eff, boolean boss) {
         Skill s = data.skill("fatalVenom");
         if (s == null || charLevel(eff) < s.open) return 0;
-        return dm.globalMultiplier(eff, boss) * coeffFrac(s, s.num("base", 0), eff)
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
                 * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * (s.num("proc", 0) / 100.0) * venomUptimeOf(eff);
     }
 
-    /** 베놈 도트 초당 데미지(공격력 버킷 제외). */
+    /** 베놈 도트 초당 데미지(공격력 버킷 제외). 스킬뎀% 적용. */
     public double venomDotDps(StatBlock eff, boolean boss) {
         Skill s = data.skill("venom");
         if (s == null || charLevel(eff) < s.open) return 0;
         Map<String, Object> dot = Json.asMap(s.raw.get("dot"));
         double coeff = SkillDpsModel.coefficient(Json.num(dot, "perSec", 0), data.growth(s.kind), skillLevel(s, eff)) / 100.0;
-        return dm.globalMultiplier(eff, boss) * coeff * meyongFactor(s.num("meyong", 0), eff) * venomUptimeOf(eff);
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff * meyongFactor(s.num("meyong", 0), eff) * venomUptimeOf(eff);
     }
 
     /** 마크 오브 어쌔신 1회 발동 데미지(공격력 버킷 제외). 나이트로드 최종뎀+300%는 107렙 게이팅. */
@@ -215,17 +215,17 @@ public final class NightlordDps {
         if (s == null || charLevel(eff) < s.open) return 0;
         double nightlord = charLevel(eff) >= s.num("nightlordOpen", Double.MAX_VALUE)
                 ? 1 + s.num("finalNightlord", 0) / 100.0 : 1.0;
-        return dm.globalMultiplier(eff, boss) * coeffFrac(s, s.num("base", 0), eff)
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
                 * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * nightlord;
     }
 
-    /** 써든레이드 지속피해 1시전 데미지(공격력 버킷 제외). */
+    /** 써든레이드 지속피해 1시전 데미지(공격력 버킷 제외). 스킬뎀% 적용. */
     public double suddenDotPerCast(StatBlock eff, boolean boss) {
         Skill s = data.skill("suddenRaid");
         Map<String, Object> dot = Json.asMap(s.raw.get("dotPerCast"));
         double dotBase = Json.num(dot, "perTick", 0) * Json.num(dot, "ticks", 0);
         double coeff = SkillDpsModel.coefficient(dotBase, data.growth(s.kind), skillLevel(s, eff)) / 100.0;
-        return dm.globalMultiplier(eff, boss) * coeff * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0);
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0);
     }
 
     /** 받는 피해 증가 디버프 배수 = 1 + Σ(받는피해% × 가동률). 같은 종류 합연산. */

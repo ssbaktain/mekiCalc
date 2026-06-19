@@ -15,6 +15,7 @@ import mekicalc.config.GameData;
 import mekicalc.config.PresetIO;
 import mekicalc.config.RangeIO;
 import mekicalc.config.UISettingsIO;
+import mekicalc.engine.CommonDealModel;
 import mekicalc.engine.DealModel;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
@@ -60,6 +61,8 @@ public final class AppModel {
     private UISettingsIO.UISettings ui;
     // 나이트로드 DPS 모델 데이터(직업=나이트로드 시 회색 스탯 환산에 사용).
     private SkillData skillData;
+    // 딜 계산 기준: true=보스 단일(기본), false=일반몹 다수. 큐브 추천·비교·기댓값 공통.
+    private boolean bossMode = true;
 
     private static final int JOB_NIGHTLORD = 1;
 
@@ -466,18 +469,29 @@ public final class AppModel {
         return res;
     }
 
+    /** 딜 계산 기준(보스/일반몹). 변경 시 추천 캐시 무효화. */
+    public boolean bossMode() { return bossMode; }
+    public void setBossMode(boolean boss) {
+        if (bossMode == boss) return;
+        bossMode = boss;
+        recCache = null;
+    }
+
     /**
-     * 추천·평가에 쓰는 딜 모델. 직업=나이트로드면 종합 DPS 모델({@link NightlordDealModel}, 보스 기준)로
-     * 모든 스탯(공격력·크리·스킬레벨·쿨감·공속 등)을 일관 환산한다. 공용이면 기존 1타 모델 그대로.
+     * 추천·평가에 쓰는 딜 모델. 직업=나이트로드면 종합 DPS 모델({@link NightlordDealModel})로
+     * 모든 스탯(공격력·크리·스킬레벨·쿨감·공속 등)을 일관 환산한다. 공용이면 1타×공속 모델.
+     * 둘 다 보스/일반몹 모드(bossMode)를 따른다.
      */
     private DealModel dealModel() {
-        if ((int) current.get("JOB") != JOB_NIGHTLORD || skillData == null) return g.model;
-        try {
-            NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(skillData));
-            return new NightlordDealModel(nd, g.model, true);   // 보스 기준
-        } catch (RuntimeException ex) {
-            return g.model;   // 안전 폴백
+        if ((int) current.get("JOB") == JOB_NIGHTLORD && skillData != null) {
+            try {
+                NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(skillData));
+                return new NightlordDealModel(nd, g.model, bossMode);
+            } catch (RuntimeException ex) {
+                // 안전 폴백: 공용 모델
+            }
         }
+        return new CommonDealModel(g.model, bossMode);
     }
 
     private static double rank(CubeEvaluator.Result r) {

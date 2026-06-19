@@ -394,7 +394,12 @@ public final class MainWindow extends JFrame {
     private JPanel buildCubeMenu() {
         JPanel p = screen(new BorderLayout());
         p.setBorder(BorderFactory.createEmptyBorder(12, 18, 16, 18));
-        p.add(topBar("home", "큐브"), BorderLayout.NORTH);
+        JPanel north = screen(null);
+        north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
+        north.add(topBar("home", "큐브"));
+        north.add(Box.createVerticalStrut(4));
+        north.add(dealBasisToggle());
+        p.add(north, BorderLayout.NORTH);
 
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
@@ -417,6 +422,20 @@ public final class MainWindow extends JFrame {
 
         p.add(bottomBig("큐브 옵션 입력", () -> { refreshCubePresetCombo(); show("cubeInput"); }), BorderLayout.SOUTH);
         return p;
+    }
+
+    /** 딜 계산 기준(보스/일반몹) 토글. 큐브 추천·비교·기댓값 전체에 적용. */
+    private JPanel dealBasisToggle() {
+        JPanel row = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        JLabel lbl = new JLabel("딜 기준");
+        lbl.setForeground(Theme.MUTED);
+        JComboBox<String> combo = new JComboBox<>(new String[]{"보스", "일반몹"});
+        combo.setSelectedIndex(model.bossMode() ? 0 : 1);
+        combo.setToolTipText("보스=단일 대상, 일반몹=다수 대상(대상 수 반영). 추천·비교·기댓값에 적용됩니다.");
+        combo.addActionListener(e -> model.setBossMode(combo.getSelectedIndex() == 0));
+        row.add(lbl);
+        row.add(combo);
+        return row;
     }
 
     // ──────────────────── 내 큐브 옵션 입력/수정 (시안: 부위 그리드 + 모달) ────────────────────

@@ -12,6 +12,7 @@ import mekicalc.config.GameData;
 import mekicalc.config.RangeIO;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.AcquisitionOption;
+import mekicalc.engine.CommonDealModel;
 import mekicalc.engine.DamageModel;
 import mekicalc.engine.Recommender;
 import mekicalc.engine.equip.CubeEvaluator;
@@ -409,6 +410,10 @@ public final class SelfTest {
         check("nl.mark.noNightlord", nd.markPerHit(b, true), 783);    // 레벨100: 나이트로드(107렙) 미개방 → ×1.0
         check("nl.mark.full", nd.markPerHit(b150, true), 3132);       // 레벨150: 나이트로드 최종뎀+300%(×4.0). 마크 스킬레벨 90 고정
         check("nl.venom", nd.venomDotDps(b, true), 79.92);
+        // 스킬뎀% 적용 검증: SKILL_DMG 100% → 베놈도트 2배
+        StatBlock bSkillDmg = new StatBlock().set("LEVEL", 100).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100).set("SKILL_DMG", 100);
+        check("nl.venom.skillDmg", nd.venomDotDps(bSkillDmg, true), 79.92 * 2);
         check("nl.shadow", nd.shadowExtraPerHit(b, true), 66.6);
         check("nl.fatal.locked", nd.fatalExtraPerHit(b, true), 0);    // 117렙 개방, 레벨100 잠김
         // 레벨150: 페이탈 피해 마스터리(130렙) 개방, 스킬레벨150 → 계수9.6 → 100×9.6×2.0×0.2×0.8 = 307.2
@@ -436,10 +441,21 @@ public final class SelfTest {
         checkTrue("nl.real.skillLvValued", ndm.increase(g.current, new StatBlock().set("SKILL_LEVELS", 1)) > 0);
         checkTrue("nl.real.cdrNotQual", !ndm.hasQualitative(new StatBlock().set("COOLDOWN_REDUCTION", 2)));
         checkTrue("nl.real.defPenQual", ndm.hasQualitative(new StatBlock().set("DEF_PEN", 5)));
+        // 공용 딜 모델 보스/일반몹 전환: 보스뎀>일반몹뎀이면 보스 모드 출력이 더 큼.
+        StatBlock cb = new StatBlock().set("ATK_FLAT", 100).set("MIN_DMG_MULT", 100)
+                .set("MAX_DMG_MULT", 100).set("BOSS_DMG", 50);
+        checkTrue("common.bossGtNormal",
+                new CommonDealModel(g.model, true).output(cb) > new CommonDealModel(g.model, false).output(cb));
+
         // 버프 지속시간 증가%: 가동률↑로 DPS 환산(계산 불가 아님). 레벨200(버프 전부 개방).
         NightlordDealModel ndmBig = new NightlordDealModel(nd, g.model, true);
         checkTrue("nl.buffDur.valued", ndmBig.increase(big, new StatBlock().set("BUFF_DURATION", 20)) > 0);
         checkTrue("nl.buffDur.notQual", !ndmBig.hasQualitative(new StatBlock().set("BUFF_DURATION", 20)));
+        // 기본 공격 대상 수: 일반몹 모드면 평타 딜 환산(계산), 보스 모드면 계산 불가.
+        NightlordDealModel ndmMob = new NightlordDealModel(nd, g.model, false);
+        checkTrue("nl.targets.mobValued", ndmMob.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1)) > 0);
+        checkTrue("nl.targets.mobNotQual", !ndmMob.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
+        checkTrue("nl.targets.bossQual", ndmBig.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

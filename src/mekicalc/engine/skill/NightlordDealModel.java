@@ -14,9 +14,10 @@ import mekicalc.model.StatBlock;
  */
 public final class NightlordDealModel implements DealModel {
 
-    /** 종합 DPS로 환산하지 않는(계산 불가) 스탯. 버프 지속%는 가동률로 환산되므로 제외. */
-    private static final Set<String> QUALITATIVE = Set.of(
-            "DEF_PEN", "BASIC_ATK_TARGETS", "SUMMON_DURATION");
+    /** 항상 계산 불가인 스탯(방관=몹 방어력 필요, 동료 소환 지속=미모델). */
+    private static final Set<String> QUALITATIVE = Set.of("DEF_PEN", "SUMMON_DURATION");
+    /** 기본 공격 대상 수: 보스(단일)에선 무효 → 계산 불가, 일반몹에선 평타 딜에 반영 → 계산. */
+    private static final String BASIC_ATK_TARGETS = "BASIC_ATK_TARGETS";
 
     private final NightlordDps nd;
     private final DamageModel base;   // 스탯 합성 위임용
@@ -33,7 +34,10 @@ public final class NightlordDealModel implements DealModel {
     @Override public StatBlock uncombine(StatBlock r, StatBlock delta) { return base.uncombine(r, delta); }
 
     @Override public boolean hasQualitative(StatBlock delta) {
-        for (String id : delta.asMap().keySet()) if (QUALITATIVE.contains(id)) return true;
+        for (String id : delta.asMap().keySet()) {
+            if (QUALITATIVE.contains(id)) return true;
+            if (boss && id.equals(BASIC_ATK_TARGETS)) return true;   // 보스 단일에선 대상 수 무효
+        }
         return false;
     }
 }
