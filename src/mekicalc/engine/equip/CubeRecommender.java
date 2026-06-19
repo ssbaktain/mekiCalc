@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import mekicalc.engine.DamageModel;
+import mekicalc.engine.DealModel;
 import mekicalc.model.StatBlock;
 
 /**
@@ -50,18 +50,18 @@ public final class CubeRecommender {
     private CubeRecommender() {}
 
     /** 한 장비를 분석해 EquipOpts 생성(조합 전부 → dedup → 정렬 → 파레토 → 확률합). */
-    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+    public static EquipOpts analyze(DealModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost) {
         return analyze(model, current, slots, curDraws, part, upper, cost, java.util.Map.of(), null, null, 0, null);
     }
 
-    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+    public static EquipOpts analyze(DealModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost,
                                     Map<String, double[]> ranges) {
         return analyze(model, current, slots, curDraws, part, upper, cost, ranges, null, null, 0, null);
     }
 
-    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+    public static EquipOpts analyze(DealModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost,
                                     Map<String, double[]> ranges, boolean[] locked) {
         return analyze(model, current, slots, curDraws, part, upper, cost, ranges, locked, null, 0, null);
@@ -71,27 +71,25 @@ public final class CubeRecommender {
      * 범위 제약 + 슬롯 잠금 + 등급업 체인 포함 분석.
      * grade=현재 등급, stack=현재 스택, ep≠null이면 상위 등급 종결 구성을 "승급 고려 확률"로 후보에 추가.
      */
-    public static EquipOpts analyze(DamageModel model, StatBlock current, List<List<PotentialDraw>> slots,
+    public static EquipOpts analyze(DealModel model, StatBlock current, List<List<PotentialDraw>> slots,
                                     PotentialDraw[] curDraws, String part, boolean upper, double cost,
                                     Map<String, double[]> ranges, boolean[] locked,
                                     String grade, int stack, EquipmentPotential ep) {
         String curGrade = grade != null ? grade : "";
         double curFull = model.output(current);
-        // 고정 슬롯(정성적 재획득·잠금) vs 풀 슬롯(돌릴 수 있는 슬롯: 옵션 또는 빈).
+        // 고정 슬롯(잠금) vs 풀 슬롯(돌릴 수 있는 슬롯: 옵션 또는 빈).
+        // 정성적 스탯이 박힌 슬롯도 일반 슬롯처럼 개선 대상에 포함한다(유지하려면 추천 옵션 수치 범위로 제약).
         List<Integer> pool = new ArrayList<>();
         boolean[] inPool = new boolean[3];
-        double qualProb = 1.0;   // 고정(핀) 슬롯 유지 확률: 정성적 재획득 + 잠긴 빈 슬롯
+        double qualProb = 1.0;   // 고정(핀) 슬롯 유지 확률: 잠긴 빈 슬롯
         StatBlock normalCurDelta = new StatBlock();
         List<PotentialDraw> normalCurOpts = new ArrayList<>();
         List<PotentialDraw> requiredOpts = new ArrayList<>();   // 잠긴 옵션: 반드시 포함(어느 슬롯이든 재획득)
-        List<String> keptStats = new ArrayList<>();   // 승급해도 유지할 스탯(잠금+정성적 재획득), 개수 보존(멀티셋)
+        List<String> keptStats = new ArrayList<>();   // 승급해도 유지할 스탯(잠금), 개수 보존(멀티셋)
         for (int i = 0; i < 3; i++) {
             PotentialDraw d = curDraws[i];
             boolean lk = locked != null && i < locked.length && locked[i];
             if (lk && d == null) { qualProb *= emptyProb(slots.get(i)); continue; }            // 잠긴 빈 슬롯: 빈 채 유지
-            if (!lk && d != null && isQualitative(model, d)) {                                  // 정성적 재획득
-                qualProb *= d.prob() / 100.0; keptStats.add(d.statId()); continue;
-            }
             // 일반 슬롯 + 잠긴 옵션 슬롯: 풀에 포함. 잠긴 옵션은 '반드시 포함'으로 표시해 어느 슬롯이든 재획득(any-slot 합산).
             pool.add(i); inPool[i] = true;
             if (d != null) {
@@ -257,7 +255,7 @@ public final class CubeRecommender {
     }
 
     /** 풀 슬롯마다 옵션-or-빈을 모두 시도해 딜증가 세트(비빈 옵션 멀티셋)를 dedup 수집. */
-    private static void genSets(DamageModel model, StatBlock baseline, double curBase, double curDeal,
+    private static void genSets(DealModel model, StatBlock baseline, double curBase, double curDeal,
                                 List<Integer> pool, List<List<PotentialDraw>> slots, int depth, PotentialDraw[] chosen,
                                 java.util.Set<String> seen, Map<String, Double> setDeal,
                                 Map<String, List<PotentialDraw>> setOpts,
@@ -379,10 +377,6 @@ public final class CubeRecommender {
             for (int i : free) { if (ri >= remaining.size()) break; rep[i] = remaining.get(ri++); }
         }
         return rep;
-    }
-
-    private static boolean isQualitative(DamageModel model, PotentialDraw d) {
-        return model.hasQualitative(new StatBlock().with(d.statId(), d.value()));
     }
 
     /** 슬롯이 빈(무의미)으로 나올 확률 = 1 − 옵션 확률 합. */

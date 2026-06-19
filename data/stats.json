@@ -1,4 +1,5 @@
 [
+  { "id": "JOB",              "name": "직업",                   "unit": "LEVEL", "combine": "SUM", "hidden": true },
   { "id": "LEVEL",            "name": "레벨",                   "unit": "LEVEL", "combine": "SUM" },
   { "id": "ATK_FLAT",         "name": "공격력(+)",              "unit": "FLAT",  "combine": "SUM" },
   { "id": "ATK_PCT",          "name": "공격력%",                "unit": "PCT",   "combine": "SUM" },

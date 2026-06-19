@@ -15,10 +15,15 @@ import mekicalc.config.GameData;
 import mekicalc.config.PresetIO;
 import mekicalc.config.RangeIO;
 import mekicalc.config.UISettingsIO;
+import mekicalc.engine.DealModel;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.EquipmentPotential;
 import mekicalc.engine.equip.PotentialDraw;
+import mekicalc.engine.skill.NightlordDealModel;
+import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillData;
+import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.model.StatBlock;
 import mekicalc.model.StatDef;
 
@@ -53,6 +58,10 @@ public final class AppModel {
     // 추천 옵션 수치 범위는 큐브 프리셋마다 따로 보관(cube_presets.json) → 별도 필드 없음.
     // 화면 설정(폰트 배율·창 크기, ui.json).
     private UISettingsIO.UISettings ui;
+    // 나이트로드 DPS 모델 데이터(직업=나이트로드 시 회색 스탯 환산에 사용).
+    private SkillData skillData;
+
+    private static final int JOB_NIGHTLORD = 1;
 
     public AppModel(Path dataDir) throws IOException {
         this.dataDir = dataDir;
@@ -63,6 +72,7 @@ public final class AppModel {
     public void reload() throws IOException {
         g = GameData.load(dataDir);
         ep = EquipmentPotential.load(dataDir);
+        skillData = SkillData.load(dataDir);
         PresetIO.Store store = PresetIO.load(dataDir);
         presets = new ArrayList<>(store.presets());
         activeName = store.active();
@@ -398,18 +408,15 @@ public final class AppModel {
             if (d == null) continue;
             delta.set(d.statId(), delta.get(d.statId()) + d.value());
         }
-        StatBlock after = g.model.combine(current, delta);
-        // 공속 DPS 배수(1+공속/100)는 효율/비교에만 반영(1타 데미지엔 미포함).
-        double base = g.model.finalDamage(current) * g.model.attackSpeedFactor(current);
-        double aft = g.model.finalDamage(after) * g.model.attackSpeedFactor(after);
-        return base <= 0 ? 0 : aft / base - 1.0;
+        // 직업별 딜 모델로 증가율(공용=1타×공속 비율, 나이트로드=종합 DPS 비율).
+        return dealModel().increase(current, delta);
     }
 
-    /** 선택한 옵션 중 데미지로 환산 못 하는 정성적 스탯(공속/방관)이 하나라도 있는지. */
+    /** 선택한 옵션 중 그 직업 모델로 데미지 환산이 안 되는 스탯이 하나라도 있는지. */
     public boolean hasQualitative(List<PotentialDraw> draws) {
         StatBlock b = new StatBlock();
         for (PotentialDraw d : draws) if (d != null) b.set(d.statId(), d.value());
-        return g.model.hasQualitative(b);
+        return dealModel().hasQualitative(b);
     }
 
     /**
@@ -454,9 +461,23 @@ public final class AppModel {
 
     /** 부위·등급의 잠재 옵션 평가 결과(딜 증가량 내림차순, 정성적은 뒤로). */
     public List<CubeEvaluator.Result> evaluate(String part, String grade) {
-        List<CubeEvaluator.Result> res = CubeEvaluator.evaluate(ep, g.model, current, part, grade);
+        List<CubeEvaluator.Result> res = CubeEvaluator.evaluate(ep, dealModel(), current, part, grade);
         res.sort((a, b) -> Double.compare(rank(b), rank(a)));
         return res;
+    }
+
+    /**
+     * 추천·평가에 쓰는 딜 모델. 직업=나이트로드면 종합 DPS 모델({@link NightlordDealModel}, 보스 기준)로
+     * 모든 스탯(공격력·크리·스킬레벨·쿨감·공속 등)을 일관 환산한다. 공용이면 기존 1타 모델 그대로.
+     */
+    private DealModel dealModel() {
+        if ((int) current.get("JOB") != JOB_NIGHTLORD || skillData == null) return g.model;
+        try {
+            NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(skillData));
+            return new NightlordDealModel(nd, g.model, true);   // 보스 기준
+        } catch (RuntimeException ex) {
+            return g.model;   // 안전 폴백
+        }
     }
 
     private static double rank(CubeEvaluator.Result r) {
@@ -476,23 +497,24 @@ public final class AppModel {
         recCache = new ArrayList<>();
         double upPrice = g.currencyValues.getOrDefault("미라클큐브", 1.0);
         double loPrice = g.currencyValues.getOrDefault("에디셔널큐브", 2.0);
+        DealModel dm = dealModel();   // 직업별 딜 모델(한 번 계산해 재사용)
         for (Map.Entry<String, CubeStateIO.PartCube> e : cubeState.entrySet()) {
             CubeStateIO.PartCube pc = e.getValue();
-            if (pc.upper() != null) addLayer(e.getKey(), pc.upper(), true, upPrice);
-            if (pc.lower() != null) addLayer(e.getKey(), pc.lower(), false, loPrice);
+            if (pc.upper() != null) addLayer(dm, e.getKey(), pc.upper(), true, upPrice);
+            if (pc.lower() != null) addLayer(dm, e.getKey(), pc.lower(), false, loPrice);
         }
         maxDivisions = 1;
         for (CubeRecommender.EquipOpts eo : recCache) maxDivisions = Math.max(maxDivisions, eo.shown().size());
     }
 
-    private void addLayer(String part, CubeStateIO.Line line, boolean upper, double price) {
+    private void addLayer(DealModel dm, String part, CubeStateIO.Line line, boolean upper, double price) {
         // 실제 옵션이 하나도 없는 층은 추천 대상 아님(잠금만 있는 빈 층도 제외 → 팬텀 추천 방지).
         if (line.grade() == null || isLineEmpty(line)) return;
         List<List<PotentialDraw>> slots = ep.slots(part, line.grade());
         PotentialDraw[] curDraws = currentDraws(line, slots);
         boolean[] locked = line.locked() != null ? line.locked() : new boolean[3];
         CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
-                g.model, current, slots, curDraws, part, upper, price, activeCubeRangeOffsets(),
+                dm, current, slots, curDraws, part, upper, price, activeCubeRangeOffsets(),
                 locked, line.grade(), line.stack(), ep);
         if (!eo.shown().isEmpty()) recCache.add(eo);
     }

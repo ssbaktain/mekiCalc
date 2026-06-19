@@ -38,7 +38,7 @@ import mekicalc.model.StatDef;
  * <h3>mode B (profile.additiveDamage=true)</h3>
  * 데미지·스탯비례·공격타입·대상을 하나로 합연산하고 최종 데미지만 따로 곱한다.
  */
-public final class DamageModel {
+public final class DamageModel implements DealModel {
 
     // 스탯 id 상수 (오타 방지)
     private static final String ATK_FLAT = "ATK_FLAT";

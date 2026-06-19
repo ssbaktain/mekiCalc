@@ -3,6 +3,7 @@
   "active": "자동 사냥",
   "presets": [
     { "name": "자동 사냥", "stats": {
+      "JOB": 1,
       "LEVEL": 111,
       "ATK_FLAT": 627413,
       "ATK_PCT": 24778.8,
@@ -24,6 +25,7 @@
       "FINAL_DMG": 65.5,
       "BASIC_ATK_TARGETS": 3,
       "COOLDOWN_REDUCTION": 0,
+      "COOLDOWN_REDUCTION_PCT": 0,
       "SKILL_LEVEL_1": 22,
       "SKILL_LEVEL_2": 14,
       "SKILL_LEVEL_3": 37,
@@ -34,6 +36,7 @@
       "SUMMON_DURATION": 60
     } },
     { "name": "챕터 보스", "stats": {
+      "JOB": 0,
       "LEVEL": 111,
       "ATK_FLAT": 631476,
       "ATK_PCT": 24778.8,
@@ -55,6 +58,7 @@
       "FINAL_DMG": 43.9,
       "BASIC_ATK_TARGETS": 3,
       "COOLDOWN_REDUCTION": 0,
+      "COOLDOWN_REDUCTION_PCT": 0,
       "SKILL_LEVEL_1": 10,
       "SKILL_LEVEL_2": 0,
       "SKILL_LEVEL_3": 32,
@@ -65,6 +69,7 @@
       "SUMMON_DURATION": 60
     } },
     { "name": "테스트", "stats": {
+      "JOB": 0,
       "LEVEL": 0,
       "ATK_FLAT": 11,
       "ATK_PCT": 0,
@@ -86,6 +91,7 @@
       "FINAL_DMG": 0,
       "BASIC_ATK_TARGETS": 0,
       "COOLDOWN_REDUCTION": 0,
+      "COOLDOWN_REDUCTION_PCT": 0,
       "SKILL_LEVEL_1": 0,
       "SKILL_LEVEL_2": 0,
       "SKILL_LEVEL_3": 0,

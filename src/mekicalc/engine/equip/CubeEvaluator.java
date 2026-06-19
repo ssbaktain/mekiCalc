@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import mekicalc.engine.DamageModel;
+import mekicalc.engine.DealModel;
 import mekicalc.model.StatBlock;
 
 /**
@@ -31,7 +31,7 @@ public final class CubeEvaluator {
 
     private CubeEvaluator() {}
 
-    public static List<Result> evaluate(EquipmentPotential ep, DamageModel model,
+    public static List<Result> evaluate(EquipmentPotential ep, DealModel model,
                                         StatBlock current, String part, String grade) {
         List<List<PotentialDraw>> slots = ep.slots(part, grade);
 

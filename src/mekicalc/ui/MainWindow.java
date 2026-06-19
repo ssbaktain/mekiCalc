@@ -64,6 +64,7 @@ public final class MainWindow extends JFrame {
 
     // 스탯 입력
     private final Map<String, JTextField> statFields = new LinkedHashMap<>();
+    private JComboBox<String> jobCombo;   // 직업 선택(공용/나이트로드) — JOB 숨김 스탯에 저장
     private final JLabel statDamage = new JLabel();
     // 딜 환산 설정(정성적·스킬레벨): 스탯별 체크박스 + 값 입력칸
     private final Map<String, JCheckBox> convChecks = new LinkedHashMap<>();
@@ -1299,6 +1300,14 @@ public final class MainWindow extends JFrame {
             @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { onStatFieldsChanged(); }
         };
         int row = 0;
+        // 직업 선택(레벨 위). 나이트로드 선택 시 회색 스탯을 DPS 모델로 환산.
+        c.gridx = 0; c.gridy = row; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        form.add(new JLabel("직업"), c);
+        c.gridx = 1; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        jobCombo = new JComboBox<>(new String[]{"공용", "나이트로드"});
+        jobCombo.addActionListener(e -> onStatFieldsChanged());
+        form.add(jobCombo, c);
+        row++;
         for (StatDef def : model.stats()) {
             if (def.hidden) continue;   // 1레벨당 주스탯 등은 직접 입력 대상 아님(큐브에서 환산)
             c.gridx = 0; c.gridy = row; c.weightx = 0; c.fill = GridBagConstraints.NONE;
@@ -1357,6 +1366,10 @@ public final class MainWindow extends JFrame {
         for (Map.Entry<String, JTextField> e : statFields.entrySet()) {
             e.getValue().setText(fmtComma(model.value(e.getKey())));
         }
+        if (jobCombo != null) {
+            int j = (int) model.value("JOB");
+            jobCombo.setSelectedIndex((j >= 0 && j < jobCombo.getItemCount()) ? j : 0);
+        }
         updateStatDamage();
         updateSaveEnabled();
     }
@@ -1369,6 +1382,7 @@ public final class MainWindow extends JFrame {
 
     /** 화면 입력값이 활성 프리셋의 저장값과 하나라도 다르면 변경됨(dirty). */
     private boolean isStatsDirty() {
+        if (jobCombo != null && jobCombo.getSelectedIndex() != (int) model.value("JOB")) return true;
         for (Map.Entry<String, JTextField> e : statFields.entrySet()) {
             if (Math.abs(parseField(e.getValue()) - model.value(e.getKey())) > 1e-9) return true;
         }
@@ -1432,6 +1446,7 @@ public final class MainWindow extends JFrame {
 
     /** 입력 필드의 현재 값들을 모델(current)에 반영. 숫자 아닌 값이 있으면 NumberFormatException. */
     private void commitFields() {
+        if (jobCombo != null) model.setValue("JOB", jobCombo.getSelectedIndex());
         for (Map.Entry<String, JTextField> e : statFields.entrySet()) {
             String t = e.getValue().getText().trim().replace(",", "");
             model.setValue(e.getKey(), (t.isEmpty() || t.equals("-")) ? 0 : Double.parseDouble(t));

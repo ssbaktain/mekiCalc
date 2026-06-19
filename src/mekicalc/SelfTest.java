@@ -17,6 +17,7 @@ import mekicalc.engine.Recommender;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.EquipmentPotential;
 import mekicalc.engine.equip.PotentialDraw;
+import mekicalc.engine.skill.NightlordDealModel;
 import mekicalc.engine.skill.NightlordDps;
 import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
@@ -374,11 +375,17 @@ public final class SelfTest {
                 .set("LEVEL", 100).set("ATK_FLAT", 100)
                 .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
 
+        // 레벨150 블록(모든 마스터리 개방) — 레벨 게이팅 ON 검증용.
+        StatBlock b150 = new StatBlock().set("LEVEL", 150).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+
         SkillData.Skill basic4 = sd.skill("basic4");
-        // 계수 2.9(스킬레벨0) × 마스터리(피해+75%×보스+20% = 1.75×1.2=2.1) × G100 = 609
-        check("nl.perHit.basic4", nd.perHit(basic4, b, true), 609);
+        // 레벨100: 4차 피해/보스 마스터리(102~132렙) 미개방 → 마스터리 1.0. 계수 2.9 × G100 = 290
+        check("nl.perHit.basic4.lv100", nd.perHit(basic4, b, true), 290);
+        check("nl.basicDps.basic4.lv100", nd.basicDps(basic4, b, true), 1450); // 290 × 5타 × 초당타수1
+        // 레벨150: 마스터리 전부(피해+75%·보스+20% = 2.1), 계수 290×(1+0.4%×150)=4.64 → 100×4.64×2.1 = 974.4
+        check("nl.perHit.basic4.lv150", nd.perHit(basic4, b150, true), 974.4);
         check("nl.basicHits.basic4", nd.basicHits(basic4, b), 5);
-        check("nl.basicDps.basic4", nd.basicDps(basic4, b, true), 3045); // 609 × 5타 × 초당타수1
 
         SkillData.Skill wind = sd.skill("windTalisman");
         // 2차 base스킬레벨90 → 계수 5.8, 메용 130%(×2.3), G100 = 1334
@@ -386,32 +393,27 @@ public final class SelfTest {
         check("nl.cd.wind", nd.cooldown(wind, b), 24);
         check("nl.activeDps.wind", nd.simpleActiveDps(wind, b, true), 1334.0 / 24);
 
-        // 쿼드러플: 쿨감 마스터리 30% → 10×0.7 = 7초
-        check("nl.cd.quad", nd.cooldown(sd.skill("quadThrow"), b), 7);
+        // 쿼드러플 쿨감 마스터리(108렙): 레벨150 → 10×0.7 = 7초
+        check("nl.cd.quad", nd.cooldown(sd.skill("quadThrow"), b150), 7);
 
         // 버프 주입: 레벨100 → 다크사이트(15렙)·아드레날린(66렙)·민첩 활성, 퍼지(110렙)·페이크/세레니티(상시)는 제외.
         NightlordDps.Buffed bf = nd.buffed(b);
-        // 다크사이트 크확 = 6 × 스케일(statActive 0.4%×스킬레벨60=1.24) × 가동률(12/25=0.48) = 3.5712
-        check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);
-        // 공격력 별도 버킷 = 숙련된표창술(18×1.36=24.48) + 다크사이트(10×1.24×0.48=5.952) = 30.432 → ×1.30432
-        check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);
-        // 아드레날린 최종뎀 = 16 × 스케일(0.3%×120=1.36) × 가동률(15/22) (퍼지 미개방이라 단독)
-        check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), 16 * 1.36 * (15.0 / 22.0));
-        // 공속 = 아드레날린(8×1.36×15/22) DIMINISHING 후 민첩(15×0.25=3.75) DIMINISHING
+        check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);     // 6 × 1.24 × 0.48
+        check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);       // 숙련된표창술 24.48 + 다크사이트 5.952
+        check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), 16 * 1.36 * (15.0 / 22.0)); // 아드레날린
         double adrAS = 8 * 1.36 * (15.0 / 22.0);
         double expAS = adrAS + (150 - adrAS) * ((15 * 0.25) / 150.0);
         check("nl.buff.atkSpeed", bf.stats.get("ATK_SPEED"), expAS);
 
-        // 특수 스킬 컴포넌트: 통제 블록(공속0 → G=100, 베놈 가동률 0.8) 직접 대입, 공격력 버킷 제외.
-        check("nl.mark", nd.markPerHit(b, true), 3132);          // 100 × 4.35(계수3×1.45) × 1.8 × 4.0
-        check("nl.venom", nd.venomDotDps(b, true), 79.92);       // 100 × 0.666(0.45×1.48) × 1.5(메용) × 0.8(u)
-        check("nl.shadow", nd.shadowExtraPerHit(b, true), 66.6); // 100 × 0.888 × 2.0 × 1.5 × 0.25
-        check("nl.fatal.locked", nd.fatalExtraPerHit(b, true), 0); // 117렙 개방 → 레벨100은 잠김
-        // 레벨120: 페이탈 스킬레벨60 → 계수7.44, = 100 × 7.44 × 2.0 × 0.2 × 0.8 = 238.08
-        StatBlock b120 = new StatBlock().set("LEVEL", 120).set("ATK_FLAT", 100)
-                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
-        check("nl.fatal", nd.fatalExtraPerHit(b120, true), 238.08);
-        check("nl.recvDebuff", nd.recvDmgFactor(b), 1.096);      // 베놈약화 0.12×0.8 (퍼지·마크 미개방)
+        // 특수 스킬 컴포넌트(공속0 → G=100, 베놈 가동률 0.8).
+        check("nl.mark.noNightlord", nd.markPerHit(b, true), 783);    // 레벨100: 나이트로드(107렙) 미개방 → ×1.0
+        check("nl.mark.full", nd.markPerHit(b150, true), 3132);       // 레벨150: 나이트로드 최종뎀+300%(×4.0). 마크 스킬레벨 90 고정
+        check("nl.venom", nd.venomDotDps(b, true), 79.92);
+        check("nl.shadow", nd.shadowExtraPerHit(b, true), 66.6);
+        check("nl.fatal.locked", nd.fatalExtraPerHit(b, true), 0);    // 117렙 개방, 레벨100 잠김
+        // 레벨150: 페이탈 피해 마스터리(130렙) 개방, 스킬레벨150 → 계수9.6 → 100×9.6×2.0×0.2×0.8 = 307.2
+        check("nl.fatal", nd.fatalExtraPerHit(b150, true), 307.2);
+        check("nl.recvDebuff", nd.recvDmgFactor(b), 1.096);          // 베놈약화 0.12×0.8 (퍼지·마크 미개방)
         // 종합 DPS: 양수, 일반몹(대상수 곱) > 보스(단일)
         checkTrue("nl.total.pos", nd.totalDps(b, true) > 0);
         checkTrue("nl.total.mobGtBoss", nd.totalDps(b, false) > nd.totalDps(b, true));
@@ -426,6 +428,18 @@ public final class SelfTest {
         // 대상수: 보스(단일)는 효과 없음(=0), 일반몹은 증가
         check("nl.conv.targetsBoss", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), true), 0);
         checkTrue("nl.conv.targetsMob", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), false) > 0);
+
+        // 실제 캐릭터 데이터(data/character.json) 경로: 예외 없이 동작하고 쿨감·모스렙이 DPS로 잡혀야 함.
+        NightlordDealModel ndm = new NightlordDealModel(nd, g.model, true);
+        checkTrue("nl.real.totalPos", nd.totalDps(g.current, true) > 0);
+        checkTrue("nl.real.cdrValued", ndm.increase(g.current, new StatBlock().set("COOLDOWN_REDUCTION", 2)) > 0);
+        checkTrue("nl.real.skillLvValued", ndm.increase(g.current, new StatBlock().set("SKILL_LEVELS", 1)) > 0);
+        checkTrue("nl.real.cdrNotQual", !ndm.hasQualitative(new StatBlock().set("COOLDOWN_REDUCTION", 2)));
+        checkTrue("nl.real.defPenQual", ndm.hasQualitative(new StatBlock().set("DEF_PEN", 5)));
+        // 버프 지속시간 증가%: 가동률↑로 DPS 환산(계산 불가 아님). 레벨200(버프 전부 개방).
+        NightlordDealModel ndmBig = new NightlordDealModel(nd, g.model, true);
+        checkTrue("nl.buffDur.valued", ndmBig.increase(big, new StatBlock().set("BUFF_DURATION", 20)) > 0);
+        checkTrue("nl.buffDur.notQual", !ndmBig.hasQualitative(new StatBlock().set("BUFF_DURATION", 20)));
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {
