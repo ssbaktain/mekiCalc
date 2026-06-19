@@ -20,6 +20,7 @@
   { "id": "FINAL_DMG",        "name": "최종 데미지%",            "unit": "PCT",   "combine": "MULT_PCT" },
   { "id": "BASIC_ATK_TARGETS","name": "기본 공격 대상 수 증가(+)", "unit": "FLAT", "combine": "SUM", "qualitative": true },
   { "id": "COOLDOWN_REDUCTION","name": "스킬 재사용 대기시간 감소(+초)", "unit": "SEC", "combine": "SUM", "qualitative": true },
+  { "id": "COOLDOWN_REDUCTION_PCT","name": "스킬 재사용 대기시간 감소%", "unit": "PCT", "combine": "DIMINISHING", "max": 100, "qualitative": true },
   { "id": "SKILL_LEVEL_1",    "name": "1차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVEL_2",    "name": "2차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVEL_3",    "name": "3차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },

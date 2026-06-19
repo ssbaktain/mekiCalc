@@ -17,6 +17,9 @@ import mekicalc.engine.Recommender;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.EquipmentPotential;
 import mekicalc.engine.equip.PotentialDraw;
+import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillData;
+import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.json.Json;
 import mekicalc.model.Profile;
 import mekicalc.model.StatBlock;
@@ -50,6 +53,8 @@ public final class SelfTest {
         testParetoAxisVerify();
         testCrossGradeProbBounded();
         testCeilingEdgeForcesGradeUp();
+        testSkillDpsModelCore();
+        testNightlordDps();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -336,6 +341,53 @@ public final class SelfTest {
             List<List<PotentialDraw>> slots, PotentialDraw[] curDraws, int stack) {
         return CubeRecommender.analyze(g.model, g.current, slots, curDraws, part, true, 1.0,
                 java.util.Map.of(), null, "NORMAL", stack, ep).totalProb();
+    }
+
+    /** DPS 모델 핵심 계산 검산(메모리 스펙의 검증값들). */
+    private static void testSkillDpsModelCore() throws Exception {
+        SkillData sd = SkillData.load(Path.of("data"));
+        SkillDpsModel m = new SkillDpsModel(sd);
+        // 데이터 로드
+        check("skill.data.basic4Base", sd.skill("basic4").num("base", 0), 290);
+        check("skill.data.growthDealActive", sd.growth("dealActive"), 0.5);
+        // 현재 계수: 4차 평타 290% × (1+0.4%×100) = 406
+        check("skill.coeff.basic4", SkillDpsModel.coefficient(290, sd.growth("basic"), 100), 406);
+        // 기본 스킬 레벨
+        check("skill.baseLv.t3@99", m.baseSkillLevel(3, 99), 117);
+        check("skill.baseLv.t3@100", m.baseSkillLevel(3, 100), 120);
+        check("skill.baseLv.t4@100", m.baseSkillLevel(4, 100), 0);
+        check("skill.baseLv.t4@101", m.baseSkillLevel(4, 101), 3);
+        // 쿨감: 비율(다크플레어 45×0.7=31.5), 고정 체감(원쿨8·쿨감초5 → 5)
+        check("skill.cd.pct", SkillDpsModel.cooldown(45, 30, 0), 31.5);
+        check("skill.cd.flatFloor", SkillDpsModel.cooldown(8, 0, 5), 5);
+        // 베놈 가동률: 지속10, p0.4, 공속100% → 10/11.25 ≈ 0.8889
+        check("skill.venomUptime", SkillDpsModel.venomUptime(10, 0.4, 100), 10.0 / 11.25);
+    }
+
+    /** 나이트로드 DPS: 통제된 StatBlock(공격력100·배율100, 나머지 0)으로 1타 데미지·DPS 손계산 대조. */
+    private static void testNightlordDps() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        SkillData sd = SkillData.load(Path.of("data"));
+        NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(sd));
+        // G_boss = 공격력100 × 1 × ... × 데미지범위((100+100)/200=1) × ... × (1+보스뎀0) = 100
+        StatBlock b = new StatBlock()
+                .set("LEVEL", 100).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+
+        SkillData.Skill basic4 = sd.skill("basic4");
+        // 계수 2.9(스킬레벨0) × 마스터리(피해+75%×보스+20% = 1.75×1.2=2.1) × G100 = 609
+        check("nl.perHit.basic4", nd.perHit(basic4, b, true), 609);
+        check("nl.basicHits.basic4", nd.basicHits(basic4, b), 5);
+        check("nl.basicDps.basic4", nd.basicDps(basic4, b, true), 3045); // 609 × 5타 × 초당타수1
+
+        SkillData.Skill wind = sd.skill("windTalisman");
+        // 2차 base스킬레벨90 → 계수 5.8, 메용 130%(×2.3), G100 = 1334
+        check("nl.perHit.wind", nd.perHit(wind, b, true), 1334);
+        check("nl.cd.wind", nd.cooldown(wind, b), 24);
+        check("nl.activeDps.wind", nd.simpleActiveDps(wind, b, true), 1334.0 / 24);
+
+        // 쿼드러플: 쿨감 마스터리 30% → 10×0.7 = 7초
+        check("nl.cd.quad", nd.cooldown(sd.skill("quadThrow"), b), 7);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

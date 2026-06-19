@@ -303,6 +303,31 @@ public final class DamageModel {
         return b.get(id);
     }
 
+    // ---- 나이트로드 DPS 모델용 G 훅 (스킬 무관 공통 배수) ----
+
+    /**
+     * 스킬 무관 공통 배수 G = 공격력 × 데미지 × 스탯비례 × 크리 × 데미지범위 × 최종데미지 × 대상(보스/일반몹).
+     * <p>스킬별로 다른 항(기본 공격 계수, 기본공격뎀%, 스킬뎀%)과 커스텀환산은 제외한다.
+     * 각 스킬의 계수·타입별 데미지%는 {@link mekicalc.engine.skill.NightlordDps}가 따로 곱한다. mode A 기준.
+     */
+    public double globalMultiplier(StatBlock b, boolean boss) {
+        double baseAtk = v(b, ATK_FLAT) * (1 + v(b, ATK_PCT) / 100.0);
+        double fDmg = (1 + v(b, DMG) / 100.0) * (1 + v(b, DMG_AMP) / 100.0);
+        double fStatProp = 1 + v(b, STAT_PROP_DMG) / 100.0;
+        double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
+        double minMult = v(b, MIN_DMG_MULT), maxMult = v(b, MAX_DMG_MULT);
+        double fRange = (minMult > maxMult) ? minMult / 100.0 : (minMult + maxMult) / 200.0;
+        double fFinal = 1 + v(b, FINAL_DMG) / 100.0;
+        double target = 1 + (boss ? v(b, BOSS_DMG) : v(b, NORMAL_DMG)) / 100.0;
+        return baseAtk * fDmg * fStatProp * fCrit * fRange * fFinal * target;
+    }
+
+    /** 기본 공격 데미지% 배수(평타 한정). */
+    public double basicAtkDmgFactor(StatBlock b) { return 1 + v(b, BASIC_ATK_DMG) / 100.0; }
+
+    /** 스킬 데미지% 배수(비평타 스킬용). */
+    public double skillDmgFactor(StatBlock b) { return 1 + v(b, SKILL_DMG) / 100.0; }
+
     public Map<String, StatDef> stats() {
         return stats;
     }

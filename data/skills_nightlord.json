@@ -1,0 +1,116 @@
+{
+  "_comment": "나이트로드 스킬 데이터(DPS 모델용). %는 표기 그대로(290 = 290%). growth=레벨당 상승비(%). 레벨 구간별 대상/타격 보정·메용 2중·DoT 가동률은 엔진(Java)에서 처리. 규칙은 메모리 mekicalc-dps-model-spec 참조.",
+  "_notInHere": "프리셋 스탯에 이미 들어가는 것들(피지컬 트레이닝 기본공격뎀, 숙련된 표창술 공격력, 래디컬 보뎀, 자벨린, 크리티컬 스로우 크확/크뎀, 64렙 대상수 강화 등)은 유저 입력값에 포함되므로 여기 없음. statPassives는 참고용.",
+
+  "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
+
+  "_growthComment": "기본 스킬레벨 = (min(캐릭레벨, 다음전직레벨) − 자기전직레벨)×3. 총 스킬레벨 = 기본 + 모스렙 + n스렙. 현재계수 = base × (1 + growth%/100 × 총스킬레벨).",
+  "growth": {
+    "basic": 0.4,
+    "dealActive": 0.5,
+    "dealPassiveCd": 0.5,
+    "dealPassiveNoCd": 0.4,
+    "statActive": 0.4,
+    "statPassive": 0.3,
+    "meyong": 5
+  },
+  "meyong": { "tier": 4, "open": 100, "_perSkillFinal": "각 스킬의 meyong 필드(표기 최종뎀%)" },
+
+  "_skillsComment": "kind: basic/dealActive/dealPassiveCd/dealPassiveNoCd. base=계수%, hits=타격수, targets=대상수(보스모드 무시), cd=쿨(초). mastery* = 동일옵션 합산값. meyong=메이플용사 표기 최종뎀%(없으면 미적용).",
+  "skills": [
+    { "id": "basic1", "name": "기본공격 1차", "kind": "basic", "tier": 1, "open": 1,
+      "base": 26, "hitsBase": 2, "targetsBase": 3,
+      "masteryDmg": 55, "targetPlus": { "15": 1, "22": 1 } },
+
+    { "id": "basic2", "name": "기본공격 2차", "kind": "basic", "tier": 2, "open": 30,
+      "base": 40, "hitsBase": 3, "targetsBase": 5,
+      "masteryDmg": 55, "masteryBoss": 15, "targetPlus": { "37": 1 }, "hitPlus": { "56": 1 } },
+
+    { "id": "basic3", "name": "기본공격 3차", "kind": "basic", "tier": 3, "open": 60,
+      "base": 80, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmg": 75, "masteryBoss": 20, "hitPlus": { "96": 1 } },
+
+    { "id": "basic4", "name": "기본공격 4차", "kind": "basic", "tier": 4, "open": 100,
+      "base": 290, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmg": 75, "masteryBoss": 20, "hitPlus": { "136": 1 } },
+
+    { "id": "windTalisman", "name": "윈드 탈리스만", "kind": "dealActive", "tier": 2, "open": 35,
+      "base": 400, "hits": 1, "targets": 6, "cd": 24, "meyong": 130 },
+
+    { "id": "tripleThrow", "name": "트리플 스로우", "kind": "dealActive", "tier": 3, "open": 63,
+      "base": 360, "hits": 3, "targets": 1, "cd": 13, "masteryDmg": 100 },
+
+    { "id": "darkFlare", "name": "다크 플레어", "kind": "dealActive", "tier": 3, "open": 69,
+      "base": 400, "hitsPerTick": 2, "hitsPerTickMastery": 1, "ticks": 4, "ticksWithPeriodMastery": 6,
+      "targets": 5, "cd": 45, "cdrMastery": 30, "meyong": 15,
+      "_comment": "20초 설치, 5초마다(주기-40% → 3초마다, 6틱). 틱당 2타(+1 마스터리=3타). 쿨-30% 마스터리." },
+
+    { "id": "quadThrow", "name": "쿼드러플 스로우", "kind": "dealActive", "tier": 4, "open": 103,
+      "base": 1150, "hits": 4, "targets": 1, "cd": 10, "cdrMastery": 30, "masteryDmg": 50 },
+
+    { "id": "suddenRaid", "name": "써든레이드", "kind": "dealActive", "tier": 4, "open": 105,
+      "base": 1400, "hits": 3, "targets": 8, "cd": 19, "masteryDmg": 50,
+      "dotPerCast": { "perTick": 360, "ticks": 5 },
+      "_comment": "본딜 1400%×3타 + 지속피해 360%×5(=1800%)/시전, 합쳐 ÷ 쿨." },
+
+    { "id": "markOfAssassin", "name": "마크 오브 어쌔신", "kind": "dealPassiveCd", "tier": 2, "open": 43,
+      "base": 300, "targetsBase": 7, "targetsNightlord": 10, "period": 5, "periodMastery": 1,
+      "masteryDmg": 80, "finalNightlord": 300,
+      "_comment": "5초마다(마스터리 -1초 → 4초) 표식, 표식 적 공격 시 base 1회. 나이트로드(107렙) 최종뎀+300%·대상10. DPS = 1회계수 ÷ 주기." },
+
+    { "id": "shadowPartner", "name": "쉐도우 파트너", "kind": "dealPassiveNoCd", "tier": 3, "open": 60,
+      "base": 60, "proc": 25, "masteryDmg": 100, "meyong": 50,
+      "_comment": "모든 공격(평타 포함)당 기대 추가 = proc% × base × (1+masteryDmg) × (1+meyong 2중) × 스킬레벨스케일." },
+
+    { "id": "venom", "name": "베놈", "kind": "dealPassiveNoCd", "tier": 3, "open": 74,
+      "dot": { "perSec": 45, "dur": 10, "proc": 30, "procMasteryPlus": 10 }, "meyong": 50,
+      "_comment": "지속 끝나야 재판정. 중독 가동률 u = dur ÷ (dur + (1/p)×평타주기), p=proc+마스터리." },
+
+    { "id": "fatalVenom", "name": "페이탈 베놈", "kind": "dealPassiveNoCd", "tier": 4, "open": 117,
+      "base": 600, "proc": 20, "masteryDmg": 100, "requiresPoison": true,
+      "_comment": "중독 대상 공격 시 proc% × base × (1+masteryDmg=1200%) × u. 메용 대상 아님." }
+  ],
+
+  "_buffsComment": "가동률 평균 기여. dur/cd로 가동률 계산(상시는 always). 효과는 스킬레벨 스케일(growth[category]) 받음. 단 nimbleMove는 고정값.",
+  "buffs": [
+    { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60,
+      "_comment": "고정값, 스킬레벨 영향 없음. 이속10%는 딜 무관." },
+
+    { "id": "darkSight", "name": "다크 사이트", "kind": "statActive", "tier": 1, "open": 15,
+      "critRate": 6, "atkPct": 10, "dur": 8, "durMastery": 50, "cd": 25,
+      "_comment": "마스터리(24렙) 지속+50% → 12초. atkPct는 스킬 공퍼 합산버킷." },
+
+    { "id": "adrenaline", "name": "아드레날린", "kind": "statPassive", "tier": 3, "open": 66,
+      "finalDmg": 10, "finalDmgMastery": 6, "atkSpeed": 8, "dur": 10, "durMastery": 5, "triggerCasts": 7,
+      "_comment": "7발동마다. 가동률 = dur ÷ (dur + 7×평타주기). 마스터리(90렙) 지속+5초·최종뎀+6%p." },
+
+    { "id": "purge", "name": "퍼지 에어리어", "kind": "statActive", "tier": 4, "open": 110,
+      "finalDmg": 13, "dur": 20, "cd": 45,
+      "_comment": "자버프 최종뎀13%. 받는피해+18%는 debuffs로." },
+
+    { "id": "fake", "name": "페이크", "kind": "statPassive", "tier": 4, "open": 115,
+      "finalDmg": 10, "finalDmgMastery": 10, "always": true },
+
+    { "id": "darkSerenity", "name": "다크 세레니티", "kind": "statPassive", "tier": 4, "open": 125,
+      "finalDmg": 15, "minMult": 20, "always": true }
+  ],
+
+  "_debuffsComment": "받는 피해 증가(보스모드 대상에 적용). 같은 종류끼리 합연산, 각 가동률 가중. 전체딜 × (1 + Σ effect×uptime).",
+  "debuffs": [
+    { "id": "venomWeaken", "name": "베놈 약화", "recvDmg": 12, "open": 82, "uptime": "venom_u" },
+    { "id": "purgeWeaken", "name": "퍼지 받는피해", "recvDmg": 18, "open": 110, "uptime": "purge" },
+    { "id": "markWeaken", "name": "마크 약화", "recvDmg": 15, "open": 107, "uptime": 1.0,
+      "_comment": "마크 나이트로드(138렙). 4초지속/4초주기 → 가동률≈100%." }
+  ],
+
+  "_statPassivesComment": "참고용. 이 효과들은 유저가 게임에서 읽어 프리셋 스탯에 입력하므로 엔진이 재적용하지 않음. 단 스킬레벨 환산(모스렙/n스렙) 정밀화 때 참고. 효과는 statPassive 0.3% 스케일.",
+  "statPassives": [
+    { "id": "physicalTraining", "name": "피지컬 트레이닝", "tier": 2, "open": 38, "basicAtkDmg": 10 },
+    { "id": "javelinMastery", "name": "자벨린 마스터리", "tier": 2, "open": 40, "minMult": 15 },
+    { "id": "criticalThrow", "name": "크리티컬 스로우", "tier": 2, "open": 45, "critRate": 6, "critDmg": 10 },
+    { "id": "radicalDarkness", "name": "래디컬 다크니스", "tier": 3, "open": 72, "bossDmg": 18 },
+    { "id": "shurikenExpert", "name": "숙련된 표창술", "tier": 3, "open": 75, "atkPct": 18 },
+    { "id": "javelinExpert", "name": "자벨린 엑스퍼트", "tier": 4, "open": 120, "skillDmg": 15, "maxMult": 20 },
+    { "id": "javelicAccel", "name": "자벨릭 액셀레이션", "tier": 2, "open": 33, "atkSpeed": 5 }
+  ]
+}
