@@ -297,24 +297,20 @@ public final class NightlordDps {
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
         int cl = charLevel(eff);
-        double castsPerSec = 1 + eff.get(ATK_SPEED) / 100.0;
+        // 액션 이코노미: 평타·액티브는 한 타임라인을 공유(시전속도 ≈ 공속). 초당 슬롯 R = 1 + 공속%.
+        // 액티브 1회 시전 = 1슬롯, 평타는 액티브가 쓰고 남은 슬롯만큼만 나감. 버프(민첩·다크사이트)는 오프-GCD.
+        double slotsPerSec = 1 + eff.get(ATK_SPEED) / 100.0;
 
         double baseDps = 0;          // 코어(평타+액티브+마크+써든도트), 추가타 제외
         double hitsPerSec = 0;       // 쉐파/페이탈 적용 대상 타수(대상수 포함)
-
-        Skill basic = highestBasic(cl);
-        if (basic != null) {
-            int hits = basicHits(basic, eff);
-            double targets = boss ? 1 : basicTargets(basic, eff);
-            baseDps += perHit(basic, bf, boss) * hits * targets * castsPerSec;
-            hitsPerSec += hits * targets * castsPerSec;
-        }
+        double skillActionsPerSec = 0;   // 액티브가 먹는 슬롯
 
         for (Skill s : data.skills()) {
             if (cl < s.open) continue;
             if (!(s.kind.equals("dealActive"))) continue;   // 평타/패시브/마크는 별도
             double cd = cooldown(s, eff);
             if (cd <= 0) continue;
+            skillActionsPerSec += 1.0 / cd;   // 시전 1회 = 평타 1슬롯
             int hits = hitsPerCast(s, eff);
             double targets = boss ? 1 : s.num("targets", 1);
             baseDps += perHit(s, bf, boss) * hits * targets / cd;
@@ -322,6 +318,16 @@ public final class NightlordDps {
             if (s.id.equals("suddenRaid")) {
                 baseDps += suddenDotPerCast(eff, boss) * atkF * targets / cd;   // 도트는 타수 아님
             }
+        }
+
+        // 평타: 액티브가 쓰고 남은 슬롯만큼만.
+        double basicActionsPerSec = Math.max(0, slotsPerSec - skillActionsPerSec);
+        Skill basic = highestBasic(cl);
+        if (basic != null) {
+            int hits = basicHits(basic, eff);
+            double targets = boss ? 1 : basicTargets(basic, eff);
+            baseDps += perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;
+            hitsPerSec += hits * targets * basicActionsPerSec;
         }
 
         // 마크: 기존 타격에 얹히는 보너스(새 타수 아님). 주기 = period − 주기 마스터리(레벨 게이팅).
