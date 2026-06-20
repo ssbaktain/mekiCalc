@@ -404,7 +404,7 @@ public final class SelfTest {
         NightlordDps.Buffed bf = nd.buffed(b);
         check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);     // 6 × 1.24 × 0.48
         check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);       // 숙련된표창술 24.48 + 다크사이트 5.952
-        check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), 16 * 1.36 * (15.0 / 22.0)); // 아드레날린
+        check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), (10 * 1.36 + 6) * (15.0 / 22.0)); // 아드레날린: base10×scale1.36 + 마스터리6(나중), ×가동률
         double adrAS = 8 * 1.36 * (15.0 / 22.0);
         double expAS = adrAS + (150 - adrAS) * ((15 * 0.25) / 150.0);
         check("nl.buff.atkSpeed", bf.stats.get("ATK_SPEED"), expAS);

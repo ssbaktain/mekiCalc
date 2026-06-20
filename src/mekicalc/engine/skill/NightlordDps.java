@@ -136,8 +136,9 @@ public final class NightlordDps {
             if (cr != 0) eff.set(CRIT_RATE, eff.get(CRIT_RATE) + cr * scale * u);
             double cd = Json.num(m, "critDmg", 0);
             if (cd != 0) eff.set(CRIT_DMG, eff.get(CRIT_DMG) + cd * scale * u);
-            double fd = Json.num(m, "finalDmg", 0) + levelSum(m, "finalDmgMasteryByLevel", cl);
-            if (fd != 0) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), fd * scale * u));
+            // 레벨계수는 base에만, 마스터리는 스케일 없이 나중에 더함(인게임 툴팁이 마스터리 미표기 → 마지막 계산).
+            double fd = Json.num(m, "finalDmg", 0) * scale + levelSum(m, "finalDmgMasteryByLevel", cl);
+            if (fd != 0) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), fd * u));
             double as = Json.num(m, "atkSpeed", 0);
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
         }
