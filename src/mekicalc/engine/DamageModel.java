@@ -98,6 +98,15 @@ public final class DamageModel implements DealModel {
         return f;
     }
 
+    /** 스탯 id가 커스텀 환산(체크 ON)으로 설정됐는지(외부 딜 모델용 공개). */
+    public boolean isCustomConv(String id) { return customConv.containsKey(id); }
+
+    /** 스탯 id 하나의 커스텀 환산 곱연산 배수(= 1 + 단위당%/100 × 값). custom 아니면 1.0. */
+    public double customConvFactor(StatBlock b, String id) {
+        Double per = customConv.get(id);
+        return per == null ? 1.0 : 1 + per / 100.0 * v(b, id);
+    }
+
     /** 기준 데미지 = 일반몹 대상 기본 공격(예상 데미지 기준). */
     public double finalDamage(StatBlock b) {
         return finalDamageNormal(b);

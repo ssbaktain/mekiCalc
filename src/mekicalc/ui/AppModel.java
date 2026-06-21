@@ -437,25 +437,12 @@ public final class AppModel {
         return any ? p : 0.0;
     }
 
-    /** 선택한 옵션들의 동일 옵션 등장 확률 총합(슬롯 배치만 다른 같은 구성 전부 합산). */
+    /** 동일 옵션 등장 확률 총합: 슬롯 순서가 어떻든 같은 옵션 구성이 나오는 모든 배치 확률의 합(우선순위 추천과 동일). */
     public double probSumForDraws(String part, String grade, List<PotentialDraw> draws) {
         List<PotentialDraw> opts = new ArrayList<>();
         for (PotentialDraw d : draws) if (d != null) opts.add(d);
         if (opts.isEmpty()) return 0.0;
         return CubeRecommender.arrangeSum(opts, ep.slots(part, grade));
-    }
-
-    /** 선택한 배치 그대로의 단일 등장 확률(선택 슬롯=옵션 확률, 미선택 슬롯=빈 확률). */
-    public double probSingleForDraws(String part, String grade, List<PotentialDraw> draws) {
-        List<List<PotentialDraw>> sl = ep.slots(part, grade);
-        double p = 1.0;
-        boolean any = false;
-        for (int i = 0; i < 3; i++) {
-            PotentialDraw d = (i < draws.size()) ? draws.get(i) : null;
-            if (d != null) { p *= d.prob() / 100.0; any = true; }
-            else p *= CubeRecommender.emptyProb(sl.get(i));
-        }
-        return any ? p : 0.0;
     }
 
     public List<String> grades() { return ep.grades(); }
@@ -465,6 +452,13 @@ public final class AppModel {
     /** 부위·등급의 잠재 옵션 평가 결과(딜 증가량 내림차순, 정성적은 뒤로). */
     public List<CubeEvaluator.Result> evaluate(String part, String grade) {
         List<CubeEvaluator.Result> res = CubeEvaluator.evaluate(ep, dealModel(), current, part, grade);
+        res.sort((a, b) -> Double.compare(rank(b), rank(a)));
+        return res;
+    }
+
+    /** 부위·등급의 특정 슬롯(0~2) 옵션 평가(등장 확률=그 슬롯 p). 딜 증가량 내림차순, 정성적은 뒤로. */
+    public List<CubeEvaluator.Result> evaluate(String part, String grade, int slot) {
+        List<CubeEvaluator.Result> res = CubeEvaluator.evaluateSlot(ep, dealModel(), current, part, grade, slot);
         res.sort((a, b) -> Double.compare(rank(b), rank(a)));
         return res;
     }
@@ -588,6 +582,88 @@ public final class AppModel {
             case 2: return r.totalProb() / r.cost();       // 1회 리롤(기존보다 좋은 옵션 등장 확률, 아랫잠 ÷2)
             default: return r.gainEff();                   // 3: 최종 효율 (딜차이×등장확률, 이미 /cost)
         }
+    }
+
+    // ──────────────────── 내 옵션 비교 ────────────────────
+
+    /** '내 옵션 비교' 결과. valid=false면 왼쪽(내 큐브 줄)이 비어 비교 불가. 확률은 0~1. */
+    public record CompareResult(boolean valid, double leftDeal, double rightDeal, double dealDiff,
+                                double leftProbSum, double rightProbSum, double gainEff, double totalProb, double remainProb,
+                                boolean leftQual, boolean rightQual, double cost) {}
+
+    /**
+     * 내 큐브 한 줄(part의 윗/아랫잠)을 기준으로, 같은 부위에서 오른쪽(가정) 등급·옵션으로 바뀌었을 때의
+     * 딜 증가량 차이·최종 효율·1회 리롤 두 확률을 우선순위 추천과 동일 정의로 계산한다.
+     * - totalProb = 1회 리롤로 '내 현재 줄'보다 좋은 옵션이 나올 확률(추천의 totalProb).
+     * - remainProb = 1회 리롤로 '오른쪽(가정) 옵션'보다 좋은 옵션이 나올 확률.
+     * - rightProbSum = 오른쪽 옵션 동일 구성 등장 확률 총합(오른쪽 등급이 더 높으면 승급 도달 확률 반영).
+     */
+    public CompareResult myCompare(String part, boolean upper, String rightGrade, List<PotentialDraw> rightOpts) {
+        CubeStateIO.PartCube pc = cubeOf(part);
+        CubeStateIO.Line line = pc == null ? null : (upper ? pc.upper() : pc.lower());
+        if (line == null || line.grade() == null || isLineEmpty(line))
+            return new CompareResult(false, 0, 0, 0, 0, 0, 0, 0, 0, false, false, 0);
+
+        String leftGrade = line.grade();
+        List<List<PotentialDraw>> leftSlots = ep.slots(part, leftGrade);
+        PotentialDraw[] curDraws = currentDraws(line, leftSlots);
+        boolean[] locked = line.locked() != null ? line.locked() : new boolean[3];
+        double cost = upper ? g.currencyValues.getOrDefault("미라클큐브", 1.0)
+                            : g.currencyValues.getOrDefault("에디셔널큐브", 2.0);
+        DealModel dm = dealModel();
+
+        CubeRecommender.EquipOpts eo = CubeRecommender.analyze(
+                dm, current, leftSlots, curDraws, part, upper, cost, activeCubeRangeOffsets(),
+                locked, leftGrade, line.stack(), ep);
+
+        // 좌/우 딜: 현재 줄을 뺀 baseline 기준(추천 엔진과 동일).
+        StatBlock leftDelta = new StatBlock();
+        for (PotentialDraw d : curDraws) if (d != null) leftDelta.set(d.statId(), leftDelta.get(d.statId()) + d.value());
+        StatBlock baseline = dm.uncombine(current, leftDelta);
+        double curBase = dm.output(baseline);
+        double leftDeal = curBase > 0 ? dm.output(current) / curBase - 1.0 : 0;
+
+        List<PotentialDraw> rOpts = new ArrayList<>();
+        for (PotentialDraw d : rightOpts) if (d != null) rOpts.add(d);
+        StatBlock rightDelta = new StatBlock();
+        for (PotentialDraw d : rOpts) rightDelta.set(d.statId(), rightDelta.get(d.statId()) + d.value());
+        double rightDeal = curBase > 0 ? dm.output(dm.combine(baseline, rightDelta)) / curBase - 1.0 : 0;
+        double dealDiff = rightDeal - leftDeal;
+
+        // 왼쪽(내 큐브) 동일 옵션 등장 확률 총합(우선순위 추천과 동일한 arrangeSum).
+        List<PotentialDraw> lOpts = new ArrayList<>();
+        for (PotentialDraw d : curDraws) if (d != null) lOpts.add(d);
+        double leftProbSum = CubeRecommender.arrangeSum(lOpts, leftSlots);
+
+        // 오른쪽 동일 옵션 등장 확률 총합(등급업이면 승급 도달 확률 반영).
+        List<List<PotentialDraw>> rightTables = ep.slots(part, rightGrade);
+        double arrange = CubeRecommender.arrangeSum(rOpts, rightTables);
+        double rightProbSum = arrange;
+        int li = ep.gradeIndex(leftGrade), ri = ep.gradeIndex(rightGrade);
+        if (ri > li && li >= 0) {
+            List<String> grs = ep.grades();
+            double eReach = 0;
+            boolean ok = true;
+            for (int gi = li; gi < ri; gi++) {
+                double eStep = ep.gradeUpCubes(grs.get(gi), gi == li ? Math.max(0, line.stack()) : 0);
+                if (eStep <= 0) { ok = false; break; }
+                eReach += eStep;
+            }
+            rightProbSum = (ok && arrange > 0) ? 1.0 / (eReach + Math.max(0.0, 1.0 / arrange - 1.0)) : 0;
+        }
+
+        double gainEff = cost > 0 ? dealDiff * rightProbSum / cost : 0;
+        // 1회 리롤로 '오른쪽(가정)보다 좋은 옵션'이 나올 확률 — 현재 줄을 비운 baseline 기준으로
+        // 전체 구성 공간(deal>0)을 열거해 rightDeal 초과를 합산. 오른쪽이 현재보다 나빠도(그 사이 옵션 포함) 정확.
+        CubeRecommender.EquipOpts eoFull = CubeRecommender.analyze(
+                dm, baseline, leftSlots, new PotentialDraw[3], part, upper, cost, java.util.Map.of(),
+                new boolean[3], leftGrade, line.stack(), ep);
+        double remainProb = eoFull.remainProbAbove(rightDeal);
+        boolean leftQual = hasQualitative(java.util.Arrays.stream(curDraws).filter(java.util.Objects::nonNull).toList());
+        boolean rightQual = hasQualitative(rOpts);
+
+        return new CompareResult(true, leftDeal, rightDeal, dealDiff, leftProbSum, rightProbSum, gainEff,
+                eo.totalProb(), remainProb, leftQual, rightQual, cost);
     }
 
     /** 등급 코드 목록을 한글 라벨로. */

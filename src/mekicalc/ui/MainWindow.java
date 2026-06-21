@@ -111,9 +111,21 @@ public final class MainWindow extends JFrame {
     private final JLabel leftResult = new JLabel(" ", SwingConstants.CENTER);
     private final JLabel rightResult = new JLabel(" ", SwingConstants.CENTER);
 
+    // 큐브 '내 옵션 비교' (부위 공용, 왼쪽=내 큐브 줄 읽기전용, 오른쪽=자유 등급·옵션)
+    private final JComboBox<String> myPart = new JComboBox<>();
+    private final JComboBox<String> myLine = new JComboBox<>(new String[]{"윗잠", "아랫잠"});
+    private final JComboBox<String> myRightGrade = new JComboBox<>();
+    private final SearchableCombo[] myRightSlots = {new SearchableCombo(), new SearchableCombo(), new SearchableCombo()};
+    private final JLabel myLeftGrade = new JLabel();
+    private final JLabel[] myLeftSlots = {new JLabel(), new JLabel(), new JLabel()};
+    private final JLabel myLeftResult = new JLabel(" ");
+    private final JLabel myRightResult = new JLabel(" ");
+    private final JLabel myResult = new JLabel(" ", SwingConstants.CENTER);
+
     // 큐브 기댓값
     private final JComboBox<String> expPart = new JComboBox<>();
     private final JComboBox<String> expGrade = new JComboBox<>();
+    private final JComboBox<String> expSlot = new JComboBox<>(new String[]{"1슬롯", "2슬롯", "3슬롯"});
     private final JComboBox<String> expSort = new JComboBox<>(
             new String[]{"효율 순", "딜 증가량 순", "등장 확률 순"});
 
@@ -154,6 +166,7 @@ public final class MainWindow extends JFrame {
         root.add(buildStatInput(), "stat");
         root.add(buildCubeMenu(), "cubeMenu");
         root.add(buildCubeCompare(), "cubeCompare");
+        root.add(buildCubeMyCompare(), "cubeMyCompare");
         root.add(buildCubeExpected(), "cubeExpected");
         root.add(buildCubeRecommend(), "cubeRecommend");
         root.add(buildCubeInput(), "cubeInput");
@@ -201,7 +214,7 @@ public final class MainWindow extends JFrame {
         } else {
             // 화면별 기준 크기: 추천(좌우 비교)은 더 넓게, 표/비교는 넓게, 나머지는 좁게.
             if (name.equals("cubeRecommend")) { w = 860; h = 760; }
-            else if (name.equals("cubeCompare") || name.equals("cubeExpected")) { w = 900; h = 740; }
+            else if (name.equals("cubeCompare") || name.equals("cubeExpected") || name.equals("cubeMyCompare")) { w = 900; h = 740; }
             else if (name.equals("conversion")) { w = 500; h = 700; }
             else if (name.equals("ranges")) { w = 600; h = 700; }
             else { w = 470; h = 700; }
@@ -408,8 +421,9 @@ public final class MainWindow extends JFrame {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 1; c.ipady = 22; c.gridx = 0;
         c.gridy = 0; center.add(wideRounded("옵션 비교", () -> { populateCompare(); show("cubeCompare"); }), c);
-        c.gridy = 1; center.add(wideRounded("기댓값", () -> { populateExpected(); show("cubeExpected"); }), c);
-        c.gridy = 2; center.add(wideRounded("우선 순위 추천", () -> {
+        c.gridy = 1; center.add(wideRounded("내 옵션 비교", () -> { populateMyCompare(); show("cubeMyCompare"); }), c);
+        c.gridy = 2; center.add(wideRounded("기댓값", () -> { populateExpected(); show("cubeExpected"); }), c);
+        c.gridy = 3; center.add(wideRounded("우선 순위 추천", () -> {
             model.buildRecommendations();
             recSlider.setMaximum(Math.max(1, model.maxDivisions() - 1));
             recSlider.setValue(0);
@@ -472,7 +486,7 @@ public final class MainWindow extends JFrame {
 
     /**
      * 큐브 옵션 입력 화면 하단의 '추천 옵션 수치 범위' 진입 버튼.
-     * 부위(장비) 버튼들과 구분되게: 흰 카드형이 아닌 점선 테두리 + 액센트 글자/⚙ 아이콘으로.
+     * 부위(장비) 흰 카드 버튼들과 구분되게: 액센트 채움 + 흰 글자로 확 눈에 띄게.
      */
     private JPanel cubeRangeBottom() {
         JPanel south = screen(new BorderLayout());
@@ -483,17 +497,10 @@ public final class MainWindow extends JFrame {
         sep.add(line, BorderLayout.CENTER);
         south.add(sep, BorderLayout.NORTH);
 
-        // 부위 버튼(흰 카드)과 달리 점선 액센트 테두리 + 액센트 글자(설정성 동작임을 ⚙로 표시).
-        JButton b = new JButton("⚙  추천 옵션 수치 범위");
+        // 흰 카드 부위 버튼들과 달리 액센트 채움(흰 글자) — 한눈에 띄는 주요 진입 버튼.
+        StyledButton b = new StyledButton("추천 옵션 수치 범위", true);
         b.setFont(b.getFont().deriveFont(Font.BOLD, 15f));
-        b.setForeground(Theme.ACCENT);
-        b.setFocusPainted(false);
-        b.setContentAreaFilled(false);
-        b.setOpaque(false);
-        b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createDashedBorder(Theme.ACCENT, 1.6f, 6f, 4f, true),
-                BorderFactory.createEmptyBorder(12, 0, 12, 0)));
+        b.setBorder(BorderFactory.createEmptyBorder(14, 0, 14, 0));
         b.addActionListener(e -> openRanges());
         b.setToolTipText("이 큐브 프리셋의 우선 순위 추천에 쓰는 옵션 수치 범위 설정");
         south.add(b, BorderLayout.CENTER);
@@ -780,7 +787,7 @@ public final class MainWindow extends JFrame {
     private void doCompare() {
         List<PotentialDraw> ld = collect(leftSlots), rd = collect(rightSlots);
         double li = model.increaseForDraws(ld), ri = model.increaseForDraws(rd);
-        double lp = singleProb(leftPart, leftGrade, ld), rp = singleProb(rightPart, rightGrade, rd);
+        double lp = sumProb(leftPart, leftGrade, ld), rp = sumProb(rightPart, rightGrade, rd);
         boolean lq = model.hasQualitative(ld), rq = model.hasQualitative(rd); // 공속/방관 등 포함 시 효율 환산 불가
 
         double[] pv = {lp * 100, rp * 100};
@@ -794,40 +801,28 @@ public final class MainWindow extends JFrame {
                 new int[]{baseDecimalsScore(sv[0]), baseDecimalsScore(sv[1])},
                 "", new String[]{(lp > 0 && lq) ? "계산 불가" : "-", (rp > 0 && rq) ? "계산 불가" : "-"});
 
-        String lSum = probSumStr(leftPart, leftGrade, ld);
-        String rSum = probSumStr(rightPart, rightGrade, rd);
-        leftResult.setText(sideHtml(li, lq, lp, probs[0], lSum, scores[0]));
-        rightResult.setText(sideHtml(ri, rq, rp, probs[1], rSum, scores[1]));
+        leftResult.setText(sideHtml(li, lq, lp, probs[0], scores[0]));
+        rightResult.setText(sideHtml(ri, rq, rp, probs[1], scores[1]));
     }
 
-    /** 한 측의 동일 옵션 등장 확률 총합 표시 문자열. */
-    private String probSumStr(JComboBox<String> partC, JComboBox<String> gradeC, List<PotentialDraw> draws) {
-        if (partC.getSelectedItem() == null || gradeC.getSelectedItem() == null) return "-";
+    /** 한 측의 동일 옵션 등장 확률 총합(순서 무관, 우선순위 추천과 동일). 미선택이면 0. */
+    private double sumProb(JComboBox<String> partC, JComboBox<String> gradeC, List<PotentialDraw> draws) {
+        if (partC.getSelectedItem() == null || gradeC.getSelectedItem() == null) return 0;
         String part = (String) partC.getSelectedItem();
         String grade = gradeLabelToCode.get((String) gradeC.getSelectedItem());
-        double s = model.probSumForDraws(part, grade, draws);
-        return s > 0 ? fmtPercentCore(s * 100) + "%" : "-";
+        return model.probSumForDraws(part, grade, draws);
     }
 
-    /** 한 측의 단일 등장 확률(빈 슬롯은 빈 확률 반영). 미선택이면 0. */
-    private double singleProb(JComboBox<String> partC, JComboBox<String> gradeC, List<PotentialDraw> draws) {
-        if (partC.getSelectedItem() == null || gradeC.getSelectedItem() == null) return model.probForDraws(draws);
-        String part = (String) partC.getSelectedItem();
-        String grade = gradeLabelToCode.get((String) gradeC.getSelectedItem());
-        return model.probSingleForDraws(part, grade, draws);
-    }
-
-    private static String sideHtml(double inc, boolean qual, double p, String prob, String probSum, String score) {
+    private static String sideHtml(double inc, boolean qual, double p, String prob, String score) {
         String incText = qual ? "계산 불가" : fmtSignedPercent(inc);
         String exp = (p <= 0) ? "-" : String.format("%,.1f개", 1.0 / p);
         return String.format(
                 "<html><div style='text-align:center'>"
                 + "딜 증가량: <b>%s</b><br>"
-                + "등장 확률: %s<br>"
                 + "동일 옵션 등장 확률 총합: %s<br>"
                 + "큐브 기댓값: %s<br>"
                 + "효율: <b>%s</b></div></html>",
-                incText, prob, probSum, exp, score);
+                incText, prob, exp, score);
     }
 
     private List<PotentialDraw> collect(SearchableCombo[] slots) {
@@ -836,19 +831,239 @@ public final class MainWindow extends JFrame {
         return out;
     }
 
+    // ──────────────────── 큐브: 내 옵션 비교 ────────────────────
+    /**
+     * 내 큐브 현재 옵션(왼쪽, 읽기전용) vs 같은 부위에서 등급·옵션만 바꾼 가정(오른쪽).
+     * 부위는 공용, 윗잠/아랫잠은 왼쪽에서 선택. 우선 순위 추천과 동일한 지표(딜 증가량 차이·최종 효율·1회 리롤 두 확률).
+     */
+    private JPanel buildCubeMyCompare() {
+        for (String part : PART_ORDER) myPart.addItem(part);
+        for (String gname : model.gradeLabels()) myRightGrade.addItem(gname);
+        styleGradeCombo(myRightGrade);
+        myRightGrade.setSelectedItem("미스틱");
+        myPart.addActionListener(e -> { refreshMyLeft(); refreshMyRightSlots(); });
+        myLine.addActionListener(e -> refreshMyLeft());
+        myRightGrade.addActionListener(e -> refreshMyRightSlots());
+
+        JPanel p = screen(new BorderLayout(8, 8));
+        p.setBorder(BorderFactory.createEmptyBorder(8, 12, 12, 12));
+        p.add(topBar("cubeMenu", "내 옵션 비교", true), BorderLayout.NORTH);
+
+        JPanel bar = screen(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 8, 2));
+        bar.add(new JLabel("부위")); bar.add(myPart);
+
+        JPanel mid = new JPanel(new GridLayout(1, 2, 16, 0));
+        mid.setOpaque(false);
+        mid.add(buildMyLeftCard());
+        mid.add(buildMyRightCard());
+
+        JPanel center = screen(new BorderLayout(0, 8));
+        center.add(bar, BorderLayout.NORTH);
+        center.add(mid, BorderLayout.CENTER);
+        p.add(center, BorderLayout.CENTER);
+
+        StyledButton compare = new StyledButton("비교", true);
+        compare.setFont(compare.getFont().deriveFont(Font.BOLD, 22f));
+        compare.setPreferredSize(new Dimension(0, 56));
+        compare.addActionListener(e -> doMyCompare());
+
+        myResult.setFont(myResult.getFont().deriveFont(Font.PLAIN, 15f));
+        myResult.setBorder(BorderFactory.createEmptyBorder(10, 4, 0, 4));
+
+        JPanel south = screen(new BorderLayout(0, 6));
+        south.setBorder(BorderFactory.createEmptyBorder(12, 40, 4, 40));
+        south.add(compare, BorderLayout.NORTH);
+        south.add(myResult, BorderLayout.CENTER);
+        p.add(south, BorderLayout.SOUTH);
+        return p;
+    }
+
+    private JPanel buildMyLeftCard() {
+        JPanel side = new JPanel(new GridBagLayout());
+        side.setBackground(Theme.CARD);
+        side.setBorder(BorderFactory.createTitledBorder("왼쪽 (내 큐브 옵션 · 읽기전용)"));
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(7, 12, 7, 12);
+        c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1; c.gridx = 0;
+
+        JPanel top = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        top.setBackground(Theme.CARD);
+        top.add(new JLabel("줄")); top.add(myLine);
+        top.add(Box.createHorizontalStrut(10));
+        top.add(new JLabel("등급"));
+        myLeftGrade.setFont(myLeftGrade.getFont().deriveFont(Font.BOLD, 14f));
+        top.add(myLeftGrade);
+        c.gridy = 0; side.add(top, c);
+
+        for (int i = 0; i < 3; i++) {
+            styleReadonlyField(myLeftSlots[i]);
+            c.gridy = i + 1; side.add(myLeftSlots[i], c);
+        }
+        c.gridy = 4; side.add(sideSeparator(), c);
+        myLeftResult.setFont(myLeftResult.getFont().deriveFont(Font.PLAIN, 14f));
+        myLeftResult.setVerticalAlignment(SwingConstants.TOP);
+        c.gridy = 5; c.weighty = 1; c.anchor = GridBagConstraints.PAGE_START; side.add(myLeftResult, c);
+        return side;
+    }
+
+    private JPanel buildMyRightCard() {
+        JPanel side = new JPanel(new GridBagLayout());
+        side.setBackground(Theme.CARD);
+        side.setBorder(BorderFactory.createTitledBorder("오른쪽 (가정: 이렇게 바뀌면)"));
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(7, 12, 7, 12);
+        c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1; c.gridx = 0;
+        JPanel top = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        top.setBackground(Theme.CARD);
+        top.add(new JLabel("등급")); top.add(myRightGrade);
+        c.gridy = 0; side.add(top, c);
+        for (int i = 0; i < 3; i++) { c.gridy = i + 1; side.add(myRightSlots[i], c); }
+        c.gridy = 4; side.add(sideSeparator(), c);
+        myRightResult.setFont(myRightResult.getFont().deriveFont(Font.PLAIN, 14f));
+        myRightResult.setVerticalAlignment(SwingConstants.TOP);
+        c.gridy = 5; c.weighty = 1; c.anchor = GridBagConstraints.PAGE_START; side.add(myRightResult, c);
+        return side;
+    }
+
+    private JSeparator sideSeparator() {
+        JSeparator s = new JSeparator();
+        s.setForeground(Theme.BORDER);
+        return s;
+    }
+
+    private void styleReadonlyField(JLabel l) {
+        l.setOpaque(true);
+        l.setBackground(new Color(0xF2, 0xF3, 0xF6));
+        l.setForeground(Theme.TEXT);
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 14f));
+        l.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(6, 9, 6, 9)));
+    }
+
+    private void populateMyCompare() {
+        refreshMyLeft();
+        refreshMyRightSlots();
+        myLeftResult.setText(" ");
+        myRightResult.setText(" ");
+        myResult.setText(" ");
+    }
+
+    /** 왼쪽: 내 큐브 선택 줄(윗/아랫잠)의 등급·3옵션을 읽기전용 표시. */
+    private void refreshMyLeft() {
+        if (myPart.getSelectedItem() == null) return;
+        String part = (String) myPart.getSelectedItem();
+        boolean upper = myLine.getSelectedIndex() == 0;
+        CubeStateIO.PartCube pc = model.cubeOf(part);
+        CubeStateIO.Line line = pc == null ? null : (upper ? pc.upper() : pc.lower());
+        if (line == null || line.grade() == null || myLineEmpty(line)) {
+            myLeftGrade.setText("없음");
+            myLeftGrade.setForeground(Theme.MUTED);
+            myLeftSlots[0].setText("저장된 큐브가 없습니다");
+            myLeftSlots[0].setForeground(Theme.MUTED);
+            for (int i = 1; i < 3; i++) { myLeftSlots[i].setText(" "); myLeftSlots[i].setForeground(Theme.MUTED); }
+            myLeftResult.setText(" ");
+            return;
+        }
+        String gradeCode = line.grade();
+        String gradeLabel = AppModel.GRADE_KO.getOrDefault(gradeCode, gradeCode);
+        myLeftGrade.setText(gradeLabel);
+        myLeftGrade.setForeground(Theme.gradeColor(gradeCode));
+        // 부위/줄 변경·화면 진입 시 오른쪽 등급을 내 큐브 등급과 같게 맞춤(이후 사용자가 따로 바꿀 수 있음).
+        if (!gradeLabel.equals(myRightGrade.getSelectedItem())) myRightGrade.setSelectedItem(gradeLabel);
+        CubeStateIO.Slot[] ss = line.slots();
+        for (int i = 0; i < 3; i++) {
+            CubeStateIO.Slot s = (ss != null && i < ss.length) ? ss[i] : null;
+            if (s == null) {
+                myLeftSlots[i].setText("(비어 있음)");
+                myLeftSlots[i].setForeground(Theme.MUTED);
+            } else {
+                String suffix = model.isPercent(s.stat()) ? "%" : "";
+                myLeftSlots[i].setText(model.statName(s.stat()) + " +" + fmt(s.value()) + suffix);
+                myLeftSlots[i].setForeground(Theme.TEXT);
+            }
+        }
+    }
+
+    private void refreshMyRightSlots() {
+        if (myPart.getSelectedItem() == null || myRightGrade.getSelectedItem() == null) return;
+        String part = (String) myPart.getSelectedItem();
+        String grade = gradeLabelToCode.get((String) myRightGrade.getSelectedItem());
+        List<List<PotentialDraw>> sl = model.slotDraws(part, grade);
+        for (int i = 0; i < 3; i++) myRightSlots[i].setItems(toItems(sl.get(i)));
+    }
+
+    private static boolean myLineEmpty(CubeStateIO.Line line) {
+        if (line.slots() == null) return true;
+        for (CubeStateIO.Slot s : line.slots()) if (s != null) return false;
+        return true;
+    }
+
+    /** 한 측 컬럼 지표: 딜 증가량·동일 옵션 등장 확률 총합·큐브 기댓값·효율(추천 칼럼과 동일). */
+    private static String sideMetricsHtml(double deal, boolean qual, double probSum, double eff) {
+        String dealText = qual ? "계산 불가" : fmtSignedPercent(deal);
+        String effText = qual ? "계산 불가" : fmtScoreCore(eff * REC_EFF_SCALE);
+        String cubes = probSum > 0 ? String.format("%,.1f개", 1.0 / probSum) : "-";
+        return String.format(
+                "<html>딜 증가량 <b>%s</b><br>"
+                + "동일 옵션 등장 확률 총합 %s<br>"
+                + "동일 옵션 큐브 기댓값 <b>%s</b><br>"
+                + "효율 <b>%s</b></html>",
+                dealText, fmtPercentCore(probSum * 100) + "%", cubes, effText);
+    }
+
+    /** 비교 실행: 내 큐브 줄 vs 가정 옵션의 측별 지표 + 딜 증가량 차이·최종 효율·1회 리롤 두 확률. */
+    private void doMyCompare() {
+        if (myPart.getSelectedItem() == null || myRightGrade.getSelectedItem() == null) return;
+        String part = (String) myPart.getSelectedItem();
+        boolean upper = myLine.getSelectedIndex() == 0;
+        String rightGrade = gradeLabelToCode.get((String) myRightGrade.getSelectedItem());
+        AppModel.CompareResult r = model.myCompare(part, upper, rightGrade, collect(myRightSlots));
+        if (!r.valid()) {
+            myLeftResult.setText(" ");
+            myRightResult.setText(" ");
+            myResult.setText("<html><div style='text-align:center'><font color='#C82A2A'>왼쪽(내 큐브 "
+                    + (upper ? "윗잠" : "아랫잠") + ")에 저장된 옵션이 없습니다.</font></div></html>");
+            return;
+        }
+        double cost = r.cost();
+        myLeftResult.setText(sideMetricsHtml(r.leftDeal(), r.leftQual(), r.leftProbSum(),
+                cost > 0 ? r.leftDeal() * r.leftProbSum() / cost : 0));
+        myRightResult.setText(sideMetricsHtml(r.rightDeal(), r.rightQual(), r.rightProbSum(),
+                cost > 0 ? r.rightDeal() * r.rightProbSum() / cost : 0));
+
+        boolean qual = r.leftQual() || r.rightQual();
+        String diff = qual ? "계산 불가" : fmtSignedPercent(r.dealDiff());
+        // 딜 증가량 차이가 0 이하(손해)면 효율 공식이 의미 없음(음수×확률 역전) → "딜 손해"로 표시.
+        String gain = qual ? "계산 불가"
+                : (r.dealDiff() <= 0 ? "딜 손해" : fmtScoreCore(r.gainEff() * REC_EFF_SCALE));
+        myResult.setText(String.format(
+                "<html><div style='text-align:center'>"
+                + "딜 증가량 차이  <b><font color='#2D6CDF'>%s</font></b> &nbsp;·&nbsp; 최종 효율  <b><font color='#2D6CDF'>%s</font></b><br><br>"
+                + "1회 리롤 시 <b>내 현재 옵션</b>보다 좋은 옵션이 등장할 확률  <b>%s%%</b><br>"
+                + "1회 리롤 시 <b>가정(오른쪽) 옵션</b>보다 좋은 옵션이 등장할 확률  <b>%s%%</b>"
+                + "</div></html>",
+                diff, gain,
+                fmtPercentPrecise(r.totalProb() * 100),
+                fmtPercentPrecise(r.remainProb() * 100)));
+    }
+
     // ──────────────────── 큐브: 기댓값 계산 ────────────────────
     private JPanel buildCubeExpected() {
         for (String part : PART_ORDER) expPart.addItem(part);
         for (String g : model.gradeLabels()) expGrade.addItem(g);
         styleGradeCombo(expGrade);
         expGrade.setSelectedItem("미스틱");
+        expSort.setSelectedIndex(1);   // 기본 정렬: 딜 증가량 순
         expPart.addActionListener(e -> populateExpected());
         expGrade.addActionListener(e -> populateExpected());
+        expSlot.addActionListener(e -> populateExpected());
         expSort.addActionListener(e -> populateExpected());
 
         JPanel controls = screen(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
         controls.add(new JLabel("부위")); controls.add(expPart);
         controls.add(new JLabel("등급")); controls.add(expGrade);
+        controls.add(new JLabel("슬롯")); controls.add(expSlot);
         controls.add(new JLabel("정렬")); controls.add(expSort);
 
         JPanel north = screen(null);
@@ -865,7 +1080,7 @@ public final class MainWindow extends JFrame {
         }
         JScrollPane sp = new JScrollPane(table);
 
-        JLabel note = noteLabel("큐브 기댓값 = 3줄 중 한 줄에라도 그 옵션이 뜰 때까지 평균 큐브 수(1/P)  ·  ★=특옵"
+        JLabel note = noteLabel("선택한 <b>슬롯</b> 기준 · 등장 확률 = 그 슬롯에서 그 옵션이 뜰 확률 · 큐브 기댓값 = 1/그 확률  ·  ★=특옵"
                 + "<br>효율 = 등장확률 × 딜증가량 점수 (큐브 1개당 기대 딜 증가량, 클수록 우선)"
                 + "<br>※ '계산 불가' = 데미지 환산에 필요한 데이터가 아직 없는 옵션 (방어 관통력 · 대상 수 · 쿨타임 감소 등)");
         note.setForeground(Theme.MUTED);
@@ -884,7 +1099,7 @@ public final class MainWindow extends JFrame {
         String part = (String) expPart.getSelectedItem();
         String grade = gradeLabelToCode.get((String) expGrade.getSelectedItem());
         List<mekicalc.engine.equip.CubeEvaluator.Result> res =
-                new ArrayList<>(model.evaluate(part, grade));
+                new ArrayList<>(model.evaluate(part, grade, expSlot.getSelectedIndex()));
         switch (expSort.getSelectedIndex()) {
             case 2 -> // 등장 확률 내림차순 (뽑기 쉬운 것=확률 높은 것이 위로)
                     res.sort((a, b) -> Double.compare(a.pPerCube(), b.pPerCube()) * -1);

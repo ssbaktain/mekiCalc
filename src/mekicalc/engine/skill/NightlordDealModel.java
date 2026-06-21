@@ -29,12 +29,19 @@ public final class NightlordDealModel implements DealModel {
         this.boss = boss;
     }
 
-    @Override public double output(StatBlock b) { return nd.totalDps(b, boss); }
+    @Override public double output(StatBlock b) {
+        // 나이트로드가 네이티브로 못 매기는 회색 스탯(방관·동료 소환 지속·보스 대상수)에 한해,
+        // 사용자가 지정한 커스텀 딜 환산을 곱연산으로 반영(이중계산 방지 위해 이 스탯들만).
+        double conv = base.customConvFactor(b, "DEF_PEN") * base.customConvFactor(b, "SUMMON_DURATION");
+        if (boss) conv *= base.customConvFactor(b, BASIC_ATK_TARGETS);
+        return nd.totalDps(b, boss) * conv;
+    }
     @Override public StatBlock combine(StatBlock current, StatBlock delta) { return base.combine(current, delta); }
     @Override public StatBlock uncombine(StatBlock r, StatBlock delta) { return base.uncombine(r, delta); }
 
     @Override public boolean hasQualitative(StatBlock delta) {
         for (String id : delta.asMap().keySet()) {
+            if (base.isCustomConv(id)) continue;                     // 사용자 지정 환산이 있으면 수치로 환산됨
             if (QUALITATIVE.contains(id)) return true;
             if (boss && id.equals(BASIC_ATK_TARGETS)) return true;   // 보스 단일에선 대상 수 무효
         }

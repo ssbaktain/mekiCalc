@@ -68,6 +68,35 @@ public final class CubeEvaluator {
         return out;
     }
 
+    /**
+     * 특정 슬롯(0~2) 한 칸만 평가한다. 등장 확률 = 그 슬롯에서 그 옵션이 뜰 확률(p_slot),
+     * 큐브 기댓값 = 1/p_slot. 슬롯마다 옵션 목록·확률이 다르므로 행 구성도 슬롯별로 달라진다.
+     */
+    public static List<Result> evaluateSlot(EquipmentPotential ep, DealModel model,
+                                            StatBlock current, String part, String grade, int slotIdx) {
+        List<List<PotentialDraw>> slots = ep.slots(part, grade);
+        List<Result> out = new ArrayList<>();
+        if (slotIdx < 0 || slotIdx >= slots.size()) return out;
+        // 같은 슬롯 안에서 동일 옵션(stat|value|special)이 중복 표기될 경우 확률 합산.
+        Map<String, Double> prob = new LinkedHashMap<>();
+        Map<String, PotentialDraw> meta = new LinkedHashMap<>();
+        for (PotentialDraw d : slots.get(slotIdx)) {
+            String k = key(d);
+            prob.merge(k, d.prob() / 100.0, Double::sum);
+            meta.putIfAbsent(k, d);
+        }
+        for (Map.Entry<String, PotentialDraw> e : meta.entrySet()) {
+            PotentialDraw d = e.getValue();
+            double p = prob.get(e.getKey());
+            double expectedCubes = p > 0 ? 1.0 / p : Double.POSITIVE_INFINITY;
+            StatBlock delta = new StatBlock().with(d.statId(), d.value());
+            boolean qual = model.hasQualitative(delta);
+            double inc = qual ? Double.NaN : model.increase(current, delta);
+            out.add(new Result(d.statId(), d.value(), d.special(), d.yellow(), qual, inc, p, expectedCubes));
+        }
+        return out;
+    }
+
     private static String key(PotentialDraw d) {
         return d.statId() + "|" + d.value() + "|" + d.special();
     }

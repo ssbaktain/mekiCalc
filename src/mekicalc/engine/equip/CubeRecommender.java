@@ -27,11 +27,22 @@ public final class CubeRecommender {
     /** dedup된 딜증가 옵션 세트. grade=이 구성의 등급(승급 추천이면 상위 등급). */
     public record OptSet(PotentialDraw[] rep, double deal, double prob, double repProb, String grade) {}
 
-    /** 한 장비의 분석 결과(슬라이더 무관, 캐시). curGrade=현재 등급. */
+    /** 한 장비의 분석 결과(슬라이더 무관, 캐시). curGrade=현재 등급.
+     *  all=딜오름 정렬된 전체 후보(같은 등급+승급), gEff=이 큐브 승급확률, nextStep=[딜, 다음등급 한큐브확률]. */
     public record EquipOpts(String part, boolean upper, double cost,
                             PotentialDraw[] curDraws, double curDeal, double curProbSingle, double curProbSum,
                             List<OptSet> shown, double[] shownSuffix, double totalProb, int totalCount,
-                            boolean[] locked, String curGrade) {}
+                            boolean[] locked, String curGrade,
+                            List<OptSet> all, double gEff, List<double[]> nextStep) {
+        /** 한 큐브 리롤로 deal보다 좋은(딜이 더 높은) 옵션이 나올 확률(승급 1단계 반영). 추천의 잔여확률과 동일 정의. */
+        public double remainProbAbove(double deal) {
+            double sameGt = 0, nextGt = 0;
+            for (OptSet o : all)
+                if (java.util.Objects.equals(o.grade(), curGrade) && o.deal() > deal + 1e-12) sameGt += o.prob();
+            for (double[] ns : nextStep) if (ns[0] > deal + 1e-12) nextGt += ns[1];
+            return (1 - gEff) * sameGt + gEff * nextGt;
+        }
+    }
 
     /** 슬라이더 한 지점에서 한 장비의 추천. grade=추천 구성 등급, curGrade=현재 등급(다르면 승급 추천). */
     public record Rec(String part, boolean upper, double cost, List<SlotPick> picks,
@@ -213,7 +224,8 @@ public final class CubeRecommender {
         for (int i = 0; i < shownSuffix.length; i++) shownSuffix[i] = shownRemainL.get(i);
 
         return new EquipOpts(part, upper, cost, curDraws, curDeal, curProbSingle, curProbSum,
-                shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3], curGrade);
+                shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3], curGrade,
+                all, gEff, nextStep);
     }
 
     /** 슬라이더 비율 f(0~1)에서 그 장비의 추천 1개. shown 비어있으면 null. */
