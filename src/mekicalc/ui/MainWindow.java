@@ -195,13 +195,8 @@ public final class MainWindow extends JFrame {
         });
         applyFontScale(uiCache.fontScale());   // 저장된 폰트 배율 적용
 
-        if (model.isUserEntered()) {
-            show("home");
-        } else {
-            refreshPresetCombo();
-            populateStatFields();
-            show("stat");
-        }
+        // 유저 데이터 유무와 무관하게 항상 홈에서 시작(기댓값만 보려는 사용자도 바로 이용).
+        show("home");
     }
 
     private void show(String name) {
@@ -2030,10 +2025,124 @@ public final class MainWindow extends JFrame {
         c.gridy = row++; center.add(wideRounded("폰트", () -> { populateFont(); show("font"); }), c);
         c.gridy = row++; center.add(wideRounded("창 크기", () -> { populateWindow(); show("window"); }), c);
 
+        c.ipady = 0; c.insets = new Insets(16, 4, 4, 4);
+        c.gridy = row++; center.add(sectionHeader("데이터"), c);
+        c.insets = new Insets(6, 8, 6, 8); c.ipady = 18;
+        c.gridy = row++; center.add(wideRounded("백업 / 복원", this::openBackupDialog), c);
+
         JPanel wrap = screen(new BorderLayout());
         wrap.add(center, BorderLayout.NORTH);
         p.add(wrap, BorderLayout.CENTER);
         return p;
+    }
+
+    // ──────────────────── 백업 / 복원 ────────────────────
+    private void openBackupDialog() {
+        JDialog d = new JDialog(this, "백업 / 복원", true);
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setBackground(Theme.CARD);
+        p.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        JLabel info = new JLabel("<html><div style='width:330px'>모든 <b>스탯·큐브 프리셋</b>과 <b>추천 범위·딜 환산 설정</b>을 "
+                + "한 파일/텍스트로 백업하고 복원합니다.<br><font color='#C82A2A'>불러오기는 현재 데이터를 전부 덮어씁니다.</font></div></html>");
+        info.setForeground(Theme.TEXT);
+        info.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        info.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        p.add(info);
+
+        p.add(backupRow("파일로 내보내기", false, () -> exportToFile()));
+        p.add(Box.createVerticalStrut(8));
+        p.add(backupRow("텍스트로 복사 (클립보드)", false, () -> exportToClipboard()));
+        p.add(Box.createVerticalStrut(8));
+        p.add(backupRow("파일에서 불러오기", true, () -> { if (importFromFile()) d.dispose(); }));
+        p.add(Box.createVerticalStrut(8));
+        p.add(backupRow("텍스트로 붙여넣기", true, () -> { if (importFromText()) d.dispose(); }));
+
+        d.setContentPane(p);
+        d.pack();
+        d.setLocationRelativeTo(this);
+        d.setVisible(true);
+    }
+
+    private StyledButton backupRow(String label, boolean primary, Runnable onClick) {
+        StyledButton b = new StyledButton(label, primary);
+        b.setFont(b.getFont().deriveFont(Font.BOLD, 15f));
+        b.setBorder(BorderFactory.createEmptyBorder(11, 16, 11, 16));
+        b.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, b.getPreferredSize().height));
+        b.addActionListener(e -> onClick.run());
+        return b;
+    }
+
+    private void exportToFile() {
+        try {
+            String data = model.exportBackup();
+            javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+            fc.setDialogTitle("백업 파일 저장");
+            fc.setSelectedFile(new java.io.File("mekicalc_backup." + mekicalc.config.BackupIO.EXT));
+            if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
+            java.nio.file.Files.writeString(fc.getSelectedFile().toPath(), data);
+            JOptionPane.showMessageDialog(this, "백업을 저장했습니다.", "내보내기", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "내보내기 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void exportToClipboard() {
+        try {
+            String data = model.exportBackup();
+            java.awt.Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new java.awt.datatransfer.StringSelection(data), null);
+            JOptionPane.showMessageDialog(this, "백업 텍스트를 클립보드에 복사했습니다.", "내보내기", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "복사 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean importFromFile() {
+        javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+        fc.setDialogTitle("백업 파일 열기");
+        if (fc.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return false;
+        try {
+            String content = java.nio.file.Files.readString(fc.getSelectedFile().toPath());
+            return applyRestore(content);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "불러오기 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private boolean importFromText() {
+        javax.swing.JTextArea ta = new javax.swing.JTextArea(12, 40);
+        ta.setLineWrap(true);
+        JScrollPane sp = new JScrollPane(ta);
+        int ok = JOptionPane.showConfirmDialog(this, sp, "백업 텍스트 붙여넣기",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (ok != JOptionPane.OK_OPTION) return false;
+        String content = ta.getText().trim();
+        if (content.isEmpty()) return false;
+        return applyRestore(content);
+    }
+
+    /** 복원 확인 후 적용 + UI 갱신. 성공 시 true. */
+    private boolean applyRestore(String content) {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "현재 모든 프리셋·설정을 백업 내용으로 덮어씁니다.\n계속할까요?",
+                "복원 확인", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.OK_OPTION) return false;
+        try {
+            model.restoreBackup(content);
+            refreshPresetCombo();
+            populateStatFields();
+            refreshCubePresetCombo();
+            show("home");
+            JOptionPane.showMessageDialog(this, "복원을 완료했습니다.", "복원", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "복원 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
     }
 
     /** 설정 섹션 헤더: 굵은 라벨 + 아래 구분선. */

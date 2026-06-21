@@ -215,4 +215,71 @@ public final class Json {
         Object v = m.get(key);
         return (v instanceof Boolean) ? (Boolean) v : def;
     }
+
+    /** Object 트리(Map/List/String/Double/Boolean/null)를 들여쓴 JSON 문자열로 직렬화. */
+    public static String write(Object o) {
+        StringBuilder sb = new StringBuilder();
+        writeValue(o, sb, 0);
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private static void writeValue(Object o, StringBuilder sb, int indent) {
+        if (o == null) { sb.append("null"); return; }
+        if (o instanceof String) { sb.append('"').append(escape((String) o)).append('"'); return; }
+        if (o instanceof Boolean) { sb.append(o.toString()); return; }
+        if (o instanceof Double) { sb.append(numStr((Double) o)); return; }
+        if (o instanceof Number) { sb.append(numStr(((Number) o).doubleValue())); return; }
+        if (o instanceof Map<?, ?> m) {
+            if (m.isEmpty()) { sb.append("{}"); return; }
+            sb.append("{\n");
+            int n = m.size(), k = 0;
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                pad(sb, indent + 1);
+                sb.append('"').append(escape(String.valueOf(e.getKey()))).append("\": ");
+                writeValue(e.getValue(), sb, indent + 1);
+                sb.append(++k < n ? ",\n" : "\n");
+            }
+            pad(sb, indent); sb.append('}');
+            return;
+        }
+        if (o instanceof List<?> list) {
+            if (list.isEmpty()) { sb.append("[]"); return; }
+            sb.append("[\n");
+            for (int idx = 0; idx < list.size(); idx++) {
+                pad(sb, indent + 1);
+                writeValue(list.get(idx), sb, indent + 1);
+                sb.append(idx < list.size() - 1 ? ",\n" : "\n");
+            }
+            pad(sb, indent); sb.append(']');
+            return;
+        }
+        // 알 수 없는 타입은 문자열로
+        sb.append('"').append(escape(String.valueOf(o))).append('"');
+    }
+
+    private static void pad(StringBuilder sb, int indent) {
+        for (int i = 0; i < indent; i++) sb.append("  ");
+    }
+
+    private static String numStr(double v) {
+        return (v == Math.floor(v) && !Double.isInfinite(v) && Math.abs(v) < 1e15)
+                ? String.valueOf((long) v) : String.valueOf(v);
+    }
+
+    private static String escape(String s) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '"' -> b.append("\\\"");
+                case '\\' -> b.append("\\\\");
+                case '\n' -> b.append("\\n");
+                case '\r' -> b.append("\\r");
+                case '\t' -> b.append("\\t");
+                default -> b.append(c);
+            }
+        }
+        return b.toString();
+    }
 }

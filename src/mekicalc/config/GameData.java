@@ -71,10 +71,15 @@ public final class GameData {
             }
         }
 
+        // character.json(레거시 단일 스탯)은 선택사항 — 없거나 손상돼도 빈 current로 시작(프리셋에서 채워짐).
         StatBlock current = new StatBlock();
-        Map<String, Object> chStats = Json.asMap(Json.asMap(read(dataDir, "character.json")).get("stats"));
-        for (Map.Entry<String, Object> e : chStats.entrySet()) {
-            if (e.getValue() instanceof Double) current.with(e.getKey(), (Double) e.getValue());
+        try {
+            Map<String, Object> chStats = Json.asMap(Json.asMap(read(dataDir, "character.json")).get("stats"));
+            for (Map.Entry<String, Object> e : chStats.entrySet()) {
+                if (e.getValue() instanceof Double) current.with(e.getKey(), (Double) e.getValue());
+            }
+        } catch (Exception ignored) {
+            // character.json 없음/손상 → 빈 current
         }
 
         // 정성적·스킬레벨 커스텀 딜 환산(전체 공용). 없으면 모두 디폴트.

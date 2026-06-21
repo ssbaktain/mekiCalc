@@ -37,3 +37,17 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### 사용자 개인 데이터 (개인별, 커밋·배포 제외) ###
+data/character.json
+data/presets.json
+data/cube_presets.json
+data/mycube.json
+data/conversions.json
+data/ranges.json
+data/ui.json
+
+### 로컬 백업 / 임시 산출물 ###
+mydata_backup/
+dist_graph.png
+model_vs_empirical.png

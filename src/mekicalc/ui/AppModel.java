@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import mekicalc.config.CharacterIO;
+import mekicalc.config.BackupIO;
 import mekicalc.config.ConversionIO;
 import mekicalc.config.CubePresetIO;
 import mekicalc.config.CubeStateIO;
@@ -388,6 +389,21 @@ public final class AppModel {
         int i = indexOf(activeName);
         if (i >= 0) presets.set(i, new PresetIO.Preset(activeName, new StatBlock(current)));
         writePresets();
+    }
+
+    // ──────────────────── 백업 / 복원 ────────────────────
+
+    /** 전체 백업(모든 스탯·큐브 프리셋 + 추천 범위 + 딜 환산)을 JSON 문자열로. 현재 편집 내용을 먼저 디스크에 반영. */
+    public String exportBackup() throws IOException {
+        save();              // 현재 스탯 → 활성 프리셋 + presets.json
+        writeCubePresets();  // 현재 큐브 → 활성 프리셋 + cube_presets.json
+        return BackupIO.export(dataDir);
+    }
+
+    /** 백업 문자열로 전체 복원(덮어쓰기) 후 메모리 재적재. 호출 측에서 UI 갱신 필요. */
+    public void restoreBackup(String content) throws IOException {
+        BackupIO.restore(dataDir, content);
+        reload();
     }
 
     /** 유저가 한 번이라도 스탯을 직접 저장했는지(첫 실행이면 false). 프리셋 파일이 있으면 입력된 것으로 본다. */

@@ -24,7 +24,8 @@ public final class App {
         SwingUtilities.invokeLater(() -> {
             try {
                 new MainWindow(new AppModel(dataDir)).setVisible(true);
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                e.printStackTrace();
                 JOptionPane.showMessageDialog(null, "시작 실패: " + e.getMessage(),
                         "오류", JOptionPane.ERROR_MESSAGE);
             }
