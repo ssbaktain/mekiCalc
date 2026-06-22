@@ -1148,6 +1148,7 @@ async function loadMeta() {
 }
 
 (async function init() {
+  const mePromise = loadMe();   // 계정 UI는 계산 데이터와 무관 → 맨 앞에서 병렬로(로그인 버튼 빨리 표시)
   await loadStats();
   try { await loadMeta(); } catch (e) { console.error("메타 로드 실패", e); }
   await loadMyData(false);     // 시작 시 내 값 자동 채움(개발 편의; 배포 땐 빈 값)
@@ -1157,6 +1158,6 @@ async function loadMeta() {
   await initCubePresets();     // 큐브 프리셋
   await refreshQual();         // 직업 기준 '딜 미환산' 표시 보강
   calcDamage();                // 시작 시 예상 데미지 자동 계산
-  await loadMe();              // 로그인 상태 확인 + 계정 UI
+  await mePromise;             // 로그인 상태 보장
   await pullPresets();         // 로그인돼 있으면 서버 프리셋으로 동기화
 })();
