@@ -43,7 +43,7 @@ async function pullPresets() {
     const data = await r.json();
     if (data && (data.statPresets || data.cubePresets)) {
       suppressSync = true;
-      await applyBundle(JSON.stringify(data));   // 서버 번들로 화면·localStorage 갱신
+      await applyBundle(JSON.stringify(data), false);   // 서버 동기화: 덮어쓰기(계정이 정본)
       suppressSync = false;
     } else {
       pushPresets();   // 서버가 비었으면 현재 로컬을 올려 시드
@@ -1112,18 +1112,50 @@ function fromDesktopBackup(b) {
   return { statPresets: sp, cubePresets: cp, conversions: conv, ranges };
 }
 
-// 백업 문자열을 받아 프리셋·설정 전체를 복원하고 화면을 갱신.
-async function applyBundle(text) {
+// 이름 충돌 시 "이름 (2)" 식으로 고유 이름.
+function uniqueName(name, existing) {
+  if (!existing[name]) return name;
+  let i = 2;
+  while (existing[`${name} (${i})`]) i++;
+  return `${name} (${i})`;
+}
+
+// 이름 있는 프리셋 컬렉션({active, presets:{name:val}})을 into에 병합(추가). from 없으면 그대로.
+// 향후 다른 프리셋 타입(유물 등)이 생겨도 이 함수 한 줄로 병합 가능 + 구버전 백업 호환(없으면 건너뜀).
+function mergePresetCollection(into, from) {
+  if (!from || !from.presets) return into;
+  if (!into) into = { active: null, presets: {} };
+  let last = into.active;
+  for (const [name, val] of Object.entries(from.presets)) {
+    const key = uniqueName(name, into.presets);
+    into.presets[key] = val;
+    last = key;
+  }
+  into.active = last;   // 마지막 불러온 걸 활성으로
+  return into;
+}
+
+// 백업 문자열을 받아 적용. merge=true면 기존 프리셋 위에 '추가'(덮어쓰지 않음).
+// 번들에 있는 섹션만 적용하고 없는/모르는 섹션은 무시 → 구버전 백업·향후 새 프리셋 타입 모두 호환.
+async function applyBundle(text, merge) {
   const raw = JSON.parse(text);
   let b;
   if (raw.format === BACKUP_FORMAT) b = raw;
   else if (raw.statPresets && raw.cubePresets) b = fromDesktopBackup(raw);   // 데스크톱/구버전 백업 호환
   else throw new Error("MekiCalc 프리셋 데이터가 아닙니다.");
 
-  if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
-  if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
-  myConv = b.conversions || {}; saveJSON(CONV_KEY, myConv);
-  myRanges = b.ranges || {}; saveJSON(RANGE_KEY, myRanges);
+  if (merge) {
+    // 추가(병합): 이름 있는 프리셋 컬렉션만 합치고, 전역 설정(환산·범위)은 현재 것 유지.
+    statPresets = mergePresetCollection(statPresets, b.statPresets); saveJSON(STATP_KEY, statPresets);
+    cubePresets = mergePresetCollection(cubePresets, b.cubePresets); saveJSON(CUBEP_KEY, cubePresets);
+    // 향후 새 프리셋 타입 추가 시 여기 한 줄:  xxxPresets = mergePresetCollection(xxxPresets, b.xxxPresets); saveJSON(...)
+  } else {
+    // 덮어쓰기(서버 동기화 등). 섹션이 있을 때만 교체 → 없는 섹션은 현재 유지.
+    if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
+    if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
+    if (b.conversions) { myConv = b.conversions; saveJSON(CONV_KEY, myConv); }
+    if (b.ranges) { myRanges = b.ranges; saveJSON(RANGE_KEY, myRanges); }
+  }
   fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
   fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
   renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
@@ -1146,7 +1178,7 @@ $("import-file").addEventListener("change", (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = async () => {
-      try { await applyBundle(reader.result); toast("파일에서 불러왔습니다."); $("backup-status").textContent = ""; }
+      try { await applyBundle(reader.result, true); toast("불러온 프리셋을 추가했습니다."); $("backup-status").textContent = ""; }
       catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
     };
     reader.readAsText(file);
@@ -1164,7 +1196,7 @@ $("export-text-btn").addEventListener("click", async () => {
 $("import-text-btn").addEventListener("click", async () => {
   const s = $("backup-text").value.trim();
   if (!s) { $("backup-status").textContent = "먼저 백업 텍스트를 붙여넣으세요."; return; }
-  try { await applyBundle(s); toast("텍스트에서 불러왔습니다."); $("backup-status").textContent = ""; }
+  try { await applyBundle(s, true); toast("불러온 프리셋을 추가했습니다."); $("backup-status").textContent = ""; }
   catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
 });
 
