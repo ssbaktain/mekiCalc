@@ -49,5 +49,6 @@ data/ui.json
 
 ### 로컬 백업 / 임시 산출물 ###
 mydata_backup/
+logs/
 dist_graph.png
 model_vs_empirical.png
