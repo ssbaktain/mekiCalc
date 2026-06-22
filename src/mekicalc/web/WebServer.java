@@ -360,6 +360,7 @@ public final class WebServer {
         if (n.endsWith(".json")) return "application/json; charset=utf-8";
         if (n.endsWith(".svg")) return "image/svg+xml";
         if (n.endsWith(".png")) return "image/png";
+        if (n.endsWith(".ico")) return "image/x-icon";
         return "application/octet-stream";
     }
 }

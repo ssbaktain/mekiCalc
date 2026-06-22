@@ -148,8 +148,8 @@ function slotOpt(s) { return s ? { name: statLabel(s.stat), value: s.value, stat
 // 슬롯 테이블에서 stat+value에 맞는 후보를 찾아 노랑/특옵 정보까지 채운 칩 옵션을 만든다.
 function findDraw(table, stat, value) {
   const d = table.find((x) => x.statId === stat && x.value === value);
-  return d ? { name: d.name, value: d.value, yellow: d.yellow, special: d.special, statId: d.statId }
-           : { name: statLabel(stat), value, yellow: false, special: false, statId: stat };
+  return d ? { name: d.name, value: d.value, unit: d.unit, yellow: d.yellow, special: d.special, statId: d.statId }
+           : { name: statLabel(stat), value, unit: statUnit(stat), yellow: false, special: false, statId: stat };
 }
 // part·grade의 슬롯들에 대해 {stat,value}[] → 노랑 정보 채운 옵션[](null 제외).
 async function resolveOpts(part, grade, slotsArr) {
@@ -346,14 +346,68 @@ function buildMenu() {
   bar.innerHTML = "";
   const left = document.createElement("div"); left.className = "menu-group";
   const right = document.createElement("div"); right.className = "menu-group";
-  for (const m of MENU) left.appendChild(makeMenuItem(m));
+  const itemEls = [];
+  for (const m of MENU) { const el = makeMenuItem(m); left.appendChild(el); itemEls.push([m, el]); }
   for (const m of MENU_RIGHT) right.appendChild(makeMenuItem(m));
   bar.appendChild(left);
   bar.appendChild(right);
   bar.addEventListener("mouseleave", closeMenus);   // 메뉴바 벗어나면 드롭다운 닫기
+  buildMobileMenu(itemEls);   // 모바일 햄버거 메뉴(좁은 화면용)
   // 첫 메뉴(프리셋)를 기본 활성 + 스탯 서브탭
   const first = left.querySelector(".menu-item");
   if (first) { setActiveMenu(first); showPanel("presets"); selectSub("stat"); }
+}
+
+// 모바일(좁은 화면) 햄버거 메뉴. 모든 항목을 펼친 세로 목록으로 → 한 번 터치로 이동(호버 불필요).
+let mobileMenuEls = [];   // {leaf, btn, desktopItem} — 활성 표시 동기화용
+function buildMobileMenu(itemEls) {
+  const bar = $("menubar");
+  mobileMenuEls = [];
+
+  const burger = document.createElement("button");
+  burger.className = "hamburger"; burger.type = "button";
+  burger.setAttribute("aria-label", "메뉴 열기");
+  burger.innerHTML = "<span></span><span></span><span></span>";
+
+  const panel = document.createElement("div");
+  panel.className = "mobile-menu";
+
+  const closeDrawer = () => { panel.classList.remove("open"); burger.classList.remove("active"); };
+
+  const addLeaf = (label, leaf, desktopItem) => {
+    const btn = document.createElement("button");
+    btn.className = "m-leaf"; btn.type = "button"; btn.textContent = label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeDrawer();
+      selectLeaf(leaf, desktopItem);   // 미저장 가드·패널 전환은 기존 로직 재사용
+      mobileMenuEls.forEach((x) => x.btn.classList.toggle("active", x.btn === btn));
+    });
+    panel.appendChild(btn);
+    mobileMenuEls.push({ leaf, btn, desktopItem });
+  };
+
+  for (const [m, el] of itemEls) {
+    if (m.items) {
+      const head = document.createElement("div");
+      head.className = "m-group-title"; head.textContent = m.label;
+      panel.appendChild(head);
+      for (const it of m.items) addLeaf(it.label, it, el);
+    } else {
+      addLeaf(m.label, m, el);
+    }
+  }
+
+  burger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = panel.classList.toggle("open");
+    burger.classList.toggle("active", open);
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", closeDrawer);   // 바깥 터치 시 닫기
+
+  bar.appendChild(burger);
+  bar.appendChild(panel);
 }
 document.addEventListener("click", closeMenus);
 buildMenu();
@@ -476,7 +530,7 @@ function renderEval() {
     const cubes = (r.expectedCubes == null) ? "∞" : fmt(r.expectedCubes) + "개";
     const tr = document.createElement("tr");
     tr.innerHTML =
-      `<td class="star">${r.special ? "★" : ""}</td><td>${cleanName(r.name)}</td><td class="num">${r.value}${OPT_SUFFIX[r.unit] || ""}</td>` +
+      `<td class="star">${r.special ? "★" : ""}</td><td${r.yellow ? ' style="color:#e7c14a"' : ""}>${cleanName(r.name)}</td><td class="num"${r.yellow ? ' style="color:#e7c14a"' : ""}>${r.value}${OPT_SUFFIX[r.unit] || ""}</td>` +
       `<td class="num ${r.qualitative ? "" : "good"}">${inc}</td><td class="num">${pct(r.pPerCube)}</td><td class="num">${cubes}</td>`;
     tb.appendChild(tr);
   }
@@ -766,6 +820,7 @@ $("oc-btn").addEventListener("click", runOptCompare);
 // ──────────────────── 내 옵션 비교 ────────────────────
 
 function statLabel(id) { const d = statDefs.find((x) => x.id === id); return d ? d.name : id; }
+function statUnit(id) { const d = statDefs.find((x) => x.id === id); return d ? d.unit : ""; }
 
 // 옵션 박스 안 내용(읽기전용). 노랑은 금색 글씨 + 배지.
 // 옵션 표기: 이름에서 단위(%·(+)·(+초)) 떼고 값 뒤에 단위 붙임 (예: "공격 속도 10%").
@@ -1207,7 +1262,13 @@ async function loadMe() {
   renderLoginUI();
 }
 
+async function doLogout() {
+  try { await fetch("/auth/logout", { method: "POST" }); } catch {}
+  location.reload();
+}
+
 function renderLoginUI() {
+  renderHeaderAccount();
   const card = $("account-card"), body = $("account-body");
   if (!card || !body) return;
   if (!me.oauthEnabled) { card.hidden = true; return; }
@@ -1217,14 +1278,26 @@ function renderLoginUI() {
       `<p class="status set-desc"><b>${me.name || ""}</b> <span class="muted">${me.email || ""}</span> 로 로그인됨. ` +
       `프리셋이 이 계정에 자동 저장·동기화됩니다.</p>` +
       `<button id="logout-btn" class="mini-btn ghost" type="button">로그아웃</button>`;
-    $("logout-btn").addEventListener("click", async () => {
-      try { await fetch("/auth/logout", { method: "POST" }); } catch {}
-      location.reload();
-    });
+    $("logout-btn").addEventListener("click", doLogout);
   } else {
     body.innerHTML =
       `<p class="status set-desc">로그인하면 프리셋(스탯·큐브·설정)을 계정에 저장해 여러 기기에서 동기화할 수 있어요.</p>` +
       `<a class="primary-btn google-btn" href="/auth/login">Google로 로그인</a>`;
+  }
+}
+
+// 우상단 헤더의 계정 영역(로그인 버튼 / 로그인됨 표시).
+function renderHeaderAccount() {
+  const h = $("header-account");
+  if (!h) return;
+  if (!me.oauthEnabled) { h.innerHTML = ""; return; }
+  if (me.loggedIn) {
+    h.innerHTML =
+      `<span class="acct-chip" title="${me.email || ""}"><span class="acct-dot"></span>${me.name || "로그인됨"}</span>` +
+      `<button id="header-logout" class="mini-btn ghost" type="button">로그아웃</button>`;
+    $("header-logout").addEventListener("click", doLogout);
+  } else {
+    h.innerHTML = `<a class="login-btn" href="/auth/login"><span class="g-mark">G</span> 로그인</a>`;
   }
 }
 
