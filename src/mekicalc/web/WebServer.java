@@ -40,7 +40,7 @@ public final class WebServer {
 
     public void start() throws IOException {
         http = HttpServer.create(new InetSocketAddress(port), 0);
-        http.setExecutor(Executors.newFixedThreadPool(4));
+        http.setExecutor(Executors.newFixedThreadPool(16));
 
         http.createContext("/api/stats", json("GET", ex -> service.statDefs()));
         http.createContext("/api/meta", json("GET", ex -> service.meta()));
