@@ -16,6 +16,10 @@ New-Item -ItemType Directory -Path "$root\out" | Out-Null
 & javac -encoding UTF-8 -d "$root\out" $sources
 if ($LASTEXITCODE -ne 0) { Write-Error "컴파일 실패"; exit 1 }
 
+# 이전(고아) 웹 서버 java가 포트를 잡고 있으면 정리 → 재시작 시 포트 충돌 방지(새 코드로 확실히 교체).
+Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 800
+
 Push-Location $root
 try {
     & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp "$root\out" `
