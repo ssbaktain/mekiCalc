@@ -331,11 +331,19 @@ public final class WebServer {
             }
             byte[] data = Files.readAllBytes(target);
             ex.getResponseHeaders().set("Content-Type", contentType(target));
+            // 앱 셸(html/js/css)은 캐시 금지 → Cloudflare/브라우저가 옛 버전 서빙 안 함(배포 즉시 반영).
+            ex.getResponseHeaders().set("Cache-Control", appShell(target) ? "no-store" : "public, max-age=86400");
             ex.sendResponseHeaders(200, data.length);
             try (OutputStream os = ex.getResponseBody()) { os.write(data); }
         } finally {
             ex.close();
         }
+    }
+
+    /** 앱 셸(자주 바뀌는 정적 파일) 여부 — 캐시 금지 대상. */
+    private static boolean appShell(Path p) {
+        String n = p.getFileName().toString().toLowerCase();
+        return n.endsWith(".html") || n.endsWith(".js") || n.endsWith(".css");
     }
 
     private static String contentType(Path p) {
