@@ -36,18 +36,26 @@ public final class CubeStateIO {
     private CubeStateIO() {}
 
     public static Map<String, PartCube> load(Path dataDir) {
-        Map<String, PartCube> out = new LinkedHashMap<>();
         Path f = dataDir.resolve(FILE);
-        if (!Files.exists(f)) return out;
+        if (!Files.exists(f)) return new LinkedHashMap<>();
         try {
-            Map<String, Object> root = Json.asMap(Json.parse(Files.readString(f)));
-            for (Map.Entry<String, Object> e : root.entrySet()) {
-                if (e.getKey().startsWith("_")) continue;
-                Map<String, Object> pm = Json.asMap(e.getValue());
-                out.put(e.getKey(), new PartCube(parseLine(pm.get("윗잠")), parseLine(pm.get("아랫잠"))));
-            }
+            return parse(Json.parse(Files.readString(f)));
         } catch (Exception ignored) {
-            // 손상된 파일은 빈 상태로 시작
+            return new LinkedHashMap<>();   // 손상된 파일은 빈 상태로 시작
+        }
+    }
+
+    /**
+     * 이미 파싱된 JSON 객체(부위→{윗잠,아랫잠})를 큐브 상태 맵으로 변환한다.
+     * 파일 로드와 웹 요청 본문이 같은 형식을 공유한다(무상태 API용).
+     */
+    public static Map<String, PartCube> parse(Object root) {
+        Map<String, PartCube> out = new LinkedHashMap<>();
+        if (!(root instanceof Map)) return out;
+        for (Map.Entry<String, Object> e : Json.asMap(root).entrySet()) {
+            if (e.getKey().startsWith("_")) continue;
+            Map<String, Object> pm = Json.asMap(e.getValue());
+            out.put(e.getKey(), new PartCube(parseLine(pm.get("윗잠")), parseLine(pm.get("아랫잠"))));
         }
         return out;
     }

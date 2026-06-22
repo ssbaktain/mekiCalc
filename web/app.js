@@ -1,0 +1,1102 @@
+"use strict";
+
+const UNIT_SUFFIX = { PCT: "%", SEC: "초", LEVEL: "Lv", FLAT: "" };
+const CUBE_KEY = "mekicalc.cube.v1";
+const CONV_KEY = "mekicalc.conv.v1";
+const RANGE_KEY = "mekicalc.ranges.v1";
+const STATP_KEY = "mekicalc.statPresets.v1";
+const CUBEP_KEY = "mekicalc.cubePresets.v1";
+
+let statDefs = [];
+let meta = { parts: [], grades: [], gradeKo: {} };
+let myCube = loadCube();               // { 부위: { 윗잠|아랫잠: {grade, slots:[{stat,value}|null x3], locked:[bool x3], stack} } }
+let myConv = loadJSON(CONV_KEY, {});   // 커스텀 딜 환산 statId -> 1단위당 %
+let myRanges = loadJSON(RANGE_KEY, {});// 추천 옵션 범위 statId -> {enabled,lo,hi,noLow,noHigh}
+let statPresets = loadJSON(STATP_KEY, null); // {active, presets:{name:{stats,job}}}
+let cubePresets = loadJSON(CUBEP_KEY, null); // {active, presets:{name:cubeState}}
+let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
+const slotCache = {};                  // "부위|등급" -> slots[3][]
+
+function loadJSON(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch { return def; } }
+function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function cleanName(name) { return String(name || "").replace(/%$/, "").replace(/\(\+초\)$/, "").replace(/\(\+\)$/, "").trim(); }
+
+// ──────────────────── 공통 ────────────────────
+
+const $ = (id) => document.getElementById(id);
+function fmt(n) { return Math.round(n).toLocaleString("ko-KR"); }
+// 적응형 소수 자리: 작은 값도 유효숫자 sig개가 보이도록(최소 2자리, 최대 8자리).
+function pctDecimals(v, sig) {
+  if (v === 0) return 2;
+  const digits = Math.floor(Math.log10(Math.abs(v)));
+  return Math.min(8, Math.max(2, sig - 1 - digits));
+}
+function pct(x, sig = 3) { if (x == null) return "—"; const v = x * 100; return v.toFixed(pctDecimals(v, sig)) + "%"; }
+function signPct(x, sig = 3) { if (x == null) return "—"; const v = x * 100; return (v >= 0 ? "+" : "") + v.toFixed(pctDecimals(v, sig)) + "%"; }
+function gradeKo(code) { return meta.gradeKo[code] ?? code; }
+
+// 등급별 색(데스크톱 Theme.gradeColor, 다크 배경용으로 약간 밝게).
+const GRADE_COLOR = {
+  NORMAL: "#a7adb8", RARE: "#4d8bff", EPIC: "#a06bff",
+  UNIQUE: "#e0a82e", LEGENDARY: "#2fbf6b", MYTHIC: "#ff5a5a",
+};
+function gradeColor(code) { return GRADE_COLOR[code] || "var(--text)"; }
+
+// 부위 표시 순서(데스크톱 PART_ORDER와 동일). 모든 부위 드롭다운·카드에 통일 적용.
+const PART_ORDER = ["모자", "망토", "상의", "어깨장식", "하의", "벨트", "장갑", "신발", "반지", "목걸이", "눈장식", "얼굴장식", "귀고리"];
+function partIdx(p) { const i = PART_ORDER.indexOf(p); return i < 0 ? 999 : i; }
+function sortParts(arr) { return arr.slice().sort((a, b) => partIdx(a) - partIdx(b)); }
+function gradeText(code) { return `<span class="grade-text" style="color:${gradeColor(code)}">${gradeKo(code)}</span>`; }
+
+// 등급 select: 옵션마다 등급색, 접힌 표시도 선택 등급색.
+function fillGradeSelect(sel) {
+  sel.innerHTML = "";
+  for (const g of meta.grades) {
+    const o = new Option(gradeKo(g), g);
+    o.style.color = gradeColor(g);
+    o.style.background = "#262a33";
+    sel.add(o);
+  }
+  applyGradeColor(sel);
+  sel.addEventListener("change", () => applyGradeColor(sel));
+}
+function applyGradeColor(sel) { sel.style.color = gradeColor(sel.value); sel.style.fontWeight = "700"; }
+
+// 큰 수의 한글 단위 환산(경/조/억/만, 유효숫자 3자리). 1만 미만은 빈 문자열. (데스크톱과 동일)
+const KOR_UNITS = [[1e16, "경"], [1e12, "조"], [1e8, "억"], [1e4, "만"]];
+function koreanUnit(v) {
+  const a = Math.abs(v);
+  if (v == null || !isFinite(a) || a < 1e4) return "";
+  for (const [val, name] of KOR_UNITS) if (a >= val) return threeSig(v / val) + name;
+  return "";
+}
+function threeSig(v) {
+  if (v === 0) return "0";
+  const digits = Math.ceil(Math.log10(Math.abs(v)));
+  const p = Math.max(0, 3 - digits);
+  return parseFloat(v.toFixed(p)).toString();
+}
+
+// 옵션 칩. opt={name,value,yellow,special,statId} 또는 null(빈). cls=before|after|same|locked.
+function chip(opt, cls) {
+  if (!opt) return `<span class="opt-chip empty">(비움)</span>`;
+  const y = opt.yellow ? " yellow" : "";
+  const star = opt.special ? "★ " : "";
+  return `<span class="opt-chip ${cls}${y}">${star}${optLabel(opt)}</span>`;
+}
+function keyOf(o) { return (o.statId != null ? o.statId : o.name) + "|" + o.value; }
+
+// 기존 옵션 묶음 → 새 옵션 묶음(하나의 세트가 다른 세트로 바뀌는 표현). 유지=중립, 빠짐=빨강, 추가=초록.
+function bundleChange(curOpts, recOpts) {
+  const curKeys = new Set(curOpts.map(keyOf));
+  const recKeys = new Set(recOpts.map(keyOf));
+  const before = curOpts.length
+    ? curOpts.map((o) => chip(o, recKeys.has(keyOf(o)) ? "same" : "before")).join("")
+    : `<span class="opt-chip empty">(없음)</span>`;
+  const after = recOpts.length
+    ? recOpts.map((o) => chip(o, curKeys.has(keyOf(o)) ? "same" : "after")).join("")
+    : `<span class="opt-chip empty">(없음)</span>`;
+  return `<div class="bundle-change"><div class="bundle">${before}</div>` +
+    `<span class="arrow big">→</span><div class="bundle">${after}</div></div>`;
+}
+
+// {stat,value} → {name,value}(myCube 슬롯 → 칩용, 노랑 정보 없음).
+function slotOpt(s) { return s ? { name: statLabel(s.stat), value: s.value, statId: s.stat } : null; }
+
+// 슬롯 테이블에서 stat+value에 맞는 후보를 찾아 노랑/특옵 정보까지 채운 칩 옵션을 만든다.
+function findDraw(table, stat, value) {
+  const d = table.find((x) => x.statId === stat && x.value === value);
+  return d ? { name: d.name, value: d.value, yellow: d.yellow, special: d.special, statId: d.statId }
+           : { name: statLabel(stat), value, yellow: false, special: false, statId: stat };
+}
+// part·grade의 슬롯들에 대해 {stat,value}[] → 노랑 정보 채운 옵션[](null 제외).
+async function resolveOpts(part, grade, slotsArr) {
+  const tables = await getSlots(part, grade);
+  const out = [];
+  for (let i = 0; i < slotsArr.length; i++) {
+    if (slotsArr[i]) out.push(findDraw(tables[i] || [], slotsArr[i].stat, slotsArr[i].value));
+  }
+  return out;
+}
+
+// 효율 점수: 데스크톱과 동일하게 ×1,000,000 후 유효숫자 포맷.
+function fmtScore(v) {
+  if (v == null || !isFinite(v) || v === 0) return "0";
+  const twoDown = Math.trunc(v * 100) / 100;          // 0.01 이상 → 소수 2자리 버림
+  if (twoDown !== 0) return String(twoDown);
+  const digits = Math.ceil(Math.log10(Math.abs(v)));  // 더 작으면 2 유효숫자
+  const p = Math.max(0, 2 - digits);
+  return String(Math.trunc(v * Math.pow(10, p)) / Math.pow(10, p));
+}
+
+function collectStats() {
+  const stats = {};
+  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
+    const v = parseFloat(input.value);
+    stats[input.dataset.statId] = isNaN(v) ? 0 : v;
+  }
+  stats.JOB = parseInt($("job-sel").value, 10) || 0;   // 직업은 별도 선택기에서
+  return stats;
+}
+
+async function postJson(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+function loadCube() {
+  try { return JSON.parse(localStorage.getItem(CUBE_KEY)) || {}; } catch { return {}; }
+}
+// 큐브 편집은 saveCube()로 작업본(myCube)만 갱신 → '저장(프리셋)' 전까진 미저장 상태(dirty).
+let cubeDirty = false;
+function saveCube() { localStorage.setItem(CUBE_KEY, JSON.stringify(myCube)); cubeDirty = true; }
+
+// 활성 큐브 프리셋으로 작업본을 되돌림(미저장 변경 폐기).
+function revertCube() {
+  myCube = clone((cubePresets && cubePresets.presets[cubePresets.active]) || {});
+  localStorage.setItem(CUBE_KEY, JSON.stringify(myCube));
+  cubeDirty = false;
+  renderCube();
+}
+// 큐브 미저장 변경이 있으면 이동 전 확인. 진행(폐기) 시 true, 취소 시 false.
+function canLeaveCube() {
+  if (!cubeDirty) return true;
+  if (confirm("저장하지 않은 큐브 변경이 있습니다.\n저장하지 않고 이동하면 변경이 되돌아갑니다. 계속할까요?")) {
+    revertCube();
+    return true;
+  }
+  return false;
+}
+
+// 스탯도 동일: '저장(프리셋)' 전 변경은 미저장(dirty).
+let statDirty = false;
+function revertStat() { spApply(statPresets.active); }   // 활성 스탯 프리셋으로 폼 복원(spApply가 dirty 해제)
+function canLeaveStat() {
+  if (!statDirty) return true;
+  if (confirm("저장하지 않은 스탯 변경이 있습니다.\n저장하지 않고 이동하면 변경이 되돌아갑니다. 계속할까요?")) {
+    revertStat();
+    return true;
+  }
+  return false;
+}
+
+// 현재 보고 있는 편집기(스탯/큐브)의 미저장 이탈 가드.
+let currentSub = "stat";
+function canLeaveEditors() {
+  if ($("panel-presets").hidden) return true;
+  if (currentSub === "stat") return canLeaveStat();
+  if (currentSub === "cube") return canLeaveCube();
+  return true;
+}
+
+// 부위·등급의 슬롯 후보(캐시). slots[slotIdx] = [{statId,name,value,special,yellow}, …]
+async function getSlots(part, grade) {
+  const key = part + "|" + grade;
+  if (!slotCache[key]) {
+    const data = await postJson("/api/slotdraws", { part, grade });
+    slotCache[key] = data.slots;
+  }
+  return slotCache[key];
+}
+
+// ──────────────────── 상단 메뉴(드롭다운) ────────────────────
+
+// 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
+// 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
+const MENU = [
+  { label: "프리셋", panel: "presets" },
+  { label: "큐브", items: [
+    { label: "큐브 기댓값", panel: "cube" },
+    { label: "옵션 비교", panel: "optcompare" },
+    { label: "내 옵션 비교", panel: "compare" },
+    { label: "우선순위 추천", panel: "recommend" },
+  ]},
+  { label: "유물", items: [{ label: "유물 잠재", panel: "soon", soon: "유물 잠재" }] },
+  { label: "어빌리티", items: [{ label: "어빌리티 효율", panel: "soon", soon: "어빌리티" }] },
+  { label: "용사의 여정", items: [{ label: "용사의 여정", panel: "soon", soon: "용사의 여정" }] },
+  { label: "장비 비교", items: [{ label: "장비 비교", panel: "soon", soon: "장비 비교" }] },
+];
+const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
+
+function showPanel(name) {
+  for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
+  if (name === "compare") renderCompareEditor(true);
+  if (name === "optcompare") renderOptCompare();
+  if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
+}
+
+function closeMenus() { document.querySelectorAll(".menu-item.open").forEach((i) => i.classList.remove("open")); }
+function setActiveMenu(item) {
+  document.querySelectorAll(".menu-item").forEach((i) => i.classList.remove("active"));
+  item.classList.add("active");
+}
+
+function selectLeaf(leaf, item) {
+  // 프리셋 패널(현재 서브탭 유지)로 머무는 이동이 아니면, 미저장 변경 가드.
+  const staysInPresets = leaf.panel === "presets" && !leaf.sub;
+  if (!staysInPresets && !canLeaveEditors()) return;
+  closeMenus();
+  setActiveMenu(item);
+  if (leaf.panel === "soon") { $("soon-title").textContent = (leaf.soon || "기능") + " — 준비 중"; showPanel("soon"); }
+  else showPanel(leaf.panel);
+  if (leaf.sub) selectSub(leaf.sub);
+}
+
+// 프리셋 패널 안의 스탯/큐브 서브탭 선택.
+function selectSub(name) {
+  currentSub = name;
+  document.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
+  document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
+}
+for (const b of document.querySelectorAll(".subtab")) {
+  b.addEventListener("click", () => {
+    if (b.dataset.sub !== currentSub && !canLeaveEditors()) return;   // 다른 서브탭으로 갈 때 미저장 가드
+    selectSub(b.dataset.sub);
+  });
+}
+
+function makeMenuItem(m) {
+  const item = document.createElement("div");
+  item.className = "menu-item" + (m.boxed ? " boxed" : "");
+  const label = document.createElement("button");
+  label.className = "menu-label";
+  label.type = "button";
+  label.textContent = m.label;
+  item.appendChild(label);
+
+  if (m.items) {
+    label.insertAdjacentHTML("beforeend", ' <span class="caret">▾</span>');
+    const dd = document.createElement("div");
+    dd.className = "menu-dropdown";
+    for (const it of m.items) {
+      const sub = document.createElement("button");
+      sub.className = "menu-sub";
+      sub.type = "button";
+      sub.textContent = it.label;
+      sub.addEventListener("click", (e) => { e.stopPropagation(); selectLeaf(it, item); });
+      dd.appendChild(sub);
+    }
+    item.appendChild(dd);
+    // 드롭다운은 .open으로만 제어(호버/클릭 둘 다 JS로 → 동시에 두 개 뜨는 버그 방지).
+    item.addEventListener("mouseenter", () => { closeMenus(); item.classList.add("open"); });
+    label.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasOpen = item.classList.contains("open");
+      closeMenus();
+      if (!wasOpen) item.classList.add("open");
+    });
+  } else {
+    label.addEventListener("click", (e) => { e.stopPropagation(); selectLeaf(m, item); });
+  }
+  return item;
+}
+
+function buildMenu() {
+  const bar = $("menubar");
+  bar.innerHTML = "";
+  const left = document.createElement("div"); left.className = "menu-group";
+  const right = document.createElement("div"); right.className = "menu-group";
+  for (const m of MENU) left.appendChild(makeMenuItem(m));
+  for (const m of MENU_RIGHT) right.appendChild(makeMenuItem(m));
+  bar.appendChild(left);
+  bar.appendChild(right);
+  bar.addEventListener("mouseleave", closeMenus);   // 메뉴바 벗어나면 드롭다운 닫기
+  // 첫 메뉴(프리셋)를 기본 활성 + 스탯 서브탭
+  const first = left.querySelector(".menu-item");
+  if (first) { setActiveMenu(first); showPanel("presets"); selectSub("stat"); }
+}
+document.addEventListener("click", closeMenus);
+buildMenu();
+
+// 직업 변경: '딜 미환산' 표시 갱신 + 예상 데미지 재계산 + 미저장 표시.
+$("job-sel").addEventListener("change", () => { statDirty = true; refreshQual(); calcDamage(); });
+
+
+// ──────────────────── 스탯 입력 폼 ────────────────────
+
+async function loadStats() {
+  try { statDefs = await (await fetch("/api/stats")).json(); renderForm(); }
+  catch (e) { $("stat-form").textContent = "스탯 목록을 불러오지 못했습니다: " + e; }
+}
+
+function renderForm() {
+  const groups = new Map();
+  for (const d of statDefs) {
+    if (d.id === "JOB") continue;   // 직업은 상단 선택기에서
+    if (!groups.has(d.group)) groups.set(d.group, []);
+    groups.get(d.group).push(d);
+  }
+  const form = $("stat-form");
+  form.innerHTML = "";
+  for (const [group, defs] of groups) {
+    const box = document.createElement("div");
+    box.className = "group";
+    box.innerHTML = `<div class="group-title">${group}</div>`;
+    const grid = document.createElement("div");
+    grid.className = "field-grid";
+    for (const d of defs) {
+      const field = document.createElement("div");
+      field.className = "field";
+      field.dataset.statId = d.id;
+      field.innerHTML =
+        `<label for="f_${d.id}">${d.name}</label>` +
+        `<div class="input-wrap"><input type="number" id="f_${d.id}" data-stat-id="${d.id}" value="0" step="any" />` +
+        `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>` +
+        `<span class="dmgx-badge" hidden>딜 미환산</span>`;
+      grid.appendChild(field);
+    }
+    box.appendChild(grid);
+    form.appendChild(box);
+  }
+  // 스탯 값 변경 시 미저장 표시 + 예상 데미지 자동 재계산
+  for (const input of form.querySelectorAll("input[data-stat-id]")) {
+    input.addEventListener("change", () => { statDirty = true; calcDamage(); });
+  }
+  applyQualMarkers();
+}
+
+// 현재 qualSet에 맞춰 각 필드의 '딜 미환산' 배지 표시/숨김.
+function applyQualMarkers() {
+  for (const field of $("stat-form").querySelectorAll(".field")) {
+    const badge = field.querySelector(".dmgx-badge");
+    if (badge) badge.hidden = !qualSet.has(field.dataset.statId);
+  }
+}
+
+// 직업·환산에 따라 '딜 미환산' 스탯 목록을 갱신.
+async function refreshQual() {
+  try {
+    const data = await postJson("/api/qualitative", { job: parseInt($("job-sel").value, 10) || 0, conversions: myConv });
+    qualSet = new Set(data.ids || []);
+  } catch (e) { qualSet = new Set(); }
+  applyQualMarkers();
+}
+
+// ──────────────────── 예상 데미지 ────────────────────
+
+async function calcDamage() {
+  $("status").textContent = "계산 중…";
+  try {
+    const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv });
+    $("dmg-normal").textContent = fmt(data.normal);
+    $("dmg-boss").textContent = fmt(data.boss);
+    $("dmg-normal-unit").textContent = data.normal == null ? "" : "(" + koreanUnit(data.normal) + ")";
+    $("dmg-boss-unit").textContent = data.boss == null ? "" : "(" + koreanUnit(data.boss) + ")";
+    $("status").textContent = "";
+  } catch (e) { $("status").textContent = "오류: " + e.message; }
+}
+
+// ──────────────────── 큐브 기댓값 ────────────────────
+
+let evResults = [];   // 마지막 계산 결과(정렬만 바꿀 때 재요청 없이 재정렬)
+
+async function calcEvaluate() {
+  $("ev-status").textContent = "계산 중…";
+  $("ev-table").hidden = true;
+  try {
+    const slotRaw = $("ev-slot").value;
+    const data = await postJson("/api/evaluate", {
+      part: $("ev-part").value, grade: $("ev-grade").value,
+      slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
+      bossMode: $("ev-boss").value === "true",
+      stats: collectStats(), conversions: myConv,
+    });
+    evResults = data.results;
+    renderEval();
+    $("ev-status").textContent = evResults.length ? "" : "표시할 옵션이 없습니다.";
+  } catch (e) { $("ev-status").textContent = "오류: " + e.message; }
+}
+
+// 정렬키: 딜 증가량(미환산=뒤로), 효율=등장확률×딜증가량.
+function evDmgKey(r) { return r.qualitative || r.damageIncrease == null ? -Infinity : r.damageIncrease; }
+function evScoreKey(r) { return r.qualitative || r.damageIncrease == null ? -Infinity : r.pPerCube * r.damageIncrease; }
+
+function renderEval() {
+  const rows = evResults.slice();
+  switch (parseInt($("ev-sort").value, 10)) {
+    case 2: rows.sort((a, b) => b.pPerCube - a.pPerCube); break;            // 등장 확률 순
+    case 0: rows.sort((a, b) => evScoreKey(b) - evScoreKey(a)); break;      // 효율 순
+    default: rows.sort((a, b) => evDmgKey(b) - evDmgKey(a));                // 딜 증가량 순
+  }
+  const tb = $("ev-table").querySelector("tbody");
+  tb.innerHTML = "";
+  for (const r of rows) {
+    const inc = r.qualitative ? '<span class="qual-tag">딜 미환산</span>'
+      : (r.damageIncrease == null ? "—" : "+" + (r.damageIncrease * 100).toFixed(2) + "%");
+    const cubes = (r.expectedCubes == null) ? "∞" : fmt(r.expectedCubes) + "개";
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      `<td class="star">${r.special ? "★" : ""}</td><td>${cleanName(r.name)}</td><td class="num">${r.value}${OPT_SUFFIX[r.unit] || ""}</td>` +
+      `<td class="num ${r.qualitative ? "" : "good"}">${inc}</td><td class="num">${pct(r.pPerCube)}</td><td class="num">${cubes}</td>`;
+    tb.appendChild(tr);
+  }
+  $("ev-table").hidden = rows.length === 0;
+}
+$("ev-btn").addEventListener("click", calcEvaluate);
+$("ev-sort").addEventListener("change", () => { if (evResults.length) renderEval(); });
+
+// ──────────────────── 내 큐브 편집기 ────────────────────
+
+function emptyLine() {
+  return { grade: meta.grades[meta.grades.length - 1], slots: [null, null, null], locked: [false, false, false], stack: 0 };
+}
+
+$("mc-add").addEventListener("click", () => {
+  const part = $("mc-part-add").value;
+  if (!part || myCube[part]) return;
+  myCube[part] = { 윗잠: emptyLine(), 아랫잠: emptyLine() };
+  saveCube(); renderCube();
+});
+$("mc-clear").addEventListener("click", () => {
+  if (!Object.keys(myCube).length) return;
+  if (!confirm("입력한 큐브 옵션을 모두 초기화할까요?")) return;
+  myCube = {}; saveCube(); renderCube();
+});
+
+// 스탯 초기화: 입력값을 모두 0으로(프리셋은 그대로, 저장 전까진 디스크 미반영).
+$("stat-reset").addEventListener("click", () => {
+  if (!confirm("스탯 입력값을 모두 0으로 초기화할까요?")) return;
+  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) input.value = "0";
+  statDirty = true;
+  calcDamage();
+});
+
+// 슬롯 select 채우기(중복 옵션 제거, "비움" 포함). 노란 옵션은 금색, 흰 옵션은 기본색으로 구분.
+function fillSlotSelect(sel, slotList, selectedSlot) {
+  sel.innerHTML = "";
+  sel.add(new Option("(비움)", ""));
+  const seen = new Set();
+  for (const d of slotList) {
+    const key = d.statId + "|" + d.value;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const o = new Option((d.special ? "★ " : "") + optLabel(d), key);
+    o.style.color = d.yellow ? "#e7c14a" : "#cfd6e6";
+    o.style.background = "#262a33";
+    o.dataset.yellow = d.yellow ? "1" : "";
+    sel.add(o);
+  }
+  sel.value = selectedSlot ? selectedSlot.stat + "|" + selectedSlot.value : "";
+  applySelectColor(sel);
+  sel.addEventListener("change", () => applySelectColor(sel));
+}
+
+// 접힌 select의 글자색을 선택된 옵션(노랑/흰)에 맞춤.
+function applySelectColor(sel) {
+  const o = sel.options[sel.selectedIndex];
+  sel.style.color = (o && o.dataset && o.dataset.yellow) ? "#e7c14a" : "";
+}
+
+function parseSlotKey(key) {
+  if (!key) return null;
+  const i = key.lastIndexOf("|");
+  return { stat: key.slice(0, i), value: parseFloat(key.slice(i + 1)) };
+}
+
+async function renderCube() {
+  const list = $("mc-list");
+  list.innerHTML = "";
+  const parts = sortParts(Object.keys(myCube));
+  if (!parts.length) { list.innerHTML = '<p class="status">아직 추가한 부위가 없습니다. 위에서 부위를 추가하세요.</p>'; return; }
+  for (const part of parts) {
+    const fs = document.createElement("fieldset");
+    fs.className = "cube-part";
+    fs.innerHTML = `<legend>${part} <button class="part-del" type="button" title="이 부위 삭제">✕</button></legend>`;
+    fs.querySelector(".part-del").addEventListener("click", () => { delete myCube[part]; saveCube(); renderCube(); });
+    for (const lineName of ["윗잠", "아랫잠"]) {
+      fs.appendChild(await renderLine(part, lineName));
+    }
+    list.appendChild(fs);
+  }
+}
+
+async function renderLine(part, lineName) {
+  const line = myCube[part][lineName];
+  const slots = await getSlots(part, line.grade);
+  const wrap = document.createElement("div");
+  wrap.className = "cube-line";
+
+  // 제목 (데스크톱과 동일: 윗잠 (미라클 큐브) / 아랫잠 (에디셔널 큐브))
+  const title = document.createElement("div");
+  title.className = "line-title";
+  title.textContent = lineName === "윗잠" ? "윗잠 (미라클 큐브)" : "아랫잠 (에디셔널 큐브)";
+  wrap.appendChild(title);
+
+  // 등급
+  const gradeSel = document.createElement("select");
+  gradeSel.className = "line-grade";
+  fillGradeSelect(gradeSel);
+  gradeSel.value = line.grade;
+  applyGradeColor(gradeSel);
+  gradeSel.addEventListener("change", () => {
+    line.grade = gradeSel.value; line.slots = [null, null, null];   // 등급 바뀌면 옵션 표 달라져 초기화
+    saveCube(); renderCube();
+  });
+  wrap.appendChild(gradeSel);
+
+  // 슬롯 1·2·3 (각 잠금)
+  for (let i = 0; i < 3; i++) {
+    const row = document.createElement("div");
+    row.className = "slot-row";
+    const sel = document.createElement("select");
+    fillSlotSelect(sel, slots[i], line.slots[i]);
+    sel.addEventListener("change", () => { line.slots[i] = parseSlotKey(sel.value); saveCube(); });
+    const lock = document.createElement("input");
+    lock.type = "checkbox"; lock.checked = !!line.locked[i];
+    lock.addEventListener("change", () => { line.locked[i] = lock.checked; saveCube(); });
+    const lockLabel = document.createElement("label");
+    lockLabel.className = "lock";
+    lockLabel.appendChild(lock);
+    lockLabel.appendChild(document.createTextNode("잠금"));
+    row.appendChild(sel);
+    row.appendChild(lockLabel);
+    wrap.appendChild(row);
+  }
+
+  // 현재 스택
+  const stackRow = document.createElement("div");
+  stackRow.className = "stack-row";
+  const sl = document.createElement("span");
+  sl.className = "stack-label";
+  sl.textContent = "현재 스택";
+  const stackInput = document.createElement("input");
+  stackInput.type = "number"; stackInput.min = "0"; stackInput.value = line.stack ?? 0; stackInput.className = "stack-input";
+  stackInput.addEventListener("change", () => { line.stack = parseInt(stackInput.value, 10) || 0; saveCube(); });
+  stackRow.appendChild(sl);
+  stackRow.appendChild(stackInput);
+  wrap.appendChild(stackRow);
+
+  return wrap;
+}
+
+// ──────────────────── 우선순위 추천 ────────────────────
+
+async function runRecommend(useSliderMax) {
+  if (!Object.keys(myCube).length) { $("rc-status").textContent = "먼저 '내 큐브' 탭에서 큐브 옵션을 입력하세요."; $("rc-list").innerHTML = ""; return; }
+  $("rc-status").textContent = "계산 중…";
+  try {
+    const data = await postJson("/api/recommend", {
+      stats: collectStats(), conversions: myConv, bossMode: $("rc-boss").value === "true",
+      cubeState: myCube, ranges: myRanges,
+      sliderValue: parseInt($("rc-slider").value, 10) || 0,
+      sortKey: parseInt($("rc-sort").value, 10) || 0,
+      upper: $("rc-upper").checked, lower: $("rc-lower").checked,
+    });
+    const slider = $("rc-slider");
+    slider.max = Math.max(0, data.maxDivisions - 1);
+    $("rc-slider-max").textContent = slider.max;
+    if (useSliderMax) { slider.value = 0; $("rc-slider-val").textContent = "0"; }
+    renderRecs(data.recs);
+    $("rc-status").textContent = data.recs.length ? "" : "추천할 옵션이 없습니다.";
+  } catch (e) { $("rc-status").textContent = "오류: " + e.message; }
+}
+
+// 슬롯 박스 한 칸. cls=neutral|before|after|locked. locked=true면 자물쇠 표시.
+function scBox(opt, cls, no, locked) {
+  const tag = no ? `<span class="sc-no">${no}</span>` : "";
+  const lk = locked ? `<span class="sc-lock" title="잠금">🔒</span>` : "";
+  return `<div class="sc-box ${cls}">${tag}${optText(opt)}${lk}</div>`;
+}
+// 좌(현재)/우(추천 or 가정) 정렬 + 중앙 구분선. rowsHtml은 .sc-row들.
+function slotCompare(rowsHtml) { return `<div class="slot-compare">${rowsHtml}</div>`; }
+
+function renderRecs(recs) {
+  const list = $("rc-list");
+  list.innerHTML = "";
+  recs.forEach((r, idx) => {
+    const card = document.createElement("div");
+    card.className = "rec-card";
+    const cross = r.crossGrade ? `<span class="cross">승급</span>` : "";
+    // 슬롯 박스 비교(현재 → 추천). 열 제목에 등급도 표기(승급 시 좌우 등급이 다름).
+    let rows = `<div class="sc-row sc-titles"><div class="sc-col-title">현재 · ${gradeText(r.curGrade)}</div><div class="sc-col-title">추천 · ${gradeText(r.grade)}</div></div>`;
+    r.picks.forEach((p, i) => {
+      let lc = "neutral", rc = "neutral";
+      if (p.locked) { lc = rc = "locked"; }
+      else if (p.changed) { lc = "before"; rc = "after"; }
+      rows += `<div class="sc-row">${scBox(p.cur, lc, i + 1, p.locked)}${scBox(p.rec, rc, i + 1, p.locked)}</div>`;
+    });
+    card.innerHTML =
+      `<div class="rec-head"><span class="rank">${idx + 1}</span><b>${r.part} ${r.upper ? "윗잠" : "아랫잠"}</b>${cross}</div>` +
+      `<div class="rec-metrics">` +
+      `<span>딜 증가량 <b class="good">${signPct(r.dealDiff)}</b></span>` +
+      `<span title="이 추천 옵션 구성이 한 큐브에 그대로 나올 확률(동일 옵션 등장 확률 총합)">등장 확률 <b>${pct(r.recProbSum)}</b></span>` +
+      `<span>평균 <b>${r.recCubes == null ? "∞" : fmt(r.recCubes)}</b>개</span>` +
+      `<span title="한 큐브 리롤로 지금 끼고 있는 옵션보다 딜이 높은 구성이 나올 확률">1회 리롤·현재보다↑ <b>${pct(r.totalProb)}</b></span>` +
+      `<span title="한 큐브 리롤로 이 추천 옵션보다도 딜이 높은 구성이 나올 확률">1회 리롤·추천보다↑ <b>${pct(r.remainProb)}</b></span>` +
+      `<span>효율 <b>${fmtScore(r.gainEff * 1e6)}</b></span>` +
+      `</div>${slotCompare(rows)}`;
+    list.appendChild(card);
+  });
+}
+
+$("rc-sort").addEventListener("change", () => runRecommend(false));
+$("rc-boss").addEventListener("change", () => runRecommend(true));
+$("rc-upper").addEventListener("change", () => runRecommend(false));
+$("rc-lower").addEventListener("change", () => runRecommend(false));
+$("rc-slider").addEventListener("input", () => { $("rc-slider-val").textContent = $("rc-slider").value; });
+$("rc-slider").addEventListener("change", () => runRecommend(false));
+
+// ──────────────────── 옵션 비교(좌/우 자유 선택) ────────────────────
+
+let ocBuilt = false;
+
+function ocBuildSide(prefix) {
+  const partSel = $(prefix + "-part"), gradeSel = $(prefix + "-grade");
+  partSel.innerHTML = "";
+  for (const p of meta.parts) partSel.add(new Option(p, p));
+  fillGradeSelect(gradeSel);
+  gradeSel.value = meta.grades[meta.grades.length - 1];
+  applyGradeColor(gradeSel);
+  partSel.addEventListener("change", () => ocFillSlots(prefix));
+  gradeSel.addEventListener("change", () => ocFillSlots(prefix));
+}
+
+async function ocFillSlots(prefix) {
+  const tables = await getSlots($(prefix + "-part").value, $(prefix + "-grade").value);
+  const box = $(prefix + "-slots");
+  box.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    const row = document.createElement("div");
+    row.className = "slot-row";
+    const sel = document.createElement("select");
+    sel.id = prefix + "-" + i;
+    fillSlotSelect(sel, tables[i] || [], null);
+    row.appendChild(sel);
+    box.appendChild(row);
+  }
+}
+
+async function renderOptCompare() {
+  if (!ocBuilt) { ocBuildSide("oc-l"); ocBuildSide("oc-r"); ocBuilt = true; }
+  await ocFillSlots("oc-l");
+  await ocFillSlots("oc-r");
+}
+
+function ocCollect(prefix) {
+  const out = [];
+  for (let i = 0; i < 3; i++) {
+    const p = parseSlotKey($(prefix + "-" + i).value);
+    if (p) out.push({ statId: p.stat, value: p.value });
+  }
+  return out;
+}
+
+function ocResultHtml(s) {
+  if (s.empty) return '<p class="status">옵션을 선택하세요.</p>';
+  const inc = s.qual ? '<span class="bad">계산 불가</span>' : `<span class="good">${signPct(s.inc)}</span>`;
+  const cubes = s.prob > 0 ? fmt(1 / s.prob) + "개" : "-";
+  const eff = s.qual ? "계산 불가" : (s.prob > 0 ? fmtScore(s.prob * s.inc * 1e4) : "-");
+  return `<div class="cmp-grid">` +
+    cell("딜 증가량", `<b>${inc}</b>`) +
+    cell("동일 옵션 등장 확률 총합", pct(s.prob)) +
+    cell("큐브 기댓값", cubes) +
+    cell("효율", eff) +
+    `</div>`;
+}
+
+async function runOptCompare() {
+  $("oc-status").textContent = "계산 중…";
+  try {
+    const data = await postJson("/api/optcompare", {
+      left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
+      right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
+      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true",
+    });
+    $("oc-l-result").innerHTML = ocResultHtml(data.left);
+    $("oc-r-result").innerHTML = ocResultHtml(data.right);
+    $("oc-status").textContent = "";
+  } catch (e) { $("oc-status").textContent = "오류: " + e.message; }
+}
+$("oc-btn").addEventListener("click", runOptCompare);
+
+// ──────────────────── 내 옵션 비교 ────────────────────
+
+function statLabel(id) { const d = statDefs.find((x) => x.id === id); return d ? d.name : id; }
+
+// 옵션 박스 안 내용(읽기전용). 노랑은 금색 글씨 + 배지.
+// 옵션 표기: 이름에서 단위(%·(+)·(+초)) 떼고 값 뒤에 단위 붙임 (예: "공격 속도 10%").
+const OPT_SUFFIX = { PCT: "%", SEC: "초" };
+function optLabel(opt) {
+  return `${cleanName(opt.name)} ${opt.value}${OPT_SUFFIX[opt.unit] || ""}`;
+}
+
+function optText(opt) {
+  if (!opt) return '<span class="muted">(비움)</span>';
+  const star = opt.special ? "★ " : "";
+  const col = opt.yellow ? ' style="color:#e7c14a"' : "";
+  return `<span${col}>${star}${optLabel(opt)}</span>`;
+}
+
+let cmpRightGrade = null;
+
+// 비교 편집기: 등급 + 3슬롯을 좌(현재·읽기전용)/우(가정·선택)로 같은 행에 정렬해 비교하기 쉽게.
+async function renderCompareEditor(resetGrade) {
+  const part = $("cmp-part").value;
+  const lineName = $("cmp-line").value === "upper" ? "윗잠" : "아랫잠";
+  const line = myCube[part] && myCube[part][lineName];
+  const highest = meta.grades[meta.grades.length - 1];
+  if (resetGrade || !cmpRightGrade) cmpRightGrade = (line && line.grade) ? line.grade : highest;
+
+  const leftTables = (line && line.grade) ? await getSlots(part, line.grade) : null;
+  const rightTables = await getSlots(part, cmpRightGrade);
+
+  let rows = `<div class="sc-row sc-titles"><div class="sc-col-title">현재 (내 큐브)</div><div class="sc-col-title">가정</div></div>`;
+  const leftGrade = (line && line.grade) ? gradeText(line.grade) : '<span class="muted">(없음)</span>';
+  rows += `<div class="sc-row"><div class="sc-cell sc-grade-cell">${leftGrade}</div><div class="sc-cell" id="ce-rg"></div></div>`;
+  for (let i = 0; i < 3; i++) {
+    const lo = (leftTables && line.slots[i]) ? findDraw(leftTables[i] || [], line.slots[i].stat, line.slots[i].value) : null;
+    rows += `<div class="sc-row">${scBox(lo, "neutral", i + 1)}<div class="sc-cell" id="ce-rs-${i}"></div></div>`;
+  }
+  $("cmp-editor").innerHTML = `<div class="slot-compare">${rows}</div>`;
+
+  // 우측 등급 select(동적 생성, id 유지)
+  const gsel = document.createElement("select");
+  gsel.id = "cmp-right-grade";
+  fillGradeSelect(gsel); gsel.value = cmpRightGrade; applyGradeColor(gsel);
+  gsel.addEventListener("change", () => { cmpRightGrade = gsel.value; renderCompareEditor(false); });
+  $("ce-rg").appendChild(gsel);
+
+  // 우측 슬롯 select
+  for (let i = 0; i < 3; i++) {
+    const sel = document.createElement("select");
+    sel.id = "cmp-right-" + i;
+    fillSlotSelect(sel, rightTables[i] || [], null);
+    $("ce-rs-" + i).appendChild(sel);
+  }
+}
+
+async function runCompare() {
+  $("cmp-status").textContent = "계산 중…";
+  $("cmp-result").innerHTML = "";
+  try {
+    const rightOpts = [];
+    for (let i = 0; i < 3; i++) {
+      const p = parseSlotKey($("cmp-right-" + i).value);
+      if (p) rightOpts.push({ statId: p.stat, value: p.value });
+    }
+    const data = await postJson("/api/compare", {
+      stats: collectStats(), conversions: myConv, bossMode: $("cmp-boss").value === "true",
+      cubeState: myCube, ranges: myRanges,
+      part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
+      rightGrade: $("cmp-right-grade").value, rightOpts,
+    });
+    if (!data.valid) { $("cmp-status").textContent = "현재(내 큐브 옵션)가 비어 있어 비교할 수 없습니다. '내 큐브' 탭에서 입력하세요."; return; }
+    $("cmp-status").textContent = "";
+    const lose = data.dealDiff <= 0;
+    $("cmp-result").innerHTML =
+      `<div class="cmp-grid">` +
+      cell("딜 증가량 차이", `<b class="${lose ? "bad" : "good"}">${signPct(data.dealDiff)}</b>`) +
+      cell(lose ? "딜 손해" : "최종 효율", lose ? `<span class="bad">${signPct(data.dealDiff)}</span>` : fmtEff(data.gainEff)) +
+      cell("현재 딜 / 등장 확률", `${signPct(data.leftDeal)} / ${pct(data.leftProbSum, 3)}`) +
+      cell("가정 딜 / 등장 확률", `${signPct(data.rightDeal)} / ${pct(data.rightProbSum, 3)}`) +
+      cell("1회 리롤: 현재보다 좋을 확률", pct(data.totalProb, 3)) +
+      cell("1회 리롤: 가정보다 좋을 확률", pct(data.remainProb, 3)) +
+      `</div>`;
+  } catch (e) { $("cmp-status").textContent = "오류: " + e.message; }
+}
+
+function cell(label, val) { return `<div class="cmp-cell"><div class="cmp-label">${label}</div><div class="cmp-val">${val}</div></div>`; }
+function fmtEff(x) { return x == null ? "—" : fmtScore(x * 1e6); }
+
+$("cmp-part").addEventListener("change", () => renderCompareEditor(true));
+$("cmp-line").addEventListener("change", () => renderCompareEditor(true));
+$("cmp-btn").addEventListener("click", runCompare);
+
+// ──────────────────── 내 값 불러오기(개발 편의) ────────────────────
+
+// 스탯 입력 폼을 주어진 값으로 채운다(없는 스탯은 0).
+function fillStats(stats) {
+  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
+    const v = stats[input.dataset.statId];
+    input.value = (v == null) ? "0" : v;
+  }
+}
+
+// 서버에 저장된 내 데이터(스탯·환산·큐브)를 불러온다.
+// overwriteCube=true면 큐브도 덮어쓴다(버튼). 자동 로드 시엔 내 큐브가 비어 있을 때만 채운다.
+async function loadMyData(overwriteCube) {
+  try {
+    const data = await (await fetch("/api/mydata")).json();
+    if (data.stats && Object.keys(data.stats).length) {
+      fillStats(data.stats);
+      if (data.stats.JOB != null) $("job-sel").value = String(Math.round(data.stats.JOB));
+    }
+    if (overwriteCube || !localStorage.getItem(CONV_KEY)) {
+      myConv = data.conversions || {};
+      saveJSON(CONV_KEY, myConv);
+      renderConvSettings();
+    }
+    await refreshQual();
+    if (data.cubeState && Object.keys(data.cubeState).length && (overwriteCube || !Object.keys(myCube).length)) {
+      myCube = data.cubeState;
+      saveCube();
+      await renderCube();
+    }
+    return true;
+  } catch (e) { console.error("내 값 불러오기 실패", e); return false; }
+}
+
+// ──────────────────── 설정: 딜 환산 · 추천 범위 ────────────────────
+
+function renderConvSettings() {
+  const box = $("conv-list");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const d of (meta.convertibleStats || [])) {
+    const on = myConv[d.id] != null;
+    const unitNote = OPT_SUFFIX[d.unit] || (d.unit === "LEVEL" ? "Lv" : "");
+    const row = document.createElement("div");
+    row.className = "set-row";
+    row.innerHTML =
+      `<label class="set-chk"><input type="checkbox" ${on ? "checked" : ""}/> ${cleanName(d.name)}</label>` +
+      `<div class="set-input"><input type="number" step="any" value="${on ? myConv[d.id] : 0}" ${on ? "" : "disabled"}/>` +
+      `<span class="unit">% / 1${unitNote}</span></div>`;
+    const chk = row.querySelector("input[type=checkbox]");
+    const num = row.querySelector("input[type=number]");
+    chk.addEventListener("change", () => {
+      if (chk.checked) { myConv[d.id] = parseFloat(num.value) || 0; num.disabled = false; }
+      else { delete myConv[d.id]; num.disabled = true; }
+      saveJSON(CONV_KEY, myConv); refreshQual();
+    });
+    num.addEventListener("change", () => { if (chk.checked) { myConv[d.id] = parseFloat(num.value) || 0; saveJSON(CONV_KEY, myConv); } });
+    box.appendChild(row);
+  }
+}
+
+function renderRangeSettings() {
+  const box = $("range-list");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const d of (meta.rangeStats || [])) {
+    const r = myRanges[d.id] || { enabled: false, lo: 0, hi: 0, noLow: false, noHigh: false };
+    const sfx = OPT_SUFFIX[d.unit] || "";
+    const row = document.createElement("div");
+    row.className = "set-row range-row";
+    row.innerHTML =
+      `<label class="set-chk"><input type="checkbox" class="en" ${r.enabled ? "checked" : ""}/> ${cleanName(d.name)}</label>` +
+      `<div class="set-input">` +
+        `<label class="mini-chk"><input type="checkbox" class="nl" ${r.noLow ? "checked" : ""}/>하한없음</label>` +
+        `<input type="number" step="any" class="lo" value="${r.lo}"/>` +
+        `<span class="tilde">~</span>` +
+        `<input type="number" step="any" class="hi" value="${r.hi}"/>` +
+        `<label class="mini-chk"><input type="checkbox" class="nh" ${r.noHigh ? "checked" : ""}/>상한없음</label>` +
+        `<span class="unit">${sfx}</span>` +
+      `</div>`;
+    const en = row.querySelector(".en"), nl = row.querySelector(".nl"), nh = row.querySelector(".nh");
+    const lo = row.querySelector(".lo"), hi = row.querySelector(".hi");
+    const sync = () => {
+      nl.disabled = nh.disabled = !en.checked;
+      lo.disabled = !en.checked || nl.checked;
+      hi.disabled = !en.checked || nh.checked;
+    };
+    const upd = () => {
+      myRanges[d.id] = {
+        enabled: en.checked, lo: parseFloat(lo.value) || 0, hi: parseFloat(hi.value) || 0,
+        noLow: nl.checked, noHigh: nh.checked,
+      };
+      sync();
+      saveJSON(RANGE_KEY, myRanges);
+    };
+    [en, nl, nh, lo, hi].forEach((el) => el.addEventListener("change", upd));
+    sync();
+    box.appendChild(row);
+  }
+}
+
+// ──────────────────── 프리셋: 스탯 · 큐브 ────────────────────
+
+function fillPresetSel(sel, store) {
+  sel.innerHTML = "";
+  for (const name of Object.keys(store.presets)) sel.add(new Option(name, name));
+  sel.value = store.active;
+}
+
+// 스탯 프리셋
+function spApply(name) {
+  const p = statPresets.presets[name];
+  if (!p) return;
+  fillStats(p.stats);
+  $("job-sel").value = String(Math.round((p.stats && p.stats.JOB) || 0));
+  statDirty = false;   // 프리셋 적용 = 저장된 상태
+  refreshQual();
+  calcDamage();   // 프리셋 전환 시 즉시 재계산
+}
+function initStatPresets() {
+  if (!statPresets) statPresets = { active: "기본", presets: { "기본": { stats: collectStats() } } };
+  else spApply(statPresets.active);
+  saveJSON(STATP_KEY, statPresets);
+  fillPresetSel($("sp-sel"), statPresets);
+  statDirty = false;
+}
+$("sp-sel").addEventListener("change", () => {
+  if (!canLeaveStat()) { $("sp-sel").value = statPresets.active; return; }   // 미저장이면 취소 시 되돌림
+  statPresets.active = $("sp-sel").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
+});
+$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = { stats: collectStats() }; saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); $("status").textContent = `'${statPresets.active}' 스탯 프리셋 저장됨`; });
+$("sp-new").addEventListener("click", () => {
+  const name = (prompt("새 스탯 프리셋 이름") || "").trim();
+  if (!name || statPresets.presets[name]) return;
+  statPresets.presets[name] = { stats: collectStats() };
+  statPresets.active = name; saveJSON(STATP_KEY, statPresets); fillPresetSel($("sp-sel"), statPresets);
+  statDirty = false;   // 현재 입력이 새 프리셋으로 저장됨
+});
+$("sp-del").addEventListener("click", () => {
+  const names = Object.keys(statPresets.presets);
+  if (names.length <= 1) return;
+  delete statPresets.presets[statPresets.active];
+  statPresets.active = Object.keys(statPresets.presets)[0];
+  saveJSON(STATP_KEY, statPresets); fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
+});
+
+// 큐브 프리셋
+async function cpApply(name) {
+  const c = cubePresets.presets[name];
+  if (!c) return;
+  myCube = clone(c); saveCube(); cubeDirty = false; await renderCube();
+}
+async function initCubePresets() {
+  if (!cubePresets) cubePresets = { active: "기본", presets: { "기본": clone(myCube) } };
+  else await cpApply(cubePresets.active);
+  saveJSON(CUBEP_KEY, cubePresets);
+  fillPresetSel($("cp-sel"), cubePresets);
+  cubeDirty = false;
+}
+// 페이지를 실제로 떠날 때(새로고침·닫기) 미저장 큐브 변경 경고.
+window.addEventListener("beforeunload", (e) => { if (cubeDirty || statDirty) { e.preventDefault(); e.returnValue = ""; } });
+$("cp-sel").addEventListener("change", async () => {
+  if (!canLeaveCube()) { $("cp-sel").value = cubePresets.active; return; }   // 미저장이면 취소 시 되돌림
+  cubePresets.active = $("cp-sel").value; saveJSON(CUBEP_KEY, cubePresets); await cpApply(cubePresets.active);
+});
+$("cp-save").addEventListener("click", () => { cubePresets.presets[cubePresets.active] = clone(myCube); saveJSON(CUBEP_KEY, cubePresets); cubeDirty = false; });
+$("cp-new").addEventListener("click", () => {
+  const name = (prompt("새 큐브 프리셋 이름") || "").trim();
+  if (!name || cubePresets.presets[name]) return;
+  cubePresets.presets[name] = clone(myCube);
+  cubePresets.active = name; saveJSON(CUBEP_KEY, cubePresets); fillPresetSel($("cp-sel"), cubePresets);
+  cubeDirty = false;   // 현재 작업본이 새 프리셋으로 저장됨
+});
+$("cp-del").addEventListener("click", async () => {
+  const names = Object.keys(cubePresets.presets);
+  if (names.length <= 1) return;
+  delete cubePresets.presets[cubePresets.active];
+  cubePresets.active = Object.keys(cubePresets.presets)[0];
+  saveJSON(CUBEP_KEY, cubePresets); fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
+});
+
+// ──────────────────── 프리셋 내보내기 / 불러오기 (.mkbak) ────────────────────
+
+const BACKUP_FORMAT = "mekicalc-presets";
+
+function bundleString() {
+  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, conversions: myConv, ranges: myRanges }, null, 2);
+}
+
+// 데스크톱(구버전) .mkbak → 웹 번들로 변환.
+// 차이: statPresets/cubePresets가 배열, cubePresets는 {name,cubes,ranges} 래퍼, conversions는 {enabled,perUnit}.
+function fromDesktopBackup(b) {
+  const sp = { active: b.statPresets.active, presets: {} };
+  for (const p of (b.statPresets.presets || [])) sp.presets[p.name] = { stats: p.stats || {} };
+
+  const cp = { active: b.cubePresets.active, presets: {} };
+  let ranges = {};
+  for (const p of (b.cubePresets.presets || [])) {
+    cp.presets[p.name] = p.cubes || {};
+    if (p.name === b.cubePresets.active) ranges = p.ranges || {};   // 웹은 전역 ranges 1개 → 활성 프리셋 것 사용
+  }
+
+  const conv = {};
+  for (const [k, v] of Object.entries(b.conversions || {})) {
+    if (k.startsWith("_")) continue;
+    if (v && v.enabled) conv[k] = v.perUnit || 0;   // 웹은 enabled 항목만 {id: perUnit}
+  }
+  return { statPresets: sp, cubePresets: cp, conversions: conv, ranges };
+}
+
+// 백업 문자열을 받아 프리셋·설정 전체를 복원하고 화면을 갱신.
+async function applyBundle(text) {
+  const raw = JSON.parse(text);
+  let b;
+  if (raw.format === BACKUP_FORMAT) b = raw;
+  else if (raw.statPresets && raw.cubePresets) b = fromDesktopBackup(raw);   // 데스크톱/구버전 백업 호환
+  else throw new Error("MekiCalc 프리셋 데이터가 아닙니다.");
+
+  if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
+  if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
+  myConv = b.conversions || {}; saveJSON(CONV_KEY, myConv);
+  myRanges = b.ranges || {}; saveJSON(RANGE_KEY, myRanges);
+  fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
+  fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
+  renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
+}
+
+// 파일로 내보내기
+$("export-btn").addEventListener("click", () => {
+  const blob = new Blob([bundleString()], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "mekicalc-presets.mkbak";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  $("backup-status").textContent = "파일로 내보냈습니다.";
+});
+// 파일에서 불러오기
+$("import-btn").addEventListener("click", () => $("import-file").click());
+$("import-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try { await applyBundle(reader.result); $("backup-status").textContent = "파일에서 불러왔습니다."; }
+      catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
+    };
+    reader.readAsText(file);
+  }
+  e.target.value = "";
+});
+// 텍스트로 내보내기(복사) — 텍스트 칸에 표시 + 클립보드 복사 시도
+$("export-text-btn").addEventListener("click", async () => {
+  const s = bundleString();
+  $("backup-text").value = s;
+  try { await navigator.clipboard.writeText(s); $("backup-status").textContent = "텍스트를 복사했습니다."; }
+  catch { $("backup-status").textContent = "아래 칸의 텍스트를 복사하세요."; }
+});
+// 텍스트로 불러오기 — 텍스트 칸 내용 적용
+$("import-text-btn").addEventListener("click", async () => {
+  const s = $("backup-text").value.trim();
+  if (!s) { $("backup-status").textContent = "먼저 백업 텍스트를 붙여넣으세요."; return; }
+  try { await applyBundle(s); $("backup-status").textContent = "텍스트에서 불러왔습니다."; }
+  catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
+});
+
+// ──────────────────── 초기화 ────────────────────
+
+async function loadMeta() {
+  meta = await (await fetch("/api/meta")).json();
+  meta.parts = sortParts(meta.parts || []);   // 부위를 고정 순서로 통일
+  for (const sel of [$("ev-part"), $("mc-part-add"), $("cmp-part")]) {
+    for (const p of meta.parts) sel.add(new Option(p, p));
+  }
+  fillGradeSelect($("ev-grade"));
+  $("ev-grade").value = meta.grades[meta.grades.length - 1];
+  applyGradeColor($("ev-grade"));
+  await renderCube();
+}
+
+(async function init() {
+  await loadStats();
+  try { await loadMeta(); } catch (e) { console.error("메타 로드 실패", e); }
+  await loadMyData(false);     // 시작 시 내 값 자동 채움(개발 편의; 배포 땐 빈 값)
+  renderConvSettings();        // 딜 환산 설정 목록
+  renderRangeSettings();       // 추천 범위 설정 목록
+  initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용)
+  await initCubePresets();     // 큐브 프리셋
+  await refreshQual();         // 직업 기준 '딜 미환산' 표시 보강
+  calcDamage();                // 시작 시 예상 데미지 자동 계산
+})();
