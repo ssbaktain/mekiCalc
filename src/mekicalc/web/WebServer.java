@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,12 +28,14 @@ public final class WebServer {
     private final int port;
     private final CalcService service;
     private final Path webDir;
+    private final AuthService auth;
     private HttpServer http;
 
-    public WebServer(int port, CalcService service, Path webDir) {
+    public WebServer(int port, CalcService service, Path webDir, AuthService auth) {
         this.port = port;
         this.service = service;
         this.webDir = webDir;
+        this.auth = auth;
     }
 
     public void start() throws IOException {
@@ -89,6 +92,80 @@ public final class WebServer {
                     str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true));
         }));
+
+        // ──────────────────── 로그인(OAuth) ────────────────────
+        http.createContext("/auth/login", ex -> {
+            try {
+                if (!auth.enabled()) { redirect(ex, "/"); return; }
+                String state = auth.randomToken();
+                addCookie(ex, cookie("oauth_state", state, 600));
+                redirect(ex, auth.authorizeUrl(state));
+            } catch (Exception e) {
+                redirect(ex, "/?login=error");
+            } finally { ex.close(); }
+        });
+
+        http.createContext("/auth/callback", ex -> {
+            try {
+                if (!auth.enabled()) { redirect(ex, "/"); return; }
+                Map<String, String> q = queryParams(ex);
+                String code = q.get("code"), state = q.get("state"), saved = getCookie(ex, "oauth_state");
+                addCookie(ex, clearCookieStr("oauth_state"));
+                if (code == null || state == null || saved == null || !state.equals(saved)) {
+                    redirect(ex, "/?login=error"); return;
+                }
+                AuthService.Session s = auth.completeLogin(code);
+                addCookie(ex, cookie("sid", s.token(), 30 * 24 * 3600));
+                redirect(ex, "/");
+            } catch (Exception e) {
+                redirect(ex, "/?login=error");
+            } finally { ex.close(); }
+        });
+
+        http.createContext("/auth/logout", ex -> {
+            try {
+                auth.logout(getCookie(ex, "sid"));
+                addCookie(ex, clearCookieStr("sid"));
+                if ("GET".equalsIgnoreCase(ex.getRequestMethod())) redirect(ex, "/");
+                else sendJson(ex, 200, Map.of("ok", true));
+            } catch (Exception e) {
+                sendJson(ex, 500, Map.of("error", String.valueOf(e.getMessage())));
+            } finally { ex.close(); }
+        });
+
+        http.createContext("/api/me", json("GET", ex -> {
+            AuthService.Session s = sessionFrom(ex);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("oauthEnabled", auth.enabled());
+            m.put("loggedIn", s != null);
+            if (s != null) { m.put("name", s.name()); m.put("email", s.email()); }
+            return m;
+        }));
+
+        // 유저 프리셋 저장/로드(로그인 필요). 본문은 불투명 번들 JSON(.mkbak 형식).
+        http.createContext("/api/presets", ex -> {
+            try {
+                AuthService.Session s = sessionFrom(ex);
+                if (s == null) { sendJson(ex, 401, Map.of("error", "로그인 필요")); return; }
+                String method = ex.getRequestMethod();
+                if ("GET".equalsIgnoreCase(method)) {
+                    String bundle = auth.loadPresets(s.sub());
+                    byte[] out = (bundle != null ? bundle : "{}").getBytes(StandardCharsets.UTF_8);
+                    ex.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                    ex.sendResponseHeaders(200, out.length);
+                    try (OutputStream os = ex.getResponseBody()) { os.write(out); }
+                } else if ("PUT".equalsIgnoreCase(method) || "POST".equalsIgnoreCase(method)) {
+                    String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    Json.parse(body);   // JSON 검증
+                    auth.savePresets(s.sub(), body);
+                    sendJson(ex, 200, Map.of("ok", true));
+                } else {
+                    sendJson(ex, 405, Map.of("error", "허용되지 않은 메서드"));
+                }
+            } catch (Exception e) {
+                sendJson(ex, 400, Map.of("error", String.valueOf(e.getMessage())));
+            } finally { ex.close(); }
+        });
 
         http.createContext("/", this::serveStatic);   // 정적 파일(나머지 전부)
 
@@ -177,6 +254,58 @@ public final class WebServer {
             if (el instanceof Map) out.add((Map<String, Object>) el);
         }
         return out;
+    }
+
+    // ──────────────────── 인증/쿠키/리다이렉트 헬퍼 ────────────────────
+
+    private AuthService.Session sessionFrom(HttpExchange ex) {
+        return auth.session(getCookie(ex, "sid"));
+    }
+
+    /** 쿠키 문자열 생성(HttpOnly·SameSite=Lax·Path=/, HTTPS면 Secure). */
+    private String cookie(String name, String value, int maxAgeSec) {
+        String s = name + "=" + value + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" + maxAgeSec;
+        return auth.config().secureCookies() ? s + "; Secure" : s;
+    }
+
+    private String clearCookieStr(String name) {
+        String s = name + "=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
+        return auth.config().secureCookies() ? s + "; Secure" : s;
+    }
+
+    private static void addCookie(HttpExchange ex, String cookie) {
+        ex.getResponseHeaders().add("Set-Cookie", cookie);
+    }
+
+    private static String getCookie(HttpExchange ex, String name) {
+        List<String> headers = ex.getRequestHeaders().get("Cookie");
+        if (headers == null) return null;
+        for (String h : headers) {
+            for (String c : h.split(";")) {
+                String t = c.trim();
+                int i = t.indexOf('=');
+                if (i > 0 && t.substring(0, i).equals(name)) return t.substring(i + 1);
+            }
+        }
+        return null;
+    }
+
+    private static void redirect(HttpExchange ex, String location) throws IOException {
+        ex.getResponseHeaders().set("Location", location);
+        ex.sendResponseHeaders(302, -1);
+    }
+
+    private static Map<String, String> queryParams(HttpExchange ex) {
+        Map<String, String> m = new LinkedHashMap<>();
+        String q = ex.getRequestURI().getRawQuery();
+        if (q == null) return m;
+        for (String p : q.split("&")) {
+            int i = p.indexOf('=');
+            if (i < 0) continue;
+            m.put(URLDecoder.decode(p.substring(0, i), StandardCharsets.UTF_8),
+                  URLDecoder.decode(p.substring(i + 1), StandardCharsets.UTF_8));
+        }
+        return m;
     }
 
     private static void sendJson(HttpExchange ex, int status, Object body) throws IOException {

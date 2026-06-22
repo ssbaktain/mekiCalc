@@ -18,8 +18,38 @@ let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인
 const slotCache = {};                  // "부위|등급" -> slots[3][]
 
 function loadJSON(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch { return def; } }
-function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); if (PRESET_KEYS.has(key)) syncUp(); }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+// ── 계정/서버 동기화 상태 ──
+const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY]);
+let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
+let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
+let syncTimer = null;
+function syncUp() {
+  if (!me.loggedIn || suppressSync) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushPresets, 1200);   // 디바운스
+}
+async function pushPresets() {
+  if (!me.loggedIn) return;
+  try { await fetch("/api/presets", { method: "PUT", headers: { "Content-Type": "application/json" }, body: bundleString() }); } catch {}
+}
+async function pullPresets() {
+  if (!me.loggedIn) return;
+  try {
+    const r = await fetch("/api/presets");
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data && (data.statPresets || data.cubePresets)) {
+      suppressSync = true;
+      await applyBundle(JSON.stringify(data));   // 서버 번들로 화면·localStorage 갱신
+      suppressSync = false;
+    } else {
+      pushPresets();   // 서버가 비었으면 현재 로컬을 올려 시드
+    }
+  } catch {}
+}
 function cleanName(name) { return String(name || "").replace(/%$/, "").replace(/\(\+초\)$/, "").replace(/\(\+\)$/, "").trim(); }
 
 // ──────────────────── 공통 ────────────────────
@@ -1075,6 +1105,34 @@ $("import-text-btn").addEventListener("click", async () => {
   catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
 });
 
+// ──────────────────── 계정(로그인) ────────────────────
+
+async function loadMe() {
+  try { me = await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
+  renderLoginUI();
+}
+
+function renderLoginUI() {
+  const card = $("account-card"), body = $("account-body");
+  if (!card || !body) return;
+  if (!me.oauthEnabled) { card.hidden = true; return; }
+  card.hidden = false;
+  if (me.loggedIn) {
+    body.innerHTML =
+      `<p class="status set-desc"><b>${me.name || ""}</b> <span class="muted">${me.email || ""}</span> 로 로그인됨. ` +
+      `프리셋이 이 계정에 자동 저장·동기화됩니다.</p>` +
+      `<button id="logout-btn" class="mini-btn ghost" type="button">로그아웃</button>`;
+    $("logout-btn").addEventListener("click", async () => {
+      try { await fetch("/auth/logout", { method: "POST" }); } catch {}
+      location.reload();
+    });
+  } else {
+    body.innerHTML =
+      `<p class="status set-desc">로그인하면 프리셋(스탯·큐브·설정)을 계정에 저장해 여러 기기에서 동기화할 수 있어요.</p>` +
+      `<a class="primary-btn google-btn" href="/auth/login">Google로 로그인</a>`;
+  }
+}
+
 // ──────────────────── 초기화 ────────────────────
 
 async function loadMeta() {
@@ -1099,4 +1157,6 @@ async function loadMeta() {
   await initCubePresets();     // 큐브 프리셋
   await refreshQual();         // 직업 기준 '딜 미환산' 표시 보강
   calcDamage();                // 시작 시 예상 데미지 자동 계산
+  await loadMe();              // 로그인 상태 확인 + 계정 UI
+  await pullPresets();         // 로그인돼 있으면 서버 프리셋으로 동기화
 })();

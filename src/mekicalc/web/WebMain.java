@@ -18,7 +18,9 @@ public final class WebMain {
 
         GameContent content = GameContent.load(dataDir);
         CalcService service = new CalcService(content);
-        WebServer server = new WebServer(port, service, webDir);
+        OAuthConfig oauth = OAuthConfig.load(dataDir);
+        AuthService auth = new AuthService(oauth, dataDir);
+        WebServer server = new WebServer(port, service, webDir, auth);
         server.start();
 
         System.out.println("========================================");
@@ -26,6 +28,7 @@ public final class WebMain {
         System.out.println(" 주소: http://localhost:" + port);
         System.out.println(" 데이터: " + dataDir.toAbsolutePath());
         System.out.println(" 정적:   " + webDir.toAbsolutePath());
+        System.out.println(" 로그인: " + (oauth.enabled ? oauth.provider + " (OAuth ON)" : "OFF (oauth.json 없음)"));
         System.out.println(" 종료: Ctrl + C");
         System.out.println("========================================");
     }

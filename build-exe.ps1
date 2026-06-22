@@ -44,8 +44,9 @@ if ($LASTEXITCODE -ne 0) { Write-Error "jpackage 실패"; exit 1 }
 # 4) data / icon 폴더를 exe 옆에 동봉 (앱이 실행 위치 기준으로 찾음)
 Copy-Item -Recurse -Force "$root\data" "$dist\mekiCalc\data"
 # 개인 데이터(스탯/큐브 프리셋·환산·범위·UI 설정)는 배포에서 제외 — 새 사용자는 빈 기본값으로 시작.
-$personalData = "character.json","presets.json","cube_presets.json","mycube.json","conversions.json","ranges.json","ui.json"
+$personalData = "character.json","presets.json","cube_presets.json","mycube.json","conversions.json","ranges.json","ui.json","oauth.json","sessions.json"
 foreach ($pf in $personalData) { Remove-Item "$dist\mekiCalc\data\$pf" -Force -ErrorAction SilentlyContinue }
+Remove-Item "$dist\mekiCalc\data\users" -Recurse -Force -ErrorAction SilentlyContinue
 if (Test-Path "$root\icon") { Copy-Item -Recurse -Force "$root\icon" "$dist\mekiCalc\icon" }
 Copy-Item -Force "$root\README.md" "$dist\mekiCalc\README.md"
 if (Test-Path "$root\README.txt") { Copy-Item -Force "$root\README.txt" "$dist\mekiCalc\README.txt" }

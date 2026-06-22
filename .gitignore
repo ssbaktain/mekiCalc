@@ -47,6 +47,11 @@ data/conversions.json
 data/ranges.json
 data/ui.json
 
+### 로그인/시크릿 (커밋·배포 제외) ###
+data/oauth.json
+data/sessions.json
+data/users/
+
 ### 로컬 백업 / 임시 산출물 ###
 mydata_backup/
 logs/

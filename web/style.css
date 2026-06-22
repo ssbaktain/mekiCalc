@@ -355,6 +355,12 @@ main {
   border-radius: 8px; color: var(--text); font-size: 14px; min-width: 120px;
 }
 
+/* 계정 / 로그인 */
+.google-btn {
+  display: inline-block; width: auto; margin-top: 6px;
+  text-decoration: none; text-align: center;
+}
+
 /* 내보내기/불러오기 */
 .backup-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
