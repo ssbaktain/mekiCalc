@@ -56,6 +56,17 @@ function cleanName(name) { return String(name || "").replace(/%$/, "").replace(/
 
 const $ = (id) => document.getElementById(id);
 function fmt(n) { return Math.round(n).toLocaleString("ko-KR"); }
+
+// 잠깐 떴다가 페이드아웃되는 알림(저장 등).
+let toastTimer = null;
+function toast(msg) {
+  const t = $("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1900);
+}
 // 적응형 소수 자리: 작은 값도 유효숫자 sig개가 보이도록(최소 2자리, 최대 8자리).
 function pctDecimals(v, sig) {
   if (v === 0) return 2;
@@ -246,7 +257,7 @@ const MENU = [
   { label: "큐브", items: [
     { label: "큐브 기댓값", panel: "cube" },
     { label: "옵션 비교", panel: "optcompare" },
-    { label: "내 옵션 비교", panel: "compare" },
+    { label: "내 옵션 비교/변경", panel: "compare" },
     { label: "우선순위 추천", panel: "recommend" },
   ]},
   { label: "유물", items: [{ label: "유물 잠재", panel: "soon", soon: "유물 잠재" }] },
@@ -779,6 +790,7 @@ async function renderCompareEditor(resetGrade) {
   const line = myCube[part] && myCube[part][lineName];
   const highest = meta.grades[meta.grades.length - 1];
   if (resetGrade || !cmpRightGrade) cmpRightGrade = (line && line.grade) ? line.grade : highest;
+  if (resetGrade) $("cmp-stack").value = (line && line.stack) ? line.stack : 0;   // 변경 후 스택 기본값=현재 스택
 
   const leftTables = (line && line.grade) ? await getSlots(part, line.grade) : null;
   const rightTables = await getSlots(part, cmpRightGrade);
@@ -841,9 +853,52 @@ async function runCompare() {
 function cell(label, val) { return `<div class="cmp-cell"><div class="cmp-label">${label}</div><div class="cmp-val">${val}</div></div>`; }
 function fmtEff(x) { return x == null ? "—" : fmtScore(x * 1e6); }
 
+// 가정(오른쪽) 옵션을 실제로 적용 → 스탯·큐브 프리셋에 즉시 반영(저장).
+async function runApply() {
+  const part = $("cmp-part").value;
+  const lineName = $("cmp-line").value === "upper" ? "윗잠" : "아랫잠";
+  const line = myCube[part] && myCube[part][lineName];
+  const rightSlots = [0, 1, 2].map((i) => parseSlotKey($("cmp-right-" + i).value));   // {stat,value}|null
+  const newGrade = $("cmp-right-grade").value;
+  const newStack = parseInt($("cmp-stack").value, 10) || 0;
+  const oldOpts = (line && line.slots) ? line.slots.filter(Boolean).map((s) => ({ statId: s.stat, value: s.value })) : [];
+  const newOpts = rightSlots.filter(Boolean).map((s) => ({ statId: s.stat, value: s.value }));
+  if (!newOpts.length && !oldOpts.length) { toast("적용할 옵션이 없습니다."); return; }
+  if (!confirm(`${part} ${lineName}을(를) 오른쪽(가정) 옵션으로 변경하고 스탯·큐브 프리셋에 저장할까요?`)) return;
+
+  $("cmp-status").textContent = "적용 중…";
+  try {
+    // 1) 옵션 교체에 따른 새 스탯 총합 계산(엔진: 기존 빼고 새 옵션 더함)
+    const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
+    // 2) 스탯 폼 + 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
+    fillStats(data.stats);
+    statPresets.presets[statPresets.active] = { stats: collectStats() };
+    saveJSON(STATP_KEY, statPresets);
+    statDirty = false;
+    // 3) 큐브 줄 + 활성 큐브 프리셋에 반영
+    if (!myCube[part]) myCube[part] = { 윗잠: emptyLine(), 아랫잠: emptyLine() };
+    const locked = (line && line.locked) ? line.locked.slice() : [false, false, false];
+    myCube[part][lineName] = {
+      grade: newGrade,
+      slots: rightSlots.map((s) => (s ? { stat: s.stat, value: s.value } : null)),
+      locked, stack: newStack,
+    };
+    saveCube();
+    cubePresets.presets[cubePresets.active] = clone(myCube);
+    saveJSON(CUBEP_KEY, cubePresets);
+    cubeDirty = false; cubeNeedsRender = true;
+    // 4) 화면 갱신(왼쪽=현재가 방금 변경값으로)
+    calcDamage();
+    await renderCompareEditor(true);
+    $("cmp-status").textContent = "";
+    toast("변경 적용 — 스탯·큐브 프리셋에 저장됨");
+  } catch (e) { $("cmp-status").textContent = "오류: " + e.message; }
+}
+
 $("cmp-part").addEventListener("change", () => renderCompareEditor(true));
 $("cmp-line").addEventListener("change", () => renderCompareEditor(true));
 $("cmp-btn").addEventListener("click", runCompare);
+$("cmp-apply").addEventListener("click", runApply);
 
 // ──────────────────── 내 값 불러오기(개발 편의) ────────────────────
 
@@ -975,7 +1030,7 @@ $("sp-sel").addEventListener("change", () => {
   if (!canLeaveStat()) { $("sp-sel").value = statPresets.active; return; }   // 미저장이면 취소 시 되돌림
   statPresets.active = $("sp-sel").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
 });
-$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = { stats: collectStats() }; saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); $("status").textContent = `'${statPresets.active}' 스탯 프리셋 저장됨`; });
+$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = { stats: collectStats() }; saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); toast(`'${statPresets.active}' 스탯 프리셋 저장됨`); });
 $("sp-new").addEventListener("click", () => {
   const name = (prompt("새 스탯 프리셋 이름") || "").trim();
   if (!name || statPresets.presets[name]) return;
@@ -1012,7 +1067,7 @@ $("cp-sel").addEventListener("change", async () => {
   if (!canLeaveCube()) { $("cp-sel").value = cubePresets.active; return; }   // 미저장이면 취소 시 되돌림
   cubePresets.active = $("cp-sel").value; saveJSON(CUBEP_KEY, cubePresets); await cpApply(cubePresets.active);
 });
-$("cp-save").addEventListener("click", () => { cubePresets.presets[cubePresets.active] = clone(myCube); saveJSON(CUBEP_KEY, cubePresets); cubeDirty = false; });
+$("cp-save").addEventListener("click", () => { cubePresets.presets[cubePresets.active] = clone(myCube); saveJSON(CUBEP_KEY, cubePresets); cubeDirty = false; toast(`'${cubePresets.active}' 큐브 프리셋 저장됨`); });
 $("cp-new").addEventListener("click", () => {
   const name = (prompt("새 큐브 프리셋 이름") || "").trim();
   if (!name || cubePresets.presets[name]) return;
@@ -1082,7 +1137,7 @@ $("export-btn").addEventListener("click", () => {
   a.href = url; a.download = "mekicalc-presets.mkbak";
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  $("backup-status").textContent = "파일로 내보냈습니다.";
+  toast("파일로 내보냈습니다.");
 });
 // 파일에서 불러오기
 $("import-btn").addEventListener("click", () => $("import-file").click());
@@ -1091,7 +1146,7 @@ $("import-file").addEventListener("change", (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = async () => {
-      try { await applyBundle(reader.result); $("backup-status").textContent = "파일에서 불러왔습니다."; }
+      try { await applyBundle(reader.result); toast("파일에서 불러왔습니다."); $("backup-status").textContent = ""; }
       catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
     };
     reader.readAsText(file);
@@ -1102,14 +1157,14 @@ $("import-file").addEventListener("change", (e) => {
 $("export-text-btn").addEventListener("click", async () => {
   const s = bundleString();
   $("backup-text").value = s;
-  try { await navigator.clipboard.writeText(s); $("backup-status").textContent = "텍스트를 복사했습니다."; }
-  catch { $("backup-status").textContent = "아래 칸의 텍스트를 복사하세요."; }
+  try { await navigator.clipboard.writeText(s); toast("텍스트를 복사했습니다."); $("backup-status").textContent = ""; }
+  catch { $("backup-status").textContent = "아래 칸의 텍스트를 복사하세요(자동 복사 실패)."; }
 });
 // 텍스트로 불러오기 — 텍스트 칸 내용 적용
 $("import-text-btn").addEventListener("click", async () => {
   const s = $("backup-text").value.trim();
   if (!s) { $("backup-status").textContent = "먼저 백업 텍스트를 붙여넣으세요."; return; }
-  try { await applyBundle(s); $("backup-status").textContent = "텍스트에서 불러왔습니다."; }
+  try { await applyBundle(s); toast("텍스트에서 불러왔습니다."); $("backup-status").textContent = ""; }
   catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
 });
 

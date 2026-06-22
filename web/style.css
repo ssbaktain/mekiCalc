@@ -361,8 +361,35 @@ main {
   text-decoration: none; text-align: center;
 }
 
-/* 내보내기/불러오기 */
-.backup-row { display: flex; gap: 10px; flex-wrap: wrap; }
+/* 내보내기/불러오기 (2열 그룹) */
+.backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+.backup-col { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.backup-col-title { font-size: 15px; font-weight: 700; color: var(--accent); }
+.backup-col .hint { font-size: 12px; color: var(--muted); margin: 0; }
+.backup-col .mini-btn { width: 100%; }
+.backup-text-label { font-size: 13px; color: var(--text); margin: 4px 0 6px; }
+.backup-text-label .hint { color: var(--muted); font-weight: 400; }
+@media (max-width: 560px) { .backup-grid { grid-template-columns: 1fr; } }
+
+/* 토스트 알림 */
+.toast {
+  position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%) translateY(8px);
+  background: var(--card2); color: var(--text); border: 1px solid var(--accent2);
+  border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45); z-index: 1000;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 버튼 행(비교 / 변경) + 보조 버튼 + 스택 입력 */
+.btn-row { display: flex; gap: 10px; }
+.btn-row .primary-btn { margin-top: 16px; }
+.primary-btn.alt { background: var(--card2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+.primary-btn.alt:hover { filter: none; border-color: var(--accent); color: var(--accent); }
+.ctl input[type=number] {
+  padding: 8px 10px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px; width: 90px;
+}
 
 /* 설정 행(딜 환산 · 추천 범위) */
 .set-desc { text-align: left; margin-bottom: 12px; }

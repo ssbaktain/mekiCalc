@@ -96,14 +96,23 @@
         <div class="card">
           <h2>프리셋 내보내기 / 불러오기</h2>
           <p class="status set-desc">로그인 없이 다른 기기·브라우저로 프리셋(스탯·큐브·딜 환산·추천 범위)을 옮길 때 사용합니다. <b>계정 로그인은 추후 추가 예정.</b></p>
-          <div class="backup-row">
-            <button id="export-btn" class="mini-btn" type="button">파일로 내보내기</button>
-            <button id="import-btn" class="mini-btn ghost" type="button">파일에서 불러오기</button>
-            <button id="export-text-btn" class="mini-btn ghost" type="button">텍스트 복사</button>
-            <button id="import-text-btn" class="mini-btn ghost" type="button">텍스트로 불러오기</button>
-            <input type="file" id="import-file" accept=".mkbak,.json" hidden />
+          <div class="backup-grid">
+            <div class="backup-col">
+              <div class="backup-col-title">📤 내보내기</div>
+              <p class="hint">백업을 만들어 다른 기기로 옮깁니다.</p>
+              <button id="export-btn" class="mini-btn" type="button">파일로 저장</button>
+              <button id="export-text-btn" class="mini-btn ghost" type="button">텍스트로 복사</button>
+            </div>
+            <div class="backup-col">
+              <div class="backup-col-title">📥 불러오기</div>
+              <p class="hint">백업 파일이나 텍스트로 복원합니다.</p>
+              <button id="import-btn" class="mini-btn" type="button">파일에서 불러오기</button>
+              <button id="import-text-btn" class="mini-btn ghost" type="button">아래 텍스트로 불러오기</button>
+              <input type="file" id="import-file" accept=".mkbak,.json" hidden />
+            </div>
           </div>
-          <textarea id="backup-text" class="backup-text" placeholder="'텍스트 복사'를 누르면 여기에 백업 내용이 표시됩니다. 다른 기기에선 이 칸에 붙여넣고 '텍스트로 불러오기'를 누르세요."></textarea>
+          <div class="backup-text-label">백업 텍스트 <span class="hint">— 복사 결과가 여기 표시되고, 불러올 텍스트는 여기에 붙여넣어요</span></div>
+          <textarea id="backup-text" class="backup-text" placeholder="'텍스트로 복사'를 누르면 여기에 백업 내용이 표시됩니다. 다른 기기에선 이 칸에 붙여넣고 '아래 텍스트로 불러오기'를 누르세요."></textarea>
           <p id="backup-status" class="status"></p>
         </div>
         <div class="card">
@@ -217,7 +226,7 @@
       </div>
     </section>
 
-    <!-- 내 옵션 비교 -->
+    <!-- 내 옵션 비교/변경 -->
     <section id="panel-compare" class="panel" hidden>
       <div class="card">
         <div class="controls">
@@ -226,9 +235,13 @@
           <label class="ctl">기준
             <select id="cmp-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select>
           </label>
+          <label class="ctl">변경 후 스택<input id="cmp-stack" type="number" min="0" value="0" /></label>
         </div>
         <div id="cmp-editor" class="cmp-editor"></div>
-        <button id="cmp-btn" class="primary-btn" type="button">비교</button>
+        <div class="btn-row">
+          <button id="cmp-btn" class="primary-btn alt" type="button">비교</button>
+          <button id="cmp-apply" class="primary-btn" type="button">이 옵션으로 변경</button>
+        </div>
         <p id="cmp-status" class="status"></p>
         <div id="cmp-result"></div>
       </div>
@@ -246,6 +259,8 @@
   </main>
 
   <footer>로컬 서버에서 계산합니다. 프리셋·설정은 이 브라우저에 저장됩니다.</footer>
+
+  <div id="toast" class="toast"></div>
 
   <script src="/app.js"></script>
 </body>

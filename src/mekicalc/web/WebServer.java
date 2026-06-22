@@ -84,6 +84,12 @@ public final class WebServer {
             return service.slotDraws(str(req, "part"), str(req, "grade"));
         }));
 
+        http.createContext("/api/applystats", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.applyStats(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+                    mapList(req.get("oldOpts")), mapList(req.get("newOpts")));
+        }));
+
         http.createContext("/api/optcompare", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             Map<String, Object> l = asObj(req.get("left")), r = asObj(req.get("right"));

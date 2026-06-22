@@ -353,6 +353,37 @@ public final class CalcService {
         return m;
     }
 
+    // ──────────────────── 옵션 변경 적용(스탯 재계산) ────────────────────
+
+    /**
+     * 한 큐브 줄의 옵션을 oldOpts→newOpts로 바꿨을 때의 새 스탯 총합을 계산한다.
+     * 현재 스탯에서 기존 옵션을 빼고(uncombine) 새 옵션을 더한다(combine) — 주스탯→공격력 전파·combine 규칙 반영.
+     * @return {"stats": {statId: 값}}
+     */
+    public Map<String, Object> applyStats(Map<String, Double> stats, Map<String, Double> conv,
+                                          List<Map<String, Object>> oldOpts, List<Map<String, Object>> newOpts) {
+        StatBlock current = block(stats);
+        DamageModel dm = content.damageModel(conv);
+        StatBlock base = dm.uncombine(current, deltaOfReq(oldOpts));   // 기존 옵션 제거
+        StatBlock result = dm.combine(base, deltaOfReq(newOpts));      // 새 옵션 적용
+        Map<String, Object> sm = new LinkedHashMap<>();
+        for (Map.Entry<String, Double> e : result.asMap().entrySet()) sm.put(e.getKey(), e.getValue());
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("stats", sm);
+        return out;
+    }
+
+    /** [{statId,value},…] → 같은 스탯끼리 합산한 StatBlock. */
+    private static StatBlock deltaOfReq(List<Map<String, Object>> opts) {
+        StatBlock b = new StatBlock();
+        for (Map<String, Object> o : opts) {
+            String sid = String.valueOf(o.get("statId"));
+            double val = o.get("value") instanceof Double ? (Double) o.get("value") : 0;
+            b.set(sid, b.get(sid) + val);
+        }
+        return b;
+    }
+
     // ──────────────────── 옵션 비교(좌/우 자유 선택) ────────────────────
 
     /**
