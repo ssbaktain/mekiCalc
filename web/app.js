@@ -219,6 +219,7 @@ function canLeaveStat() {
 
 // 현재 보고 있는 편집기(스탯/큐브)의 미저장 이탈 가드.
 let currentSub = "stat";
+let cubeNeedsRender = false;   // 큐브 데이터는 바뀌었지만 아직 화면 렌더 안 함(지연 로딩)
 function canLeaveEditors() {
   if ($("panel-presets").hidden) return true;
   if (currentSub === "stat") return canLeaveStat();
@@ -284,6 +285,7 @@ function selectSub(name) {
   currentSub = name;
   document.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
+  if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
 }
 for (const b of document.querySelectorAll(".subtab")) {
   b.addEventListener("click", () => {
@@ -535,6 +537,10 @@ async function renderCube() {
   list.innerHTML = "";
   const parts = sortParts(Object.keys(myCube));
   if (!parts.length) { list.innerHTML = '<p class="status">아직 추가한 부위가 없습니다. 위에서 부위를 추가하세요.</p>'; return; }
+  // 모든 부위×줄의 슬롯 테이블을 병렬로 미리 로드(순차 대기 제거 → 빠름)
+  await Promise.all(parts.flatMap((part) => ["윗잠", "아랫잠"]
+    .filter((ln) => myCube[part][ln] && myCube[part][ln].grade)
+    .map((ln) => getSlots(part, myCube[part][ln].grade).catch(() => null))));
   for (const part of parts) {
     const fs = document.createElement("fieldset");
     fs.className = "cube-part";
@@ -989,7 +995,9 @@ $("sp-del").addEventListener("click", () => {
 async function cpApply(name) {
   const c = cubePresets.presets[name];
   if (!c) return;
-  myCube = clone(c); saveCube(); cubeDirty = false; await renderCube();
+  myCube = clone(c); saveCube(); cubeDirty = false;
+  // 큐브 탭이 보일 때만 즉시 렌더, 아니면 지연(슬롯 조회가 초기 로드를 막지 않게)
+  if (currentSub === "cube") await renderCube(); else cubeNeedsRender = true;
 }
 async function initCubePresets() {
   if (!cubePresets) cubePresets = { active: "기본", presets: { "기본": clone(myCube) } };
