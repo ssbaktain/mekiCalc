@@ -34,8 +34,9 @@ public final class WebMain {
         Db db = Db.load(dataDir);
         PgAuthStore pg = null;
         if (db.enabled) {
-            try { db.ensureSchema(); pg = new PgAuthStore(db); }
-            catch (Exception e) { System.err.println("DB 초기화 실패, 파일 모드로 폴백: " + e); pg = null; }
+            // 헤드리스 부팅: Docker/Postgres가 늦게 떠도 최대 3분 기다렸다 붙음(파일모드 폴백은 최후수단).
+            if (db.waitReady(180)) pg = new PgAuthStore(db);
+            else System.err.println("DB 연결 실패(타임아웃), 파일 모드로 폴백");
         }
         AuthService auth = new AuthService(oauth, dataDir, pg);
         WebServer server = new WebServer(port, service, webDir, auth);

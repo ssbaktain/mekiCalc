@@ -61,6 +61,31 @@ public final class Db {
         return DriverManager.getConnection(url, props);
     }
 
+    /**
+     * DB가 응답할 때까지 최대 maxSeconds 대기(스키마 보장 겸). 헤드리스 부팅에서 웹서버 작업이
+     * Docker/Postgres보다 먼저 떠도 안전하게 붙도록 재시도한다. 성공=true, 타임아웃=false(파일 폴백).
+     */
+    public boolean waitReady(int maxSeconds) {
+        long deadline = System.currentTimeMillis() + maxSeconds * 1000L;
+        int attempt = 0;
+        while (true) {
+            try {
+                ensureSchema();
+                if (attempt > 0) System.out.println("DB 연결 성공(" + attempt + "회 재시도 후).");
+                return true;
+            } catch (SQLException e) {
+                attempt++;
+                if (System.currentTimeMillis() >= deadline) {
+                    System.err.println("DB 대기 타임아웃(" + attempt + "회 시도): " + e.getMessage());
+                    return false;
+                }
+                System.out.println("DB 대기 중...(시도 " + attempt + ") " + e.getMessage());
+                try { Thread.sleep(3000); }
+                catch (InterruptedException ie) { Thread.currentThread().interrupt(); return false; }
+            }
+        }
+    }
+
     /** 테이블/인덱스 없으면 생성(재시작·이식에도 안전). */
     public void ensureSchema() throws SQLException {
         try (Connection c = open(); Statement st = c.createStatement()) {
