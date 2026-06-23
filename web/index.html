@@ -5,19 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MekiCalc</title>
   <link rel="icon" href="/icon/mekicalc.ico" />
+  <link rel="apple-touch-icon" href="/icon/mekicalc.png" />
   <link rel="stylesheet" href="/style.css" />
+  <!-- Google AdSense: 승인 후 ca-pub-XXXXXXXXXXXXXXXX 를 실제 게시자 ID로 바꾸고 아래 한 줄의 주석을 해제하세요. -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 </head>
 <body>
   <header>
-    <div class="header-text">
-      <h1>MekiCalc</h1>
-      <p class="sub">메이플 키우기 스탯 효율 계산기</p>
+    <div class="brand" title="홈으로">
+      <img class="brand-logo" src="/icon/mekicalc.png" alt="MekiCalc 로고" width="44" height="44" />
+      <div class="header-text">
+        <h1>MekiCalc</h1>
+        <p class="sub">메이플 키우기 스탯 효율 계산기</p>
+      </div>
     </div>
     <div id="header-account" class="header-account"></div>
   </header>
 
+  <div id="inapp-banner" class="inapp-banner" hidden>
+    <span class="inapp-msg">카카오톡 등 인앱 브라우저에서는 구글 로그인이 차단돼요. 외부 브라우저로 열어주세요.</span>
+    <button id="inapp-open" class="inapp-btn" type="button">외부 브라우저로 열기</button>
+    <button id="inapp-close" class="inapp-x" type="button" aria-label="닫기">✕</button>
+  </div>
+
   <main>
     <nav id="menubar" class="menubar"></nav>
+
+    <!-- 상단 배너 광고 자리. 승인 후: hidden 제거 + 아래 ins의 data-ad-client/slot 채우고 주석 해제. -->
+    <div class="ad-slot ad-top" hidden>
+      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0000000000" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
+    </div>
 
     <!-- 프리셋 (예상 데미지 + 스탯/큐브 선택) -->
     <section id="panel-presets" class="panel">
@@ -262,9 +280,18 @@
       </div>
     </section>
 
+    <!-- 하단 배너 광고 자리. 승인 후: hidden 제거 + 아래 ins의 data-ad-client/slot 채우고 주석 해제. -->
+    <div class="ad-slot ad-bottom" hidden>
+      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0000000000" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
+    </div>
   </main>
 
-  <footer>로컬 서버에서 계산합니다. 프리셋·설정은 이 브라우저에 저장됩니다.</footer>
+  <footer>
+    <p class="footer-disclaimer">MekiCalc은 비공식 팬 계산기입니다. 「메이플스토리 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
+    <p class="footer-links"><a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:ssbaktain@gmail.com">문의</a></p>
+    <p class="footer-copy">© 2026 MekiCalc · 프리셋·설정은 이 브라우저(로그인 시 계정)에 저장됩니다.</p>
+  </footer>
 
   <div id="toast" class="toast"></div>
 

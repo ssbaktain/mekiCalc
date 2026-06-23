@@ -412,16 +412,38 @@ function buildMobileMenu(itemEls) {
 document.addEventListener("click", closeMenus);
 buildMenu();
 
-// 타이틀(로고) 클릭 → 홈(프리셋 패널)으로. 현재 서브탭은 유지(미저장 변경 보존).
-const logoEl = document.querySelector("header h1");
-if (logoEl) {
-  logoEl.title = "홈으로";
-  logoEl.addEventListener("click", () => {
+// 브랜드(로고+타이틀) 클릭 → 홈(프리셋 패널)으로. 현재 서브탭은 유지(미저장 변경 보존).
+const brandEl = document.querySelector("header .brand");
+if (brandEl) {
+  brandEl.addEventListener("click", () => {
     const first = document.querySelector("#menubar .menu-item");
     if (first) selectLeaf(MENU[0], first);
     window.scrollTo({ top: 0 });
   });
 }
+
+// 인앱(임베디드) 브라우저 감지 → 구글 로그인이 차단되므로 외부 브라우저로 열도록 안내.
+(function inAppBrowserNotice() {
+  const ua = navigator.userAgent || "";
+  const isKakao = /KAKAOTALK/i.test(ua);
+  const isInApp = isKakao || /(FBAN|FBAV|Instagram|Line\/|NAVER|DaumApps|; wv\)|Snapchat)/i.test(ua);
+  const banner = $("inapp-banner");
+  if (!isInApp || !banner) return;
+  banner.hidden = false;
+  $("inapp-close").addEventListener("click", () => { banner.hidden = true; });
+  $("inapp-open").addEventListener("click", () => {
+    const url = location.href;
+    if (isKakao) {
+      location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);   // 카카오톡: 시스템 브라우저로
+    } else if (/Android/i.test(ua)) {
+      location.href = "intent://" + location.host + location.pathname + location.search +
+        "#Intent;scheme=https;package=com.android.chrome;end";                          // 안드로이드: 크롬 인텐트
+    } else {
+      if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+      toast("주소를 복사했어요. Safari·크롬에 붙여넣어 열어주세요.");
+    }
+  });
+})();
 
 // 직업 변경: '딜 미환산' 표시 갱신 + 예상 데미지 재계산 + 미저장 표시.
 $("job-sel").addEventListener("change", () => { statDirty = true; refreshQual(); calcDamage(); });
