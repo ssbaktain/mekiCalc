@@ -6,6 +6,11 @@ const CONV_KEY = "mekicalc.conv.v1";
 const RANGE_KEY = "mekicalc.ranges.v1";
 const STATP_KEY = "mekicalc.statPresets.v1";
 const CUBEP_KEY = "mekicalc.cubePresets.v1";
+// 즉시 페인트용 캐시(서버 대기 없이 화면 먼저 그림). 정적 데이터는 계정 무관, 데미지는 직전 값.
+const CACHE_STATS = "mekicalc.cache.statDefs.v1";
+const CACHE_META  = "mekicalc.cache.meta.v1";
+const CACHE_ME    = "mekicalc.cache.me.v1";
+const CACHE_DMG   = "mekicalc.cache.damage.v1";
 
 let statDefs = [];
 let meta = { parts: [], grades: [], gradeKo: {} };
@@ -460,7 +465,7 @@ $("job-sel").addEventListener("change", () => { statDirty = true; refreshQual();
 // ──────────────────── 스탯 입력 폼 ────────────────────
 
 async function loadStats(pre) {
-  try { statDefs = pre || await (await fetch("/api/stats")).json(); renderForm(); }
+  try { statDefs = pre || await (await fetch("/api/stats")).json(); saveJSON(CACHE_STATS, statDefs); renderForm(); }
   catch (e) { $("stat-form").textContent = "스탯 목록을 불러오지 못했습니다: " + e; }
 }
 
@@ -519,14 +524,19 @@ async function refreshQual() {
 
 // ──────────────────── 예상 데미지 ────────────────────
 
+// 데미지 숫자 표시(즉시 페인트·실계산 공용).
+function showDamage(normal, boss) {
+  $("dmg-normal").textContent = normal == null ? "—" : fmt(normal);
+  $("dmg-boss").textContent = boss == null ? "—" : fmt(boss);
+  $("dmg-normal-unit").textContent = normal == null ? "" : "(" + koreanUnit(normal) + ")";
+  $("dmg-boss-unit").textContent = boss == null ? "" : "(" + koreanUnit(boss) + ")";
+}
 async function calcDamage() {
   $("status").textContent = "계산 중…";
   try {
     const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv });
-    $("dmg-normal").textContent = fmt(data.normal);
-    $("dmg-boss").textContent = fmt(data.boss);
-    $("dmg-normal-unit").textContent = data.normal == null ? "" : "(" + koreanUnit(data.normal) + ")";
-    $("dmg-boss-unit").textContent = data.boss == null ? "" : "(" + koreanUnit(data.boss) + ")";
+    showDamage(data.normal, data.boss);
+    saveJSON(CACHE_DMG, { normal: data.normal, boss: data.boss });   // 직전 데미지(다음 로드 즉시 표시용)
     $("status").textContent = "";
   } catch (e) { $("status").textContent = "오류: " + e.message; }
 }
@@ -1332,11 +1342,14 @@ $("import-text-btn").addEventListener("click", async () => {
 
 async function loadMe(pre) {
   try { me = pre || await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
+  saveJSON(CACHE_ME, me);
   renderLoginUI();
 }
 
 async function doLogout() {
   try { await fetch("/auth/logout", { method: "POST" }); } catch {}
+  // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터·캐시 제거(정적 캐시는 유지).
+  [STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME].forEach((k) => localStorage.removeItem(k));
   location.reload();
 }
 
@@ -1379,15 +1392,22 @@ function renderAccountInto(el) {
 
 // ──────────────────── 초기화 ────────────────────
 
-async function loadMeta(pre) {
-  meta = pre || await (await fetch("/api/meta")).json();
+// meta 적용(부위·등급 드롭다운). 셀렉트를 비우고 다시 채워 두 번 호출돼도 중복 안 됨(즉시 페인트+갱신 공용).
+function applyMeta(m) {
+  meta = m;
   meta.parts = sortParts(meta.parts || []);   // 부위를 고정 순서로 통일
   for (const sel of [$("ev-part"), $("mc-part-add"), $("cmp-part")]) {
+    sel.innerHTML = "";
     for (const p of meta.parts) sel.add(new Option(p, p));
   }
   fillGradeSelect($("ev-grade"));
   $("ev-grade").value = meta.grades[meta.grades.length - 1];
   applyGradeColor($("ev-grade"));
+  saveJSON(CACHE_META, meta);
+}
+
+async function loadMeta(pre) {
+  applyMeta(pre || await (await fetch("/api/meta")).json());
   await renderCube();
 }
 
@@ -1396,13 +1416,34 @@ async function loadMeta(pre) {
   // (멀티 기기에서 나중에 연 기기가 옛 값으로 계정을 덮어써 예상 데미지가 흔들리던 문제). 사용자 편집은 init 후부터 동기화.
   suppressSync = true;
   try {
+    // ── 즉시 페인트: 캐시(localStorage)로 화면을 서버 대기 없이 먼저 그림 → 재방문 시 "클릭하자마자" 느낌 ──
+    // 정적 데이터(stats·meta)와 직전 데미지·계정 표시를 즉시 복원. 데이터는 곧 서버 응답으로 갱신됨.
+    const cStats = loadJSON(CACHE_STATS, null), cMeta = loadJSON(CACHE_META, null);
+    if (cStats && cMeta) {
+      try {
+        statDefs = cStats; renderForm();
+        applyMeta(cMeta);
+        const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
+        initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
+        renderConvSettings(); renderRangeSettings();
+        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) showDamage(cDmg.normal, cDmg.boss);   // 직전 데미지 즉시
+      } catch (e) { console.error("즉시 페인트 실패(무시하고 정상 로드)", e); }
+    }
+
+    // ── 백그라운드: 서버에서 최신 받아 갱신 ──
     // stats+meta+mydata+me를 한 번의 왕복으로(순차 6회 → 1회). 실패 시 개별 엔드포인트로 폴백.
+    const painted = !!(cStats && cMeta);
     let boot = null;
     try { boot = await (await fetch("/api/bootstrap")).json(); } catch (e) { console.error("bootstrap 실패, 개별 로드", e); }
 
-    await loadStats(boot && boot.stats);
+    // 정적 데이터(stats·meta)는 배포 때나 바뀜 → 바뀌었을 때만 폼/드롭다운 재구성(평소엔 즉시페인트 화면 유지 = 깜빡임 0).
+    const statsChanged = boot && boot.stats && JSON.stringify(boot.stats) !== JSON.stringify(cStats);
+    const metaChanged  = boot && boot.meta  && JSON.stringify(boot.meta)  !== JSON.stringify(cMeta);
+
+    if (!painted || statsChanged) await loadStats(boot && boot.stats);
     await loadMe(boot && boot.me);
-    try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); }
+    if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
+    else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
     renderConvSettings();        // 딜 환산 설정 목록
     renderRangeSettings();       // 추천 범위 설정 목록
