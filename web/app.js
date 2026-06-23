@@ -1392,20 +1392,27 @@ async function loadMeta(pre) {
 }
 
 (async function init() {
-  // stats+meta+mydata+me를 한 번의 왕복으로(순차 6회 → 1회). 실패 시 개별 엔드포인트로 폴백.
-  let boot = null;
-  try { boot = await (await fetch("/api/bootstrap")).json(); } catch (e) { console.error("bootstrap 실패, 개별 로드", e); }
+  // 초기화 중에는 자동 push 금지: 계정 정본을 pull하기 전에 로컬(스테일) 상태를 계정에 덮어쓰는 것 방지
+  // (멀티 기기에서 나중에 연 기기가 옛 값으로 계정을 덮어써 예상 데미지가 흔들리던 문제). 사용자 편집은 init 후부터 동기화.
+  suppressSync = true;
+  try {
+    // stats+meta+mydata+me를 한 번의 왕복으로(순차 6회 → 1회). 실패 시 개별 엔드포인트로 폴백.
+    let boot = null;
+    try { boot = await (await fetch("/api/bootstrap")).json(); } catch (e) { console.error("bootstrap 실패, 개별 로드", e); }
 
-  await loadStats(boot && boot.stats);
-  await loadMe(boot && boot.me);
-  try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); }
-  await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
-  renderConvSettings();        // 딜 환산 설정 목록
-  renderRangeSettings();       // 추천 범위 설정 목록
-  initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
-  await initCubePresets();     // 큐브 프리셋
-  // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
-  booting = false;
-  await Promise.all([refreshQual(), calcDamage()]);
-  await pullPresets();         // 로그인돼 있으면 서버 프리셋으로 동기화
+    await loadStats(boot && boot.stats);
+    await loadMe(boot && boot.me);
+    try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); }
+    await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
+    renderConvSettings();        // 딜 환산 설정 목록
+    renderRangeSettings();       // 추천 범위 설정 목록
+    initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
+    await initCubePresets();     // 큐브 프리셋
+    // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
+    booting = false;
+    await Promise.all([refreshQual(), calcDamage()]);
+    await pullPresets();         // 로그인돼 있으면 서버 프리셋으로 동기화(계정이 정본)
+  } finally {
+    suppressSync = false;        // 이제부터 사용자 편집은 계정에 동기화
+  }
 })();
