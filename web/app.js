@@ -412,6 +412,17 @@ function buildMobileMenu(itemEls) {
 document.addEventListener("click", closeMenus);
 buildMenu();
 
+// 타이틀(로고) 클릭 → 홈(프리셋 패널)으로. 현재 서브탭은 유지(미저장 변경 보존).
+const logoEl = document.querySelector("header h1");
+if (logoEl) {
+  logoEl.title = "홈으로";
+  logoEl.addEventListener("click", () => {
+    const first = document.querySelector("#menubar .menu-item");
+    if (first) selectLeaf(MENU[0], first);
+    window.scrollTo({ top: 0 });
+  });
+}
+
 // 직업 변경: '딜 미환산' 표시 갱신 + 예상 데미지 재계산 + 미저장 표시.
 $("job-sel").addEventListener("change", () => { statDirty = true; refreshQual(); calcDamage(); });
 
@@ -599,13 +610,14 @@ function parseSlotKey(key) {
 
 async function renderCube() {
   const list = $("mc-list");
-  list.innerHTML = "";
   const parts = sortParts(Object.keys(myCube));
   if (!parts.length) { list.innerHTML = '<p class="status">아직 추가한 부위가 없습니다. 위에서 부위를 추가하세요.</p>'; return; }
   // 모든 부위×줄의 슬롯 테이블을 병렬로 미리 로드(순차 대기 제거 → 빠름)
   await Promise.all(parts.flatMap((part) => ["윗잠", "아랫잠"]
     .filter((ln) => myCube[part][ln] && myCube[part][ln].grade)
     .map((ln) => getSlots(part, myCube[part][ln].grade).catch(() => null))));
+  // 새 내용을 프래그먼트에 먼저 다 만든 뒤 한 번에 교체 → 빈 상태로 높이가 줄어 스크롤이 위로 튀는 현상 방지.
+  const frag = document.createDocumentFragment();
   for (const part of parts) {
     const fs = document.createElement("fieldset");
     fs.className = "cube-part";
@@ -614,8 +626,9 @@ async function renderCube() {
     for (const lineName of ["윗잠", "아랫잠"]) {
       fs.appendChild(await renderLine(part, lineName));
     }
-    list.appendChild(fs);
+    frag.appendChild(fs);
   }
+  list.replaceChildren(frag);
 }
 
 async function renderLine(part, lineName) {
@@ -636,9 +649,10 @@ async function renderLine(part, lineName) {
   fillGradeSelect(gradeSel);
   gradeSel.value = line.grade;
   applyGradeColor(gradeSel);
-  gradeSel.addEventListener("change", () => {
+  gradeSel.addEventListener("change", async () => {
     line.grade = gradeSel.value; line.slots = [null, null, null];   // 등급 바뀌면 옵션 표 달라져 초기화
-    saveCube(); renderCube();
+    saveCube();
+    wrap.replaceWith(await renderLine(part, lineName));   // 이 줄만 교체 → 화면이 위로 튀지 않음
   });
   wrap.appendChild(gradeSel);
 
@@ -1100,6 +1114,24 @@ $("sp-del").addEventListener("click", () => {
   statPresets.active = Object.keys(statPresets.presets)[0];
   saveJSON(STATP_KEY, statPresets); fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
 });
+$("sp-rename").addEventListener("click", () => {
+  if (renamePreset(statPresets) == null) return;
+  saveJSON(STATP_KEY, statPresets); fillPresetSel($("sp-sel"), statPresets);
+  toast("스탯 프리셋 이름을 변경했습니다.");
+});
+
+// 활성 프리셋 이름 변경(목록 순서 유지). store={active, presets:{name:val}}.
+function renamePreset(store) {
+  const old = store.active;
+  const name = (prompt("프리셋 이름 변경", old) || "").trim();
+  if (!name || name === old) return null;
+  if (store.presets[name]) { toast("이미 같은 이름의 프리셋이 있습니다."); return null; }
+  const renamed = {};
+  for (const k of Object.keys(store.presets)) renamed[k === old ? name : k] = store.presets[k];
+  store.presets = renamed;
+  store.active = name;
+  return name;
+}
 
 // 큐브 프리셋
 async function cpApply(name) {
@@ -1136,6 +1168,11 @@ $("cp-del").addEventListener("click", async () => {
   delete cubePresets.presets[cubePresets.active];
   cubePresets.active = Object.keys(cubePresets.presets)[0];
   saveJSON(CUBEP_KEY, cubePresets); fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
+});
+$("cp-rename").addEventListener("click", () => {
+  if (renamePreset(cubePresets) == null) return;
+  saveJSON(CUBEP_KEY, cubePresets); fillPresetSel($("cp-sel"), cubePresets);
+  toast("큐브 프리셋 이름을 변경했습니다.");
 });
 
 // ──────────────────── 프리셋 내보내기 / 불러오기 (.mkbak) ────────────────────
