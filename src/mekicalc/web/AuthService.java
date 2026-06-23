@@ -32,17 +32,22 @@ public final class AuthService {
     private static final long SESSION_DAYS = 30;
 
     private final OAuthConfig cfg;
-    private final Path sessionsFile;   // data/sessions.json
-    private final Path usersDir;       // data/users/
+    private final Path sessionsFile;   // data/sessions.json (파일 모드)
+    private final Path usersDir;       // data/users/ (파일 모드)
+    private final PgAuthStore pg;      // null이면 파일 모드, 아니면 DB 모드
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private final HttpClient http = HttpClient.newHttpClient();
     private final SecureRandom rng = new SecureRandom();
 
-    public AuthService(OAuthConfig cfg, Path dataDir) {
+    public AuthService(OAuthConfig cfg, Path dataDir) { this(cfg, dataDir, null); }
+
+    public AuthService(OAuthConfig cfg, Path dataDir, PgAuthStore pg) {
         this.cfg = cfg;
         this.sessionsFile = dataDir.resolve("sessions.json");
         this.usersDir = dataDir.resolve("users");
-        loadSessions();
+        this.pg = pg;
+        if (pg != null) sessions.putAll(pg.loadSessions());   // DB: 시작 시 세션 캐시 적재
+        else loadSessions();                                  // 파일: sessions.json
     }
 
     public OAuthConfig config() { return cfg; }
@@ -98,7 +103,8 @@ public final class AuthService {
         Session s = new Session(randomToken(), sub.toString(), name, email,
                 System.currentTimeMillis() + SESSION_DAYS * 24 * 3600_000L);
         sessions.put(s.token(), s);
-        saveSessions();
+        if (pg != null) { pg.upsertUser(s.sub(), s.name(), s.email()); pg.putSession(s); }
+        else saveSessions();
         return s;
     }
 
@@ -107,18 +113,25 @@ public final class AuthService {
         if (token == null) return null;
         Session s = sessions.get(token);
         if (s == null) return null;
-        if (s.expiresAt() < System.currentTimeMillis()) { sessions.remove(token); return null; }
+        if (s.expiresAt() < System.currentTimeMillis()) {
+            sessions.remove(token);
+            if (pg != null) pg.deleteSession(token); else saveSessions();
+            return null;
+        }
         return s;
     }
 
     public void logout(String token) {
-        if (token != null && sessions.remove(token) != null) saveSessions();
+        if (token != null && sessions.remove(token) != null) {
+            if (pg != null) pg.deleteSession(token); else saveSessions();
+        }
     }
 
     // ──────────────────── 유저 프리셋(서버 동기화) ────────────────────
 
     /** 유저의 저장된 프리셋 번들(JSON 문자열). 없으면 null. */
     public String loadPresets(String sub) {
+        if (pg != null) return pg.loadBundle(sub);
         try {
             Path f = usersDir.resolve(safe(sub) + ".json");
             if (Files.exists(f)) return Files.readString(f);
@@ -128,6 +141,7 @@ public final class AuthService {
 
     /** 유저의 프리셋 번들 저장(불투명 JSON 문자열 그대로). */
     public void savePresets(String sub, String bundleJson) throws Exception {
+        if (pg != null) { pg.saveBundle(sub, bundleJson); return; }
         Files.createDirectories(usersDir);
         Files.writeString(usersDir.resolve(safe(sub) + ".json"), bundleJson);
     }

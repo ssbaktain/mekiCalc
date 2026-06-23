@@ -51,6 +51,7 @@ data/ui.json
 data/oauth.json
 data/sessions.json
 data/users/
+data/db.json
 
 ### 로컬 백업 / 임시 산출물 ###
 mydata_backup/

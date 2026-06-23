@@ -22,7 +22,8 @@ Start-Sleep -Milliseconds 800
 
 Push-Location $root
 try {
-    & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp "$root\out" `
+    # lib\*  = JDBC 드라이버 등 런타임 의존 jar(컴파일은 java.sql=JDK라 불필요, 실행 시 org.postgresql.Driver 로드)
+    & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp "$root\out;$root\lib\*" `
         mekicalc.web.WebMain $Port "$root\data" "$root\web"
 } finally {
     Pop-Location
