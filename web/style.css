@@ -340,7 +340,8 @@ main {
 /* 큐브 편집기 — 부위별 박스(그리드로 폭 제한), 한 줄당 등급→슬롯1·2·3→스택 세로 배치 */
 /* min(300px,100%)로 두면 화면이 300px보다 좁아도 트랙이 컨테이너를 넘지 않음(모바일 넘침 방지) */
 #mc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
-.cube-part { border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px 12px; margin: 0; }
+/* min-width:0 — 그리드 아이템이 안쪽 select의 콘텐츠 최소폭에 막혀 트랙 밖으로 튀어나오지 않게 */
+.cube-part { border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px 12px; margin: 0; min-width: 0; }
 .cube-part legend { font-weight: 700; padding: 0 6px; color: var(--accent); }
 .cube-part legend .part-del {
   background: none; border: none; cursor: pointer; color: var(--muted);
