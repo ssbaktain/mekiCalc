@@ -31,6 +31,7 @@ const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY]);
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
+let damageShown = false;      // 데미지 값이 한 번 표시됐는지(이후 갱신은 조용히 — '계산 중'·'오류' 텍스트 안 띄움)
 let syncTimer = null;
 function syncUp() {
   if (!me.loggedIn || suppressSync) return;
@@ -532,13 +533,22 @@ function showDamage(normal, boss) {
   $("dmg-boss-unit").textContent = boss == null ? "" : "(" + koreanUnit(boss) + ")";
 }
 async function calcDamage() {
-  $("status").textContent = "계산 중…";
-  try {
-    const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv });
-    showDamage(data.normal, data.boss);
-    saveJSON(CACHE_DMG, { normal: data.normal, boss: data.boss });   // 직전 데미지(다음 로드 즉시 표시용)
-    $("status").textContent = "";
-  } catch (e) { $("status").textContent = "오류: " + e.message; }
+  // 이미 값이 떠 있으면(즉시 페인트·이전 계산) 백그라운드 갱신은 조용히 — '계산 중'/'오류' 텍스트로 방해하지 않음.
+  const refreshing = damageShown;
+  if (!refreshing) $("status").textContent = "계산 중…";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv });
+      showDamage(data.normal, data.boss);
+      saveJSON(CACHE_DMG, { normal: data.normal, boss: data.boss });   // 직전 데미지(다음 로드 즉시 표시용)
+      damageShown = true;
+      $("status").textContent = "";
+      return;
+    } catch (e) {
+      if (attempt === 0) { await new Promise((r) => setTimeout(r, 400)); continue; }   // 짧게 쉬고 1회 재시도(터널 블립 흡수)
+      if (!refreshing) $("status").textContent = "오류: " + e.message;   // 값이 아예 없을 때만 오류 표시(있으면 직전 값 유지)
+    }
+  }
 }
 
 // ──────────────────── 큐브 기댓값 ────────────────────
@@ -1426,7 +1436,7 @@ async function loadMeta(pre) {
         const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
         initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
         renderConvSettings(); renderRangeSettings();
-        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) showDamage(cDmg.normal, cDmg.boss);   // 직전 데미지 즉시
+        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) { showDamage(cDmg.normal, cDmg.boss); damageShown = true; }   // 직전 데미지 즉시(이후 갱신은 조용히)
       } catch (e) { console.error("즉시 페인트 실패(무시하고 정상 로드)", e); }
     }
 
