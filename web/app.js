@@ -25,6 +25,7 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY]);
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
+let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
 let syncTimer = null;
 function syncUp() {
   if (!me.loggedIn || suppressSync) return;
@@ -451,8 +452,8 @@ $("job-sel").addEventListener("change", () => { statDirty = true; refreshQual();
 
 // ──────────────────── 스탯 입력 폼 ────────────────────
 
-async function loadStats() {
-  try { statDefs = await (await fetch("/api/stats")).json(); renderForm(); }
+async function loadStats(pre) {
+  try { statDefs = pre || await (await fetch("/api/stats")).json(); renderForm(); }
   catch (e) { $("stat-form").textContent = "스탯 목록을 불러오지 못했습니다: " + e; }
 }
 
@@ -1003,9 +1004,9 @@ function fillStats(stats) {
 
 // 서버에 저장된 내 데이터(스탯·환산·큐브)를 불러온다.
 // overwriteCube=true면 큐브도 덮어쓴다(버튼). 자동 로드 시엔 내 큐브가 비어 있을 때만 채운다.
-async function loadMyData(overwriteCube) {
+async function loadMyData(overwriteCube, pre) {
   try {
-    const data = await (await fetch("/api/mydata")).json();
+    const data = pre || await (await fetch("/api/mydata")).json();
     if (data.stats && Object.keys(data.stats).length) {
       fillStats(data.stats);
       if (data.stats.JOB != null) $("job-sel").value = String(Math.round(data.stats.JOB));
@@ -1015,7 +1016,7 @@ async function loadMyData(overwriteCube) {
       saveJSON(CONV_KEY, myConv);
       renderConvSettings();
     }
-    await refreshQual();
+    if (!booting) await refreshQual();   // 초기화 중엔 맨 끝에서 1번만(중복 왕복 제거)
     if (data.cubeState && Object.keys(data.cubeState).length && (overwriteCube || !Object.keys(myCube).length)) {
       myCube = data.cubeState;
       saveCube();
@@ -1100,19 +1101,20 @@ function fillPresetSel(sel, store) {
   sel.value = store.active;
 }
 
-// 스탯 프리셋
-function spApply(name) {
+// 스탯 프리셋. skipRecompute=true면 폼만 채우고 재계산은 건너뜀(초기화 중 중복 호출 방지).
+function spApply(name, skipRecompute) {
   const p = statPresets.presets[name];
   if (!p) return;
   fillStats(p.stats);
   $("job-sel").value = String(Math.round((p.stats && p.stats.JOB) || 0));
   statDirty = false;   // 프리셋 적용 = 저장된 상태
+  if (skipRecompute) return;
   refreshQual();
   calcDamage();   // 프리셋 전환 시 즉시 재계산
 }
 function initStatPresets() {
   if (!statPresets) statPresets = { active: "기본", presets: { "기본": { stats: collectStats() } } };
-  else spApply(statPresets.active);
+  else spApply(statPresets.active, booting);   // 초기화 중엔 재계산 미룸(init 끝에서 1번)
   saveJSON(STATP_KEY, statPresets);
   fillPresetSel($("sp-sel"), statPresets);
   statDirty = false;
@@ -1316,8 +1318,8 @@ $("import-text-btn").addEventListener("click", async () => {
 
 // ──────────────────── 계정(로그인) ────────────────────
 
-async function loadMe() {
-  try { me = await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
+async function loadMe(pre) {
+  try { me = pre || await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
   renderLoginUI();
 }
 
@@ -1362,8 +1364,8 @@ function renderHeaderAccount() {
 
 // ──────────────────── 초기화 ────────────────────
 
-async function loadMeta() {
-  meta = await (await fetch("/api/meta")).json();
+async function loadMeta(pre) {
+  meta = pre || await (await fetch("/api/meta")).json();
   meta.parts = sortParts(meta.parts || []);   // 부위를 고정 순서로 통일
   for (const sel of [$("ev-part"), $("mc-part-add"), $("cmp-part")]) {
     for (const p of meta.parts) sel.add(new Option(p, p));
@@ -1375,16 +1377,20 @@ async function loadMeta() {
 }
 
 (async function init() {
-  const mePromise = loadMe();   // 계정 UI는 계산 데이터와 무관 → 맨 앞에서 병렬로(로그인 버튼 빨리 표시)
-  await loadStats();
-  try { await loadMeta(); } catch (e) { console.error("메타 로드 실패", e); }
-  await loadMyData(false);     // 시작 시 내 값 자동 채움(개발 편의; 배포 땐 빈 값)
+  // stats+meta+mydata+me를 한 번의 왕복으로(순차 6회 → 1회). 실패 시 개별 엔드포인트로 폴백.
+  let boot = null;
+  try { boot = await (await fetch("/api/bootstrap")).json(); } catch (e) { console.error("bootstrap 실패, 개별 로드", e); }
+
+  await loadStats(boot && boot.stats);
+  await loadMe(boot && boot.me);
+  try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); }
+  await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
   renderConvSettings();        // 딜 환산 설정 목록
   renderRangeSettings();       // 추천 범위 설정 목록
-  initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용)
+  initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
   await initCubePresets();     // 큐브 프리셋
-  await refreshQual();         // 직업 기준 '딜 미환산' 표시 보강
-  calcDamage();                // 시작 시 예상 데미지 자동 계산
-  await mePromise;             // 로그인 상태 보장
+  // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
+  booting = false;
+  await Promise.all([refreshQual(), calcDamage()]);
   await pullPresets();         // 로그인돼 있으면 서버 프리셋으로 동기화
 })();

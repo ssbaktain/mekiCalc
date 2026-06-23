@@ -264,11 +264,14 @@ main {
   .m-leaf:active { background: var(--card); }
   .m-leaf.active { background: var(--accent2); color: #fff; }
 
-  /* 헤더: 좁은 화면에서 줄바꿈 허용 + 폰트 축소 */
-  header { padding: 16px 14px 6px; flex-wrap: wrap; }
+  /* 헤더: 좁은 화면에서도 계정(로그인/로그아웃)을 우상단에 고정(줄바꿈 금지) + 폰트 축소 */
+  header { padding: 16px 14px 6px; flex-wrap: nowrap; }
   header h1 { font-size: 24px; }
   .brand-logo { width: 36px; height: 36px; }
   .brand { gap: 10px; }
+  .header-account { padding-top: 2px; gap: 6px; }
+  .acct-chip { max-width: 96px; font-size: 12px; padding: 5px 8px; }
+  .login-btn { padding: 6px 10px; font-size: 13px; }
   main { padding: 12px 14px 40px; }
 
   /* 표는 가로 스크롤 허용(뭉개짐 방지) */

@@ -139,13 +139,16 @@ public final class WebServer {
             } finally { ex.close(); }
         });
 
-        http.createContext("/api/me", json("GET", ex -> {
-            AuthService.Session s = sessionFrom(ex);
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("oauthEnabled", auth.enabled());
-            m.put("loggedIn", s != null);
-            if (s != null) { m.put("name", s.name()); m.put("email", s.email()); }
-            return m;
+        http.createContext("/api/me", json("GET", ex -> meInfo(sessionFrom(ex))));
+
+        // 초기 로드 1회 왕복용: stats+meta+mydata+me를 한 응답으로 묶음(프론트 init의 순차 호출 제거).
+        http.createContext("/api/bootstrap", json("GET", ex -> {
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("stats", service.statDefs());
+            out.put("meta", service.meta());
+            out.put("mydata", service.myData());
+            out.put("me", meInfo(sessionFrom(ex)));
+            return out;
         }));
 
         // 유저 프리셋 저장/로드(로그인 필요). 본문은 불투명 번들 JSON(.mkbak 형식).
@@ -266,6 +269,15 @@ public final class WebServer {
 
     private AuthService.Session sessionFrom(HttpExchange ex) {
         return auth.session(getCookie(ex, "sid"));
+    }
+
+    /** /api/me·/api/bootstrap 공용 로그인 상태 객체. */
+    private Map<String, Object> meInfo(AuthService.Session s) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("oauthEnabled", auth.enabled());
+        m.put("loggedIn", s != null);
+        if (s != null) { m.put("name", s.name()); m.put("email", s.email()); }
+        return m;
     }
 
     /** 쿠키 문자열 생성(HttpOnly·SameSite=Lax·Path=/, HTTPS면 Secure). */
