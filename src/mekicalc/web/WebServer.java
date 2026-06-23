@@ -347,10 +347,11 @@ public final class WebServer {
                 try (OutputStream os = ex.getResponseBody()) { os.write(nf); }
                 return;
             }
-            byte[] data = Files.readAllBytes(target);
+            String name = target.getFileName().toString().toLowerCase();
+            // HTML은 자산 참조(app.js·style.css)에 콘텐츠 해시(?v=)를 주입 → 내용이 바뀌면 URL이 바뀜(캐시버스팅).
+            byte[] data = name.endsWith(".html") ? htmlWithVersionedAssets(target) : Files.readAllBytes(target);
             ex.getResponseHeaders().set("Content-Type", contentType(target));
-            // 앱 셸(html/js/css)은 캐시 금지 → Cloudflare/브라우저가 옛 버전 서빙 안 함(배포 즉시 반영).
-            ex.getResponseHeaders().set("Cache-Control", appShell(target) ? "no-store" : "public, max-age=86400");
+            ex.getResponseHeaders().set("Cache-Control", cacheControlFor(name));
             ex.sendResponseHeaders(200, data.length);
             try (OutputStream os = ex.getResponseBody()) { os.write(data); }
         } finally {
@@ -358,10 +359,45 @@ public final class WebServer {
         }
     }
 
-    /** 앱 셸(자주 바뀌는 정적 파일) 여부 — 캐시 금지 대상. */
-    private static boolean appShell(Path p) {
-        String n = p.getFileName().toString().toLowerCase();
-        return n.endsWith(".html") || n.endsWith(".js") || n.endsWith(".css");
+    /**
+     * 캐시 정책:
+     * <ul>
+     *   <li>HTML: no-store — 항상 최신(자산 버전 스탬프를 매번 새로 전달해야 함).</li>
+     *   <li>JS/CSS: 1년 immutable — URL에 콘텐츠 해시(?v=)가 붙어 바뀌면 새 URL이 되므로 안전하게 장기 캐시(엣지·브라우저).</li>
+     *   <li>그 외(이미지 등): 1일.</li>
+     * </ul>
+     */
+    private static String cacheControlFor(String name) {
+        if (name.endsWith(".html")) return "no-store";
+        if (name.endsWith(".js") || name.endsWith(".css")) return "public, max-age=31536000, immutable";
+        return "public, max-age=86400";
+    }
+
+    /** HTML 내 /style.css·/app.js 참조 뒤에 ?v=<콘텐츠 해시>를 붙여 반환. */
+    private byte[] htmlWithVersionedAssets(Path htmlFile) throws IOException {
+        String html = Files.readString(htmlFile, StandardCharsets.UTF_8);
+        html = html.replace("/style.css\"", "/style.css?v=" + assetVer("style.css") + "\"");
+        html = html.replace("/app.js\"", "/app.js?v=" + assetVer("app.js") + "\"");
+        return html.getBytes(StandardCharsets.UTF_8);
+    }
+
+    /** 자산 파일의 콘텐츠 해시(앞 8자리). mtime이 같으면 캐시값 재사용(매 요청 재해시 방지). */
+    private final Map<String, String[]> assetVerCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private String assetVer(String name) {
+        try {
+            Path f = webDir.resolve(name);
+            String mtime = String.valueOf(Files.getLastModifiedTime(f).toMillis());
+            String[] cached = assetVerCache.get(name);
+            if (cached != null && cached[0].equals(mtime)) return cached[1];
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(f));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 4; i++) sb.append(String.format("%02x", digest[i]));
+            String ver = sb.toString();
+            assetVerCache.put(name, new String[]{mtime, ver});
+            return ver;
+        } catch (Exception e) {
+            return "0";
+        }
     }
 
     private static String contentType(Path p) {
