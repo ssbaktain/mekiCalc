@@ -409,6 +409,7 @@ public final class WebServer {
         if (n.endsWith(".svg")) return "image/svg+xml";
         if (n.endsWith(".png")) return "image/png";
         if (n.endsWith(".ico")) return "image/x-icon";
+        if (n.endsWith(".txt")) return "text/plain; charset=utf-8";
         return "application/octet-stream";
     }
 }
