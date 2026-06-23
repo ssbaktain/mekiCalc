@@ -28,7 +28,7 @@
   { "id": "SKILL_LEVEL_4",    "name": "4차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVELS",     "name": "모든 스킬 레벨(+)",        "unit": "LEVEL", "combine": "SUM" },
   { "id": "MAIN_STAT_PER_LEVEL","name": "1레벨당 주스탯(+)",       "unit": "FLAT",  "combine": "SUM", "hidden": true },
-  { "id": "BUFF_DURATION_SEC","name": "버프 지속시간 증가(초)",     "unit": "SEC",   "combine": "SUM", "qualitative": true },
+  { "id": "BUFF_DURATION_SEC","name": "버프 지속시간 증가",         "unit": "SEC",   "combine": "SUM", "qualitative": true },
   { "id": "BUFF_DURATION",    "name": "버프 지속시간 증가%",       "unit": "PCT",   "combine": "SUM", "qualitative": true },
   { "id": "SUMMON_DURATION",  "name": "동료 소환 지속시간 증가%",   "unit": "PCT",   "combine": "SUM", "qualitative": true }
 ]
