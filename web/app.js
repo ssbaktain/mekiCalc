@@ -373,6 +373,11 @@ function buildMobileMenu(itemEls) {
   const panel = document.createElement("div");
   panel.className = "mobile-menu";
 
+  // 계정(로그인/로그아웃·상태) — 드로어 맨 위. renderHeaderAccount가 내용을 채움.
+  const acct = document.createElement("div");
+  acct.id = "m-account"; acct.className = "m-account";
+  panel.appendChild(acct);
+
   const closeDrawer = () => { panel.classList.remove("open"); burger.classList.remove("active"); };
 
   const addLeaf = (label, leaf, desktopItem) => {
@@ -407,8 +412,10 @@ function buildMobileMenu(itemEls) {
   panel.addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", closeDrawer);   // 바깥 터치 시 닫기
 
-  bar.appendChild(burger);
-  bar.appendChild(panel);
+  // 햄버거·드로어는 헤더 우상단에 배치(모바일에서 로그인 자리를 대체). 데스크톱에선 CSS로 숨김.
+  const header = document.querySelector("header") || bar;
+  header.appendChild(burger);
+  header.appendChild(panel);
 }
 document.addEventListener("click", closeMenus);
 buildMenu();
@@ -1347,18 +1354,21 @@ function renderLoginUI() {
   }
 }
 
-// 우상단 헤더의 계정 영역(로그인 버튼 / 로그인됨 표시).
+// 계정 영역: 데스크톱은 헤더 우상단(#header-account), 모바일은 햄버거 드로어 안(#m-account)에 동일 내용.
 function renderHeaderAccount() {
-  const h = $("header-account");
-  if (!h) return;
-  if (!me.oauthEnabled) { h.innerHTML = ""; return; }
+  renderAccountInto($("header-account"));   // 데스크톱 우상단
+  renderAccountInto($("m-account"));        // 모바일 드로어
+}
+function renderAccountInto(el) {
+  if (!el) return;
+  if (!me.oauthEnabled) { el.innerHTML = ""; return; }
   if (me.loggedIn) {
-    h.innerHTML =
+    el.innerHTML =
       `<span class="acct-chip" title="${me.email || ""}"><span class="acct-dot"></span>${me.name || "로그인됨"}</span>` +
-      `<button id="header-logout" class="mini-btn ghost" type="button">로그아웃</button>`;
-    $("header-logout").addEventListener("click", doLogout);
+      `<button class="mini-btn ghost acct-logout" type="button">로그아웃</button>`;
+    el.querySelector(".acct-logout").addEventListener("click", doLogout);   // class 사용(중복 id 방지)
   } else {
-    h.innerHTML = `<a class="login-btn" href="/auth/login"><span class="g-mark">G</span> 로그인</a>`;
+    el.innerHTML = `<a class="login-btn" href="/auth/login"><span class="g-mark">G</span> 로그인</a>`;
   }
 }
 
