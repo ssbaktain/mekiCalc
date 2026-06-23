@@ -1071,13 +1071,18 @@ function renderRangeSettings() {
     row.className = "set-row range-row";
     row.innerHTML =
       `<label class="set-chk"><input type="checkbox" class="en" ${r.enabled ? "checked" : ""}/> ${cleanName(d.name)}</label>` +
-      `<div class="set-input">` +
-        `<label class="mini-chk"><input type="checkbox" class="nl" ${r.noLow ? "checked" : ""}/>하한없음</label>` +
-        `<input type="number" step="any" class="lo" value="${r.lo}"/>` +
+      `<div class="set-input range-bounds">` +
+        `<div class="bound-row">` +
+          `<label class="mini-chk"><input type="checkbox" class="nl" ${r.noLow ? "checked" : ""}/>하한없음</label>` +
+          `<input type="number" step="any" class="lo" value="${r.lo}"/>` +
+          `<span class="unit">${sfx}</span>` +
+        `</div>` +
         `<span class="tilde">~</span>` +
-        `<input type="number" step="any" class="hi" value="${r.hi}"/>` +
-        `<label class="mini-chk"><input type="checkbox" class="nh" ${r.noHigh ? "checked" : ""}/>상한없음</label>` +
-        `<span class="unit">${sfx}</span>` +
+        `<div class="bound-row">` +
+          `<label class="mini-chk"><input type="checkbox" class="nh" ${r.noHigh ? "checked" : ""}/>상한없음</label>` +
+          `<input type="number" step="any" class="hi" value="${r.hi}"/>` +
+          `<span class="unit">${sfx}</span>` +
+        `</div>` +
       `</div>`;
     const en = row.querySelector(".en"), nl = row.querySelector(".nl"), nh = row.querySelector(".nh");
     const lo = row.querySelector(".lo"), hi = row.querySelector(".hi");

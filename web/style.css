@@ -489,7 +489,18 @@ main {
 }
 .set-input .tilde { color: var(--muted); width: 10px; text-align: center; }
 .set-input .mini-chk { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.range-row .set-input { flex-wrap: wrap; justify-content: flex-end; }
+
+/* 추천 범위: 하한/상한을 각각 [체크 + 입력 + 단위] 한 묶음으로, 사이에 ~ */
+.range-bounds { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.bound-row { display: flex; align-items: center; gap: 6px; }
+.bound-row .unit { min-width: 0; }   /* 범위 단위는 짧으니 박스폭 reserve 안 함 */
+@media (max-width: 640px) {
+  /* 모바일: 하한/상한을 세로로 쌓고 ~ 를 가운데 */
+  .set-row.range-row { align-items: flex-start; }
+  .range-bounds { flex-direction: column; align-items: stretch; width: 100%; gap: 4px; }
+  .range-bounds .tilde { align-self: center; }
+  .bound-row { justify-content: flex-start; }
+}
 
 footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px 20px 36px; border-top: 1px solid var(--border); margin-top: 8px; }
 footer p { margin: 5px auto; max-width: 680px; line-height: 1.6; }
