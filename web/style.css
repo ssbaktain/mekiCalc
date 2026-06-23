@@ -338,7 +338,8 @@ main {
 .slider-scale span:last-child { color: #e7c14a; font-weight: 600; }
 
 /* 큐브 편집기 — 부위별 박스(그리드로 폭 제한), 한 줄당 등급→슬롯1·2·3→스택 세로 배치 */
-#mc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+/* min(300px,100%)로 두면 화면이 300px보다 좁아도 트랙이 컨테이너를 넘지 않음(모바일 넘침 방지) */
+#mc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
 .cube-part { border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px 12px; margin: 0; }
 .cube-part legend { font-weight: 700; padding: 0 6px; color: var(--accent); }
 .cube-part legend .part-del {
@@ -499,7 +500,14 @@ main {
   .set-row.range-row { align-items: flex-start; }
   .range-bounds { flex-direction: column; align-items: stretch; width: 100%; gap: 4px; }
   .range-bounds .tilde { align-self: center; }
+  /* 입력부는 오른쪽 끝으로 밀착, 체크박스+라벨은 왼쪽에 */
   .bound-row { justify-content: flex-start; }
+  .bound-row .lo, .bound-row .hi { margin-left: auto; }
+  /* 딜 환산: 이름이 길어 줄바꿈돼도 입력부를 오른쪽 끝으로 */
+  .set-input { margin-left: auto; }
+  /* 하한없음/상한없음 — 체크박스와 라벨 딱 붙이기 */
+  .set-input .mini-chk { gap: 1px; }
+  .set-input .mini-chk input { margin: 0; }
 }
 
 footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px 20px 36px; border-top: 1px solid var(--border); margin-top: 8px; }
