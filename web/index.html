@@ -43,15 +43,27 @@
       <div class="card damage-card">
         <div class="result-row">
           <div class="result">
-            <div class="label">예상 데미지 (일반몹)</div>
+            <div class="label">예상 데미지 (일반몹 · 평타 1타)</div>
             <div id="dmg-normal" class="value">—</div>
             <div id="dmg-normal-unit" class="value-unit"></div>
           </div>
           <div class="result">
-            <div class="label">예상 데미지 (보스몹)</div>
+            <div class="label">예상 데미지 (보스몹 · 평타 1타)</div>
             <div id="dmg-boss" class="value">—</div>
             <div id="dmg-boss-unit" class="value-unit"></div>
           </div>
+        </div>
+        <button id="dmg-toggle" class="dmg-toggle" type="button" aria-expanded="false">자세히 <span class="caret">▾</span></button>
+        <div id="dmg-detail" class="dmg-detail" hidden>
+          <table class="dmg-table">
+            <thead><tr><th></th><th>일반몹</th><th>보스몹</th></tr></thead>
+            <tbody>
+              <tr><th>1타 최소딜</th><td id="d-min-n">—</td><td id="d-min-b">—</td></tr>
+              <tr><th>1타 최대딜</th><td id="d-max-n">—</td><td id="d-max-b">—</td></tr>
+              <tr><th>1타 평균딜</th><td id="d-avg-n">—</td><td id="d-avg-b">—</td></tr>
+              <tr><th>DPS</th><td id="d-dps-n">—</td><td id="d-dps-b">—</td></tr>
+            </tbody>
+          </table>
         </div>
         <p id="status" class="status"></p>
       </div>

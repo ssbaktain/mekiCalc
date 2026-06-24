@@ -182,11 +182,24 @@ public final class NightlordDps {
      * 공속·타수·받는피해 디버프는 한 타 값이 아니므로 제외(평타 한 대의 한 타 기준).
      */
     public double basicPerHit(StatBlock input, boolean boss) {
+        return basicHitStats(input, boss)[2];   // 평균
+    }
+
+    /**
+     * 평타 1타 기대 데미지 [최소, 최대, 평균]. 버프 가동률·상시패시브 공퍼·받는 피해 디버프 반영.
+     * perHit는 데미지범위 평균((최소+최대)/2)을 내장 → 최소·최대는 그 비율로 환산. 최소>최대면 최소로 고정.
+     */
+    public double[] basicHitStats(StatBlock input, boolean boss) {
         Buffed bf = buffed(input);
         Skill basic = highestBasic(charLevel(bf.stats));
-        // 받는 피해 증가 디버프(베놈 약화·퍼지 등)는 적이 받는 모든 피해를 키우므로 평타 1타에도 반영.
-        // 출처 스킬을 끄면 그 디버프도 빠짐(recvDmgFactor가 skillOn으로 게이팅) → 카드에도 즉시 반영.
-        return basic == null ? 0 : perHit(basic, bf, boss) * recvDmgFactor(bf.stats);
+        if (basic == null) return new double[]{0, 0, 0};
+        double avg = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);   // fAvg(=평균 데미지범위) 내장
+        double mn = bf.stats.get(MIN_DMG_MULT), mx = bf.stats.get(MAX_DMG_MULT);
+        double fAvg = (mn > mx) ? mn / 100.0 : (mn + mx) / 200.0;
+        if (fAvg <= 0) return new double[]{avg, avg, avg};
+        double min = avg * (mn / 100.0) / fAvg;
+        double max = avg * ((mn > mx ? mn : mx) / 100.0) / fAvg;
+        return new double[]{min, max, avg};
     }
 
     /** 버프 반영 평타 DPS. */
@@ -554,6 +567,11 @@ public final class NightlordDps {
      * 추가타는 모든 타격(평타+액티브 본타)에 타격당 기대값으로 적용.
      */
     public double totalDps(StatBlock input, boolean boss) {
+        return totalDps(input, boss, false);
+    }
+
+    /** singleTarget=true면 일반몹 모드여도 대상 수를 1로 고정(1마리 기준 DPS — 예상 데미지 카드 표기용). 추천/평가는 2-arg(대상수 반영) 사용. */
+    public double totalDps(StatBlock input, boolean boss, boolean singleTarget) {
         Buffed bf = buffed(input);
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
@@ -573,7 +591,7 @@ public final class NightlordDps {
             if (cd <= 0) continue;
             skillActionsPerSec += 1.0 / cd;   // 시전 1회 = 평타 1슬롯
             int hits = hitsPerCast(s, eff);
-            double targets = boss ? 1 : s.num("targets", 1);
+            double targets = (boss || singleTarget) ? 1 : s.num("targets", 1);
             baseDps += perHit(s, bf, boss) * hits * targets / cd;
             // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
             double procAttempts = s.id.equals("darkFlare")
@@ -589,7 +607,7 @@ public final class NightlordDps {
         Skill basic = highestBasic(cl);
         if (basic != null) {
             int hits = basicHits(basic, eff);
-            double targets = boss ? 1 : basicTargets(basic, eff);
+            double targets = (boss || singleTarget) ? 1 : basicTargets(basic, eff);
             baseDps += perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;
             procActionsPerSec += targets * basicActionsPerSec;   // 발동은 시전당(타수 무관)
         }
@@ -599,7 +617,7 @@ public final class NightlordDps {
         if (mark != null && wants("markOfAssassin", mark.open, cl)) {
             double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
             boolean nl = cl >= mark.num("nightlordOpen", Double.MAX_VALUE);
-            double targets = boss ? 1 : (nl ? mark.num("targetsNightlord", mark.num("targetsBase", 1)) : mark.num("targetsBase", 1));
+            double targets = (boss || singleTarget) ? 1 : (nl ? mark.num("targetsNightlord", mark.num("targetsBase", 1)) : mark.num("targetsBase", 1));
             if (period > 0) baseDps += markPerHit(eff, boss) * atkF * targets / period;
         }
 

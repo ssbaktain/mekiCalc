@@ -12,6 +12,7 @@ const CACHE_STATS = "mekicalc.cache.statDefs.v1";
 const CACHE_META  = "mekicalc.cache.meta.v1";
 const CACHE_ME    = "mekicalc.cache.me.v1";
 const CACHE_DMG   = "mekicalc.cache.damage.v1";
+const CACHE_SKILLS = "mekicalc.cache.skills.v1";   // 스킬 탭 목록(즉시 페인트용, 직업별)
 
 let statDefs = [];
 let meta = { parts: [], grades: [], gradeKo: {} };
@@ -545,13 +546,38 @@ async function refreshQual() {
 
 // ──────────────────── 예상 데미지 ────────────────────
 
-// 데미지 숫자 표시(즉시 페인트·실계산 공용).
-function showDamage(normal, boss) {
-  $("dmg-normal").textContent = normal == null ? "—" : fmt(normal);
-  $("dmg-boss").textContent = boss == null ? "—" : fmt(boss);
-  $("dmg-normal-unit").textContent = normal == null ? "" : "(" + koreanUnit(normal) + ")";
-  $("dmg-boss-unit").textContent = boss == null ? "" : "(" + koreanUnit(boss) + ")";
+// 데미지 표시(즉시 페인트·실계산 공용). data = {normal, boss, detail:{normal:{min,max,avg,dps}, boss:{...}}}.
+function showDamage(data) {
+  const n = data ? data.normal : null, b = data ? data.boss : null;
+  $("dmg-normal").textContent = n == null ? "—" : fmt(n);
+  $("dmg-boss").textContent = b == null ? "—" : fmt(b);
+  $("dmg-normal-unit").textContent = n == null ? "" : "(" + koreanUnit(n) + ")";
+  $("dmg-boss-unit").textContent = b == null ? "" : "(" + koreanUnit(b) + ")";
+  renderDmgDetail(data && data.detail);
 }
+
+// 상세 표 셀: 전체 숫자 + (조/억 읽기). 값 없으면 —.
+function dmgCell(v) {
+  return (v == null) ? "—" : fmt(v) + "<br><span class='ku'>(" + koreanUnit(v) + ")</span>";
+}
+function renderDmgDetail(detail) {
+  const n = (detail && detail.normal) || {}, b = (detail && detail.boss) || {};
+  $("d-min-n").innerHTML = dmgCell(n.min); $("d-min-b").innerHTML = dmgCell(b.min);
+  $("d-max-n").innerHTML = dmgCell(n.max); $("d-max-b").innerHTML = dmgCell(b.max);
+  $("d-avg-n").innerHTML = dmgCell(n.avg); $("d-avg-b").innerHTML = dmgCell(b.avg);
+  $("d-dps-n").innerHTML = dmgCell(n.dps); $("d-dps-b").innerHTML = dmgCell(b.dps);
+}
+
+// 자세히 토글(상태 유지)
+const DMG_DETAIL_KEY = "mekicalc.dmgDetailOpen.v1";
+function setDmgDetail(open) {
+  $("dmg-detail").hidden = !open;
+  $("dmg-toggle").setAttribute("aria-expanded", open ? "true" : "false");
+  $("dmg-toggle").firstChild.textContent = open ? "접기 " : "자세히 ";
+  localStorage.setItem(DMG_DETAIL_KEY, open ? "1" : "0");
+}
+$("dmg-toggle").addEventListener("click", () => setDmgDetail($("dmg-detail").hidden));
+if (localStorage.getItem(DMG_DETAIL_KEY) === "1") setDmgDetail(true);
 async function calcDamage() {
   // 이미 값이 떠 있으면(즉시 페인트·이전 계산) 백그라운드 갱신은 조용히 — '계산 중'/'오류' 텍스트로 방해하지 않음.
   const refreshing = damageShown;
@@ -559,8 +585,8 @@ async function calcDamage() {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv, buffs: activeBuffs() });
-      showDamage(data.normal, data.boss);
-      saveJSON(CACHE_DMG, { normal: data.normal, boss: data.boss });   // 직전 데미지(다음 로드 즉시 표시용)
+      showDamage(data);
+      saveJSON(CACHE_DMG, data);   // 직전 데미지(상세 포함, 다음 로드 즉시 표시용)
       damageShown = true;
       $("status").textContent = "";
       return;
@@ -1276,11 +1302,11 @@ function initBuffPresets() {
   buffDirty = false;
 }
 
-// 스킬 탭 데이터 캐시(딜 스킬 + 버프). 뷰 전환 시 재요청 없이 다시 그림.
-let skillData = null;
+// 스킬 탭 데이터 캐시(딜 스킬 + 버프). 직전 응답을 localStorage에도 보관 → 도메인(터널 지연)에서도 즉시 표시.
+let skillData = loadJSON(CACHE_SKILLS, null);
 let skillView = "deal";   // "deal"(딜 스킬) | "buff"(버프 스킬)
 
-// 현재 스탯 기준 스킬/버프 목록을 받아 활성 뷰를 그린다. 모델 없는 직업은 안내만.
+// 현재 스탯 기준 스킬/버프 목록을 그린다. 캐시/메모리에 있으면 즉시 렌더(불러오는 중 안 띄움), 항상 백그라운드로 최신화.
 async function renderBuffs() {
   if (!buffPresets) initBuffPresets();
   $("bp-job").value = String(myBuffJob);
@@ -1288,16 +1314,28 @@ async function renderBuffs() {
   if (myBuffJob !== 1) {   // DPS 환산 모델 있는 직업만(현재 나이트로드). 공용 등은 준비 중.
     const soon = '<div class="buff-soon"><div class="soon-icon">🚧</div>'
       + '<p>타 직업 스킬 선택 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p></div>';
-    $("deal-list").innerHTML = soon; $("buff-list").innerHTML = soon; skillData = null;
+    $("deal-list").innerHTML = soon; $("buff-list").innerHTML = soon;
     return;
   }
-  const active = skillView === "deal" ? $("deal-list") : $("buff-list");
-  active.innerHTML = '<p class="status">불러오는 중…</p>';
+  if (skillData && skillData.job === myBuffJob) renderActiveSkillView();   // 즉시(캐시/메모리)
+  else { const a = skillView === "deal" ? $("deal-list") : $("buff-list"); a.innerHTML = '<p class="status">불러오는 중…</p>'; }
+  await refreshSkillData();
+}
+
+// /api/buffs 백그라운드 호출 → 최신 목록으로 갱신·캐시. 캐시가 이미 있으면 실패해도 조용히.
+async function refreshSkillData() {
+  if (myBuffJob !== 1) return;
   try {
     const stats = collectStats(); stats.JOB = myBuffJob;
-    skillData = await postJson("/api/buffs", { stats });
-    renderActiveSkillView();
-  } catch (e) { active.innerHTML = '<p class="status">오류: ' + e.message + '</p>'; }
+    const fresh = await postJson("/api/buffs", { stats });
+    skillData = fresh; saveJSON(CACHE_SKILLS, fresh);
+    if (currentSub === "buff") renderActiveSkillView();
+  } catch (e) {
+    if (!skillData && currentSub === "buff") {
+      const a = skillView === "deal" ? $("deal-list") : $("buff-list");
+      a.innerHTML = '<p class="status">오류: ' + e.message + '</p>';
+    }
+  }
 }
 
 function syncSkillViewButtons() {
@@ -1594,7 +1632,7 @@ async function loadMe(pre) {
 async function doLogout() {
   try { await fetch("/auth/logout", { method: "POST" }); } catch {}
   // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터·캐시 제거(정적 캐시는 유지).
-  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME].forEach((k) => localStorage.removeItem(k));
+  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME, CACHE_SKILLS].forEach((k) => localStorage.removeItem(k));
   location.reload();
 }
 
@@ -1671,7 +1709,7 @@ async function loadMeta(pre) {
         const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
         initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
         renderConvSettings(); renderRangeSettings();
-        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) { showDamage(cDmg.normal, cDmg.boss); damageShown = true; }   // 직전 데미지 즉시(이후 갱신은 조용히)
+        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) { showDamage(cDmg); damageShown = true; }   // 직전 데미지 즉시(상세 포함, 이후 갱신은 조용히)
       } catch (e) { console.error("즉시 페인트 실패(무시하고 정상 로드)", e); }
     }
 
@@ -1702,4 +1740,5 @@ async function loadMeta(pre) {
   } finally {
     suppressSync = false;        // 이제부터 사용자 편집은 계정에 동기화
   }
+  refreshSkillData();   // 스킬 탭 목록 미리 받아 캐시 → 첫 탭 클릭 시 '불러오는 중' 없이 즉시 표시
 })();

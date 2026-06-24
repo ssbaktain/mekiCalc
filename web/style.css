@@ -203,6 +203,24 @@ main {
 .damage-card .value { font-size: 22px; }
 .damage-card .status { margin: 8px 0 0; min-height: 0; }
 
+/* 예상 데미지 자세히 토글 */
+.dmg-toggle {
+  display: block; width: 100%; margin-top: 10px; padding: 7px; cursor: pointer;
+  background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); font-size: 13px; font-weight: 600;
+}
+.dmg-toggle:hover { color: var(--accent); }
+.dmg-toggle .caret { display: inline-block; transition: transform .15s; }
+.dmg-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }
+.dmg-detail { margin-top: 10px; }
+.dmg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dmg-table th, .dmg-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+.dmg-table thead th { color: var(--muted); font-weight: 700; text-align: right; }
+.dmg-table thead th:first-child { text-align: left; }
+.dmg-table tbody th { color: var(--muted); font-weight: 600; text-align: left; white-space: nowrap; }
+.dmg-table td { text-align: right; font-variant-numeric: tabular-nums; }
+.dmg-table .ku { display: block; font-size: 11px; color: var(--muted); }
+
 /* 프리셋 서브탭(스탯 / 큐브 / 버프 / 동료 / 유물 / 설정) */
 .subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .subtab {

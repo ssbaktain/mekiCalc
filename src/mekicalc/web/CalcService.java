@@ -212,21 +212,51 @@ public final class CalcService {
         StatBlock b = block(stats);
         DamageModel m = content.damageModel(customConv);
         Map<String, Object> out = new LinkedHashMap<>();
+        Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
         // 옛 공용 1타 대신 버프(체크된 것만) 평균 반영 평타 1타(타수 중 한 타) 기대딜을 보여준다.
         if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
             try {
                 NightlordDps nd = new NightlordDps(m, new SkillDpsModel(content.skillData), buffs);
-                out.put("normal", safe(nd.basicPerHit(b, false)));
-                out.put("boss", safe(nd.basicPerHit(b, true)));
+                double[] n = nd.basicHitStats(b, false), bo = nd.basicHitStats(b, true);
+                out.put("normal", safe(n[2]));   // 헤드라인 = 1타 평균딜
+                out.put("boss", safe(bo[2]));
+                // 카드 DPS는 1마리(단일 대상) 기준 — 일반몹도 대상수 미반영(평타 1타 표기와 일관). 추천/평가는 대상수 반영(2-arg) 유지.
+                detail.put("normal", hitMap(n[0], n[1], n[2], nd.totalDps(b, false, true)));
+                detail.put("boss", hitMap(bo[0], bo[1], bo[2], nd.totalDps(b, true, true)));
+                out.put("detail", detail);
                 return out;
             } catch (RuntimeException ex) {
                 // 안전 폴백: 공용 1타
             }
         }
-        out.put("normal", safe(m.finalDamageNormal(b)));
-        out.put("boss", safe(m.finalDamageBoss(b)));
+        // 공용 직업: 1타 평균 = finalDamage, 최소/최대는 데미지범위로 환산, DPS는 모델 없어 null.
+        double avgN = m.finalDamageNormal(b), avgB = m.finalDamageBoss(b);
+        double[] rn = rangeMinMax(b, avgN), rb = rangeMinMax(b, avgB);
+        out.put("normal", safe(avgN));
+        out.put("boss", safe(avgB));
+        detail.put("normal", hitMap(rn[0], rn[1], avgN, Double.NaN));
+        detail.put("boss", hitMap(rb[0], rb[1], avgB, Double.NaN));
+        out.put("detail", detail);
         return out;
+    }
+
+    /** {min,max,avg,dps} 맵(JSON 안전). dps가 NaN이면 null(모델 없는 직업). */
+    private static Map<String, Object> hitMap(double min, double max, double avg, double dps) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("min", safe(min));
+        m.put("max", safe(max));
+        m.put("avg", safe(avg));
+        m.put("dps", safe(dps));
+        return m;
+    }
+
+    /** 평균(평균 데미지범위 반영값) → [최소, 최대] (최소·최대 데미지범위 배율로 환산). 공용 모델용. */
+    private static double[] rangeMinMax(StatBlock b, double avg) {
+        double mn = b.get("MIN_DMG_MULT"), mx = b.get("MAX_DMG_MULT");
+        double fAvg = (mn > mx) ? mn / 100.0 : (mn + mx) / 200.0;
+        if (fAvg <= 0) return new double[]{avg, avg};
+        return new double[]{avg * (mn / 100.0) / fAvg, avg * ((mn > mx ? mn : mx) / 100.0) / fAvg};
     }
 
     // ──────────────────── 버프 목록(편집기) ────────────────────
