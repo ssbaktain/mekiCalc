@@ -322,17 +322,24 @@ main {
     max-height: 70vh; overflow-y: auto;
   }
   .mobile-menu.open { display: block; }
+  /* 대분류(그룹 헤더): 크게 + 강조색, 그룹끼리 간격 */
   .m-group-title {
-    font-size: 12px; font-weight: 700; color: var(--muted);
-    padding: 10px 12px 4px; letter-spacing: 0.02em;
+    font-size: 16px; font-weight: 700; color: var(--accent);
+    padding: 6px 12px 4px; margin-top: 14px; letter-spacing: 0.02em;
   }
+  /* 소분류(하위 항목): 작게 + 살짝 들여쓰기 */
   .m-leaf {
     display: block; width: 100%; text-align: left; cursor: pointer;
-    background: none; border: none; color: var(--text); font-size: 16px; font-weight: 600;
-    padding: 13px 14px; border-radius: 8px;
+    background: none; border: none; color: var(--text); font-size: 14px; font-weight: 500;
+    padding: 9px 14px 9px 22px; border-radius: 8px;
   }
   .m-leaf:active { background: var(--card); }
   .m-leaf.active { background: var(--accent2); color: #fff; }
+  /* 최상위 단독 항목(프리셋): 대분류 크기(클릭 가능) */
+  .m-leaf-top {
+    font-size: 16px; font-weight: 700; padding: 11px 14px; margin-top: 14px;
+  }
+  .m-account + .m-leaf-top, .m-account + .m-group-title { margin-top: 4px; }   /* 계정 바로 아래 첫 항목은 간격 최소 */
 
   /* 드로어 맨 위 계정(로그인/로그아웃) 영역 */
   .m-account {
@@ -610,3 +617,38 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 }
 .inapp-btn:hover { background: var(--accent); }
 .inapp-x { background: none; border: none; color: #f0e3c0; cursor: pointer; font-size: 14px; padding: 4px; }
+
+/* 프리셋 빠른 전환(플로팅) */
+.quick-presets { position: fixed; right: 18px; bottom: 18px; z-index: 200; }
+.qp-fab {
+  width: 54px; height: 54px; border-radius: 50%; cursor: pointer;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff; border: none; font-size: 24px; line-height: 1;
+  box-shadow: 0 4px 16px rgba(91, 120, 224, 0.5);
+  transition: filter .12s, transform .08s;
+}
+.qp-fab:hover { filter: brightness(1.1); }
+.qp-fab:active { transform: scale(0.94); }
+.qp-fab[aria-expanded="true"] { filter: brightness(1.12); box-shadow: 0 4px 20px rgba(91, 120, 224, 0.65); }
+.qp-panel {
+  position: absolute; right: 2px; bottom: 66px; width: 244px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 14px 16px; box-shadow: 0 10px 32px rgba(0, 0, 0, .55);
+}
+.qp-title {
+  font-size: 13px; font-weight: 700; color: var(--accent); margin: 0 0 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.qp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.qp-row:last-child { margin-bottom: 0; }
+.qp-row > span { flex: none; width: 32px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.qp-row select {
+  flex: 1; min-width: 0;
+  padding: 7px 10px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer;
+}
+.qp-row select:hover { border-color: var(--accent); }
+@media (max-width: 640px) {
+  .quick-presets { right: 12px; bottom: 12px; }
+  .qp-fab { width: 50px; height: 50px; font-size: 22px; }
+}

@@ -299,6 +299,25 @@ function showPanel(name) {
   if (name === "compare") renderCompareEditor(true);
   if (name === "optcompare") renderOptCompare();
   if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
+  if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
+}
+
+// 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
+function recalcActivePanel() {
+  calcDamage();
+  if (!$("panel-cube").hidden) calcEvaluate();
+  else if (!$("panel-recommend").hidden) runRecommend(true);
+  else if (!$("panel-compare").hidden) refreshCompareOnPresetChange();
+  else if (!$("panel-optcompare").hidden) runOptCompare();
+}
+
+// 내 옵션 비교: 프리셋 전환 시 좌측(현재 큐브)·결과를 갱신하되 우측(가정) 선택은 보존.
+async function refreshCompareOnPresetChange() {
+  const hadResult = $("cmp-result").innerHTML.trim() !== "";
+  const saved = [0, 1, 2].map((i) => { const s = $("cmp-right-" + i); return s ? s.value : ""; });
+  await renderCompareEditor(false);   // 좌측=새 큐브 반영, 등급/스택 보존(우측 슬롯은 재생성됨)
+  saved.forEach((v, i) => { const s = $("cmp-right-" + i); if (s && v && [...s.options].some((o) => o.value === v)) s.value = v; });
+  if (hadResult) runCompare();   // 결과가 떠 있었으면 새 스탯·큐브로 다시 계산
 }
 
 function closeMenus() { document.querySelectorAll(".menu-item.open").forEach((i) => i.classList.remove("open")); }
@@ -407,9 +426,10 @@ function buildMobileMenu(itemEls) {
 
   const closeDrawer = () => { panel.classList.remove("open"); burger.classList.remove("active"); };
 
-  const addLeaf = (label, leaf, desktopItem) => {
+  const addLeaf = (label, leaf, desktopItem, isTop) => {
     const btn = document.createElement("button");
-    btn.className = "m-leaf"; btn.type = "button"; btn.textContent = label;
+    btn.className = "m-leaf" + (isTop ? " m-leaf-top" : "");   // isTop=최상위 단독(프리셋)=대분류 크기
+    btn.type = "button"; btn.textContent = label;
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       closeDrawer();
@@ -425,9 +445,9 @@ function buildMobileMenu(itemEls) {
       const head = document.createElement("div");
       head.className = "m-group-title"; head.textContent = m.label;
       panel.appendChild(head);
-      for (const it of m.items) addLeaf(it.label, it, el);
+      for (const it of m.items) addLeaf(it.label, it, el, false);   // 소분류
     } else {
-      addLeaf(m.label, m, el);
+      addLeaf(m.label, m, el, true);   // 최상위 단독(프리셋) = 대분류
     }
   }
 
@@ -614,9 +634,14 @@ async function calcDamage() {
 
 let evResults = [];   // 마지막 계산 결과(정렬만 바꿀 때 재요청 없이 재정렬)
 
+// 0.5초 넘는 계산일 때만 "계산 중…" 표시(빠른 계산은 표시 안 함 → 깜빡임 방지). 끝나면 반환값 호출해 해제.
+function deferLoading(statusId) {
+  const t = setTimeout(() => { const el = $(statusId); if (el) el.textContent = "계산 중…"; }, 500);
+  return () => clearTimeout(t);
+}
+
 async function calcEvaluate() {
-  $("ev-status").textContent = "계산 중…";
-  $("ev-table").hidden = true;
+  const done = deferLoading("ev-status");   // 표는 숨기지 않음(이전 결과 유지) → renderEval이 끝에 갱신
   try {
     const slotRaw = $("ev-slot").value;
     const data = await postJson("/api/evaluate", {
@@ -629,6 +654,7 @@ async function calcEvaluate() {
     renderEval();
     $("ev-status").textContent = evResults.length ? "" : "표시할 옵션이 없습니다.";
   } catch (e) { $("ev-status").textContent = "오류: " + e.message; }
+  finally { done(); }
 }
 
 // 정렬키: 딜 증가량(미환산=뒤로), 효율=등장확률×딜증가량.
@@ -656,7 +682,8 @@ function renderEval() {
   }
   $("ev-table").hidden = rows.length === 0;
 }
-$("ev-btn").addEventListener("click", calcEvaluate);
+// 입력(부위·등급·슬롯·기준) 변경 시 자동 계산. 정렬만 바꾸면 재요청 없이 재정렬.
+for (const id of ["ev-part", "ev-grade", "ev-slot", "ev-boss"]) $(id).addEventListener("change", calcEvaluate);
 $("ev-sort").addEventListener("change", () => { if (evResults.length) renderEval(); });
 
 // ──────────────────── 내 큐브 편집기 ────────────────────
@@ -804,7 +831,7 @@ async function renderLine(part, lineName) {
 
 async function runRecommend(useSliderMax) {
   if (!Object.keys(myCube).length) { $("rc-status").textContent = "먼저 '내 큐브' 탭에서 큐브 옵션을 입력하세요."; $("rc-list").innerHTML = ""; return; }
-  $("rc-status").textContent = "계산 중…";
+  const done = deferLoading("rc-status");
   try {
     const data = await postJson("/api/recommend", {
       stats: collectStats(), conversions: myConv, bossMode: $("rc-boss").value === "true",
@@ -820,6 +847,7 @@ async function runRecommend(useSliderMax) {
     renderRecs(data.recs);
     $("rc-status").textContent = data.recs.length ? "" : "추천할 옵션이 없습니다.";
   } catch (e) { $("rc-status").textContent = "오류: " + e.message; }
+  finally { done(); }
 }
 
 // 슬롯 박스 한 칸. cls=neutral|before|after|locked. locked=true면 자물쇠 표시.
@@ -926,7 +954,7 @@ function ocResultHtml(s) {
 }
 
 async function runOptCompare() {
-  $("oc-status").textContent = "계산 중…";
+  const done = deferLoading("oc-status");
   try {
     const data = await postJson("/api/optcompare", {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
@@ -937,6 +965,7 @@ async function runOptCompare() {
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
     $("oc-status").textContent = "";
   } catch (e) { $("oc-status").textContent = "오류: " + e.message; }
+  finally { done(); }
 }
 $("oc-btn").addEventListener("click", runOptCompare);
 
@@ -999,8 +1028,7 @@ async function renderCompareEditor(resetGrade) {
 }
 
 async function runCompare() {
-  $("cmp-status").textContent = "계산 중…";
-  $("cmp-result").innerHTML = "";
+  const done = deferLoading("cmp-status");   // 결과는 안 지움(이전 결과 유지) → 끝에서 교체
   try {
     const rightOpts = [];
     for (let i = 0; i < 3; i++) {
@@ -1026,6 +1054,7 @@ async function runCompare() {
       cell("1회 리롤: 가정보다 좋을 확률", pct(data.remainProb, 3)) +
       `</div>`;
   } catch (e) { $("cmp-status").textContent = "오류: " + e.message; }
+  finally { done(); }
 }
 
 function cell(label, val) { return `<div class="cmp-cell"><div class="cmp-label">${label}</div><div class="cmp-val">${val}</div></div>`; }
@@ -1201,7 +1230,7 @@ function spApply(name, skipRecompute) {
   statDirty = false;   // 프리셋 적용 = 저장된 상태
   if (skipRecompute) return;
   refreshQual();
-  calcDamage();   // 프리셋 전환 시 즉시 재계산
+  recalcActivePanel();   // 프리셋 전환 시 보이는 패널까지 즉시 재계산
 }
 function initStatPresets() {
   if (!statPresets) statPresets = { active: "기본", presets: { "기본": { stats: collectStats() } } };
@@ -1255,6 +1284,7 @@ async function cpApply(name) {
   myCube = clone(c); saveCube(); cubeDirty = false;
   // 큐브 탭이 보일 때만 즉시 렌더, 아니면 지연(슬롯 조회가 초기 로드를 막지 않게)
   if (currentSub === "cube") await renderCube(); else cubeNeedsRender = true;
+  recalcActivePanel();   // 큐브 프리셋 전환 시 보이는 계산(추천·비교 등) 즉시 갱신
 }
 async function initCubePresets() {
   if (!cubePresets) cubePresets = { active: "기본", presets: { "기본": clone(myCube) } };
@@ -1301,7 +1331,7 @@ function bpApply(name) {
   buffDirty = false;
   $("bp-job").value = String(myBuffJob);
   if (currentSub === "buff") renderBuffs();
-  calcDamage();   // 버프 바뀌면 예상 데미지 즉시 갱신
+  recalcActivePanel();   // 스킬 프리셋 바뀌면 보이는 계산까지 즉시 갱신
 }
 
 function initBuffPresets() {
@@ -1507,6 +1537,36 @@ $("bp-job").addEventListener("change", () => {
   myBuffs = null;   // 직업 바뀌면 선택 초기화(전부 체크)
   buffDirty = true;
   renderBuffs(); calcDamage();
+});
+
+// ──────────────────── 프리셋 빠른 전환(플로팅) ────────────────────
+// 어디서든 우하단 ⚡ → 작은 패널에서 스탯/큐브/스킬 프리셋만 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
+function syncQuickPanel() {
+  if (statPresets) fillPresetSel($("qs-sp"), statPresets);
+  if (cubePresets) fillPresetSel($("qs-cp"), cubePresets);
+  if (buffPresets) fillPresetSel($("qs-bp"), buffPresets);
+}
+function toggleQuickPanel(open) {
+  $("qp-panel").hidden = !open;
+  $("qp-fab").setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) syncQuickPanel();   // 열 때마다 최신 프리셋 목록·활성값 반영
+}
+$("qp-fab").addEventListener("click", () => toggleQuickPanel($("qp-panel").hidden));   // 오직 플로팅 버튼으로만 열고 닫음(바깥 클릭 무시)
+
+$("qs-sp").addEventListener("change", () => {
+  if (!canLeaveStat()) { $("qs-sp").value = statPresets.active; return; }
+  statPresets.active = $("qs-sp").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
+  $("sp-sel").value = statPresets.active; toast(`스탯 → '${statPresets.active}'`);
+});
+$("qs-cp").addEventListener("change", async () => {
+  if (!canLeaveCube()) { $("qs-cp").value = cubePresets.active; return; }
+  cubePresets.active = $("qs-cp").value; saveJSON(CUBEP_KEY, cubePresets); await cpApply(cubePresets.active);
+  $("cp-sel").value = cubePresets.active; toast(`큐브 → '${cubePresets.active}'`);
+});
+$("qs-bp").addEventListener("change", () => {
+  if (buffDirty && !confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?")) { $("qs-bp").value = buffPresets.active; return; }
+  buffPresets.active = $("qs-bp").value; saveJSON(BUFFP_KEY, buffPresets); bpApply(buffPresets.active);
+  $("bp-sel").value = buffPresets.active; toast(`스킬 → '${buffPresets.active}'`);
 });
 
 // ──────────────────── 프리셋 내보내기 / 불러오기 (.mkbak) ────────────────────

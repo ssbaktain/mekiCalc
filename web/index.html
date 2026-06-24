@@ -244,7 +244,6 @@
             </select>
           </label>
         </div>
-        <button id="ev-btn" class="primary-btn" type="button">계산</button>
         <p id="ev-status" class="status"></p>
         <table id="ev-table" class="table" hidden>
           <thead><tr><th></th><th>옵션</th><th>수치</th><th>딜 증가량</th><th>등장 확률</th><th>큐브 기댓값</th></tr></thead>
@@ -361,6 +360,17 @@
   </footer>
 
   <div id="toast" class="toast"></div>
+
+  <!-- 프리셋 빠른 전환(어디서든 우하단 플로팅) -->
+  <div id="quick-presets" class="quick-presets">
+    <div id="qp-panel" class="qp-panel" hidden>
+      <div class="qp-title">프리셋 빠른 전환</div>
+      <label class="qp-row"><span>스탯</span><select id="qs-sp"></select></label>
+      <label class="qp-row"><span>큐브</span><select id="qs-cp"></select></label>
+      <label class="qp-row" id="qp-row-skill"><span>스킬</span><select id="qs-bp"></select></label>
+    </div>
+    <button id="qp-fab" class="qp-fab" type="button" aria-label="프리셋 빠른 전환" aria-expanded="false">⚡</button>
+  </div>
 
   <script src="/app.js"></script>
 </body>
