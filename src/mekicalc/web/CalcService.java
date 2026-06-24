@@ -222,8 +222,8 @@ public final class CalcService {
                 out.put("normal", safe(n[2]));   // 헤드라인 = 1타 평균딜
                 out.put("boss", safe(bo[2]));
                 // 카드 DPS는 1마리(단일 대상) 기준 — 일반몹도 대상수 미반영(평타 1타 표기와 일관). 추천/평가는 대상수 반영(2-arg) 유지.
-                detail.put("normal", hitMap(n[0], n[1], n[2], nd.totalDps(b, false, true)));
-                detail.put("boss", hitMap(bo[0], bo[1], bo[2], nd.totalDps(b, true, true)));
+                detail.put("normal", hitMap(n[0], n[1], n[2], dpsMap(nd.dpsBreakdown(b, false, true))));
+                detail.put("boss", hitMap(bo[0], bo[1], bo[2], dpsMap(nd.dpsBreakdown(b, true, true))));
                 out.put("detail", detail);
                 return out;
             } catch (RuntimeException ex) {
@@ -235,19 +235,28 @@ public final class CalcService {
         double[] rn = rangeMinMax(b, avgN), rb = rangeMinMax(b, avgB);
         out.put("normal", safe(avgN));
         out.put("boss", safe(avgB));
-        detail.put("normal", hitMap(rn[0], rn[1], avgN, Double.NaN));
-        detail.put("boss", hitMap(rb[0], rb[1], avgB, Double.NaN));
+        detail.put("normal", hitMap(rn[0], rn[1], avgN, null));   // 공용 직업: DPS 모델 없음
+        detail.put("boss", hitMap(rb[0], rb[1], avgB, null));
         out.put("detail", detail);
         return out;
     }
 
-    /** {min,max,avg,dps} 맵(JSON 안전). dps가 NaN이면 null(모델 없는 직업). */
-    private static Map<String, Object> hitMap(double min, double max, double avg, double dps) {
+    /** {min,max,avg,dps} 맵(JSON 안전). dps는 {basic,skill,total} 맵 또는 null(모델 없는 직업). */
+    private static Map<String, Object> hitMap(double min, double max, double avg, Object dps) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("min", safe(min));
         m.put("max", safe(max));
         m.put("avg", safe(avg));
-        m.put("dps", safe(dps));
+        m.put("dps", dps);
+        return m;
+    }
+
+    /** {평타, 스킬, 전체} DPS 맵. bd = NightlordDps.dpsBreakdown 결과 [평타만, 스킬만, 전체]. */
+    private static Map<String, Object> dpsMap(double[] bd) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("basic", safe(bd[0]));
+        m.put("skill", safe(bd[1]));
+        m.put("total", safe(bd[2]));
         return m;
     }
 

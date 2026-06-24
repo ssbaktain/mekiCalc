@@ -560,12 +560,25 @@ function showDamage(data) {
 function dmgCell(v) {
   return (v == null) ? "—" : fmt(v) + "<br><span class='ku'>(" + koreanUnit(v) + ")</span>";
 }
+// 비중 포함 셀(평타/스킬 DPS): 숫자 + (조/억) · 전체 대비 %.
+function dmgCellShare(v, total) {
+  if (v == null) return "—";
+  const share = (total > 0) ? Math.round((v / total) * 100) : 0;
+  return fmt(v) + "<br><span class='ku'>(" + koreanUnit(v) + ") · " + share + "%</span>";
+}
 function renderDmgDetail(detail) {
   const n = (detail && detail.normal) || {}, b = (detail && detail.boss) || {};
   $("d-min-n").innerHTML = dmgCell(n.min); $("d-min-b").innerHTML = dmgCell(b.min);
   $("d-max-n").innerHTML = dmgCell(n.max); $("d-max-b").innerHTML = dmgCell(b.max);
   $("d-avg-n").innerHTML = dmgCell(n.avg); $("d-avg-b").innerHTML = dmgCell(b.avg);
-  $("d-dps-n").innerHTML = dmgCell(n.dps); $("d-dps-b").innerHTML = dmgCell(b.dps);
+  fillDps(n.dps, "n"); fillDps(b.dps, "b");
+}
+// dps = {basic, skill, total} 또는 null(공용 직업)
+function fillDps(d, suf) {
+  if (!d) { $("d-dpsb-" + suf).textContent = "—"; $("d-dpss-" + suf).textContent = "—"; $("d-dpst-" + suf).textContent = "—"; return; }
+  $("d-dpsb-" + suf).innerHTML = dmgCellShare(d.basic, d.total);
+  $("d-dpss-" + suf).innerHTML = dmgCellShare(d.skill, d.total);
+  $("d-dpst-" + suf).innerHTML = dmgCell(d.total);
 }
 
 // 자세히 토글(상태 유지)

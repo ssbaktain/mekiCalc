@@ -570,8 +570,16 @@ public final class NightlordDps {
         return totalDps(input, boss, false);
     }
 
-    /** singleTarget=true면 일반몹 모드여도 대상 수를 1로 고정(1마리 기준 DPS — 예상 데미지 카드 표기용). 추천/평가는 2-arg(대상수 반영) 사용. */
     public double totalDps(StatBlock input, boolean boss, boolean singleTarget) {
+        return dpsBreakdown(input, boss, singleTarget)[2];
+    }
+
+    /**
+     * [평타만, 스킬만, 전체] 종합 DPS(장기 평균). 쿨 스킬=데미지÷쿨, 버프=가동률 평균 → 1초 스냅샷이 아니라
+     * 정상상태(3분이든 무한이든 동일) 1초 평균. 평타만=평타 직접 타격, 스킬만=나머지(액티브·마크·도트·추가타).
+     * singleTarget=true면 일반몹도 1마리 기준(카드용). 추천/평가는 2-arg(대상수 반영) 사용.
+     */
+    public double[] dpsBreakdown(StatBlock input, boolean boss, boolean singleTarget) {
         Buffed bf = buffed(input);
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
@@ -581,6 +589,7 @@ public final class NightlordDps {
         double slotsPerSec = 1 + eff.get(ATK_SPEED) / 100.0;
 
         double baseDps = 0;          // 코어(평타+액티브+마크+써든도트), 추가타 제외
+        double basicDps = 0;         // 그중 평타 직접 타격분(평타만/스킬만 분리용)
         double procActionsPerSec = 0; // 쉐파/페이탈 발동 횟수(시전당 판정, 타수 무관, 대상수 가중)
         double skillActionsPerSec = 0;   // 액티브가 먹는 슬롯
 
@@ -608,7 +617,8 @@ public final class NightlordDps {
         if (basic != null) {
             int hits = basicHits(basic, eff);
             double targets = (boss || singleTarget) ? 1 : basicTargets(basic, eff);
-            baseDps += perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;
+            basicDps = perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;   // 평타 직접 타격(평타만 DPS)
+            baseDps += basicDps;
             procActionsPerSec += targets * basicActionsPerSec;   // 발동은 시전당(타수 무관)
         }
 
@@ -628,7 +638,10 @@ public final class NightlordDps {
         // 베놈 도트(연속): 타수 아님.
         double venomDps = venomDotDps(eff, boss) * atkF;
 
-        return (baseDps + procDps + venomDps) * recvDmgFactor(eff);
+        double recv = recvDmgFactor(eff);
+        double total = (baseDps + procDps + venomDps) * recv;
+        double basicOnly = basicDps * recv;
+        return new double[]{basicOnly, total - basicOnly, total};   // [평타만, 스킬만, 전체]
     }
 
     /**
