@@ -1,6 +1,6 @@
 {
   "_comment": "나이트로드 스킬 데이터(DPS 모델용). %는 표기 그대로(290=290%). growth=레벨당 상승비(%). 마스터리·타격/대상 보정은 {레벨:증가값} 맵으로, 캐릭터 레벨 ≥ 키일 때만 합산(레벨 게이팅). 규칙은 메모리 mekicalc-dps-model-spec 참조.",
-  "_notInHere": "프리셋 스탯에 이미 들어가는 것들(피지컬 트레이닝 기본공격뎀, 숙련된 표창술 공격력, 래디컬 보뎀, 크리티컬 스로우 크확/크뎀, 기본공격데미지강화·64렙 대상수 강화 등)은 유저 입력값에 포함되므로 여기 없음.",
+  "_notInHere": "프리셋 스탯에 이미 들어가는 것들(피지컬 트레이닝 기본공격뎀, 래디컬 보뎀, 크리티컬 스로우 크확/크뎀, 기본공격데미지강화·64렙 대상수 강화 등)은 유저 입력값에 포함되므로 여기 없음. 단 숙련된 표창술 공격력%은 입력(i버튼 깡공·공퍼)에 안 들어가 statPassives에서 엔진이 적용한다.",
 
   "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
 
@@ -57,7 +57,7 @@
     { "id": "shadowPartner", "name": "쉐도우 파트너", "kind": "dealPassiveNoCd", "tier": 3, "open": 60,
       "base": 60, "proc": 25, "masteryDmgByLevel": { "68": 100 }, "meyong": 50 },
 
-    { "id": "venom", "name": "베놈", "kind": "dealPassiveNoCd", "tier": 3, "open": 74,
+    { "id": "venom", "name": "베놈", "kind": "dealPassiveNoCd", "tier": 3, "open": 74, "dual": "디버프",
       "dot": { "perSec": 45, "dur": 10, "proc": 30, "procMasteryPlus": 10, "procMasteryOpen": 98 }, "meyong": 50 },
 
     { "id": "fatalVenom", "name": "페이탈 베놈", "kind": "dealPassiveNoCd", "tier": 4, "open": 117,
@@ -86,9 +86,9 @@
   ],
 
   "debuffs": [
-    { "id": "venomWeaken", "name": "베놈 약화", "recvDmg": 12, "open": 82, "uptime": "venom_u" },
-    { "id": "purgeWeaken", "name": "퍼지 받는피해", "recvDmg": 18, "open": 110, "uptime": "purge" },
-    { "id": "markWeaken", "name": "마크 약화", "recvDmg": 15, "open": 138, "uptime": 1.0,
+    { "id": "venomWeaken", "name": "베놈 약화", "recvDmg": 12, "open": 82, "uptime": "venom_u", "source": "venom" },
+    { "id": "purgeWeaken", "name": "퍼지 받는피해", "recvDmg": 18, "open": 110, "uptime": "purge", "source": "purge" },
+    { "id": "markWeaken", "name": "마크 약화", "recvDmg": 15, "open": 138, "uptime": 1.0, "source": "markOfAssassin",
       "_comment": "마크 오브 나이트로드 약화 마스터리 138렙. 4초지속/4초주기 → 가동률≈100%." }
   ],
 

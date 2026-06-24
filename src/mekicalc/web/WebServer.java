@@ -11,8 +11,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import mekicalc.config.RangeIO;
 import mekicalc.json.Json;
@@ -52,14 +54,21 @@ public final class WebServer {
 
         http.createContext("/api/damage", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
-            return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")));
+            return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+                    toStrSet(req.get("buffs")));
+        }));
+
+        http.createContext("/api/buffs", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.buffList(toDoubleMap(req.get("stats")));
         }));
 
         http.createContext("/api/evaluate", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             return service.evaluate(
                     str(req, "part"), str(req, "grade"), intOrNull(req, "slot"),
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true));
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
+                    toStrSet(req.get("buffs")));
         }));
 
         http.createContext("/api/recommend", json("POST", ex -> {
@@ -68,7 +77,7 @@ public final class WebServer {
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                     (int) num(req, "sliderValue", 0), (int) num(req, "sortKey", 0),
-                    bool(req, "upper", true), bool(req, "lower", true));
+                    bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")));
         }));
 
         http.createContext("/api/compare", json("POST", ex -> {
@@ -76,7 +85,8 @@ public final class WebServer {
             return service.myCompare(
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
-                    str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")));
+                    str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")),
+                    toStrSet(req.get("buffs")));
         }));
 
         http.createContext("/api/slotdraws", json("POST", ex -> {
@@ -96,7 +106,8 @@ public final class WebServer {
             return service.optCompare(
                     str(l, "part"), str(l, "grade"), mapList(l.get("opts")),
                     str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true));
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
+                    toStrSet(req.get("buffs")));
         }));
 
         // ──────────────────── 로그인(OAuth) ────────────────────
@@ -252,6 +263,18 @@ public final class WebServer {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> asObj(Object o) {
         return (o instanceof Map) ? (Map<String, Object>) o : new LinkedHashMap<>();
+    }
+
+    /**
+     * 버프 id 배열 → Set. <b>null/비배열이면 null</b>(= 전부 적용, 하위호환). 빈 배열이면 빈 Set(= 아무것도 적용 안 함).
+     * 이 null vs 빈-Set 구분이 "버프 프리셋 없음(현행 유지)"과 "버프 전부 끔"을 가른다.
+     */
+    @SuppressWarnings("unchecked")
+    private static Set<String> toStrSet(Object o) {
+        if (!(o instanceof List)) return null;
+        Set<String> out = new LinkedHashSet<>();
+        for (Object el : (List<Object>) o) if (el != null) out.add(el.toString());
+        return out;
     }
 
     /** JSON 배열(객체들)을 List&lt;Map&gt;으로. null/비배열이면 빈 리스트. */

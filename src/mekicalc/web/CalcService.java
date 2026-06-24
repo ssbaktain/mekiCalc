@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import mekicalc.config.ConversionIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.config.PresetIO;
@@ -68,11 +69,11 @@ public final class CalcService {
      * 직업별 딜 모델. JOB=나이트로드면 종합 DPS, 아니면 공용(1타×공속). 둘 다 보스/일반몹 모드 반영.
      * 데스크톱 {@code AppModel.dealModel()}을 무상태로 옮긴 것.
      */
-    private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss) {
+    private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs) {
         DamageModel dm = content.damageModel(conv);
         if ((int) current.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
             try {
-                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData));
+                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs);
                 return new NightlordDealModel(nd, dm, boss);
             } catch (RuntimeException ex) {
                 // 안전 폴백: 공용 모델
@@ -192,7 +193,7 @@ public final class CalcService {
     public Map<String, Object> qualitativeMarkers(int job, Map<String, Double> conv) {
         StatBlock probe = new StatBlock();
         probe.set("JOB", job);
-        DealModel dm = dealModel(probe, conv, true);   // 보스 기준(BASIC_ATK_TARGETS는 보스에서만 미환산)
+        DealModel dm = dealModel(probe, conv, true, null);   // 보스 기준(BASIC_ATK_TARGETS는 보스에서만 미환산). 버프는 미환산 판정과 무관.
         List<String> ids = new ArrayList<>();
         for (StatDef d : content.stats.values()) {
             if (d.hidden || d.derived) continue;
@@ -207,12 +208,47 @@ public final class CalcService {
 
     // ──────────────────── 예상 데미지 ────────────────────
 
-    public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv) {
+    public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv, Set<String> buffs) {
         StatBlock b = block(stats);
         DamageModel m = content.damageModel(customConv);
         Map<String, Object> out = new LinkedHashMap<>();
+        // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
+        // 옛 공용 1타 대신 버프(체크된 것만) 평균 반영 평타 1타(타수 중 한 타) 기대딜을 보여준다.
+        if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+            try {
+                NightlordDps nd = new NightlordDps(m, new SkillDpsModel(content.skillData), buffs);
+                out.put("normal", safe(nd.basicPerHit(b, false)));
+                out.put("boss", safe(nd.basicPerHit(b, true)));
+                return out;
+            } catch (RuntimeException ex) {
+                // 안전 폴백: 공용 1타
+            }
+        }
         out.put("normal", safe(m.finalDamageNormal(b)));
         out.put("boss", safe(m.finalDamageBoss(b)));
+        return out;
+    }
+
+    // ──────────────────── 버프 목록(편집기) ────────────────────
+
+    /** 현재 스탯(직업·레벨·스킬레벨·쿨감 등) 기준 스킬 편집기 목록(버프 + 딜 스킬). DPS 모델 없는 직업은 빈 목록. */
+    public Map<String, Object> buffList(Map<String, Double> stats) {
+        StatBlock b = block(stats);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("job", (int) b.get("JOB"));
+        List<Map<String, Object>> buffs = new ArrayList<>();
+        List<Map<String, Object>> dealSkills = new ArrayList<>();
+        if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+            try {
+                NightlordDps nd = new NightlordDps(content.damageModel(Map.of()), new SkillDpsModel(content.skillData));
+                buffs = nd.buffInfos(b);
+                dealSkills = nd.dealSkillInfos(b);
+            } catch (RuntimeException ex) {
+                // 빈 목록 폴백
+            }
+        }
+        out.put("buffs", buffs);
+        out.put("dealSkills", dealSkills);
         return out;
     }
 
@@ -223,9 +259,10 @@ public final class CalcService {
      * 0~2이면 그 슬롯만. 딜 증가량 내림차순(정성적은 뒤로).
      */
     public Map<String, Object> evaluate(String part, String grade, Integer slot,
-                                        Map<String, Double> stats, Map<String, Double> conv, boolean boss) {
+                                        Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+                                        Set<String> buffs) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss);
+        DealModel dm = dealModel(current, conv, boss, buffs);
         List<CubeEvaluator.Result> res = (slot == null)
                 ? CubeEvaluator.evaluate(content.equip, dm, current, part, grade)
                 : CubeEvaluator.evaluateSlot(content.equip, dm, current, part, grade, slot);
@@ -266,9 +303,10 @@ public final class CalcService {
      */
     public Map<String, Object> recommend(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
-                                         int sliderValue, int sortKey, boolean upper, boolean lower) {
+                                         int sliderValue, int sortKey, boolean upper, boolean lower,
+                                         Set<String> buffs) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss);
+        DealModel dm = dealModel(current, conv, boss, buffs);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
         double upPrice = content.currency.getOrDefault("미라클큐브", 1.0);
@@ -392,9 +430,10 @@ public final class CalcService {
      */
     public Map<String, Object> optCompare(String lPart, String lGrade, List<Map<String, Object>> lOpts,
                                           String rPart, String rGrade, List<Map<String, Object>> rOpts,
-                                          Map<String, Double> stats, Map<String, Double> conv, boolean boss) {
+                                          Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+                                          Set<String> buffs) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss);
+        DealModel dm = dealModel(current, conv, boss, buffs);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("left", sideEval(lPart, lGrade, lOpts, current, dm));
         out.put("right", sideEval(rPart, rGrade, rOpts, current, dm));
@@ -430,9 +469,9 @@ public final class CalcService {
     public Map<String, Object> myCompare(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
                                          String part, boolean upper, String rightGrade,
-                                         List<Map<String, Object>> rightOpts) {
+                                         List<Map<String, Object>> rightOpts, Set<String> buffs) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss);
+        DealModel dm = dealModel(current, conv, boss, buffs);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
 

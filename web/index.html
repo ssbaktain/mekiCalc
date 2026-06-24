@@ -58,6 +58,9 @@
 
       <div class="subtabs">
         <button class="subtab active" data-sub="stat" type="button">스탯</button>
+        <button class="subtab" data-sub="buff" type="button">스킬</button>
+        <button class="subtab" data-sub="ally" type="button">동료</button>
+        <button class="subtab" data-sub="relic" type="button">유물</button>
         <button class="subtab" data-sub="cube" type="button">큐브</button>
         <button class="subtab subtab-right" data-sub="settings" type="button">⚙ 설정</button>
       </div>
@@ -109,6 +112,55 @@
           </div>
           <div id="mc-list"></div>
           <p class="status">입력한 큐브는 이 브라우저에 자동 저장됩니다.</p>
+        </div>
+      </div>
+
+      <!-- 버프 -->
+      <div id="sub-buff" class="subpanel" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>스킬 선택</h2>
+            <div class="head-right">
+              <label class="ctl inline">직업
+                <select id="bp-job"><option value="0">공용</option><option value="1">나이트로드</option></select>
+              </label>
+            </div>
+          </div>
+          <div class="preset-bar">
+            <span class="preset-label">스킬 프리셋</span>
+            <select id="bp-sel"></select>
+            <button id="bp-save" class="mini-btn" type="button">저장</button>
+            <button id="bp-new" class="mini-btn ghost" type="button">추가</button>
+            <button id="bp-rename" class="mini-btn ghost" type="button">이름변경</button>
+            <button id="bp-del" class="mini-btn ghost" type="button">삭제</button>
+          </div>
+          <div class="skill-views">
+            <button class="skill-view active" data-view="deal" type="button">딜 스킬</button>
+            <button class="skill-view" data-view="buff" type="button">버프 스킬</button>
+          </div>
+          <div id="deal-list">불러오는 중…</div>
+          <div id="buff-list" hidden>불러오는 중…</div>
+          <p class="status">체크한 스킬·버프가 예상 데미지·추천·평가에 반영됩니다. PC는 <b>ⓘ에 마우스를 올리면</b>(모바일은 ⓘ를 탭) 상세가 보여요.<br>
+            딜과 버프를 함께 가진 스킬(<b>딜+버프</b> 표시)은 한쪽에서 끄면 다른 쪽에서도 함께 꺼집니다.<br>
+            표시 수치는 <b>마스터리 미반영</b>이에요. 마스터리(피해·쿨감·대상수 등)는 <b>레벨에 따라 내부 계산에 자동 적용</b>됩니다.</p>
+        </div>
+      </div>
+
+      <!-- 동료 -->
+      <div id="sub-ally" class="subpanel" hidden>
+        <div class="card soon-card">
+          <div class="soon-icon">🚧</div>
+          <h2>동료 — 준비 중</h2>
+          <p class="status">이 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p>
+        </div>
+      </div>
+
+      <!-- 유물 -->
+      <div id="sub-relic" class="subpanel" hidden>
+        <div class="card soon-card">
+          <div class="soon-icon">🚧</div>
+          <h2>유물 — 준비 중</h2>
+          <p class="status">이 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p>
         </div>
       </div>
 

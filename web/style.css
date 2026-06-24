@@ -203,8 +203,8 @@ main {
 .damage-card .value { font-size: 22px; }
 .damage-card .status { margin: 8px 0 0; min-height: 0; }
 
-/* 프리셋 서브탭(스탯 / 큐브) */
-.subtabs { display: flex; gap: 8px; margin-bottom: 14px; }
+/* 프리셋 서브탭(스탯 / 큐브 / 버프 / 동료 / 유물 / 설정) */
+.subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .subtab {
   padding: 10px 22px; font-size: 15px; font-weight: 700; cursor: pointer;
   color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 9px;
@@ -224,6 +224,53 @@ main {
 .soon-card { text-align: center; padding: 48px 20px; }
 .soon-icon { font-size: 40px; margin-bottom: 10px; }
 .soon-card h2 { color: var(--accent); }
+
+/* 스킬 탭: 딜/버프 뷰 토글 */
+.skill-views { display: flex; gap: 6px; margin-bottom: 12px; }
+.skill-view {
+  padding: 7px 16px; font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 8px;
+  color: var(--muted); background: var(--card2); border: 1px solid var(--border);
+}
+.skill-view:hover { color: var(--accent); }
+.skill-view.active { color: #fff; background: var(--accent2); border-color: var(--accent2); }
+
+/* 딜+버프/디버프 동시 스킬 태그 */
+.buff-tag {
+  flex: none; margin-left: 6px; padding: 1px 7px; font-size: 11px; font-weight: 700;
+  color: var(--accent); border: 1px solid var(--accent); border-radius: 10px; white-space: nowrap;
+}
+
+/* 버프 선택 목록 */
+.buff-groups { display: flex; flex-direction: column; gap: 6px; }
+.buff-group-title { font-size: 13px; font-weight: 700; color: var(--muted); margin: 4px 2px 2px; }
+.buff-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0 6px; }
+.buff-item {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+}
+.buff-item.locked .buff-name { color: var(--muted); }
+.buff-check { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; min-width: 0; }
+.buff-check input { width: 17px; height: 17px; accent-color: var(--accent2); flex: none; }
+.buff-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.buff-cd { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.buff-info {
+  flex: none; width: 24px; height: 24px; cursor: help; padding: 0; outline: none;
+  background: none; border: none; color: var(--muted); font-size: 15px; line-height: 1;
+}
+.buff-info:hover, .buff-info:focus { color: var(--accent); }
+.buff-tip {
+  display: none; position: absolute; z-index: 30; top: calc(100% + 4px); right: 10px; left: auto;
+  width: 260px; max-width: 72%;
+  background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+.buff-info:hover + .buff-tip { display: block; }   /* 데스크톱: 호버로만(클릭 고정 X) */
+.buff-tip.show { display: block; }                 /* 모바일: 탭 토글 */
+.buff-tip-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; padding: 2px 0; }
+.buff-tip-row > span { color: var(--muted); flex: none; }
+.buff-tip-row > b { color: var(--text); text-align: right; font-weight: 600; }
+.buff-soon { text-align: center; padding: 30px 16px; color: var(--muted); }
+.buff-soon .soon-icon { font-size: 32px; margin-bottom: 8px; }
 
 @media (max-width: 640px) {
   /* 햄버거를 헤더 우상단으로 옮겼으므로 모바일에선 메뉴바 줄 자체를 숨김 */

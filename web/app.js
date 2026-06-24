@@ -6,6 +6,7 @@ const CONV_KEY = "mekicalc.conv.v1";
 const RANGE_KEY = "mekicalc.ranges.v1";
 const STATP_KEY = "mekicalc.statPresets.v1";
 const CUBEP_KEY = "mekicalc.cubePresets.v1";
+const BUFFP_KEY = "mekicalc.buffPresets.v1";
 // 즉시 페인트용 캐시(서버 대기 없이 화면 먼저 그림). 정적 데이터는 계정 무관, 데미지는 직전 값.
 const CACHE_STATS = "mekicalc.cache.statDefs.v1";
 const CACHE_META  = "mekicalc.cache.meta.v1";
@@ -19,6 +20,16 @@ let myConv = loadJSON(CONV_KEY, {});   // 커스텀 딜 환산 statId -> 1단위
 let myRanges = loadJSON(RANGE_KEY, {});// 추천 옵션 범위 statId -> {enabled,lo,hi,noLow,noHigh}
 let statPresets = loadJSON(STATP_KEY, null); // {active, presets:{name:{stats,job}}}
 let cubePresets = loadJSON(CUBEP_KEY, null); // {active, presets:{name:cubeState}}
+let buffPresets = loadJSON(BUFFP_KEY, null); // {active, presets:{name:{job, buffs:[id]|null}}}  buffs=null=전부 체크
+// 버프 작업 상태(활성 프리셋의 현재 편집본). myBuffs=null이면 "전부 체크"(=현행/하위호환), []=전부 끔.
+let myBuffJob = 1;
+let myBuffs = null;
+if (buffPresets && buffPresets.presets && buffPresets.presets[buffPresets.active]) {
+  const _bp = buffPresets.presets[buffPresets.active];
+  myBuffJob = _bp.job || 0;
+  myBuffs = Array.isArray(_bp.buffs) ? _bp.buffs : null;
+}
+let buffDirty = false;
 let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
 const slotCache = {};                  // "부위|등급" -> slots[3][]
 
@@ -27,7 +38,7 @@ function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); if
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ── 계정/서버 동기화 상태 ──
-const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY]);
+const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY]);
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
@@ -188,6 +199,14 @@ function collectStats() {
   return stats;
 }
 
+// 계산에 보낼 버프 선택. null이면 서버가 전부 적용(현행/하위호환), []는 전부 끔, [...]는 그것만.
+// 버프 프리셋의 직업이 현재 캐릭터(스탯) 직업과 다르면 폴백(null=전부 적용) — 엉뚱한 직업 버프로 0 적용되는 사고 방지.
+function activeBuffs() {
+  const job = parseInt($("job-sel").value, 10) || 0;
+  if (job !== myBuffJob) return null;
+  return myBuffs;   // null 또는 배열
+}
+
 async function postJson(url, payload) {
   const res = await fetch(url, {
     method: "POST",
@@ -304,6 +323,7 @@ function selectSub(name) {
   document.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
+  if (name === "buff") renderBuffs();   // 버프 목록은 현재 스탯 기준 계산이라 탭 열 때마다 최신화
 }
 for (const b of document.querySelectorAll(".subtab")) {
   b.addEventListener("click", () => {
@@ -538,7 +558,7 @@ async function calcDamage() {
   if (!refreshing) $("status").textContent = "계산 중…";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv });
+      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv, buffs: activeBuffs() });
       showDamage(data.normal, data.boss);
       saveJSON(CACHE_DMG, { normal: data.normal, boss: data.boss });   // 직전 데미지(다음 로드 즉시 표시용)
       damageShown = true;
@@ -564,7 +584,7 @@ async function calcEvaluate() {
       part: $("ev-part").value, grade: $("ev-grade").value,
       slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
       bossMode: $("ev-boss").value === "true",
-      stats: collectStats(), conversions: myConv,
+      stats: collectStats(), conversions: myConv, buffs: activeBuffs(),
     });
     evResults = data.results;
     renderEval();
@@ -749,7 +769,7 @@ async function runRecommend(useSliderMax) {
   try {
     const data = await postJson("/api/recommend", {
       stats: collectStats(), conversions: myConv, bossMode: $("rc-boss").value === "true",
-      cubeState: myCube, ranges: myRanges,
+      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(),
       sliderValue: parseInt($("rc-slider").value, 10) || 0,
       sortKey: parseInt($("rc-sort").value, 10) || 0,
       upper: $("rc-upper").checked, lower: $("rc-lower").checked,
@@ -872,7 +892,7 @@ async function runOptCompare() {
     const data = await postJson("/api/optcompare", {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
       right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
-      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true",
+      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true", buffs: activeBuffs(),
     });
     $("oc-l-result").innerHTML = ocResultHtml(data.left);
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
@@ -950,7 +970,7 @@ async function runCompare() {
     }
     const data = await postJson("/api/compare", {
       stats: collectStats(), conversions: myConv, bossMode: $("cmp-boss").value === "true",
-      cubeState: myCube, ranges: myRanges,
+      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(),
       part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
       rightGrade: $("cmp-right-grade").value, rightOpts,
     });
@@ -1205,7 +1225,7 @@ async function initCubePresets() {
   cubeDirty = false;
 }
 // 페이지를 실제로 떠날 때(새로고침·닫기) 미저장 큐브 변경 경고.
-window.addEventListener("beforeunload", (e) => { if (cubeDirty || statDirty) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", (e) => { if (cubeDirty || statDirty || buffDirty) { e.preventDefault(); e.returnValue = ""; } });
 $("cp-sel").addEventListener("change", async () => {
   if (!canLeaveCube()) { $("cp-sel").value = cubePresets.active; return; }   // 미저장이면 취소 시 되돌림
   cubePresets.active = $("cp-sel").value; saveJSON(CUBEP_KEY, cubePresets); await cpApply(cubePresets.active);
@@ -1231,12 +1251,219 @@ $("cp-rename").addEventListener("click", () => {
   toast("큐브 프리셋 이름을 변경했습니다.");
 });
 
+// ──────────────────── 버프 선택(편집기) ────────────────────
+
+// 활성 버프 프리셋 → 작업 상태(myBuffJob/myBuffs) 적재 후 화면·데미지 갱신.
+function bpApply(name) {
+  const p = buffPresets.presets[name];
+  if (!p) return;
+  myBuffJob = p.job || 0;
+  myBuffs = Array.isArray(p.buffs) ? p.buffs.slice() : null;
+  buffDirty = false;
+  $("bp-job").value = String(myBuffJob);
+  if (currentSub === "buff") renderBuffs();
+  calcDamage();   // 버프 바뀌면 예상 데미지 즉시 갱신
+}
+
+function initBuffPresets() {
+  if (!buffPresets) {
+    const job = parseInt($("job-sel").value, 10) || 0;   // 현재 캐릭터 직업을 기본 버프 직업으로
+    buffPresets = { active: "기본", presets: { "기본": { job, buffs: null } } };
+    myBuffJob = job; myBuffs = null;
+  }
+  saveJSON(BUFFP_KEY, buffPresets);
+  fillPresetSel($("bp-sel"), buffPresets);
+  buffDirty = false;
+}
+
+// 스킬 탭 데이터 캐시(딜 스킬 + 버프). 뷰 전환 시 재요청 없이 다시 그림.
+let skillData = null;
+let skillView = "deal";   // "deal"(딜 스킬) | "buff"(버프 스킬)
+
+// 현재 스탯 기준 스킬/버프 목록을 받아 활성 뷰를 그린다. 모델 없는 직업은 안내만.
+async function renderBuffs() {
+  if (!buffPresets) initBuffPresets();
+  $("bp-job").value = String(myBuffJob);
+  syncSkillViewButtons();
+  if (myBuffJob !== 1) {   // DPS 환산 모델 있는 직업만(현재 나이트로드). 공용 등은 준비 중.
+    const soon = '<div class="buff-soon"><div class="soon-icon">🚧</div>'
+      + '<p>타 직업 스킬 선택 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p></div>';
+    $("deal-list").innerHTML = soon; $("buff-list").innerHTML = soon; skillData = null;
+    return;
+  }
+  const active = skillView === "deal" ? $("deal-list") : $("buff-list");
+  active.innerHTML = '<p class="status">불러오는 중…</p>';
+  try {
+    const stats = collectStats(); stats.JOB = myBuffJob;
+    skillData = await postJson("/api/buffs", { stats });
+    renderActiveSkillView();
+  } catch (e) { active.innerHTML = '<p class="status">오류: ' + e.message + '</p>'; }
+}
+
+function syncSkillViewButtons() {
+  document.querySelectorAll(".skill-view").forEach((b) => b.classList.toggle("active", b.dataset.view === skillView));
+  $("deal-list").hidden = skillView !== "deal";
+  $("buff-list").hidden = skillView !== "buff";
+}
+
+function renderActiveSkillView() {
+  if (!skillData) return;
+  if (skillView === "deal")
+    renderSkillList(skillData.dealSkills || [], "deal-list",
+      [["active", "액티브"], ["passive", "패시브"], ["unlearned", "미습득 (배우지 않음)"]], "피해량");
+  else
+    renderSkillList(skillData.buffs || [], "buff-list",
+      [["active", "액티브"], ["passive", "패시브"], ["always", "상시 패시브"], ["unlearned", "미습득 (배우지 않음)"]], "효과");
+}
+
+// items=[{id,name,open,group,locked,effects,cooldown,skillLevel,also,targets}] — 그룹 분리(가로선), 미습득은 별도.
+function renderSkillList(items, containerId, order, effectLabel) {
+  const list = $(containerId);
+  list.innerHTML = "";
+  if (!items.length) { list.innerHTML = '<p class="status">표시할 항목이 없습니다.</p>'; return; }
+  const groups = {};
+  for (const b of items) {
+    const g = b.locked ? "unlearned" : b.group;
+    (groups[g] || (groups[g] = [])).push(b);
+  }
+  const wrap = document.createElement("div"); wrap.className = "buff-groups";
+  let first = true;
+  for (const [key, title] of order) {
+    if (!groups[key] || !groups[key].length) continue;
+    if (!first) { const hr = document.createElement("hr"); hr.className = "buff-divider"; wrap.appendChild(hr); }
+    first = false;
+    const t = document.createElement("div"); t.className = "buff-group-title"; t.textContent = title;
+    wrap.appendChild(t);
+    for (const b of groups[key]) wrap.appendChild(buffItem(b, effectLabel));
+  }
+  list.appendChild(wrap);
+}
+
+function buffItem(b, effectLabel) {
+  const row = document.createElement("div");
+  row.className = "buff-item" + (b.locked ? " locked" : "");
+
+  const lbl = document.createElement("label");
+  lbl.className = "buff-check";
+  const cb = document.createElement("input");
+  cb.type = "checkbox"; cb.dataset.buffId = b.id;
+  cb.checked = (myBuffs == null) ? !b.locked : myBuffs.includes(b.id);   // 기본: 습득한 것만 체크(미습득은 해제)
+  cb.addEventListener("change", () => toggleSkill(b, cb.checked));
+  const nm = document.createElement("span"); nm.className = "buff-name"; nm.textContent = b.name;
+  lbl.appendChild(cb); lbl.appendChild(nm);
+  if (b.also) { const tag = document.createElement("span"); tag.className = "buff-tag"; tag.textContent = "딜+" + b.also; lbl.appendChild(tag); }
+
+  const cd = document.createElement("span"); cd.className = "buff-cd"; cd.textContent = b.cooldown || "";
+
+  const info = document.createElement("button");
+  info.type = "button"; info.className = "buff-info"; info.textContent = "ⓘ"; info.setAttribute("aria-label", "상세");
+
+  // 순서: 습득 레벨 → 스킬 레벨 → 쿨타임 → (대상수) → 피해량/효과(2개 이상이면 줄마다 하나씩).
+  const label = effectLabel || "효과";
+  const tip = document.createElement("div"); tip.className = "buff-tip";
+  tip.appendChild(tipRow("습득 레벨", "Lv " + b.open));
+  tip.appendChild(tipRow("스킬 레벨", b.skillLevel || "—"));
+  tip.appendChild(tipRow("쿨타임", b.cooldown || "—"));
+  if (b.targets) tip.appendChild(tipRow("대상 수", b.targets));
+  const effects = b.effects || [];
+  if (!effects.length) tip.appendChild(tipRow(label, "—"));
+  else effects.forEach((e, i) => tip.appendChild(tipRow(i === 0 ? label : "", e)));
+
+  // ⓘ: 데스크톱은 호버(CSS)로만 표시. 모바일(hover 없음)은 탭으로 토글, 바깥을 탭하면 닫힘.
+  info.addEventListener("click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (window.matchMedia("(hover: hover)").matches) return;
+    const showing = tip.classList.contains("show");
+    closeAllTips();
+    if (!showing) tip.classList.add("show");
+  });
+
+  row.appendChild(lbl); row.appendChild(cd); row.appendChild(info); row.appendChild(tip);
+  return row;
+}
+function closeAllTips() { document.querySelectorAll(".buff-tip.show").forEach((t) => t.classList.remove("show")); }
+document.addEventListener("click", closeAllTips);   // 바깥 탭 시 모바일 툴팁 닫기(info는 stopPropagation)
+
+function tipRow(label, value) {
+  const r = document.createElement("div"); r.className = "buff-tip-row";
+  const s = document.createElement("span"); s.textContent = label;
+  const v = document.createElement("b"); v.textContent = value;
+  r.appendChild(s); r.appendChild(v);
+  return r;
+}
+
+// 현재 체크 대상 전체 스킬 id(딜+버프, 학습한 것). myBuffs 최초 구체화용 — 딜 id까지 포함해야
+// 버프만 토글해도 딜 스킬이 집합에서 빠지지 않음(빠지면 추천/평가에서 모든 딜 스킬이 꺼짐).
+function defaultCheckedIds() {
+  const ids = new Set();
+  const all = skillData ? [].concat(skillData.buffs || [], skillData.dealSkills || []) : [];
+  for (const b of all) if (!b.locked) ids.add(b.id);
+  return [...ids];
+}
+
+// 체크 변경 → 공유 집합(myBuffs)에 증분 반영(뷰 전환에도 유지·듀얼 스킬 자동 동기화). 즉시 재계산.
+function toggleSkill(b, checked) {
+  if (myBuffs == null) myBuffs = defaultCheckedIds();
+  if (checked) { if (!myBuffs.includes(b.id)) myBuffs.push(b.id); }
+  else myBuffs = myBuffs.filter((x) => x !== b.id);
+  buffDirty = true;
+  calcDamage();
+  if (b.locked && checked) toast("‘" + b.name + "’은(는) 아직 배우지 않은 스킬이라 과대평가될 수 있어요.");
+  else if (!b.locked && !checked && (b.group === "passive" || b.group === "always"))
+    toast("‘" + b.name + "’은(는) 원래 항상 켜져 있는 패시브라, 해제하면 과소평가될 수 있어요.");
+}
+
+// 딜/버프 뷰 토글
+for (const btn of document.querySelectorAll(".skill-view")) {
+  btn.addEventListener("click", () => {
+    if (skillView === btn.dataset.view) return;
+    skillView = btn.dataset.view;
+    syncSkillViewButtons();
+    if (skillData) renderActiveSkillView(); else renderBuffs();
+  });
+}
+
+$("bp-sel").addEventListener("change", () => {
+  if (buffDirty && !confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?")) { $("bp-sel").value = buffPresets.active; return; }
+  buffPresets.active = $("bp-sel").value; saveJSON(BUFFP_KEY, buffPresets); bpApply(buffPresets.active);
+});
+$("bp-save").addEventListener("click", () => {
+  buffPresets.presets[buffPresets.active] = { job: myBuffJob, buffs: myBuffs };
+  saveJSON(BUFFP_KEY, buffPresets); buffDirty = false;
+  toast(`'${buffPresets.active}' 스킬 프리셋 저장됨`);
+});
+$("bp-new").addEventListener("click", () => {
+  const name = (prompt("새 스킬 프리셋 이름") || "").trim();
+  if (!name || buffPresets.presets[name]) return;
+  buffPresets.presets[name] = { job: myBuffJob, buffs: myBuffs };
+  buffPresets.active = name; saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
+  buffDirty = false;
+});
+$("bp-del").addEventListener("click", () => {
+  const names = Object.keys(buffPresets.presets);
+  if (names.length <= 1) return;
+  delete buffPresets.presets[buffPresets.active];
+  buffPresets.active = Object.keys(buffPresets.presets)[0];
+  saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets); bpApply(buffPresets.active);
+});
+$("bp-rename").addEventListener("click", () => {
+  if (renamePreset(buffPresets) == null) return;
+  saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
+  toast("스킬 프리셋 이름을 변경했습니다.");
+});
+$("bp-job").addEventListener("change", () => {
+  myBuffJob = parseInt($("bp-job").value, 10) || 0;
+  myBuffs = null;   // 직업 바뀌면 선택 초기화(전부 체크)
+  buffDirty = true;
+  renderBuffs(); calcDamage();
+});
+
 // ──────────────────── 프리셋 내보내기 / 불러오기 (.mkbak) ────────────────────
 
 const BACKUP_FORMAT = "mekicalc-presets";
 
 function bundleString() {
-  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, conversions: myConv, ranges: myRanges }, null, 2);
+  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, buffPresets, conversions: myConv, ranges: myRanges }, null, 2);
 }
 
 // 데스크톱(구버전) .mkbak → 웹 번들로 변환.
@@ -1296,16 +1523,24 @@ async function applyBundle(text, merge) {
     // 추가(병합): 이름 있는 프리셋 컬렉션만 합치고, 전역 설정(환산·범위)은 현재 것 유지.
     statPresets = mergePresetCollection(statPresets, b.statPresets); saveJSON(STATP_KEY, statPresets);
     cubePresets = mergePresetCollection(cubePresets, b.cubePresets); saveJSON(CUBEP_KEY, cubePresets);
-    // 향후 새 프리셋 타입 추가 시 여기 한 줄:  xxxPresets = mergePresetCollection(xxxPresets, b.xxxPresets); saveJSON(...)
+    if (b.buffPresets) { buffPresets = mergePresetCollection(buffPresets, b.buffPresets); saveJSON(BUFFP_KEY, buffPresets); }
   } else {
     // 덮어쓰기(서버 동기화 등). 섹션이 있을 때만 교체 → 없는 섹션은 현재 유지.
     if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
     if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
+    if (b.buffPresets) { buffPresets = b.buffPresets; saveJSON(BUFFP_KEY, buffPresets); }
     if (b.conversions) { myConv = b.conversions; saveJSON(CONV_KEY, myConv); }
     if (b.ranges) { myRanges = b.ranges; saveJSON(RANGE_KEY, myRanges); }
   }
   fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
   fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
+  // 버프 프리셋: 활성 프리셋을 작업 상태로 적재(직업·선택). 버프 탭이 보이면 다시 그림.
+  if (buffPresets && buffPresets.presets[buffPresets.active]) {
+    const bp = buffPresets.presets[buffPresets.active];
+    myBuffJob = bp.job || 0; myBuffs = Array.isArray(bp.buffs) ? bp.buffs.slice() : null; buffDirty = false;
+    fillPresetSel($("bp-sel"), buffPresets); $("bp-job").value = String(myBuffJob);
+    if (currentSub === "buff") renderBuffs();
+  }
   renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
 }
 
@@ -1359,7 +1594,7 @@ async function loadMe(pre) {
 async function doLogout() {
   try { await fetch("/auth/logout", { method: "POST" }); } catch {}
   // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터·캐시 제거(정적 캐시는 유지).
-  [STATP_KEY, CUBEP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME].forEach((k) => localStorage.removeItem(k));
+  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME].forEach((k) => localStorage.removeItem(k));
   location.reload();
 }
 
@@ -1459,6 +1694,7 @@ async function loadMeta(pre) {
     renderRangeSettings();       // 추천 범위 설정 목록
     initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
     await initCubePresets();     // 큐브 프리셋
+    initBuffPresets();           // 버프 프리셋(없으면 현재 직업 기준 '기본' 생성)
     // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
     booting = false;
     await Promise.all([refreshQual(), calcDamage()]);
