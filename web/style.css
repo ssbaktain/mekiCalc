@@ -220,6 +220,15 @@ main {
 .dmg-table tbody th { color: var(--muted); font-weight: 600; text-align: left; white-space: nowrap; }
 .dmg-table td { text-align: right; font-variant-numeric: tabular-nums; }
 .dmg-table .ku { display: block; font-size: 11px; color: var(--muted); }
+/* 모바일: 표가 박스를 벗어나지 않게 글자·패딩 축소 + 긴 숫자 줄바꿈 허용 */
+@media (max-width: 640px) {
+  .damage-card { padding: 12px 12px; }
+  .dmg-table { font-size: 11px; }
+  .dmg-table th, .dmg-table td { padding: 5px 3px; }
+  .dmg-table tbody th { font-size: 11px; }
+  .dmg-table td { overflow-wrap: anywhere; }
+  .dmg-table .ku { font-size: 10px; }
+}
 
 /* 프리셋 서브탭(스탯 / 큐브 / 버프 / 동료 / 유물 / 설정) */
 .subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
