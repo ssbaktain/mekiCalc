@@ -31,13 +31,15 @@ public final class WebServer {
     private final CalcService service;
     private final Path webDir;
     private final AuthService auth;
+    private final EventLog log;
     private HttpServer http;
 
-    public WebServer(int port, CalcService service, Path webDir, AuthService auth) {
+    public WebServer(int port, CalcService service, Path webDir, AuthService auth, EventLog log) {
         this.port = port;
         this.service = service;
         this.webDir = webDir;
         this.auth = auth;
+        this.log = log;
     }
 
     public void start() throws IOException {
@@ -158,9 +160,13 @@ public final class WebServer {
             out.put("stats", service.statDefs());
             out.put("meta", service.meta());
             out.put("mydata", service.myData());
+            out.put("companions", service.companions());
             out.put("me", meInfo(sessionFrom(ex)));
             return out;
         }));
+
+        // 동료 공격력 계승 비율 데이터 수집(저장 시). 추후 비율 공식 모델링용.
+        http.createContext("/api/ally-ratio", json("POST", ex -> service.recordAllyRatio(readJsonBody(ex))));
 
         // 유저 프리셋 저장/로드(로그인 필요). 본문은 불투명 번들 JSON(.mkbak 형식).
         http.createContext("/api/presets", ex -> {
@@ -203,21 +209,47 @@ public final class WebServer {
 
     private HttpHandler json(String method, JsonAction action) {
         return ex -> {
+            long start = System.nanoTime();
+            String reqMethod = ex.getRequestMethod();
+            String path = ex.getRequestURI().getPath();
+            int status = 200;
             try {
-                if (!method.equalsIgnoreCase(ex.getRequestMethod())) {
+                if (!method.equalsIgnoreCase(reqMethod)) {
+                    status = 405;
                     sendJson(ex, 405, Map.of("error", "허용되지 않은 메서드"));
                     return;
                 }
                 Object body = action.handle(ex);
                 sendJson(ex, 200, body);
             } catch (IllegalArgumentException bad) {
+                status = 400;
                 sendJson(ex, 400, Map.of("error", String.valueOf(bad.getMessage())));
             } catch (Exception e) {
+                status = 500;
+                log.error(reqMethod, path, userOf(ex), e);
                 sendJson(ex, 500, Map.of("error", "서버 오류: " + e.getMessage()));
             } finally {
+                long ms = (System.nanoTime() - start) / 1_000_000;
+                log.access(reqMethod, path, status, ms, userOf(ex), clientIp(ex));
                 ex.close();
             }
         };
+    }
+
+    /** 로그인 상태면 유저 이메일, 아니면 null(비로그인 요청 식별). 세션은 인메모리 조회라 가볍다. */
+    private String userOf(HttpExchange ex) {
+        AuthService.Session s = sessionFrom(ex);
+        return s != null ? s.email() : null;
+    }
+
+    /** 실제 클라이언트 IP. Cloudflare 터널 뒤라 CF-Connecting-IP → X-Forwarded-For → 원격주소 순. */
+    private static String clientIp(HttpExchange ex) {
+        String cf = ex.getRequestHeaders().getFirst("CF-Connecting-IP");
+        if (cf != null && !cf.isBlank()) return cf.trim();
+        String xff = ex.getRequestHeaders().getFirst("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+        return ex.getRemoteAddress() != null
+                ? ex.getRemoteAddress().getAddress().getHostAddress() : null;
     }
 
     private static Map<String, Object> readJsonBody(HttpExchange ex) throws IOException {

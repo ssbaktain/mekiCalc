@@ -39,7 +39,8 @@ public final class WebMain {
             else System.err.println("DB 연결 실패(타임아웃), 파일 모드로 폴백");
         }
         AuthService auth = new AuthService(oauth, dataDir, pg);
-        WebServer server = new WebServer(port, service, webDir, auth);
+        EventLog log = new EventLog(dataDir);
+        WebServer server = new WebServer(port, service, webDir, auth, log);
         server.start();
 
         System.out.println("========================================");

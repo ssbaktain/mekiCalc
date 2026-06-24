@@ -1,0 +1,14 @@
+{
+  "_comment": "메인 동료 데이터. 서브 동료와 '장착 효과'는 이미 유저 스탯 입력에 포함되므로 여기엔 메인 전용(기본공격·버프·디버프)만 둔다. 공격력은 소환 시 캐릭터 스탯을 계승비율(현재는 유저 입력, 추후 캐릭/동료 레벨로 자동화)만큼 받고, 그 외 스탯은 전부 계승. 소환 쿨/유지로 가동률 반영 예정.",
+  "_example": {
+    "id": "exampleId",
+    "name": "예시 동료",
+    "grades": ["RARE", "EPIC", "UNIQUE", "LEGENDARY"],
+    "summonCd": 60,
+    "summonDuration": 30,
+    "basicAttack": { "base": 290, "growth": 0.4, "hits": 1, "period": 1.0 },
+    "buffs": [],
+    "debuffs": []
+  },
+  "companions": []
+}

@@ -162,10 +162,18 @@
 
       <!-- 동료 -->
       <div id="sub-ally" class="subpanel" hidden>
-        <div class="card soon-card">
-          <div class="soon-icon">🚧</div>
-          <h2>동료 — 준비 중</h2>
-          <p class="status">이 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p>
+        <div class="card">
+          <div class="card-head"><h2>동료 (메인)</h2></div>
+          <div class="preset-bar">
+            <span class="preset-label">동료 프리셋</span>
+            <select id="ap-sel"></select>
+            <button id="ap-save" class="mini-btn" type="button">저장</button>
+            <button id="ap-new" class="mini-btn ghost" type="button">추가</button>
+            <button id="ap-rename" class="mini-btn ghost" type="button">이름변경</button>
+            <button id="ap-del" class="mini-btn ghost" type="button">삭제</button>
+          </div>
+          <div id="ally-body">불러오는 중…</div>
+          <p class="status">서브 동료·장착 효과는 이미 스탯 입력에 포함돼서, <b>메인 동료</b>만 입력해요. 저장하면 (캐릭터 레벨·동료 레벨·계승 비율)이 데이터로 수집됩니다(공격력 계승 공식 자동화 전 임시).</p>
         </div>
       </div>
 

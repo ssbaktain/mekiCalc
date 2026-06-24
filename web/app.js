@@ -7,12 +7,14 @@ const RANGE_KEY = "mekicalc.ranges.v1";
 const STATP_KEY = "mekicalc.statPresets.v1";
 const CUBEP_KEY = "mekicalc.cubePresets.v1";
 const BUFFP_KEY = "mekicalc.buffPresets.v1";
+const ALLYP_KEY = "mekicalc.allyPresets.v1";
 // 즉시 페인트용 캐시(서버 대기 없이 화면 먼저 그림). 정적 데이터는 계정 무관, 데미지는 직전 값.
 const CACHE_STATS = "mekicalc.cache.statDefs.v1";
 const CACHE_META  = "mekicalc.cache.meta.v1";
 const CACHE_ME    = "mekicalc.cache.me.v1";
 const CACHE_DMG   = "mekicalc.cache.damage.v1";
 const CACHE_SKILLS = "mekicalc.cache.skills.v1";   // 스킬 탭 목록(즉시 페인트용, 직업별)
+const CACHE_COMPANIONS = "mekicalc.cache.companions.v1";   // 동료 목록(정적, 즉시 표시용)
 
 let statDefs = [];
 let meta = { parts: [], grades: [], gradeKo: {} };
@@ -31,6 +33,10 @@ if (buffPresets && buffPresets.presets && buffPresets.presets[buffPresets.active
   myBuffs = Array.isArray(_bp.buffs) ? _bp.buffs : null;
 }
 let buffDirty = false;
+// 동료(메인): 프리셋 {active, presets:{name:{companionId,grade,level,ratio}}}. companions=메인 동료 목록(bootstrap).
+let allyPresets = loadJSON(ALLYP_KEY, null);
+let allyDirty = false;
+let companions = loadJSON(CACHE_COMPANIONS, []);
 let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
 const slotCache = {};                  // "부위|등급" -> slots[3][]
 
@@ -39,7 +45,7 @@ function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); if
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ── 계정/서버 동기화 상태 ──
-const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY]);
+const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, CONV_KEY, RANGE_KEY]);
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
@@ -344,6 +350,7 @@ function selectSub(name) {
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
   if (name === "buff") renderBuffs();   // 버프 목록은 현재 스탯 기준 계산이라 탭 열 때마다 최신화
+  if (name === "ally") renderAlly();
 }
 for (const b of document.querySelectorAll(".subtab")) {
   b.addEventListener("click", () => {
@@ -1539,6 +1546,107 @@ $("bp-job").addEventListener("change", () => {
   renderBuffs(); calcDamage();
 });
 
+// ──────────────────── 동료(메인) ────────────────────
+// 서브 동료·장착효과는 이미 스탯에 포함 → 메인 동료(동료/등급/레벨/공격력 계승비율)만 입력. 계산 연동은 동료 데이터 오면.
+function companionById(id) { return companions.find((c) => c.id === id) || null; }
+
+function initAllyPresets() {
+  if (!allyPresets) allyPresets = { active: "기본", presets: { "기본": {} } };
+  saveJSON(ALLYP_KEY, allyPresets);
+  fillPresetSel($("ap-sel"), allyPresets);
+  allyDirty = false;
+}
+
+function renderAlly() {
+  if (!allyPresets) initAllyPresets();
+  const body = $("ally-body");
+  if (!companions.length) {   // 동료 데이터 아직 없음(companions.json 빈 상태)
+    body.innerHTML = '<div class="buff-soon"><div class="soon-icon">🚧</div><p>동료 데이터 준비 중이에요. 곧 추가될 예정입니다.</p></div>';
+    return;
+  }
+  const p = allyPresets.presets[allyPresets.active] || {};
+  body.innerHTML =
+    '<div class="controls">' +
+    '<label class="ctl">동료<select id="al-companion"></select></label>' +
+    '<label class="ctl">등급<select id="al-grade"></select></label>' +
+    '<label class="ctl">레벨<input id="al-level" type="number" min="1" step="1"></label>' +
+    '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" min="0" step="any"></label>' +
+    '</div>';
+  const csel = $("al-companion");
+  for (const c of companions) csel.add(new Option(c.name || c.id, c.id));
+  csel.value = p.companionId || companions[0].id;
+  fillAllyGrades(csel.value, p.grade);
+  $("al-level").value = p.level != null ? p.level : 1;
+  $("al-ratio").value = p.ratio != null ? p.ratio : 0;
+  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; });
+  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; });
+}
+
+function fillAllyGrades(companionId, selected) {
+  const gsel = $("al-grade");
+  gsel.innerHTML = "";
+  const grades = (companionById(companionId) || {}).grades || [];
+  for (const g of grades) gsel.add(new Option(gradeKo(g), g));
+  if (selected && grades.includes(selected)) gsel.value = selected;
+}
+
+function collectAlly() {
+  if (!$("al-companion")) return {};
+  return {
+    companionId: $("al-companion").value,
+    grade: $("al-grade").value,
+    level: parseInt($("al-level").value, 10) || 1,
+    ratio: parseFloat($("al-ratio").value) || 0,
+  };
+}
+
+function apApply(name) {
+  if (!allyPresets.presets[name]) return;
+  allyDirty = false;
+  if (currentSub === "ally") renderAlly();
+}
+
+// 저장 시 (캐릭터 레벨·동료·등급·동료 레벨·계승 비율)을 서버에 수집 → 추후 비율 공식화. 비율 0이면 생략.
+function collectAllyRatio(data) {
+  if (!data.companionId || !data.ratio) return;
+  const charLevel = parseInt(collectStats().LEVEL, 10) || 0;
+  fetch("/api/ally-ratio", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ts: new Date().toISOString(), charLevel, companionId: data.companionId, grade: data.grade, companionLevel: data.level, ratio: data.ratio }),
+  }).catch(() => {});
+}
+
+$("ap-sel").addEventListener("change", () => {
+  if (allyDirty && !confirm("저장하지 않은 동료 변경이 있습니다. 버리고 전환할까요?")) { $("ap-sel").value = allyPresets.active; return; }
+  allyPresets.active = $("ap-sel").value; saveJSON(ALLYP_KEY, allyPresets); apApply(allyPresets.active);
+});
+$("ap-save").addEventListener("click", () => {
+  const data = collectAlly();
+  allyPresets.presets[allyPresets.active] = data;
+  saveJSON(ALLYP_KEY, allyPresets); allyDirty = false;
+  toast(`'${allyPresets.active}' 동료 프리셋 저장됨`);
+  collectAllyRatio(data);
+});
+$("ap-new").addEventListener("click", () => {
+  const name = (prompt("새 동료 프리셋 이름") || "").trim();
+  if (!name || allyPresets.presets[name]) return;
+  allyPresets.presets[name] = collectAlly();
+  allyPresets.active = name; saveJSON(ALLYP_KEY, allyPresets); fillPresetSel($("ap-sel"), allyPresets);
+  allyDirty = false;
+});
+$("ap-del").addEventListener("click", () => {
+  const names = Object.keys(allyPresets.presets);
+  if (names.length <= 1) return;
+  delete allyPresets.presets[allyPresets.active];
+  allyPresets.active = Object.keys(allyPresets.presets)[0];
+  saveJSON(ALLYP_KEY, allyPresets); fillPresetSel($("ap-sel"), allyPresets); apApply(allyPresets.active);
+});
+$("ap-rename").addEventListener("click", () => {
+  if (renamePreset(allyPresets) == null) return;
+  saveJSON(ALLYP_KEY, allyPresets); fillPresetSel($("ap-sel"), allyPresets);
+  toast("동료 프리셋 이름을 변경했습니다.");
+});
+
 // ──────────────────── 프리셋 빠른 전환(플로팅) ────────────────────
 // 어디서든 우하단 ⚡ → 작은 패널에서 스탯/큐브/스킬 프리셋만 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
 function syncQuickPanel() {
@@ -1574,7 +1682,7 @@ $("qs-bp").addEventListener("change", () => {
 const BACKUP_FORMAT = "mekicalc-presets";
 
 function bundleString() {
-  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, buffPresets, conversions: myConv, ranges: myRanges }, null, 2);
+  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, buffPresets, allyPresets, conversions: myConv, ranges: myRanges }, null, 2);
 }
 
 // 데스크톱(구버전) .mkbak → 웹 번들로 변환.
@@ -1635,11 +1743,13 @@ async function applyBundle(text, merge) {
     statPresets = mergePresetCollection(statPresets, b.statPresets); saveJSON(STATP_KEY, statPresets);
     cubePresets = mergePresetCollection(cubePresets, b.cubePresets); saveJSON(CUBEP_KEY, cubePresets);
     if (b.buffPresets) { buffPresets = mergePresetCollection(buffPresets, b.buffPresets); saveJSON(BUFFP_KEY, buffPresets); }
+    if (b.allyPresets) { allyPresets = mergePresetCollection(allyPresets, b.allyPresets); saveJSON(ALLYP_KEY, allyPresets); }
   } else {
     // 덮어쓰기(서버 동기화 등). 섹션이 있을 때만 교체 → 없는 섹션은 현재 유지.
     if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
     if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
     if (b.buffPresets) { buffPresets = b.buffPresets; saveJSON(BUFFP_KEY, buffPresets); }
+    if (b.allyPresets) { allyPresets = b.allyPresets; saveJSON(ALLYP_KEY, allyPresets); }
     if (b.conversions) { myConv = b.conversions; saveJSON(CONV_KEY, myConv); }
     if (b.ranges) { myRanges = b.ranges; saveJSON(RANGE_KEY, myRanges); }
   }
@@ -1652,6 +1762,7 @@ async function applyBundle(text, merge) {
     fillPresetSel($("bp-sel"), buffPresets); $("bp-job").value = String(myBuffJob);
     if (currentSub === "buff") renderBuffs();
   }
+  if (allyPresets) { fillPresetSel($("ap-sel"), allyPresets); allyDirty = false; if (currentSub === "ally") renderAlly(); }
   renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
 }
 
@@ -1705,7 +1816,7 @@ async function loadMe(pre) {
 async function doLogout() {
   try { await fetch("/auth/logout", { method: "POST" }); } catch {}
   // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터·캐시 제거(정적 캐시는 유지).
-  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME, CACHE_SKILLS].forEach((k) => localStorage.removeItem(k));
+  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME, CACHE_SKILLS].forEach((k) => localStorage.removeItem(k));
   location.reload();
 }
 
@@ -1800,12 +1911,14 @@ async function loadMeta(pre) {
     await loadMe(boot && boot.me);
     if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
     else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
+    if (boot && boot.companions) { companions = boot.companions; saveJSON(CACHE_COMPANIONS, companions); }   // 동료 목록(정적)
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
     renderConvSettings();        // 딜 환산 설정 목록
     renderRangeSettings();       // 추천 범위 설정 목록
     initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
     await initCubePresets();     // 큐브 프리셋
     initBuffPresets();           // 버프 프리셋(없으면 현재 직업 기준 '기본' 생성)
+    initAllyPresets();           // 동료 프리셋(메인 동료)
     // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
     booting = false;
     await Promise.all([refreshQual(), calcDamage()]);

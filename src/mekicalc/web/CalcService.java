@@ -1,6 +1,7 @@
 package mekicalc.web;
 
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -289,6 +290,39 @@ public final class CalcService {
         out.put("buffs", buffs);
         out.put("dealSkills", dealSkills);
         return out;
+    }
+
+    // ──────────────────── 동료 ────────────────────
+
+    /** 메인 동료 목록(원본) — 동료 탭 드롭다운용. companions.json 비었으면 빈 목록. */
+    public List<Map<String, Object>> companions() {
+        return content.companions;
+    }
+
+    /**
+     * 공격력 계승 비율 데이터 수집: (캐릭터 레벨, 동료, 등급, 동료 레벨, 비율)을 companion_ratios.jsonl에 한 줄씩 누적.
+     * 추후 캐릭/동료 레벨 → 계승비율 공식 모델링용. 저장할 때마다 호출(클라가 ts 포함해 보냄).
+     */
+    public Map<String, Object> recordAllyRatio(Map<String, Object> req) {
+        try {
+            // jsonl(한 줄=한 레코드) — Json.write는 여러 줄이라 단일 값(j)을 모아 한 줄로 조립.
+            String line = "{\"ts\":" + j(req.get("ts"))
+                    + ",\"charLevel\":" + j(req.get("charLevel"))
+                    + ",\"companionId\":" + j(req.get("companionId"))
+                    + ",\"grade\":" + j(req.get("grade"))
+                    + ",\"companionLevel\":" + j(req.get("companionLevel"))
+                    + ",\"ratio\":" + j(req.get("ratio")) + "}\n";
+            Files.writeString(content.dataDir.resolve("companion_ratios.jsonl"), line,
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            return Map.of("ok", true);
+        } catch (Exception e) {
+            return Map.of("ok", false, "error", String.valueOf(e.getMessage()));
+        }
+    }
+
+    /** 단일 JSON 값(문자열은 이스케이프된 따옴표, 숫자는 그대로). Json.write가 값 끝에 개행을 붙이므로 strip. */
+    private static String j(Object o) {
+        return Json.write(o).strip();
     }
 
     // ──────────────────── 큐브 기댓값(평가) ────────────────────
