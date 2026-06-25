@@ -1,5 +1,5 @@
 {
-  "_comment": "나이트로드 스킬 데이터(DPS 모델용). %는 표기 그대로(290=290%). growth=레벨당 상승비(%). 마스터리·타격/대상 보정은 {레벨:증가값} 맵으로, 캐릭터 레벨 ≥ 키일 때만 합산(레벨 게이팅). 규칙은 메모리 mekicalc-dps-model-spec 참조.",
+  "_comment": "나이트로드 스킬 데이터(DPS 모델용). %는 표기 그대로(290=290%). growth=레벨당 상승비(%). 데미지 계수는 kind별 growth 사용. 버프/패시브 '효과값'(최종뎀·크리·크뎀·공속·공퍼)은 기본적으로 그 스킬 kind의 growth로 스케일하되(다크사이트 statActive=0.4 등 인게임 일치), 스킬별로 다르면 'valueGrowth'로 개별 지정(보편 규칙 아님 — 검산으로 확정). 예: 퍼지 에어리어는 statActive지만 효과값은 0.3%/레벨(인게임 13%→18.8/17.3, 2026-06-25) → valueGrowth=0.3. 마스터리·타격/대상 보정은 {레벨:증가값} 맵으로, 캐릭터 레벨 ≥ 키일 때만 합산(레벨 게이팅). 규칙은 메모리 mekicalc-dps-model-spec 참조.",
   "_notInHere": "프리셋 스탯에 이미 들어가는 것들(피지컬 트레이닝 기본공격뎀, 래디컬 보뎀, 크리티컬 스로우 크확/크뎀, 기본공격데미지강화·64렙 대상수 강화 등)은 유저 입력값에 포함되므로 여기 없음. 단 숙련된 표창술 공격력%은 입력(i버튼 깡공·공퍼)에 안 들어가 statPassives에서 엔진이 적용한다.",
 
   "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
@@ -55,7 +55,8 @@
       "_comment": "5초마다(마스터리 -1@122 → 4초) 표식, 표식 공격 시 base 1회. 마크 오브 나이트로드(107렙) 최종뎀+300%·대상10." },
 
     { "id": "shadowPartner", "name": "쉐도우 파트너", "kind": "dealPassiveNoCd", "tier": 3, "open": 60,
-      "base": 60, "proc": 25, "masteryDmgByLevel": { "68": 100 }, "meyong": 50 },
+      "base": 84, "proc": 25, "masteryDmgByLevel": { "68": 100 }, "meyong": 50,
+      "_comment": "기본 계수 84%(이전 60% 오류 — 유저 정정 2026-06-25). 마스터리 +100%는 계수에 선반영 X, 내부에서 별도 곱. 표시 피해량(마스터리 제외) = 84×(1+0.4%×L) → 인게임 표기와 일치(총합195=149.5, 137=130 등 5점 검증)." },
 
     { "id": "venom", "name": "베놈", "kind": "dealPassiveNoCd", "tier": 3, "open": 74, "dual": "디버프",
       "dot": { "perSec": 45, "dur": 10, "proc": 30, "procMasteryPlus": 10, "procMasteryOpen": 98 }, "meyong": 50 },
@@ -75,11 +76,14 @@
       "durMasteryFlatByLevel": { "90": 5 }, "triggerCasts": 7 },
 
     { "id": "purge", "name": "퍼지 에어리어", "kind": "statActive", "tier": 4, "open": 110,
-      "finalDmg": 13, "dur": 20, "cd": 45, "ignoreBuffDuration": true,
-      "_comment": "설치기 판정이라 버프 지속시간 증가% 영향 안 받음." },
+      "finalDmg": 13, "valueGrowth": 0.3, "dur": 20, "cd": 45, "ignoreBuffDuration": true,
+      "critTaken": 30, "critTakenOpen": 113,
+      "_comment": "설치기 판정이라 버프 지속시간 증가% 영향 안 받음. valueGrowth=0.3: 효과값 상승비가 kind(statActive 0.4)와 달라 인게임 검증값(0.3%/레벨, 13%→18.8/17.3)으로 개별 지정." },
 
     { "id": "fake", "name": "페이크", "kind": "statPassive", "tier": 4, "open": 115,
-      "finalDmg": 10, "finalDmgMasteryByLevel": { "118": 10 }, "always": true },
+      "finalDmg": 10, "finalDmgMasteryByLevel": { "118": 10 }, "always": true, "dual": "딜",
+      "counter": { "base": 2500, "kind": "dealPassiveNoCd", "proc": 20, "buffLossSec": 3, "buffKeepMasteryOpen": 118 },
+      "_comment": "피격 시 20% 반격 2500%(딜패시브 0.4 스케일 — 검증 전). 반격 발동 시 3초간 최종뎀+10% 소실 → 전역 입력 '피격 주기(초)'로 발동빈도(=proc/피격주기) 산정. buffKeepMasteryOpen=118(페이크-회피 마스터리: 발동해도 최종뎀 버프 유지). finalDmgMasteryByLevel{118:10}=같은 마스터리의 최종뎀+10%p. 피격주기=0이면 반격·손실 모두 미적용." },
 
     { "id": "darkSerenity", "name": "다크 세레니티", "kind": "statPassive", "tier": 4, "open": 125,
       "finalDmg": 15, "minMult": 20, "always": true }
@@ -87,7 +91,8 @@
 
   "debuffs": [
     { "id": "venomWeaken", "name": "베놈 약화", "recvDmg": 12, "open": 82, "uptime": "venom_u", "source": "venom" },
-    { "id": "purgeWeaken", "name": "퍼지 받는피해", "recvDmg": 18, "open": 110, "uptime": "purge", "source": "purge" },
+    { "id": "purgeWeaken", "name": "퍼지 받는피해", "recvDmg": 18, "tier": 4, "valueGrowth": 0.4, "open": 110, "uptime": "purge", "source": "purge",
+      "_comment": "받피증은 스킬레벨 스케일 0.4%/레벨(인게임 검증: 총합149렙 28.7%, 2026-06-25). 최종뎀(0.3)과 상승비 다름. venom/mark 디버프는 미검증이라 tier/valueGrowth 없어 고정." },
     { "id": "markWeaken", "name": "마크 약화", "recvDmg": 15, "open": 138, "uptime": 1.0, "source": "markOfAssassin",
       "_comment": "마크 오브 나이트로드 약화 마스터리 138렙. 4초지속/4초주기 → 가동률≈100%." }
   ],

@@ -402,8 +402,8 @@ public final class SelfTest {
 
         // 버프 주입: 레벨100 → 다크사이트(15렙)·아드레날린(66렙)·민첩 활성, 퍼지(110렙)·페이크/세레니티(상시)는 제외.
         NightlordDps.Buffed bf = nd.buffed(b);
-        check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);     // 6 × 1.24 × 0.48
-        check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);       // 숙련된표창술 24.48 + 다크사이트 5.952
+        check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);     // 다크사이트 크확 6 × 1.24 × 0.48 (statActive kind growth 0.4: 1+0.004×60)
+        check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);       // 숙련된표창술 24.48(0.3) + 다크사이트 5.952(0.4)
         check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), (10 * 1.36 + 6) * (15.0 / 22.0)); // 아드레날린: base10×scale1.36 + 마스터리6(나중), ×가동률
         double adrAS = 8 * 1.36 * (15.0 / 22.0);
         double expAS = adrAS + (150 - adrAS) * ((15 * 0.25) / 150.0);
@@ -417,7 +417,7 @@ public final class SelfTest {
         StatBlock bSkillDmg = new StatBlock().set("LEVEL", 100).set("ATK_FLAT", 100)
                 .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100).set("SKILL_DMG", 100);
         check("nl.venom.skillDmg", nd.venomDotDps(bSkillDmg, true), 79.92 * 2);
-        check("nl.shadow", nd.shadowExtraPerHit(b, true), 66.6);
+        check("nl.shadow", nd.shadowExtraPerHit(b, true), 93.24);   // base 84(이전 60): 66.6 × 84/60 (마스터리 +100% 유지)
         check("nl.fatal.locked", nd.fatalExtraPerHit(b, true), 0);    // 117렙 개방, 레벨100 잠김
         // 레벨150: 페이탈 피해 마스터리(130렙) 개방, 스킬레벨150 → 계수9.6 → 100×9.6×2.0×0.2×0.8 = 307.2
         check("nl.fatal", nd.fatalExtraPerHit(b150, true), 307.2);

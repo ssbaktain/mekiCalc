@@ -57,7 +57,7 @@ public final class WebServer {
         http.createContext("/api/damage", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
-                    toStrSet(req.get("buffs")));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
         }));
 
         http.createContext("/api/buffs", json("POST", ex -> {
@@ -70,7 +70,7 @@ public final class WebServer {
             return service.evaluate(
                     str(req, "part"), str(req, "grade"), intOrNull(req, "slot"),
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
-                    toStrSet(req.get("buffs")));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
         }));
 
         http.createContext("/api/recommend", json("POST", ex -> {
@@ -79,7 +79,7 @@ public final class WebServer {
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                     (int) num(req, "sliderValue", 0), (int) num(req, "sortKey", 0),
-                    bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")));
+                    bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
         }));
 
         http.createContext("/api/compare", json("POST", ex -> {
@@ -88,7 +88,7 @@ public final class WebServer {
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                     str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")),
-                    toStrSet(req.get("buffs")));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
         }));
 
         http.createContext("/api/slotdraws", json("POST", ex -> {
@@ -109,7 +109,7 @@ public final class WebServer {
                     str(l, "part"), str(l, "grade"), mapList(l.get("opts")),
                     str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
                     toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
-                    toStrSet(req.get("buffs")));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
         }));
 
         // ──────────────────── 로그인(OAuth) ────────────────────

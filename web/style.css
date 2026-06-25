@@ -252,6 +252,12 @@ main {
 .soon-icon { font-size: 40px; margin-bottom: 10px; }
 .soon-card h2 { color: var(--accent); }
 
+/* 스킬 탭: 피격 주기 입력 */
+.hit-interval-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.hit-interval-row label { font-size: 14px; font-weight: 700; color: var(--text); }
+.hit-interval-row input { width: 80px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--card2); color: var(--text); }
+.hit-interval-row .hint { font-size: 12px; color: var(--muted); }
+
 /* 스킬 탭: 딜/버프 뷰 토글 */
 .skill-views { display: flex; gap: 6px; margin-bottom: 12px; }
 .skill-view {
@@ -287,15 +293,19 @@ main {
 .buff-info:hover, .buff-info:focus { color: var(--accent); }
 .buff-tip {
   display: none; position: absolute; z-index: 30; top: calc(100% + 4px); right: 10px; left: auto;
-  width: 260px; max-width: 72%;
-  background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  /* 이름(좌)·수치(우) 2열 그리드. 열 사이 간격(벽=column-gap)으로 가장 긴 이름·수치라도 항상 떨어짐.
+     너비는 내용에 맞춰(줄넘김 없이) 자동, 상한까지만. */
+  grid-template-columns: max-content minmax(0, max-content);
+  column-gap: 30px; row-gap: 4px;
+  width: max-content; max-width: min(92vw, 460px);
+  background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
 }
-.buff-info:hover + .buff-tip { display: block; }   /* 데스크톱: 호버로만(클릭 고정 X) */
-.buff-tip.show { display: block; }                 /* 모바일: 탭 토글 */
-.buff-tip-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; padding: 2px 0; }
-.buff-tip-row > span { color: var(--muted); flex: none; }
-.buff-tip-row > b { color: var(--text); text-align: right; font-weight: 600; }
+.buff-info:hover + .buff-tip { display: grid; }    /* 데스크톱: 호버로만(클릭 고정 X) */
+.buff-tip.show { display: grid; }                  /* 모바일: 탭 토글 */
+.buff-tip-row { display: contents; }               /* 행 래퍼 해제 → span/b가 그리드 셀로 직접 배치 */
+.buff-tip-row > span { color: var(--muted); font-size: 13px; }
+.buff-tip-row > b { color: var(--text); font-size: 13px; font-weight: 600; justify-self: end; text-align: right; overflow-wrap: anywhere; }
 .buff-soon { text-align: center; padding: 30px 16px; color: var(--muted); }
 .buff-soon .soon-icon { font-size: 32px; margin-bottom: 8px; }
 

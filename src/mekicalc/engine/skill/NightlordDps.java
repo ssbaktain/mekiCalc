@@ -40,16 +40,29 @@ public final class NightlordDps {
     private final SkillData data;
     /** 적용할 시간제 버프 id 집합. null이면 전부 적용(하위호환·기본). 빈 집합이면 아무 버프도 적용 안 함. */
     private final Set<String> activeBuffs;
+    /** 피격 주기(초). 페이크 반격(피격 시 발동) 빈도·버프손실 산정용. 0이면 반격·손실 미적용. */
+    private final double hitInterval;
 
     public NightlordDps(DamageModel dm, SkillDpsModel model) {
-        this(dm, model, null);
+        this(dm, model, null, 0);
     }
 
     public NightlordDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs) {
+        this(dm, model, activeBuffs, 0);
+    }
+
+    public NightlordDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs, double hitInterval) {
         this.dm = dm;
         this.model = model;
         this.data = model.data();
         this.activeBuffs = activeBuffs;
+        this.hitInterval = hitInterval;
+    }
+
+    /** data.buffs()에서 id로 버프 맵 찾기(없으면 null). 페이크 등 특수 처리용. */
+    private Map<String, Object> buffById(String id) {
+        for (Map<String, Object> m : data.buffs()) if (id.equals(Json.str(m, "id", ""))) return m;
+        return null;
     }
 
     private int charLevel(StatBlock b) { return (int) b.get(LEVEL); }
@@ -153,7 +166,8 @@ public final class NightlordDps {
         for (Map<String, Object> m : data.buffs()) {
             if (Json.bool(m, "always", false) || !wantsBuff(m, cl)) continue;
             boolean fixed = Json.bool(m, "fixed", false);
-            double scale = fixed ? 1.0 : scale(Json.str(m, "kind", "statActive"), (int) Json.num(m, "tier", 0), cl, input);
+            // 버프 효과값 스케일: 기본 kind growth + 스킬별 valueGrowth override(buffValueScale).
+            double scale = fixed ? 1.0 : buffValueScale(m, cl, input);
             double u = buffUptime(m, atkSpeedBase, buffDur, cl);
 
             double atkPct = Json.num(m, "atkPct", 0);
@@ -168,7 +182,44 @@ public final class NightlordDps {
             double as = Json.num(m, "atkSpeed", 0);
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
         }
+        // 퍼지 크리 마스터리(113렙): 퍼지 가동 중 적 받는 크리티컬 데미지 +critTaken% → 크리 데미지 ×(1+비율×가동률).
+        // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
+        Map<String, Object> pg = buffById("purge");
+        if (pg != null && wantsBuff(pg, cl) && cl >= Json.num(pg, "critTakenOpen", Double.MAX_VALUE)) {
+            double boost = Json.num(pg, "critTaken", 0) / 100.0 * purgeUptime(eff);
+            if (boost != 0) add(eff, CRIT_DMG, eff.get(CRIT_DMG) * boost);
+        }
+
+        // 페이크 반격 발동 시 최종뎀+10% 버프가 3초간 소실(피격주기 기반). 입력엔 100% 가정이라 손실분 차감.
+        // 버프 유지 마스터리(buffKeepMasteryOpen) 습득 시 손실 없음. 피격주기=0이면 미적용.
+        if (hitInterval > 0) {
+            Map<String, Object> fk = buffById("fake");
+            if (fk != null && wantsBuff(fk, cl)) {
+                Map<String, Object> c = Json.asMap(fk.get("counter"));
+                if (c != null && cl < Json.num(c, "buffKeepMasteryOpen", Double.MAX_VALUE)) {
+                    double rate = (Json.num(c, "proc", 0) / 100.0) / hitInterval;   // 초당 반격 발동률
+                    double buffLost = Math.min(1.0, rate * Json.num(c, "buffLossSec", 0));
+                    double fd = Json.num(fk, "finalDmg", 0) * passiveScale(fk, cl, input)
+                            + levelSum(fk, "finalDmgMasteryByLevel", cl);
+                    add(eff, FINAL_DMG, -(fd * buffLost));
+                }
+            }
+        }
         return new Buffed(eff, 1 + skillAtkSum / 100.0);
+    }
+
+    /** 페이크 반격 1회 기대 데미지(공격력 버킷 제외). 피격 시 발동 → dpsBreakdown에서 피격주기로 빈도 곱함. */
+    public double fakeCounterPerHit(StatBlock eff, boolean boss) {
+        Map<String, Object> m = buffById("fake");
+        if (m == null || !wantsBuff(m, charLevel(eff))) return 0;
+        Map<String, Object> c = Json.asMap(m.get("counter"));
+        if (c == null) return 0;
+        int tier = (int) Json.num(m, "tier", 0);
+        int lv = model.totalSkillLevel(tier, charLevel(eff),
+                (int) eff.get(SKILL_LEVELS), (int) eff.get("SKILL_LEVEL_" + tier));
+        double coeff = SkillDpsModel.coefficient(Json.num(c, "base", 0),
+                data.growth(Json.str(c, "kind", "dealPassiveNoCd")), lv) / 100.0;
+        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff;
     }
 
     /** 버프 반영 1타 데미지 = perHit(주입 스탯) × 공격력 별도 버킷. */
@@ -232,12 +283,63 @@ public final class NightlordDps {
         for (Map<String, Object> m : data.statPassives()) {
             out.add(buffInfo(m, input, cl, "always"));   // 상시 패시브(숙련된 표창술 등)
         }
+        out.add(meyongInfo(input, cl));                  // 메이플 용사(표시 전용, 계산엔 이미 반영)
+        Map<String, Object> mn = markNightlordInfo(input, cl);
+        if (mn != null) out.add(mn);                     // 마크 오브 나이트로드(표시 전용)
         for (Skill s : data.skills()) {
             if (Json.str(s.raw, "dual", "").isEmpty()) continue;   // 딜+버프/디버프 스킬은 버프 뷰에도 표시(같은 id=상태 공유)
             out.add(dualBuffEntry(s, input, cl));
         }
         out.sort((a, b) -> Integer.compare((int) a.get("open"), (int) b.get("open")));
         return out;
+    }
+
+    /** 메이플 용사(메용) 표시 전용 항목 — 대상 스킬별 현재 최종뎀 보너스. 계산엔 이미 반영(perHit meyongFactor). */
+    private Map<String, Object> meyongInfo(StatBlock input, int cl) {
+        int open = data.meyongOpen(), tier = data.meyongTier();
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("id", "meyong");
+        e.put("name", "메이플 용사");
+        e.put("open", open);
+        e.put("group", "always");
+        e.put("locked", cl < open);
+        int levelDerived = model.baseSkillLevel(tier, cl);
+        int bonus = (int) input.get(SKILL_LEVELS) + (int) input.get("SKILL_LEVEL_" + tier);
+        e.put("skillLevel", bonus != 0 ? (levelDerived + " + " + bonus) : String.valueOf(levelDerived));
+        e.put("cooldown", "상시");
+        List<String> eff = new ArrayList<>();
+        for (Skill s : data.skills()) {
+            double listed = s.num("meyong", 0);
+            if (listed <= 0) continue;
+            double b = model.meyongFinalBonus(listed, cl, (int) input.get(SKILL_LEVELS), (int) input.get("SKILL_LEVEL_" + tier));
+            eff.add(s.name + " 최종 데미지 +" + num1(b) + "%");
+        }
+        e.put("effects", eff);
+        return e;
+    }
+
+    /** 마크 오브 나이트로드 표시 전용 항목 — 마크 대상 7→10·최종뎀 +N%. 계산엔 이미 반영(markPerHit nightlordOpen). */
+    private Map<String, Object> markNightlordInfo(StatBlock input, int cl) {
+        Skill mark = data.skill("markOfAssassin");
+        if (mark == null || !mark.raw.containsKey("nightlordOpen")) return null;
+        int open = (int) mark.num("nightlordOpen", 0), tier = data.meyongTier();   // 4차 패시브
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("id", "markNightlord");
+        e.put("name", "마크 오브 나이트로드");
+        e.put("open", open);
+        e.put("group", "always");
+        e.put("locked", cl < open);
+        int levelDerived = model.baseSkillLevel(tier, cl);
+        int bonus = (int) input.get(SKILL_LEVELS) + (int) input.get("SKILL_LEVEL_" + tier);
+        e.put("skillLevel", bonus != 0 ? (levelDerived + " + " + bonus) : String.valueOf(levelDerived));
+        e.put("cooldown", "상시");
+        int nlLv = model.totalSkillLevel(tier, cl, (int) input.get(SKILL_LEVELS), (int) input.get("SKILL_LEVEL_" + tier));
+        double finalN = mark.num("finalNightlord", 0) * (1 + 0.004 * nlLv);
+        List<String> eff = new ArrayList<>();
+        eff.add("마크 오브 어쌔신 최대 대상 " + (int) mark.num("targetsBase", 0) + " → " + (int) mark.num("targetsNightlord", 0));
+        eff.add("마크 오브 어쌔신 최종 데미지 +" + num1(finalN) + "%");
+        e.put("effects", eff);
+        return e;
     }
 
     /** 한 버프/패시브의 표시 항목. */
@@ -251,7 +353,12 @@ public final class NightlordDps {
         e.put("open", open);
         e.put("group", group);
         e.put("locked", cl < open);
-        e.put("effects", buffEffects(m, sc, cl));
+        List<String> effects = buffEffects(m, sc, cl);
+        // 이 버프를 source로 하는 디버프(받는 피해 증가)도 같은 툴팁에 표시(예: 퍼지 = 최종뎀 + 받피증).
+        String bid = Json.str(m, "id", "");
+        for (Map<String, Object> d : data.debuffs())
+            if (bid.equals(Json.str(d, "source", ""))) addEff(effects, "받는 피해", debuffRecvDmg(d, cl, input));
+        e.put("effects", effects);
         e.put("cooldown", buffCooldownText(m, input));
         if (tier > 0) {
             int levelDerived = model.baseSkillLevel(tier, cl);
@@ -266,8 +373,7 @@ public final class NightlordDps {
     /** 패시브/버프 스케일 = 고정이면 1, 아니면 kind(없으면 statPassive)의 상승비 × 총 스킬레벨. */
     private double passiveScale(Map<String, Object> m, int cl, StatBlock input) {
         if (Json.bool(m, "fixed", false)) return 1.0;
-        String kind = Json.str(m, "kind", "");
-        return scale(kind.isEmpty() ? "statPassive" : kind, (int) Json.num(m, "tier", 0), cl, input);
+        return buffValueScale(m, cl, input);
     }
 
     /** 효과(스케일·마스터리 반영) 항목 리스트 — 2개 이상이면 프론트에서 열로 나열. */
@@ -358,8 +464,35 @@ public final class NightlordDps {
             e.put("targets", targetsText(s, cl));
             out.add(e);
         }
+        // (휴면) 페이크 반격은 '안 맞기' 가정으로 미반영 → 딜 뷰에 표시 안 함. 부활 시 fakeDealEntry 호출 복구.
         out.sort((a, b) -> Integer.compare((int) a.get("open"), (int) b.get("open")));
         return out;
+    }
+
+    /** 페이크 반격의 딜 뷰 항목(피해량 표시). 버프 뷰(buffInfo)와 같은 id="fake"로 체크 동기화. */
+    private Map<String, Object> fakeDealEntry(Map<String, Object> m, StatBlock input, int cl) {
+        Map<String, Object> c = Json.asMap(m.get("counter"));
+        int tier = (int) Json.num(m, "tier", 0);
+        int open = (int) Json.num(m, "open", 0);
+        int lv = model.totalSkillLevel(tier, cl, (int) input.get(SKILL_LEVELS), (int) input.get("SKILL_LEVEL_" + tier));
+        double coeff = SkillDpsModel.coefficient(Json.num(c, "base", 0),
+                data.growth(Json.str(c, "kind", "dealPassiveNoCd")), lv);
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("id", Json.str(m, "id", ""));
+        e.put("name", Json.str(m, "name", ""));
+        e.put("open", open);
+        e.put("locked", cl < open);
+        int levelDerived = model.baseSkillLevel(tier, cl);
+        int bonus = (int) input.get(SKILL_LEVELS) + (int) input.get("SKILL_LEVEL_" + tier);
+        e.put("skillLevel", bonus != 0 ? (levelDerived + " + " + bonus) : String.valueOf(levelDerived));
+        e.put("cooldown", "피격 시 " + num1(Json.num(c, "proc", 0)) + "% 발동");
+        List<String> eff = new ArrayList<>();
+        eff.add("반격 피해 " + num1(coeff) + "%");
+        e.put("effects", eff);
+        e.put("group", "passive");
+        e.put("also", "버프");   // 딜+버프 뱃지(프론트는 'also' 필드 사용)
+        e.put("targets", null);
+        return e;
     }
 
     /** 딜 스킬 공통 표시 필드(id·이름·습득레벨·스킬레벨·쿨타임·dual). 효과·그룹은 호출자가 채운다. */
@@ -385,7 +518,7 @@ public final class NightlordDps {
         e.put("group", s.kind.equals("dealActive") ? "active" : "passive");
         List<String> eff = new ArrayList<>();
         for (Map<String, Object> d : data.debuffs())
-            if (s.id.equals(Json.str(d, "source", ""))) addEff(eff, "받는 피해", Json.num(d, "recvDmg", 0));
+            if (s.id.equals(Json.str(d, "source", ""))) addEff(eff, "받는 피해", debuffRecvDmg(d, cl, input));
         e.put("effects", eff);
         return e;
     }
@@ -500,6 +633,15 @@ public final class NightlordDps {
         return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0);
     }
 
+    /**
+     * 디버프 받는피해%(스킬레벨 스케일). 디버프에 "tier"가 있으면 buffValueScale(valueGrowth 또는 kind growth)로
+     * 스케일, 없으면 고정값. 퍼지 받피증=0.4%/레벨(valueGrowth), venom/mark는 미검증이라 고정.
+     */
+    private double debuffRecvDmg(Map<String, Object> d, int cl, StatBlock input) {
+        double base = Json.num(d, "recvDmg", 0);
+        return d.containsKey("tier") ? base * buffValueScale(d, cl, input) : base;
+    }
+
     /** 받는 피해 증가 디버프 배수 = 1 + Σ(받는피해% × 가동률). 같은 종류 합연산. */
     public double recvDmgFactor(StatBlock eff) {
         int cl = charLevel(eff);
@@ -508,7 +650,7 @@ public final class NightlordDps {
             if (cl < Json.num(d, "open", 0)) continue;
             String src = Json.str(d, "source", "");
             if (!src.isEmpty() && !skillOn(src)) continue;   // 출처 딜/버프 스킬을 끄면 그 디버프도 빠짐(동기화)
-            double recv = Json.num(d, "recvDmg", 0) / 100.0;
+            double recv = debuffRecvDmg(d, cl, eff) / 100.0;
             Object up = d.get("uptime");
             double u = (up instanceof Double) ? (Double) up
                     : "venom_u".equals(up) ? venomUptimeOf(eff)
@@ -638,8 +780,19 @@ public final class NightlordDps {
         // 베놈 도트(연속): 타수 아님.
         double venomDps = venomDotDps(eff, boss) * atkF;
 
+        // 페이크 반격(피격 시 발동): 발동률 = proc/피격주기(초당). 피격주기=0이면 0.
+        double counterDps = 0;
+        if (hitInterval > 0) {
+            Map<String, Object> fk = buffById("fake");
+            Map<String, Object> c = (fk == null) ? null : Json.asMap(fk.get("counter"));
+            if (c != null && wantsBuff(fk, cl)) {
+                double rate = (Json.num(c, "proc", 0) / 100.0) / hitInterval;
+                counterDps = fakeCounterPerHit(eff, boss) * atkF * rate;
+            }
+        }
+
         double recv = recvDmgFactor(eff);
-        double total = (baseDps + procDps + venomDps) * recv;
+        double total = (baseDps + procDps + venomDps + counterDps) * recv;
         double basicOnly = basicDps * recv;
         return new double[]{basicOnly, total - basicOnly, total};   // [평타만, 스킬만, 전체]
     }
@@ -656,10 +809,22 @@ public final class NightlordDps {
         return after / before - 1.0;
     }
 
-    /** 버프/스탯패시브 효과의 스킬레벨 스케일 = 1 + 상승비%/100 × 총 스킬레벨. */
-    private double scale(String kind, int tier, int charLevel, StatBlock input) {
+    /**
+     * 버프/패시브 '효과값'(최종뎀·크리·크뎀·공속·공퍼 등)의 스킬레벨 스케일 = 1 + 상승비%/100 × 총 스킬레벨.
+     *
+     * <p>상승비는 <b>기본적으로 스킬 kind growth</b>를 쓴다(다크 사이트=statActive 0.4 등 인게임 일치).
+     * 다만 효과값 상승비가 kind와 다른 스킬이 있어, 데이터의 <b>"valueGrowth"</b>로 스킬별 개별 지정한다.
+     * (보편 규칙 아님 — 검산으로 스킬별 확정. 예: 퍼지 에어리어는 statActive지만 효과값은 0.3%/레벨,
+     * 인게임 검증 2026-06-25 → valueGrowth=0.3.) 데미지 계수는 별도로 coeffFrac/coefficient에서 kind growth 사용.
+     */
+    private double buffValueScale(Map<String, Object> m, int charLevel, StatBlock input) {
+        int tier = (int) Json.num(m, "tier", 0);
         int lv = model.totalSkillLevel(tier, charLevel, (int) input.get(SKILL_LEVELS), (int) input.get("SKILL_LEVEL_" + tier));
-        return 1 + data.growth(kind) / 100.0 * lv;
+        String kind = Json.str(m, "kind", "");
+        double g = m.containsKey("valueGrowth")
+                ? Json.num(m, "valueGrowth", 0)
+                : data.growth(kind.isEmpty() ? "statPassive" : kind);
+        return 1 + g / 100.0 * lv;
     }
 
     /** 버프 가동률: triggerCasts 있으면 발동형, 아니면 쿨 기반. 지속 마스터리·버프지속% 레벨 게이팅. */

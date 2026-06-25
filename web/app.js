@@ -27,10 +27,12 @@ let buffPresets = loadJSON(BUFFP_KEY, null); // {active, presets:{name:{job, buf
 // 버프 작업 상태(활성 프리셋의 현재 편집본). myBuffs=null이면 "전부 체크"(=현행/하위호환), []=전부 끔.
 let myBuffJob = 1;
 let myBuffs = null;
+let myHitInterval = 0;   // 피격 주기(초). 페이크 반격·버프손실 계산용. 0=안 맞음(미적용). 스킬 프리셋에 저장.
 if (buffPresets && buffPresets.presets && buffPresets.presets[buffPresets.active]) {
   const _bp = buffPresets.presets[buffPresets.active];
   myBuffJob = _bp.job || 0;
   myBuffs = Array.isArray(_bp.buffs) ? _bp.buffs : null;
+  myHitInterval = _bp.hitInterval || 0;
 }
 let buffDirty = false;
 // 동료(메인): 프리셋 {active, presets:{name:{companionId,grade,level,ratio}}}. companions=메인 동료 목록(bootstrap).
@@ -624,7 +626,7 @@ async function calcDamage() {
   if (!refreshing) $("status").textContent = "계산 중…";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv, buffs: activeBuffs() });
+      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval });
       showDamage(data);
       saveJSON(CACHE_DMG, data);   // 직전 데미지(상세 포함, 다음 로드 즉시 표시용)
       damageShown = true;
@@ -655,7 +657,7 @@ async function calcEvaluate() {
       part: $("ev-part").value, grade: $("ev-grade").value,
       slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
       bossMode: $("ev-boss").value === "true",
-      stats: collectStats(), conversions: myConv, buffs: activeBuffs(),
+      stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
     });
     evResults = data.results;
     renderEval();
@@ -842,7 +844,7 @@ async function runRecommend(useSliderMax) {
   try {
     const data = await postJson("/api/recommend", {
       stats: collectStats(), conversions: myConv, bossMode: $("rc-boss").value === "true",
-      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(),
+      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       sliderValue: parseInt($("rc-slider").value, 10) || 0,
       sortKey: parseInt($("rc-sort").value, 10) || 0,
       upper: $("rc-upper").checked, lower: $("rc-lower").checked,
@@ -966,7 +968,7 @@ async function runOptCompare() {
     const data = await postJson("/api/optcompare", {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
       right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
-      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true", buffs: activeBuffs(),
+      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true", buffs: activeBuffs(), hitInterval: myHitInterval,
     });
     $("oc-l-result").innerHTML = ocResultHtml(data.left);
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
@@ -1044,7 +1046,7 @@ async function runCompare() {
     }
     const data = await postJson("/api/compare", {
       stats: collectStats(), conversions: myConv, bossMode: $("cmp-boss").value === "true",
-      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(),
+      cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
       rightGrade: $("cmp-right-grade").value, rightOpts,
     });
@@ -1335,8 +1337,10 @@ function bpApply(name) {
   if (!p) return;
   myBuffJob = p.job || 0;
   myBuffs = Array.isArray(p.buffs) ? p.buffs.slice() : null;
+  myHitInterval = p.hitInterval || 0;
   buffDirty = false;
   $("bp-job").value = String(myBuffJob);
+  if ($("hit-interval")) $("hit-interval").value = myHitInterval;
   if (currentSub === "buff") renderBuffs();
   recalcActivePanel();   // 스킬 프리셋 바뀌면 보이는 계산까지 즉시 갱신
 }
@@ -1360,6 +1364,7 @@ let skillView = "deal";   // "deal"(딜 스킬) | "buff"(버프 스킬)
 async function renderBuffs() {
   if (!buffPresets) initBuffPresets();
   $("bp-job").value = String(myBuffJob);
+  if ($("hit-interval")) $("hit-interval").value = myHitInterval;
   syncSkillViewButtons();
   if (myBuffJob !== 1) {   // DPS 환산 모델 있는 직업만(현재 나이트로드). 공용 등은 준비 중.
     const soon = '<div class="buff-soon"><div class="soon-icon">🚧</div>'
@@ -1516,14 +1521,14 @@ $("bp-sel").addEventListener("change", () => {
   buffPresets.active = $("bp-sel").value; saveJSON(BUFFP_KEY, buffPresets); bpApply(buffPresets.active);
 });
 $("bp-save").addEventListener("click", () => {
-  buffPresets.presets[buffPresets.active] = { job: myBuffJob, buffs: myBuffs };
+  buffPresets.presets[buffPresets.active] = { job: myBuffJob, buffs: myBuffs, hitInterval: myHitInterval };
   saveJSON(BUFFP_KEY, buffPresets); buffDirty = false;
   toast(`'${buffPresets.active}' 스킬 프리셋 저장됨`);
 });
 $("bp-new").addEventListener("click", () => {
   const name = (prompt("새 스킬 프리셋 이름") || "").trim();
   if (!name || buffPresets.presets[name]) return;
-  buffPresets.presets[name] = { job: myBuffJob, buffs: myBuffs };
+  buffPresets.presets[name] = { job: myBuffJob, buffs: myBuffs, hitInterval: myHitInterval };
   buffPresets.active = name; saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
   buffDirty = false;
 });
@@ -1534,6 +1539,7 @@ $("bp-del").addEventListener("click", () => {
   buffPresets.active = Object.keys(buffPresets.presets)[0];
   saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets); bpApply(buffPresets.active);
 });
+// 피격 주기 입력은 제거됨(항상 '안 맞기'=최고 효율 가정 → myHitInterval=0). 반격 계산코드는 백엔드에 휴면 상태로 둠.
 $("bp-rename").addEventListener("click", () => {
   if (renamePreset(buffPresets) == null) return;
   saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
@@ -1759,7 +1765,9 @@ async function applyBundle(text, merge) {
   if (buffPresets && buffPresets.presets[buffPresets.active]) {
     const bp = buffPresets.presets[buffPresets.active];
     myBuffJob = bp.job || 0; myBuffs = Array.isArray(bp.buffs) ? bp.buffs.slice() : null; buffDirty = false;
+    myHitInterval = bp.hitInterval || 0;
     fillPresetSel($("bp-sel"), buffPresets); $("bp-job").value = String(myBuffJob);
+    if ($("hit-interval")) $("hit-interval").value = myHitInterval;
     if (currentSub === "buff") renderBuffs();
   }
   if (allyPresets) { fillPresetSel($("ap-sel"), allyPresets); allyDirty = false; if (currentSub === "ally") renderAlly(); }
