@@ -22,6 +22,12 @@ public final class WebMain {
             return;
         }
 
+        // 일회성(하루 1회 스케줄드): 유저 프리셋 통계 스냅샷 덤프. 사용: java ... WebMain --snapshot [dataDir]
+        if (args.length > 0 && args[0].equals("--snapshot")) {
+            StatsSnapshot.run(Path.of(args.length > 1 ? args[1] : "data"));
+            return;
+        }
+
         int port = args.length > 0 ? Integer.parseInt(args[0]) : 8080;
         Path dataDir = Path.of(args.length > 1 ? args[1] : "data");
         Path webDir = Path.of(args.length > 2 ? args[2] : "web");
