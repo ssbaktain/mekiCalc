@@ -24,8 +24,11 @@ public final class EventLog {
     private final Object lock = new Object();
 
     public EventLog(Path dataDir) {
-        this.accessFile = dataDir.resolve("access.jsonl");
-        this.errorFile = dataDir.resolve("error.jsonl");
+        // data 의 형제 폴더 logs/ 에 모은다(미니PC 콘솔 롤링 로그 server-*.log 와 같은 위치).
+        // 상대경로 "data" 여도 resolveSibling("logs") → "logs" 로 안전.
+        Path logDir = dataDir.resolveSibling("logs");
+        this.accessFile = logDir.resolve("access.jsonl");
+        this.errorFile = logDir.resolve("error.jsonl");
     }
 
     /** API 요청 1건: 시각·메서드·경로·상태코드·처리시간(ms)·유저(이메일)·클라이언트 IP. */
@@ -54,6 +57,7 @@ public final class EventLog {
     private void append(Path f, String line) {
         synchronized (lock) {
             try {
+                Files.createDirectories(f.getParent());   // logs/ 없으면 생성(멱등)
                 Files.writeString(f, line, StandardCharsets.UTF_8,
                         StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (IOException e) {

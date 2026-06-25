@@ -60,6 +60,4 @@ dist_graph.png
 model_vs_empirical.png
 # 동료 공격력 계승 비율 수집 데이터(서버 누적)
 data/companion_ratios.jsonl
-# 운영 로그(접속/에러 — 이메일·IP 포함, 로컬 보관)
-data/access.jsonl
-data/error.jsonl
+# 운영 로그(접속/에러 access.jsonl·error.jsonl)는 logs/ 에 모이며 위 'logs/' 규칙으로 이미 제외됨
