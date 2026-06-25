@@ -36,13 +36,18 @@ public final class GameContent {
     public final SkillData skillData;
     /** 메인 동료 데이터(companions.json의 companions 배열, 원본 맵). 없으면 빈 목록(동료 탭 "준비 중"). */
     public final List<Map<String, Object>> companions;
+    /** companions.json 전체 맵(소환쿨/유지·계승비율·등급평타 등 상수 포함). DPS 계산용. */
+    public final Map<String, Object> companionRoot;
+    /** monster_defense.json 전체 맵(챕터별 스테이지 일반몹/보스 방어력). 대상별 절대 데미지용. 없으면 빈 맵. */
+    public final Map<String, Object> monsterDefense;
     /** 데이터 폴더 경로(개발 환경 개인 데이터 불러오기용 — 배포 시 개인 파일 없으면 빈 값). */
     public final Path dataDir;
 
     private GameContent(Map<String, StatDef> stats, Profile profile,
                         Map<String, Double> currency, List<StatSource> sources,
                         EquipmentPotential equip, SkillData skillData,
-                        List<Map<String, Object>> companions, Path dataDir) {
+                        List<Map<String, Object>> companions, Map<String, Object> companionRoot,
+                        Map<String, Object> monsterDefense, Path dataDir) {
         this.stats = stats;
         this.profile = profile;
         this.currency = currency;
@@ -50,6 +55,8 @@ public final class GameContent {
         this.equip = equip;
         this.skillData = skillData;
         this.companions = companions;
+        this.companionRoot = companionRoot;
+        this.monsterDefense = monsterDefense;
         this.dataDir = dataDir;
     }
 
@@ -63,23 +70,35 @@ public final class GameContent {
         } catch (Exception e) {
             skillData = null;   // 스킬 데이터 없거나 손상 → 나이트로드는 공용 모델로 폴백
         }
+        Map<String, Object> compRoot = loadCompanionRoot(dataDir);
+        List<Map<String, Object>> comps = new ArrayList<>();
+        Object arr = compRoot.get("companions");
+        if (arr != null) for (Object o : Json.asList(arr)) comps.add(Json.asMap(o));
+        Map<String, Object> monDef = loadJsonMap(dataDir, "monster_defense.json");
         return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData,
-                loadCompanions(dataDir), dataDir);
+                comps, compRoot, monDef, dataDir);
     }
 
-    /** companions.json의 companions 배열을 원본 맵 리스트로 읽음. 없거나 손상 시 빈 목록. */
-    private static List<Map<String, Object>> loadCompanions(Path dataDir) {
-        List<Map<String, Object>> out = new ArrayList<>();
+    /** dataDir의 JSON 파일을 맵으로 읽는다. 없거나 손상 시 빈 맵. */
+    private static Map<String, Object> loadJsonMap(Path dataDir, String name) {
+        try {
+            Path f = dataDir.resolve(name);
+            if (Files.exists(f)) return Json.asMap(Json.parse(Files.readString(f)));
+        } catch (Exception e) {
+            System.err.println(name + " 읽기 실패(빈 맵): " + e);
+        }
+        return new java.util.LinkedHashMap<>();
+    }
+
+    /** companions.json 전체 맵(상수 + companions 배열). 없거나 손상 시 빈 맵. */
+    private static Map<String, Object> loadCompanionRoot(Path dataDir) {
         try {
             Path f = dataDir.resolve("companions.json");
-            if (Files.exists(f)) {
-                Object arr = Json.asMap(Json.parse(Files.readString(f))).get("companions");
-                if (arr != null) for (Object o : Json.asList(arr)) out.add(Json.asMap(o));
-            }
+            if (Files.exists(f)) return Json.asMap(Json.parse(Files.readString(f)));
         } catch (Exception e) {
-            System.err.println("companions.json 읽기 실패(빈 목록): " + e);
+            System.err.println("companions.json 읽기 실패(빈 맵): " + e);
         }
-        return out;
+        return new java.util.LinkedHashMap<>();
     }
 
     /**

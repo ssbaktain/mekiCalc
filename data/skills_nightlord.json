@@ -83,7 +83,7 @@
     { "id": "fake", "name": "페이크", "kind": "statPassive", "tier": 4, "open": 115,
       "finalDmg": 10, "finalDmgMasteryByLevel": { "118": 10 }, "always": true, "dual": "딜",
       "counter": { "base": 2500, "kind": "dealPassiveNoCd", "proc": 20, "buffLossSec": 3, "buffKeepMasteryOpen": 118 },
-      "_comment": "피격 시 20% 반격 2500%(딜패시브 0.4 스케일 — 검증 전). 반격 발동 시 3초간 최종뎀+10% 소실 → 전역 입력 '피격 주기(초)'로 발동빈도(=proc/피격주기) 산정. buffKeepMasteryOpen=118(페이크-회피 마스터리: 발동해도 최종뎀 버프 유지). finalDmgMasteryByLevel{118:10}=같은 마스터리의 최종뎀+10%p. 피격주기=0이면 반격·손실 모두 미적용." },
+      "_comment": "피격 시 20% 반격 2500%(딜패시브 0.4 스케일 — 유저 검증 완료). 반격 발동 시 3초간 최종뎀+10% 소실 → 전역 입력 '피격 주기(초)'로 발동빈도(=proc/피격주기) 산정. buffKeepMasteryOpen=118(페이크-회피 마스터리: 발동해도 최종뎀 버프 유지). finalDmgMasteryByLevel{118:10}=같은 마스터리의 최종뎀+10%p. 피격주기=0이면 반격·손실 모두 미적용." },
 
     { "id": "darkSerenity", "name": "다크 세레니티", "kind": "statPassive", "tier": 4, "open": 125,
       "finalDmg": 15, "minMult": 20, "always": true }

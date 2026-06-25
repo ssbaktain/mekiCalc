@@ -56,8 +56,11 @@ public final class WebServer {
 
         http.createContext("/api/damage", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
+            Object cid = req.get("companionId"), gr = req.get("grade");
             return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
-                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    cid == null ? null : cid.toString(), gr == null ? null : gr.toString(),
+                    (int) num(req, "level", 0), num(req, "ratio", 0));
         }));
 
         http.createContext("/api/buffs", json("POST", ex -> {
@@ -161,12 +164,21 @@ public final class WebServer {
             out.put("meta", service.meta());
             out.put("mydata", service.myData());
             out.put("companions", service.companions());
+            out.put("monsterDefense", service.monsterDefense());
             out.put("me", meInfo(sessionFrom(ex)));
             return out;
         }));
 
         // 동료 공격력 계승 비율 데이터 수집(저장 시). 추후 비율 공식 모델링용.
         http.createContext("/api/ally-ratio", json("POST", ex -> service.recordAllyRatio(readJsonBody(ex))));
+
+        // 메인 동료 DPS 기여 미리보기(Stage 1: 계승·가동률·동료 평타).
+        http.createContext("/api/companion-dps", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.companionPreview(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+                    bool(req, "bossMode", true), str(req, "companionId"), str(req, "grade"),
+                    (int) num(req, "level", 1), num(req, "ratio", 0), toStrSet(req.get("buffs")));
+        }));
 
         // 유저 프리셋 저장/로드(로그인 필요). 본문은 불투명 번들 JSON(.mkbak 형식).
         http.createContext("/api/presets", ex -> {

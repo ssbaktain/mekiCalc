@@ -64,3 +64,8 @@ model_vs_empirical.png
 # 동료 공격력 계승 비율 수집 데이터(서버 누적)
 data/companion_ratios.jsonl
 # 운영 로그(접속/에러 access.jsonl·error.jsonl)는 logs/ 에 모이며 위 'logs/' 규칙으로 이미 제외됨
+
+### 클뜯/리버싱 산출물 (대용량·저작권 — 커밋·배포 제외) ###
+textAsset/
+ally.txt
+il2cpp_dump/

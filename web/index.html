@@ -63,9 +63,18 @@
               <tr><th>1타 평균딜</th><td id="d-avg-n">—</td><td id="d-avg-b">—</td></tr>
               <tr><th>평타 DPS</th><td id="d-dpsb-n">—</td><td id="d-dpsb-b">—</td></tr>
               <tr><th>스킬 DPS</th><td id="d-dpss-n">—</td><td id="d-dpss-b">—</td></tr>
+              <tr><th>동료 DPS<br><span class="th-sub">90초 사이클</span></th><td id="d-dpsc-n">—</td><td id="d-dpsc-b">—</td></tr>
               <tr><th>전체 DPS</th><td id="d-dpst-n">—</td><td id="d-dpst-b">—</td></tr>
             </tbody>
           </table>
+        </div>
+        <div id="target-box" class="target-box" hidden>
+          <div class="target-ctrls">
+            <span class="target-title">대상별 절대 데미지</span>
+            <label class="ctl">챕터<select id="tg-chapter"></select></label>
+            <label class="ctl">대상<select id="tg-stage"></select></label>
+          </div>
+          <div id="target-result" class="target-result"></div>
         </div>
         <p id="status" class="status"></p>
       </div>

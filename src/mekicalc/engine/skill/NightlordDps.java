@@ -42,6 +42,8 @@ public final class NightlordDps {
     private final Set<String> activeBuffs;
     /** 피격 주기(초). 페이크 반격(피격 시 발동) 빈도·버프손실 산정용. 0이면 반격·손실 미적용. */
     private final double hitInterval;
+    /** 외부(동료) 스킬 공퍼% — 플레이어 스킬 공퍼 버킷(skillAtkSum)에 합산되어 한 번만 곱연산된다. 0이면 미적용. */
+    private double externalAtkPct = 0;
 
     public NightlordDps(DamageModel dm, SkillDpsModel model) {
         this(dm, model, null, 0);
@@ -138,7 +140,13 @@ public final class NightlordDps {
      * 공격력 별도 버킷(숙련된 표창술 + 다크사이트 등 스킬 공퍼)을 계산한다.
      * 상시 스탯 패시브(공격력% 제외)는 이미 입력에 포함되어 건드리지 않는다.
      */
-    public Buffed buffed(StatBlock input) {
+    public Buffed buffed(StatBlock input) { return buffed(input, false); }
+
+    /**
+     * fullBuff=true면 모든 사용 버프를 <b>가동률 1(풀버프)</b>로 적용한다(동료 계승 기준: 풀버프 상태에서 소환).
+     * 장기 평균(false)과 달리 소환 순간의 최대 스냅샷을 만든다. 페이크 반격 버프손실도 미적용(풀버프 가정).
+     */
+    public Buffed buffed(StatBlock input, boolean fullBuff) {
         int cl = charLevel(input);
         double atkSpeedBase = input.get(ATK_SPEED);   // 순환 방지: 가동률은 입력 공속 기준
         double buffDur = input.get(BUFF_DURATION);    // 버프 지속시간 증가% → 가동률↑
@@ -168,7 +176,7 @@ public final class NightlordDps {
             boolean fixed = Json.bool(m, "fixed", false);
             // 버프 효과값 스케일: 기본 kind growth + 스킬별 valueGrowth override(buffValueScale).
             double scale = fixed ? 1.0 : buffValueScale(m, cl, input);
-            double u = buffUptime(m, atkSpeedBase, buffDur, cl);
+            double u = fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl);
 
             double atkPct = Json.num(m, "atkPct", 0);
             if (atkPct != 0) skillAtkSum += atkPct * scale * u;
@@ -186,13 +194,13 @@ public final class NightlordDps {
         // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
         Map<String, Object> pg = buffById("purge");
         if (pg != null && wantsBuff(pg, cl) && cl >= Json.num(pg, "critTakenOpen", Double.MAX_VALUE)) {
-            double boost = Json.num(pg, "critTaken", 0) / 100.0 * purgeUptime(eff);
+            double boost = Json.num(pg, "critTaken", 0) / 100.0 * (fullBuff ? 1.0 : purgeUptime(eff));
             if (boost != 0) add(eff, CRIT_DMG, eff.get(CRIT_DMG) * boost);
         }
 
         // 페이크 반격 발동 시 최종뎀+10% 버프가 3초간 소실(피격주기 기반). 입력엔 100% 가정이라 손실분 차감.
         // 버프 유지 마스터리(buffKeepMasteryOpen) 습득 시 손실 없음. 피격주기=0이면 미적용.
-        if (hitInterval > 0) {
+        if (!fullBuff && hitInterval > 0) {
             Map<String, Object> fk = buffById("fake");
             if (fk != null && wantsBuff(fk, cl)) {
                 Map<String, Object> c = Json.asMap(fk.get("counter"));
@@ -205,7 +213,26 @@ public final class NightlordDps {
                 }
             }
         }
-        return new Buffed(eff, 1 + skillAtkSum / 100.0);
+        return new Buffed(eff, 1 + (skillAtkSum + externalAtkPct) / 100.0);   // 동료 스킬 공퍼도 같은 합 버킷에 합산
+    }
+
+    /** 외부(동료) 스킬 공퍼%를 설정한다(플레이어 스킬 공퍼와 합산). 동료 소환 중 플레이어 DPS 계산용. */
+    public void setExternalAtkPct(double pct) { this.externalAtkPct = pct; }
+
+    /**
+     * 동료 계승 기준 풀버프 스탯 스냅샷. 모든 사용 버프를 가동률 1로 적용하고, 공격력 별도 버킷(스킬 공퍼)을
+     * 공격력(ATK_FLAT)에 합산해 단일 StatBlock으로 만든다(ATK_PCT는 프리셋 값 유지 → 계승식에서 곱).
+     */
+    public StatBlock fullBuffStats(StatBlock input) {
+        Buffed bf = buffed(input, true);
+        StatBlock s = new StatBlock(bf.stats);
+        s.set("ATK_FLAT", s.get("ATK_FLAT") * bf.skillAtkFactor);   // 스킬 공퍼 버킷을 공격력에 흡수
+        return s;
+    }
+
+    /** 플레이어가 적에게 거는 받피증 디버프 합(분수, 가동률 평균). 동료도 같은 적을 때리므로 공유. recvDmgFactor−1. */
+    public double playerRecvBonus(StatBlock eff) {
+        return recvDmgFactor(eff) - 1.0;
     }
 
     /** 페이크 반격 1회 기대 데미지(공격력 버킷 제외). 피격 시 발동 → dpsBreakdown에서 피격주기로 빈도 곱함. */

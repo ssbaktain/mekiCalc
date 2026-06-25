@@ -252,6 +252,29 @@ main {
 .soon-icon { font-size: 40px; margin-bottom: 10px; }
 .soon-card h2 { color: var(--accent); }
 
+.th-sub { font-size: 11px; font-weight: 400; color: var(--muted); }
+
+/* 예상 데미지: 대상별 절대 데미지 */
+.target-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.target-ctrls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.target-title { font-size: 13px; font-weight: 700; color: var(--accent); }
+.target-result { margin-top: 8px; }
+.target-result .tg-line { font-size: 12px; color: var(--muted); }
+.target-result .tg-main { font-size: 15px; margin-top: 3px; }
+.target-result .tg-main b { color: var(--accent); }
+.target-result .ku { font-size: 12px; color: var(--muted); }
+
+/* 동료 탭: 결과 */
+.ally-result { margin-top: 14px; }
+.ally-sum { font-size: 16px; font-weight: 700; }
+.ally-sum b { color: var(--accent); }
+.ally-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.ally-detail { margin-top: 10px; }
+.ally-detail summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.ally-detail .buff-tip-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.ally-detail .buff-tip-row > span { color: var(--muted); }
+.ally-detail .buff-tip-row > b { color: var(--text); }
+
 /* 스킬 탭: 피격 주기 입력 */
 .hit-interval-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .hit-interval-row label { font-size: 14px; font-weight: 700; color: var(--text); }

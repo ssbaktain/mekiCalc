@@ -18,6 +18,7 @@ import mekicalc.engine.DealModel;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.PotentialDraw;
+import mekicalc.engine.skill.CompanionDps;
 import mekicalc.engine.skill.NightlordDealModel;
 import mekicalc.engine.skill.NightlordDps;
 import mekicalc.engine.skill.SkillDpsModel;
@@ -210,8 +211,20 @@ public final class CalcService {
     // ──────────────────── 예상 데미지 ────────────────────
 
     public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv, Set<String> buffs, double hitInterval) {
+        return previewDamage(stats, customConv, buffs, hitInterval, null, null, 0, 0);
+    }
+
+    /**
+     * 예상 데미지(헤드라인 1타 + DPS 분해). 동료 선택(companionId 등)이 주어지면 동료의 <b>90초 한 사이클</b> 평균 DPS를
+     * 분해에 추가하고 전체에 합산한다(소환 유지/소환쿨 반영). 동료 미선택/무효 시 종전과 동일.
+     */
+    public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv, Set<String> buffs, double hitInterval,
+                                             String companionId, String grade, int companionLevel, double inheritRatio) {
         StatBlock b = block(stats);
         DamageModel m = content.damageModel(customConv);
+        CompanionDps comp = companionId == null ? null
+                : new CompanionDps(m, content.companionRoot, companionId, grade, companionLevel, inheritRatio);
+        if (comp != null && !comp.valid()) comp = null;
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
@@ -220,11 +233,23 @@ public final class CalcService {
             try {
                 NightlordDps nd = new NightlordDps(m, new SkillDpsModel(content.skillData), buffs, hitInterval);
                 double[] n = nd.basicHitStats(b, false), bo = nd.basicHitStats(b, true);
-                out.put("normal", safe(n[2]));   // 헤드라인 = 1타 평균딜
+                out.put("normal", safe(n[2]));   // 헤드라인 = 1타 평균딜(플레이어 본인)
                 out.put("boss", safe(bo[2]));
+                // 동료는 풀버프 스냅샷 계승 + 플레이어 받피증 공유(같은 적 타격).
+                StatBlock inh = b;
+                double uptime = 0, Rp = 1;
+                if (comp != null) {
+                    inh = nd.fullBuffStats(b);
+                    comp.playerRecvBonus(nd.playerRecvBonus(nd.buffed(b).stats));
+                    uptime = comp.summonUptime(b);
+                    Rp = 1 + nd.playerRecvBonus(nd.buffed(b).stats);
+                }
+                // 플레이어 DPS는 동료 버프/받피증을 소환 가동률만큼 블렌딩(소환 중=버프받음, 평상시=본인).
+                double[] pn = blendPlayer(nd, b, false, comp, uptime, Rp);
+                double[] pb = blendPlayer(nd, b, true, comp, uptime, Rp);
                 // 카드 DPS는 1마리(단일 대상) 기준 — 일반몹도 대상수 미반영(평타 1타 표기와 일관). 추천/평가는 대상수 반영(2-arg) 유지.
-                detail.put("normal", hitMap(n[0], n[1], n[2], dpsMap(nd.dpsBreakdown(b, false, true))));
-                detail.put("boss", hitMap(bo[0], bo[1], bo[2], dpsMap(nd.dpsBreakdown(b, true, true))));
+                detail.put("normal", hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false)));
+                detail.put("boss", hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true)));
                 out.put("detail", detail);
                 return out;
             } catch (RuntimeException ex) {
@@ -252,12 +277,38 @@ public final class CalcService {
         return m;
     }
 
-    /** {평타, 스킬, 전체} DPS 맵. bd = NightlordDps.dpsBreakdown 결과 [평타만, 스킬만, 전체]. */
-    private static Map<String, Object> dpsMap(double[] bd) {
+    /**
+     * 플레이어 [평타, 스킬, 전체] DPS — 동료가 있으면 소환 가동률만큼 동료 버프/받피증을 블렌딩.
+     * 소환 중 = 동료 버프(target player/both) 적용 + 동료 받피증 공유, 평상시 = 본인. comp=null이면 본인 그대로.
+     */
+    private static double[] blendPlayer(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp) {
+        double[] base = nd.dpsBreakdown(b, boss, true);
+        if (comp == null) return base;
+        Map<String, Object> gift = comp.playerGift(b, boss);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> giftBuffs = (Map<String, Object>) gift.get("buffs");
+        // 동료 공격력%는 별도 곱버킷이 아니라 플레이어 스킬 공퍼와 '합산 후 한 번 곱'(스킬 공퍼끼리 합연산) → skillAtkSum에 주입.
+        double compAtkPct = giftBuffs.containsKey("ATK_PCT") ? ((Number) giftBuffs.remove("ATK_PCT")).doubleValue() : 0;
+        StatBlock summonInput = new StatBlock(b);
+        CompanionDps.applyGift(summonInput, giftBuffs);              // 공퍼 외 버프(최종뎀·크리·최대뎀배율 등) 적용
+        nd.setExternalAtkPct(compAtkPct);                           // 동료 공퍼를 플레이어 스킬 공퍼 합에 합산
+        double[] summon = nd.dpsBreakdown(summonInput, boss, true);
+        nd.setExternalAtkPct(0);                                    // 원복(평상시 계산 오염 방지)
+        double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
+        double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;          // 동료 받피증을 플레이어 받피증 위에 합연산
+        double[] out = new double[3];
+        for (int i = 0; i < 3; i++) out[i] = base[i] * (1 - uptime) + summon[i] * recvScale * uptime;
+        return out;
+    }
+
+    /** {평타, 스킬, 동료, 전체} DPS 맵. bd = 블렌딩된 플레이어 [평타만, 스킬만, 전체]. comp 있으면 90초 사이클 동료 DPS 합산. */
+    private static Map<String, Object> dpsMap(double[] bd, CompanionDps comp, StatBlock player, boolean boss) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("basic", safe(bd[0]));
         m.put("skill", safe(bd[1]));
-        m.put("total", safe(bd[2]));
+        double companion = (comp == null) ? 0 : comp.cycleBreakdown(player, boss)[2];
+        m.put("companion", comp == null ? null : safe(companion));   // 동료 90초 사이클 평균(미선택=null)
+        m.put("total", safe(bd[2] + companion));
         return m;
     }
 
@@ -294,9 +345,63 @@ public final class CalcService {
 
     // ──────────────────── 동료 ────────────────────
 
-    /** 메인 동료 목록(원본) — 동료 탭 드롭다운용. companions.json 비었으면 빈 목록. */
+    /** 몬스터 방어력 데이터(챕터별 스테이지 일반몹/보스). 대상별 절대 데미지용. */
+    public Map<String, Object> monsterDefense() {
+        return content.monsterDefense;
+    }
+
+    /** 메인 동료 목록(원본) — 동료 탭 드롭다운용. normalOnly(지망생)은 거의 안 쓰여 목록에서 제외(데이터는 보존). */
     public List<Map<String, Object>> companions() {
-        return content.companions;
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> c : content.companions) {
+            Object no = c.get("normalOnly");
+            if (no instanceof Boolean && (Boolean) no) continue;   // 지망생 제외(목록만)
+            out.add(c);
+        }
+        return out;
+    }
+
+    /**
+     * 메인 동료 DPS 기여 미리보기(Stage 1: 계승·소환 가동률·동료 평타). 계승비율은 입력값(ratio) 사용(A안).
+     * @return {valid, ratioUsed, refRatio(참고), uptime, basicDps}
+     */
+    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+                                                String companionId, String grade, int level, double ratio) {
+        return companionPreview(stats, conv, boss, companionId, grade, level, ratio, null);
+    }
+
+    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+                                                String companionId, String grade, int level, double ratio, Set<String> buffs) {
+        StatBlock raw = block(stats);
+        DamageModel dm = content.damageModel(conv);
+        // 동료 계승 기준 = 풀버프 스냅샷 + 플레이어 받피증(나이트로드 모델 있을 때). 그 외 직업은 원본 스탯·받피증 0.
+        StatBlock b = raw;
+        double recvBonus = 0;
+        if ((int) raw.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+            try {
+                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs, 0);
+                b = nd.fullBuffStats(raw);
+                recvBonus = nd.playerRecvBonus(nd.buffed(raw).stats);
+            } catch (RuntimeException ex) { b = raw; recvBonus = 0; }
+        }
+        CompanionDps cd = new CompanionDps(dm, content.companionRoot, companionId, grade, level, ratio).playerRecvBonus(recvBonus);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("valid", cd.valid());
+        if (!cd.valid()) return out;
+        double[] bd = cd.dpsBreakdown(b, boss);   // 30초 시간진행 시뮬레이션 [평타, 스킬, 합](받피증 포함)
+        out.put("ratioUsed", ratio);
+        out.put("refRatio", cd.refRatioPct(b));
+        out.put("uptime", cd.summonUptime(b));
+        out.put("basicDps", safe(bd[0]));
+        out.put("skillDps", safe(bd[1]));
+        out.put("ownDps", safe(bd[2]));
+        double[] cyc = cd.cycleBreakdown(b, boss);   // 90초 한 사이클 평균(소환쿨 고려) — 예상 데미지 통합 기준
+        out.put("cycleBasicDps", safe(cyc[0]));
+        out.put("cycleSkillDps", safe(cyc[1]));
+        out.put("cycleDps", safe(cyc[2]));
+        out.put("detail", cd.detail(b, boss));   // 항목별 DPS(평타·스킬별) — 검증용
+        out.put("statsView", cd.statsView(b, boss));   // 동료 유효 스탯(자체버프 반영 확인용)
+        return out;
     }
 
     /**

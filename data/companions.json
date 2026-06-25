@@ -1,14 +1,389 @@
 {
-  "_comment": "메인 동료 데이터. 서브 동료와 '장착 효과'는 이미 유저 스탯 입력에 포함되므로 여기엔 메인 전용(기본공격·버프·디버프)만 둔다. 공격력은 소환 시 캐릭터 스탯을 계승비율(현재는 유저 입력, 추후 캐릭/동료 레벨로 자동화)만큼 받고, 그 외 스탯은 전부 계승. 소환 쿨/유지로 가동률 반영 예정.",
-  "_example": {
-    "id": "exampleId",
-    "name": "예시 동료",
-    "grades": ["RARE", "EPIC", "UNIQUE", "LEGENDARY"],
-    "summonCd": 60,
-    "summonDuration": 30,
-    "basicAttack": { "base": 290, "growth": 0.4, "hits": 1, "period": 1.0 },
-    "buffs": [],
-    "debuffs": []
+  "_comment": "동료 데이터(ally.txt 전수 데이터화, 2026-06-25). 규약: type=summon(소환 1회)/active/passive. lvl=개방 동료레벨, cd=스킬 쿨타임초(액티브=재사용, proc 패시브=발동 간격), dur=지속초, on=발동 트리거(companionAttack=동료 모든 공격/companionBasicAttack=동료 평타/period=주기), chance=발동확률%. deal/dot/proc=딜(coeff%·hits·targets·bossMult/bossOnly). buffs/debuffs=stat(우리 스탯ID, 미매핑은 ACC/DEF/HP/SHIELD/MOVE/EVASION/CRIT_RESIST 등)·value·target(player/companion/both/enemy)·dur·maxStacks·stackPeriod. used=딜 계산 반영 여부(딜무관 스탯=false, 단 원문 raw는 항상 보존). 같은 이름 액티브/패시브도 서로 다른 스킬. 메인 동료만 계산 사용(서브 배제). 바이퍼 버스트/어썰트: replaceOfBurst=버스트 발동 시 그 %로 어썰트 대체, enablesAssault100/activeOverride=해당 액티브 지속 중 평타마다 어썰트 100%.",
+  "summonCd": 90,
+  "summonDuration": 30,
+  "inheritBaseRatio": { "NORMAL": 25, "RARE": 50, "EPIC": 50, "UNIQUE": 50, "LEGENDARY": 60 },
+  "gradeTierLevel": { "NORMAL": 1, "RARE": 10, "EPIC": 30, "UNIQUE": 60, "LEGENDARY": 100 },
+  "gradeLevelCap": { "NORMAL": 100, "RARE": 50, "EPIC": 30, "UNIQUE": 10, "LEGENDARY": 14 },
+  "gradeBasicAttack": {
+    "RARE": { "coeff": 26, "hits": 2, "targets": 3 },
+    "EPIC": { "coeff": 40, "hits": 3, "targets": 5 },
+    "UNIQUE": { "coeff": 80, "hits": 5, "targets": 6 },
+    "LEGENDARY": { "coeff": 290, "hits": 5, "targets": 6 }
   },
-  "companions": []
+  "uniqueLegendaryFinalDmg": { "levels": [5, 8, 10], "perLevel": 25, "target": "companion", "_comment": "유니크/레전더리 동료 5·8·10렙 각각 동료 최종뎀 +25%(누적 최대 +75%)" },
+  "_inheritNote": "기본 공격력 계승비율 = inheritBaseRatio[grade] × (플레이어 차수<동료등급 차수면 현재레벨/gradeTierLevel[grade]) × 동료레벨factor(비선형, /api/ally-ratio 수집해 역산 예정). 예: 레전(100) 플레이어28렙 → 0.6×28/100=16.8%.",
+  "_statRefNote": "계승 스탯(소환 당시 플레이어): ATK·CRIT_RATE·CRIT_DMG·ATK_SPEED·MAIN_STAT·STAT_PROP_DMG·DMG·DMG_AMP·BASIC_ATK_DMG·SKILL_DMG·DEF_PEN·BOSS_DMG·NORMAL_DMG·MIN_DMG_MULT·MAX_DMG_MULT·FINAL_DMG. 1/2/3/4/모스렙 계승 안 함(스킬 계수 불변). 소환 후 플레이어 스탯변화 무영향(동료 자기버프만 적용).",
+
+  "companions": [
+    { "id": "warriorCadet",  "name": "전사 지망생",  "normalOnly": true, "grades": { "NORMAL": { "skills": [] } }, "_comment": "노말 전용, 소환/스킬 없음. 평타 정보 없어 무시." },
+    { "id": "magicianCadet", "name": "마법사 지망생", "normalOnly": true, "grades": { "NORMAL": { "skills": [] } } },
+    { "id": "archerCadet",   "name": "궁수 지망생",  "normalOnly": true, "grades": { "NORMAL": { "skills": [] } } },
+    { "id": "thiefCadet",    "name": "도적 지망생",  "normalOnly": true, "grades": { "NORMAL": { "skills": [] } } },
+    { "id": "pirateCadet",   "name": "해적 지망생",  "normalOnly": true, "grades": { "NORMAL": { "skills": [] } } },
+
+    { "id": "hero", "name": "히어로", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 방어력 15% 증가, 최대 HP 15%만큼 보호막", "buffs": [ {"stat":"DEF","value":15,"target":"player","dur":10,"used":false,"note":"방어력"}, {"stat":"SHIELD","value":15,"target":"player","dur":10,"used":false,"note":"보호막"} ] },
+        { "type": "passive", "raw": "주변 적들의 공격력 10% 감소", "debuffs": [ {"stat":"ENEMY_ATK","value":-10,"target":"enemy","used":false,"note":"적 공격력"} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 방어력 15% 증가, 최대 HP 20% 보호막", "buffs": [ {"stat":"DEF","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":20,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 22, "raw": "적 7명 250% 피해, 1.5초 기절", "deal": {"coeff":250,"hits":1,"targets":7}, "cc": "기절1.5초" },
+        { "type": "passive", "raw": "적 공격력 15% 감소", "debuffs": [ {"stat":"ENEMY_ATK","value":-15,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 3, "cd": 0.5, "raw": "공격 시 40% 확률 10초간 동료+플레이어 공격력 5% 증가, 최대 5중첩", "proc": {"on":"companionAttack","chance":40,"cd":0.5,"buff":{"stat":"ATK_PCT","value":5,"target":"both","dur":10,"maxStacks":5,"used":true}} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 방어력 15% 증가, 최대 HP 25% 보호막", "buffs": [ {"stat":"DEF","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":25,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 22, "raw": "적 7명 800% 피해, 2초 기절", "deal": {"coeff":800,"hits":1,"targets":7}, "cc":"기절2초" },
+        { "type": "active", "cd": 9, "raw": "적 8명 250% 피해 4회", "deal": {"coeff":250,"hits":4,"targets":8} },
+        { "type": "passive", "raw": "적 공격력 20% 감소", "debuffs": [ {"stat":"ENEMY_ATK","value":-20,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 2, "cd": 0.5, "raw": "공격 시 40% 확률 10초간 동료+플레이어 공격력 5% 증가, 최대 5중첩", "proc": {"on":"companionAttack","chance":40,"cd":0.5,"buff":{"stat":"ATK_PCT","value":5,"target":"both","dur":10,"maxStacks":5,"used":true}} },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 디버프 내성 10 증가", "buffs": [ {"stat":"DEBUFF_RES","value":10,"target":"player","used":false,"note":"디버프 내성"} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 방어력 15% 증가, 최대 HP 30% 보호막", "buffs": [ {"stat":"DEF","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":30,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 22, "raw": "적 7명 2400% 피해, 2초 기절", "deal": {"coeff":2400,"hits":1,"targets":7}, "cc":"기절2초" },
+        { "type": "active", "cd": 9, "raw": "적 8명 750% 피해 4회", "deal": {"coeff":750,"hits":4,"targets":8} },
+        { "type": "active", "cd": 19, "lvl": 4, "raw": "적 5명 1100% 피해 3회, 10초간 방어력 10%↓·받는 피해 10%↑", "deal": {"coeff":1100,"hits":3,"targets":5}, "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","dur":10,"used":false}, {"stat":"RECV_DMG","value":10,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "적 공격력 20% 감소", "debuffs": [ {"stat":"ENEMY_ATK","value":-20,"target":"enemy","used":false} ] },
+        { "type": "passive", "cd": 0.5, "raw": "공격 시 40% 확률 10초간 동료+플레이어 공격력 5% 증가, 최대 5중첩", "proc": {"on":"companionAttack","chance":40,"cd":0.5,"buff":{"stat":"ATK_PCT","value":5,"target":"both","dur":10,"maxStacks":5,"used":true}} },
+        { "type": "passive", "lvl": 2, "raw": "플레이어 디버프 내성 10 증가", "buffs": [ {"stat":"DEBUFF_RES","value":10,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 받는 피해 15% 감소, 동료 최종 데미지 15% 증가", "buffs": [ {"stat":"PLAYER_RECV_DMG","value":-15,"target":"player","used":false,"note":"플레이어 받는피해(생존)"}, {"stat":"FINAL_DMG","value":15,"target":"companion","used":true} ] }
+      ]}
+    }},
+
+    { "id": "paladin", "name": "팔라딘", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 받는 피해 15% 감소", "buffs": [ {"stat":"PLAYER_RECV_DMG","value":-15,"target":"player","dur":10,"used":false,"note":"플레이어 받는피해"} ] },
+        { "type": "passive", "raw": "주변 적 방어력 5% 감소", "debuffs": [ {"stat":"DEF","value":-5,"target":"enemy","used":false} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 플레이어 받는 피해 20% 감소", "buffs": [ {"stat":"PLAYER_RECV_DMG","value":-20,"target":"player","dur":15,"used":false} ] },
+        { "type": "active", "cd": 18, "raw": "적 7명 260% 피해, 10초간 방어력 10% 감소", "deal": {"coeff":260,"hits":1,"targets":7}, "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "passive", "raw": "적 방어력 5% 감소", "debuffs": [ {"stat":"DEF","value":-5,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "기본 공격 시 15% 확률 10초간 동료+플레이어 크리티컬 데미지 15% 증가", "proc": {"on":"companionBasicAttack","chance":15,"buff":{"stat":"CRIT_DMG","value":15,"target":"both","dur":10,"used":true}} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 플레이어 받는 피해 20% 감소", "buffs": [ {"stat":"PLAYER_RECV_DMG","value":-20,"target":"player","dur":15,"used":false} ] },
+        { "type": "active", "cd": 18, "raw": "적 7명 860% 피해, 10초간 방어력 10% 감소", "deal": {"coeff":860,"hits":1,"targets":7}, "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 25, "raw": "적 8명 1400% 피해, 10초간 받는 피해 10% 증가", "deal": {"coeff":1400,"hits":1,"targets":8}, "debuffs": [ {"stat":"RECV_DMG","value":10,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "적 방어력 10% 감소", "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "기본 공격 시 15% 확률 10초간 동료+플레이어 크리티컬 데미지 15% 증가", "proc": {"on":"companionBasicAttack","chance":15,"buff":{"stat":"CRIT_DMG","value":15,"target":"both","dur":10,"used":true}} },
+        { "type": "passive", "lvl": 3, "raw": "10초마다 5초 보호막(HP 8% 방어), 보호막 동안 플레이어 공격력 10% 증가", "proc": {"on":"period","period":10,"buff":{"stat":"ATK_PCT","value":10,"target":"player","dur":5,"used":true}}, "extra": {"stat":"SHIELD","used":false} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 20, "raw": "20초간 플레이어 받는 피해 20% 감소", "buffs": [ {"stat":"PLAYER_RECV_DMG","value":-20,"target":"player","dur":20,"used":false} ] },
+        { "type": "active", "cd": 18, "raw": "적 7명 2300% 피해, 10초간 방어력 10% 감소", "deal": {"coeff":2300,"hits":1,"targets":7}, "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 25, "raw": "적 8명 4900% 피해, 10초간 받는 피해 10% 증가", "deal": {"coeff":4900,"hits":1,"targets":8}, "debuffs": [ {"stat":"RECV_DMG","value":10,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "active", "cd": 30, "lvl": 4, "raw": "10초간 동료+플레이어 최종 데미지 8% 증가", "buffs": [ {"stat":"FINAL_DMG","value":8,"target":"both","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "적 방어력 10% 감소", "debuffs": [ {"stat":"DEF","value":-10,"target":"enemy","used":false} ] },
+        { "type": "passive", "raw": "기본 공격 시 15% 확률 10초간 동료+플레이어 크리티컬 데미지 15% 증가", "proc": {"on":"companionBasicAttack","chance":15,"buff":{"stat":"CRIT_DMG","value":15,"target":"both","dur":10,"used":true}} },
+        { "type": "passive", "lvl": 2, "raw": "10초마다 5초 보호막(HP 8% 방어), 보호막 동안 플레이어 공격력 10% 증가", "proc": {"on":"period","period":10,"buff":{"stat":"ATK_PCT","value":10,"target":"player","dur":5,"used":true}}, "extra": {"stat":"SHIELD","used":false} },
+        { "type": "passive", "lvl": 3, "cd": 5, "raw": "기본 공격 시 35% 확률 5초간 플레이어 기본 공격 데미지 15% 증가, 0.5초 후 적 4명 650% 피해 4회", "proc": {"on":"companionBasicAttack","chance":35,"cd":5,"buff":{"stat":"BASIC_ATK_DMG","value":15,"target":"player","dur":5,"used":true},"deal":{"coeff":650,"hits":4,"targets":4}} }
+      ]}
+    }},
+
+    { "id": "darkKnight", "name": "다크나이트", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 2, "raw": "2초간 플레이어 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":2,"used":false,"note":"피해 면역"} ] },
+        { "type": "passive", "raw": "동료 공격 속도 10%, 이동 속도 10% 증가", "buffs": [ {"stat":"ATK_SPEED","value":10,"target":"companion","used":true}, {"stat":"MOVE","value":10,"target":"companion","used":false,"note":"이속"} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 2.5, "raw": "플레이어 2.5초간 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":2.5,"used":false} ] },
+        { "type": "active", "cd": 25, "raw": "플레이어 HP 20% 회복, 10초간 HP 20% 증가", "buffs": [ {"stat":"HP","value":20,"target":"player","dur":10,"used":false,"note":"HP"} ] },
+        { "type": "passive", "raw": "동료 공격 속도 15%, 이동 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"companion","used":true}, {"stat":"MOVE","value":15,"target":"companion","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "적 6명 받는 피해 15% 증가", "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","targets":6,"used":true} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 3, "raw": "플레이어 3초간 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":3,"used":false} ] },
+        { "type": "active", "cd": 25, "raw": "플레이어 HP 20% 회복, 10초간 최대 HP 20% 증가", "buffs": [ {"stat":"HP","value":20,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 18, "raw": "적 12명 700% 피해, 버프 3개 제거", "deal": {"coeff":700,"hits":1,"targets":12} },
+        { "type": "passive", "raw": "동료 공격 속도 20%, 이동 속도 20% 증가", "buffs": [ {"stat":"ATK_SPEED","value":20,"target":"companion","used":true}, {"stat":"MOVE","value":20,"target":"companion","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "적 6명 받는 피해 15% 증가", "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","targets":6,"used":true} ] },
+        { "type": "passive", "lvl": 3, "cd": 3, "raw": "공격 시 20% 확률 적 6명 80% 피해 6회", "proc": {"on":"companionAttack","chance":20,"cd":3,"deal":{"coeff":80,"hits":6,"targets":6}} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 3.5, "raw": "플레이어 3.5초간 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":3.5,"used":false} ] },
+        { "type": "active", "cd": 25, "raw": "플레이어 HP 20% 회복, 10초간 최대 HP 20% 증가", "buffs": [ {"stat":"HP","value":20,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 18, "raw": "적 12명 2100% 피해, 버프 3개 제거", "deal": {"coeff":2100,"hits":1,"targets":12} },
+        { "type": "active", "cd": 17, "lvl": 4, "raw": "적 5명 3600% 피해 1회, 2초 기절", "deal": {"coeff":3600,"hits":1,"targets":5}, "cc":"기절2초" },
+        { "type": "passive", "raw": "동료 공격 속도 25%, 이동 속도 25% 증가", "buffs": [ {"stat":"ATK_SPEED","value":25,"target":"companion","used":true}, {"stat":"MOVE","value":25,"target":"companion","used":false} ] },
+        { "type": "passive", "raw": "적 6명 받는 피해 15% 증가", "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","targets":6,"used":true} ] },
+        { "type": "passive", "lvl": 2, "cd": 3, "raw": "공격 시 20% 확률 적 8명 290% 피해 6회", "proc": {"on":"companionAttack","chance":20,"cd":3,"deal":{"coeff":290,"hits":6,"targets":8}} },
+        { "type": "passive", "lvl": 3, "cd": 5, "raw": "동료가 직접 공격한 적에게 1000% 피해 2회", "proc": {"on":"companionAttack","chance":100,"cd":5,"deal":{"coeff":1000,"hits":2,"targets":1}} }
+      ]}
+    }},
+
+    { "id": "fpArchMage", "name": "썬콜", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "적 6명 10% 피해 5회, 1.5초 빙결", "deal": {"coeff":10,"hits":5,"targets":6}, "cc":"빙결1.5초" },
+        { "type": "passive", "raw": "동료+플레이어 이동 속도 15% 증가", "buffs": [ {"stat":"MOVE","value":15,"target":"both","used":false,"note":"이속"} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "적 8명 30% 피해 5회, 2초 빙결", "deal": {"coeff":30,"hits":5,"targets":8}, "cc":"빙결2초" },
+        { "type": "active", "cd": 30, "raw": "15초간 동료+플레이어 공격력 20% 증가", "buffs": [ {"stat":"ATK_PCT","value":20,"target":"both","dur":15,"used":true} ] },
+        { "type": "passive", "raw": "동료+플레이어 이동 속도 20% 증가", "buffs": [ {"stat":"MOVE","value":20,"target":"both","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "적 크리티컬 저항 10% 감소", "debuffs": [ {"stat":"CRIT_RESIST","value":-10,"target":"enemy","used":false,"note":"크리 저항(크확100% 가정 미사용)"} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "적 10명 90% 피해 5회, 2.5초 빙결", "deal": {"coeff":90,"hits":5,"targets":10}, "cc":"빙결2.5초" },
+        { "type": "active", "cd": 30, "raw": "15초간 동료+플레이어 공격력 20% 증가", "buffs": [ {"stat":"ATK_PCT","value":20,"target":"both","dur":15,"used":true} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 2초마다 적 6명 200% 피해 3회", "dot": {"coeff":200,"hits":3,"period":2,"dur":10,"targets":6} },
+        { "type": "passive", "raw": "동료+플레이어 이동 속도 25% 증가", "buffs": [ {"stat":"MOVE","value":25,"target":"both","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "적 크리티컬 저항 10% 감소", "debuffs": [ {"stat":"CRIT_RESIST","value":-10,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 일반 몬스터 데미지 15% 증가", "buffs": [ {"stat":"NORMAL_DMG","value":15,"target":"player","used":true} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "적 10명 300% 피해 5회, 3초 빙결", "deal": {"coeff":300,"hits":5,"targets":10}, "cc":"빙결3초" },
+        { "type": "active", "cd": 30, "raw": "15초간 동료+플레이어 공격력 20% 증가", "buffs": [ {"stat":"ATK_PCT","value":20,"target":"both","dur":15,"used":true} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 2초마다 적 8명 600% 피해 3회", "dot": {"coeff":600,"hits":3,"period":2,"dur":10,"targets":8} },
+        { "type": "active", "cd": 30, "lvl": 4, "raw": "5초간 0.5초마다 적 10명 800% 피해, 5초간 받는 피해 15% 증가", "dot": {"coeff":800,"hits":1,"period":0.5,"dur":5,"targets":10}, "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","dur":5,"used":true} ] },
+        { "type": "passive", "raw": "동료+플레이어 이동 속도 25% 증가", "buffs": [ {"stat":"MOVE","value":25,"target":"both","used":false} ] },
+        { "type": "passive", "raw": "적 크리티컬 저항 10% 감소", "debuffs": [ {"stat":"CRIT_RESIST","value":-10,"target":"enemy","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "플레이어 일반 몬스터 데미지 15% 증가", "buffs": [ {"stat":"NORMAL_DMG","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 3, "cd": 5, "raw": "5초마다 적 5명 800% 피해 3회", "proc": {"on":"period","period":5,"deal":{"coeff":800,"hits":3,"targets":5}} }
+      ]}
+    }},
+
+    { "id": "bulldog", "name": "불독", "epicPlus": true, "grades": {
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "적 8명 30% 피해 5회, 10초간 받는 피해 15% 증가", "deal": {"coeff":30,"hits":5,"targets":8}, "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "active", "cd": 12, "raw": "적 6명 50% 피해 3회, 10초간 0.5초마다 10% 지속 피해", "deal": {"coeff":50,"hits":3,"targets":6}, "dot": {"coeff":10,"hits":1,"period":0.5,"dur":10,"targets":6} },
+        { "type": "passive", "raw": "플레이어 공격력 12%, 방어력 12% 증가", "buffs": [ {"stat":"ATK_PCT","value":12,"target":"player","used":true}, {"stat":"DEF","value":12,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "3초마다 적 3명 1초마다 12% 지속 피해", "proc": {"on":"period","period":3,"dot":{"coeff":12,"hits":1,"period":1,"dur":3,"targets":3}} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "적 10명 90% 피해 5회, 10초간 받는 피해 20% 증가", "deal": {"coeff":90,"hits":5,"targets":10}, "debuffs": [ {"stat":"RECV_DMG","value":20,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "active", "cd": 12, "raw": "적 6명 160% 피해 3회, 10초간 0.5초마다 30% 지속 피해", "deal": {"coeff":160,"hits":3,"targets":6}, "dot": {"coeff":30,"hits":1,"period":0.5,"dur":10,"targets":6} },
+        { "type": "active", "cd": 15, "raw": "10초간 적 10명 1초마다 110% 지속 피해, 받는 피해 15% 증가", "dot": {"coeff":110,"hits":1,"period":1,"dur":10,"targets":10}, "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "플레이어 공격력 15%, 방어력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"player","used":true}, {"stat":"DEF","value":15,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "3초마다 장판: 적 3명 1초마다 30% 지속 피해", "proc": {"on":"period","period":3,"dot":{"coeff":30,"hits":1,"period":1,"dur":3,"targets":3}} },
+        { "type": "passive", "lvl": 3, "raw": "적 1명마다 동료 최종 데미지 3% 증가, 최대 10명", "buffs": [ {"stat":"FINAL_DMG","value":3,"target":"companion","perEnemy":true,"maxStacks":10,"used":true,"note":"적 수 비례(최대 30%)"} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "적 10명 300% 피해 5회, 10초간 받는 피해 25% 증가", "deal": {"coeff":300,"hits":5,"targets":10}, "debuffs": [ {"stat":"RECV_DMG","value":25,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 독 안개: 적 10명 1초마다 300% 지속 피해, 받는 피해 15% 증가", "dot": {"coeff":300,"hits":1,"period":1,"dur":10,"targets":10}, "debuffs": [ {"stat":"RECV_DMG","value":15,"target":"enemy","dur":10,"used":true} ] },
+        { "type": "active", "cd": 17, "raw": "적 5명 600% 피해 3회, 3번 공격", "deal": {"coeff":600,"hits":3,"targets":5,"repeat":3,"note":"3번 공격(총 9히트)"} },
+        { "type": "active", "cd": 30, "lvl": 4, "raw": "30초간 4초마다 적 3명 3500% 피해", "dot": {"coeff":3500,"hits":1,"period":4,"dur":30,"targets":3} },
+        { "type": "passive", "raw": "플레이어 공격력 15%, 방어력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"player","used":true}, {"stat":"DEF","value":15,"target":"player","used":false} ] },
+        { "type": "passive", "raw": "3초마다 장판: 적 3명 1초마다 100% 지속 피해", "proc": {"on":"period","period":3,"dot":{"coeff":100,"hits":1,"period":1,"dur":3,"targets":3}} },
+        { "type": "passive", "lvl": 2, "raw": "적 1명마다 동료 최종 데미지 3% 증가, 최대 10명", "buffs": [ {"stat":"FINAL_DMG","value":3,"target":"companion","perEnemy":true,"maxStacks":10,"used":true} ] },
+        { "type": "passive", "lvl": 3, "cd": 5, "raw": "5초마다 독 안개 폭발: 10명 2000% 피해", "proc": {"on":"period","period":5,"deal":{"coeff":2000,"hits":1,"targets":10}} }
+      ]}
+    }},
+
+    { "id": "bishop", "name": "비숍", "epicPlus": true, "grades": {
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 20, "raw": "20초간 플레이어 1초마다 HP 1% 회복", "buffs": [ {"stat":"HP_REGEN","value":1,"target":"player","dur":20,"used":false,"note":"HP 회복"} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 플레이어 1초마다 HP 1% 회복, HP 30%↑면 공격력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"player","dur":10,"cond":"HP>=30%","used":true,"note":"조건부 공격력"}, {"stat":"HP_REGEN","value":1,"target":"player","dur":10,"used":false} ] },
+        { "type": "passive", "raw": "플레이어 최대 데미지 배율 18% 증가", "buffs": [ {"stat":"MAX_DMG_MULT","value":18,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "2초마다 플레이어 MP 3% 회복, MP 50%↑면 5초간 최종 데미지 8% 증가", "proc": {"on":"period","period":2,"buff":{"stat":"FINAL_DMG","value":8,"target":"player","dur":5,"cond":"MP>=50%","used":true,"note":"조건부 최종뎀"}}, "extra": {"stat":"MP","used":false} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 25, "raw": "25초간 플레이어 1초마다 HP 1% 회복", "buffs": [ {"stat":"HP_REGEN","value":1,"target":"player","dur":25,"used":false} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 플레이어 1초마다 HP 1% 회복, HP 30%↑면 공격력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"player","dur":10,"cond":"HP>=30%","used":true}, {"stat":"HP_REGEN","value":1,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 27, "raw": "15초간 플레이어 공격력 20% 증가, 받는 피해 5% 감소, 디버프 1개 제거", "buffs": [ {"stat":"ATK_PCT","value":20,"target":"player","dur":15,"used":true} ] },
+        { "type": "passive", "raw": "플레이어 최대 데미지 배율 24% 증가", "buffs": [ {"stat":"MAX_DMG_MULT","value":24,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "2초마다 플레이어 MP 3% 회복, MP 50%↑면 5초간 최종 데미지 8% 증가", "proc": {"on":"period","period":2,"buff":{"stat":"FINAL_DMG","value":8,"target":"player","dur":5,"cond":"MP>=50%","used":true}}, "extra": {"stat":"MP","used":false} },
+        { "type": "passive", "lvl": 3, "cd": 3, "raw": "공격 시 20% 확률 적 7명 800% 추가 피해", "proc": {"on":"companionAttack","chance":20,"cd":3,"deal":{"coeff":800,"hits":1,"targets":7}} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 30, "raw": "30초간 플레이어 1초마다 HP 1% 회복", "buffs": [ {"stat":"HP_REGEN","value":1,"target":"player","dur":30,"used":false} ] },
+        { "type": "active", "cd": 15, "raw": "10초간 플레이어 1초마다 HP 1% 회복, HP 30%↑면 공격력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"player","dur":10,"cond":"HP>=30%","used":true}, {"stat":"HP_REGEN","value":1,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 27, "raw": "15초간 플레이어 공격력 20% 증가, 받는 피해 5% 감소, 디버프 1개 제거", "buffs": [ {"stat":"ATK_PCT","value":20,"target":"player","dur":15,"used":true} ] },
+        { "type": "active", "cd": 11, "lvl": 4, "raw": "적 10명 650% 피해 6회", "deal": {"coeff":650,"hits":6,"targets":10} },
+        { "type": "passive", "raw": "플레이어 최대 데미지 배율 24% 증가", "buffs": [ {"stat":"MAX_DMG_MULT","value":24,"target":"player","used":true} ] },
+        { "type": "passive", "raw": "2초마다 플레이어 MP 3% 회복, MP 50%↑면 5초간 최종 데미지 8% 증가", "proc": {"on":"period","period":2,"buff":{"stat":"FINAL_DMG","value":8,"target":"player","dur":5,"cond":"MP>=50%","used":true}}, "extra": {"stat":"MP","used":false} },
+        { "type": "passive", "lvl": 2, "cd": 3, "raw": "공격 시 20% 확률 적 7명 2600% 추가 피해", "proc": {"on":"companionAttack","chance":20,"cd":3,"deal":{"coeff":2600,"hits":1,"targets":7}} },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 현재 HP 10%마다 크리티컬 데미지 4%, 공격 속도 2% 증가", "buffs": [ {"stat":"CRIT_DMG","value":4,"target":"player","perHp10":true,"used":false,"note":"현재HP 비례(불확정)"}, {"stat":"ATK_SPEED","value":2,"target":"player","perHp10":true,"used":false,"note":"현재HP 비례(불확정)"} ] }
+      ]}
+    }},
+
+    { "id": "bowMaster", "name": "보우마스터", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 플레이어 공격 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"player","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 8% 증가", "buffs": [ {"stat":"CRIT_RATE","value":8,"target":"both","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 플레이어 공격 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"player","dur":15,"used":true} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 방어력 15% 감소, 대상 120% 피해 3회", "deal": {"coeff":120,"hits":3,"targets":1}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 12% 증가", "buffs": [ {"stat":"CRIT_RATE","value":12,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "1초마다 대상 40% 피해, 3초간 받는 피해 5% 증가", "proc": {"on":"period","period":1,"deal":{"coeff":40,"hits":1,"targets":1},"debuff":{"stat":"RECV_DMG","value":5,"target":"enemy","dur":3,"used":true}} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 플레이어 공격 속도 20% 증가", "buffs": [ {"stat":"ATK_SPEED","value":20,"target":"player","dur":15,"used":true} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 방어력 15% 감소, 대상 350% 피해 3회", "deal": {"coeff":350,"hits":3,"targets":1}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 30, "raw": "20초간 3초마다 적 3명 500% 피해", "dot": {"coeff":500,"hits":1,"period":3,"dur":20,"targets":3} },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "1초마다 대상 40% 피해, 3초간 받는 피해 5% 증가", "proc": {"on":"period","period":1,"deal":{"coeff":40,"hits":1,"targets":1},"debuff":{"stat":"RECV_DMG","value":5,"target":"enemy","dur":3,"used":true}} },
+        { "type": "passive", "lvl": 3, "raw": "동료가 적 타격 시 10% 확률 10초간 동료 공격력 1.5% 증가, 최대 100중첩", "proc": {"on":"companionHit","chance":10,"buff":{"stat":"ATK_PCT","value":1.5,"target":"companion","dur":10,"maxStacks":100,"used":true}} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 20, "raw": "20초간 플레이어 공격 속도 20% 증가", "buffs": [ {"stat":"ATK_SPEED","value":20,"target":"player","dur":20,"used":true} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 방어력 15% 감소, 대상 1000% 피해 3회", "deal": {"coeff":1000,"hits":3,"targets":1}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 30, "raw": "20초간 3초마다 적 3명 500% 피해", "dot": {"coeff":500,"hits":1,"period":3,"dur":20,"targets":3} },
+        { "type": "active", "cd": 23, "lvl": 4, "raw": "대상 800% 피해 20회, 공속 빠를수록 빠르게 발사", "deal": {"coeff":800,"hits":20,"targets":1} },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "raw": "1초마다 대상 145% 피해, 3초간 받는 피해 5% 증가", "proc": {"on":"period","period":1,"deal":{"coeff":145,"hits":1,"targets":1},"debuff":{"stat":"RECV_DMG","value":5,"target":"enemy","dur":3,"used":true}} },
+        { "type": "passive", "lvl": 2, "raw": "동료가 적 타격 시 10% 확률 10초간 동료 공격력 1.5% 증가, 최대 100중첩", "proc": {"on":"companionHit","chance":10,"buff":{"stat":"ATK_PCT","value":1.5,"target":"companion","dur":10,"maxStacks":100,"used":true}} },
+        { "type": "passive", "lvl": 3, "raw": "1초마다 동료 방어 관통력 1% 증가", "buffs": [ {"stat":"DEF_PEN","value":1,"target":"companion","stackPeriod":1,"used":false,"note":"방관(현재 딜 미환산)"} ] }
+      ]}
+    }},
+
+    { "id": "marksman", "name": "신궁", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "플레이어 디버프 1개 제거, 3초간 디버프 면역", "buffs": [ {"stat":"DEBUFF_IMMUNE","value":1,"target":"player","dur":3,"used":false,"note":"디버프 면역"} ] },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 8% 증가", "buffs": [ {"stat":"CRIT_RATE","value":8,"target":"both","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "플레이어 디버프 1개 제거, 4초간 디버프 면역", "buffs": [ {"stat":"DEBUFF_IMMUNE","value":1,"target":"player","dur":4,"used":false} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 공격력 15% 감소, 대상 120% 피해 3회", "deal": {"coeff":120,"hits":3,"targets":1}, "debuffs": [ {"stat":"ENEMY_ATK","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 12% 증가", "buffs": [ {"stat":"CRIT_RATE","value":12,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 3, "cd": 11, "raw": "플레이어 상태이상 시 3초 보호막(최대HP 20% 방어)", "buffs": [ {"stat":"SHIELD","value":20,"target":"player","dur":3,"used":false} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "플레이어 디버프 1개 제거, 4초간 디버프 면역", "buffs": [ {"stat":"DEBUFF_IMMUNE","value":1,"target":"player","dur":4,"used":false} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 공격력 15% 감소, 대상 350% 피해 3회", "deal": {"coeff":350,"hits":3,"targets":1}, "debuffs": [ {"stat":"ENEMY_ATK","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 16, "raw": "적 10명 460% 피해 3회, 1초 기절", "deal": {"coeff":460,"hits":3,"targets":10}, "cc":"기절1초" },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 2, "cd": 11, "raw": "플레이어 상태이상 시 3초 보호막(최대HP 20% 방어)", "buffs": [ {"stat":"SHIELD","value":20,"target":"player","dur":3,"used":false} ] },
+        { "type": "passive", "lvl": 3, "raw": "동료 최종 데미지 20% 증가(아레나 2배)", "buffs": [ {"stat":"FINAL_DMG","value":20,"target":"companion","used":true} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "플레이어 디버프 3개 제거, 4초간 디버프 면역", "buffs": [ {"stat":"DEBUFF_IMMUNE","value":1,"target":"player","dur":4,"used":false} ] },
+        { "type": "active", "cd": 13, "raw": "10초간 대상 공격력 15% 감소, 대상 1000% 피해 3회", "deal": {"coeff":1000,"hits":3,"targets":1}, "debuffs": [ {"stat":"ENEMY_ATK","value":-15,"target":"enemy","dur":10,"used":false} ] },
+        { "type": "active", "cd": 16, "raw": "적 8명 1300% 피해 3회, 1초 기절", "deal": {"coeff":1300,"hits":3,"targets":8}, "cc":"기절1초" },
+        { "type": "active", "cd": 12, "lvl": 4, "raw": "대상 4200% 피해, 30초 표식(회피-10), 표식 대상 재공격 시 표식 제거·2초 기절", "deal": {"coeff":4200,"hits":1,"targets":1} },
+        { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "cd": 11, "raw": "플레이어 상태이상 시 3초 보호막(최대HP 20% 방어)", "buffs": [ {"stat":"SHIELD","value":20,"target":"player","dur":3,"used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "동료 최종 데미지 20% 증가(아레나 2배)", "buffs": [ {"stat":"FINAL_DMG","value":20,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 회피 30 증가·받는 피해 5% 감소(50회 피격 시 10초 사라짐)", "buffs": [ {"stat":"EVASION","value":30,"target":"player","used":false,"note":"회피/받는피해(생존)"} ] }
+      ]}
+    }},
+
+    { "id": "nightLord", "name": "나이트로드", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "적 8명 30% 피해 4회, 보스면 3배", "deal": {"coeff":30,"hits":4,"targets":8,"bossMult":3} },
+        { "type": "passive", "raw": "동료+플레이어 명중 6 증가", "buffs": [ {"stat":"ACC","value":6,"target":"both","used":false,"note":"명중"} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "적 8명 80% 피해 4회, 보스면 3배", "deal": {"coeff":80,"hits":4,"targets":8,"bossMult":3} },
+        { "type": "active", "cd": 11, "raw": "적 6명 300% 피해, 보스면 10초간 방어력 15% 감소", "deal": {"coeff":300,"hits":1,"targets":6}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"bossOnly":true,"used":false} ] },
+        { "type": "passive", "raw": "동료+플레이어 명중 8 증가", "buffs": [ {"stat":"ACC","value":8,"target":"both","used":false} ] },
+        { "type": "passive", "raw": "플레이어 보스 몬스터 데미지 15% 증가", "buffs": [ {"stat":"BOSS_DMG","value":15,"target":"player","used":true} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "적 8명 280% 피해 4회, 보스면 3배", "deal": {"coeff":280,"hits":4,"targets":8,"bossMult":3} },
+        { "type": "active", "cd": 11, "raw": "적 6명 900% 피해, 보스면 10초간 방어력 15% 감소", "deal": {"coeff":900,"hits":1,"targets":6}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"bossOnly":true,"used":false} ] },
+        { "type": "active", "cd": 13, "raw": "대상 350% 피해 3회", "deal": {"coeff":350,"hits":3,"targets":1} },
+        { "type": "passive", "raw": "동료+플레이어 명중 10 증가", "buffs": [ {"stat":"ACC","value":10,"target":"both","used":false} ] },
+        { "type": "passive", "lvl": 2, "raw": "플레이어 보스 몬스터 데미지 15% 증가", "buffs": [ {"stat":"BOSS_DMG","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "1초마다 동료 최종 데미지 1.5% 증가, 최대 15중첩", "buffs": [ {"stat":"FINAL_DMG","value":1.5,"target":"companion","stackPeriod":1,"maxStacks":15,"used":true} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "적 8명 800% 피해 4회, 보스면 3배", "deal": {"coeff":800,"hits":4,"targets":8,"bossMult":3} },
+        { "type": "active", "cd": 11, "raw": "적 10명 1100% 피해 3회, 10초간 1초마다 100% 지속, 보스면 방어력 15% 감소", "deal": {"coeff":1100,"hits":3,"targets":10}, "dot": {"coeff":100,"hits":1,"period":1,"dur":10,"targets":10}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"bossOnly":true,"used":false} ] },
+        { "type": "active", "cd": 10, "raw": "대상 1300% 피해 4회", "deal": {"coeff":1300,"hits":4,"targets":1} },
+        { "type": "active", "cd": 30, "lvl": 4, "dur": 20, "raw": "20초 결계: 받는 피해 10% 증가·이속 10% 감소, 보스면 이속감소X·받피증 2배", "debuffs": [ {"stat":"RECV_DMG","value":10,"target":"enemy","dur":20,"bossMult":2,"used":true} ] },
+        { "type": "passive", "raw": "동료+플레이어 명중 10 증가", "buffs": [ {"stat":"ACC","value":10,"target":"both","used":false} ] },
+        { "type": "passive", "raw": "플레이어 보스 몬스터 데미지 15% 증가", "buffs": [ {"stat":"BOSS_DMG","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "1초마다 동료 최종 데미지 1.5% 증가, 최대 15중첩", "buffs": [ {"stat":"FINAL_DMG","value":1.5,"target":"companion","stackPeriod":1,"maxStacks":15,"used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "동료가 보스 공격 시 35% 확률 1000% 피해", "proc": {"on":"companionAttack","bossOnly":true,"chance":35,"deal":{"coeff":1000,"hits":1,"targets":1}} }
+      ]}
+    }},
+
+    { "id": "shadower", "name": "섀도어", "_nameByGrade": {"RARE":"섀도우"}, "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "대상 버프 1개 제거, 80% 피해 2회", "deal": {"coeff":80,"hits":2,"targets":1} },
+        { "type": "passive", "raw": "플레이어 크리티컬 데미지 8% 증가", "buffs": [ {"stat":"CRIT_DMG","value":8,"target":"player","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "대상 버프 1개 제거, 120% 피해 3회", "deal": {"coeff":120,"hits":3,"targets":1} },
+        { "type": "active", "cd": 30, "raw": "3초간 플레이어 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":3,"used":false} ] },
+        { "type": "passive", "raw": "플레이어 크리티컬 데미지 12% 증가", "buffs": [ {"stat":"CRIT_DMG","value":12,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "플레이어 공격 속도 15%, 이동 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"player","used":true}, {"stat":"MOVE","value":15,"target":"player","used":false} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "대상 버프 2개 제거, 200% 피해 4회", "deal": {"coeff":200,"hits":4,"targets":1} },
+        { "type": "active", "cd": 25, "raw": "3초간 플레이어 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":3,"used":false} ] },
+        { "type": "active", "cd": 19, "raw": "적 8명 270% 피해 3회, 2초 기절", "deal": {"coeff":270,"hits":3,"targets":8}, "cc":"기절2초" },
+        { "type": "passive", "raw": "플레이어 크리티컬 데미지 15% 증가", "buffs": [ {"stat":"CRIT_DMG","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "플레이어 공격 속도 15%, 이동 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"player","used":true}, {"stat":"MOVE","value":15,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 3, "cd": 3, "raw": "공격 시 대상 버프 있으면 20% 확률 버프 1개 제거·200% 피해 3회, 보스면 5배", "proc": {"on":"companionAttack","chance":20,"cond":"대상 버프 보유","deal":{"coeff":200,"hits":3,"targets":1,"bossMult":5}} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "대상 버프 2개 제거, 580% 피해 5회", "deal": {"coeff":580,"hits":5,"targets":1} },
+        { "type": "active", "cd": 25, "raw": "3초간 플레이어 기본 공격 피해 면역", "buffs": [ {"stat":"IMMUNE","value":1,"target":"player","dur":3,"used":false} ] },
+        { "type": "active", "cd": 19, "raw": "적 8명 650% 피해 3회, 2초 기절", "deal": {"coeff":650,"hits":3,"targets":8}, "cc":"기절2초" },
+        { "type": "active", "cd": 13, "lvl": 4, "raw": "대상 1400% 피해 2회 + 마무리 3000% 추가, 30% 확률 강화(1초 기절)", "deal": {"coeff":1400,"hits":2,"targets":1}, "finisher": {"coeff":3000,"hits":1,"targets":1} },
+        { "type": "passive", "raw": "플레이어 크리티컬 데미지 15% 증가", "buffs": [ {"stat":"CRIT_DMG","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "raw": "플레이어 공격 속도 15%, 이동 속도 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"player","used":true}, {"stat":"MOVE","value":15,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 2, "cd": 3, "raw": "공격 시 대상 버프 있으면 20% 확률 버프 1개 제거·1000% 피해 3회, 보스면 5배", "proc": {"on":"companionAttack","chance":20,"cond":"대상 버프 보유","deal":{"coeff":1000,"hits":3,"targets":1,"bossMult":5}} },
+        { "type": "passive", "lvl": 3, "raw": "적이 상태이상이면 대상 5000% 피해", "proc": {"on":"companionAttack","cond":"적 상태이상","deal":{"coeff":5000,"hits":1,"targets":1}} }
+      ]}
+    }},
+
+    { "id": "viper", "name": "바이퍼", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 동료+플레이어 공격 속도 8%, 크리티컬 데미지 8% 증가", "buffs": [ {"stat":"ATK_SPEED","value":8,"target":"both","dur":10,"used":true}, {"stat":"CRIT_DMG","value":8,"target":"both","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "플레이어 크리티컬 확률 10% 증가", "buffs": [ {"stat":"CRIT_RATE","value":10,"target":"player","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 동료+플레이어 공격 속도 12%, 크리티컬 데미지 12% 증가", "buffs": [ {"stat":"ATK_SPEED","value":12,"target":"both","dur":10,"used":true}, {"stat":"CRIT_DMG","value":12,"target":"both","dur":10,"used":true} ] },
+        { "type": "passive", "raw": "플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"player","used":true} ] },
+        { "type": "passive", "cd": 7, "raw": "[씨 서펜트 버스트] 동료 기본 공격 시 40% 확률 적 5명 130% 추가 피해 2회", "proc": {"on":"companionBasicAttack","chance":40,"cd":7,"deal":{"coeff":130,"hits":2,"targets":5}} },
+        { "type": "passive", "lvl": 3, "raw": "4초마다 플레이어 HP 1%, MP 1% 회복", "buffs": [ {"stat":"HP_REGEN","value":1,"target":"player","used":false,"note":"HP/MP 회복"} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 동료+플레이어 공격 속도 12%, 크리티컬 데미지 12% 증가", "buffs": [ {"stat":"ATK_SPEED","value":12,"target":"both","dur":15,"used":true}, {"stat":"CRIT_DMG","value":12,"target":"both","dur":15,"used":true} ] },
+        { "type": "active", "cd": 25, "lvl": 2, "dur": 12, "raw": "12초간 플레이어 최종 데미지 15%, 동료 최종 데미지 30% 증가, [서펜트 어썰트] 100% 발동", "enablesAssault100": true, "note": "지속 12초 동안 평타마다 씨 서펜트 버스트 대신 서펜트 어썰트가 100% 발동(40% 게이트·50% 대체 무시)", "buffs": [ {"stat":"FINAL_DMG","value":15,"target":"player","dur":12,"used":true}, {"stat":"FINAL_DMG","value":30,"target":"companion","dur":12,"used":true} ] },
+        { "type": "passive", "raw": "플레이어 크리티컬 확률 15%, 크리티컬 데미지 10% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"player","used":true}, {"stat":"CRIT_DMG","value":10,"target":"player","used":true} ] },
+        { "type": "passive", "cd": 5, "raw": "[씨 서펜트 버스트] 동료 기본 공격 시 40% 확률 적 7명 430% 추가 피해 2회", "proc": {"on":"companionBasicAttack","chance":40,"cd":5,"deal":{"coeff":430,"hits":2,"targets":7}} },
+        { "type": "passive", "raw": "4초마다 플레이어 HP 1.5%, MP 1.5% 회복", "buffs": [ {"stat":"HP_REGEN","value":1.5,"target":"player","used":false} ] },
+        { "type": "passive", "lvl": 2, "modifies": "씨 서펜트 버스트", "raw": "[씨 서펜트 버스트]가 50% 확률 [서펜트 어썰트]로 대체: 적 12명 480% 추가 피해 3회", "proc": {"on":"companionBasicAttack","replaceOfBurst":50,"deal":{"coeff":480,"hits":3,"targets":12},"activeOverride":{"skill":"서펜트 어썰트(액티브 2렙/25초)","assault100DuringBuff":true},"note":"버스트 발동(평타 40%) 시 데미지 전 50%로 이 어썰트로 대체(→버스트20%/어썰트20%). 액티브 지속 12초 중엔 평타마다 어썰트 100%"} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 15, "raw": "15초간 동료+플레이어 공격 속도 15%, 크리티컬 데미지 15% 증가", "buffs": [ {"stat":"ATK_SPEED","value":15,"target":"both","dur":15,"used":true}, {"stat":"CRIT_DMG","value":15,"target":"both","dur":15,"used":true} ] },
+        { "type": "active", "cd": 25, "lvl": 2, "dur": 12, "raw": "12초간 플레이어 최종 데미지 15%, 동료 최종 데미지 30% 증가, [서펜트 어썰트] 100% 발동", "enablesAssault100": true, "note": "지속 12초 동안 평타마다 씨 서펜트 버스트 대신 서펜트 어썰트가 100% 발동(40% 게이트·50% 대체 무시)", "buffs": [ {"stat":"FINAL_DMG","value":15,"target":"player","dur":12,"used":true}, {"stat":"FINAL_DMG","value":30,"target":"companion","dur":12,"used":true} ] },
+        { "type": "active", "cd": 16, "lvl": 3, "raw": "[피스트 인레이지] 적 4명 900% 피해 3회, 보스면 동일 피해 2회 더", "deal": {"coeff":900,"hits":3,"targets":4,"bossExtraHits":6,"note":"보스면 총 9회"} },
+        { "type": "passive", "cd": 3, "raw": "[씨 서펜트 버스트] 동료 기본 공격 시 40% 확률 적 9명 1050% 추가 피해 3회", "proc": {"on":"companionBasicAttack","chance":40,"cd":3,"deal":{"coeff":1050,"hits":3,"targets":9}} },
+        { "type": "passive", "raw": "플레이어 크리티컬 확률 15%, 크리티컬 데미지 10% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"player","used":true}, {"stat":"CRIT_DMG","value":10,"target":"player","used":true} ] },
+        { "type": "passive", "raw": "4초마다 플레이어 HP 1.5%, MP 1.5% 회복", "buffs": [ {"stat":"HP_REGEN","value":1.5,"target":"player","used":false} ] },
+        { "type": "passive", "modifies": "씨 서펜트 버스트", "raw": "[씨 서펜트 버스트]가 50% 확률 [서펜트 어썰트]로 대체: 적 12명 1750% 추가 피해 3회", "proc": {"on":"companionBasicAttack","replaceOfBurst":50,"deal":{"coeff":1750,"hits":3,"targets":12},"activeOverride":{"skill":"서펜트 어썰트(액티브 2렙/25초)","assault100DuringBuff":true},"note":"버스트 발동(평타 40%) 시 데미지 전 50%로 이 어썰트로 대체(→버스트20%/어썰트20%). 액티브 지속 12초 중엔 평타마다 어썰트 100%"} },
+        { "type": "passive", "lvl": 4, "raw": "[피스트 인레이지] 발동 시 적 8명 1700% 추가 피해 2회, 10초간 받는 피해 15% 증가", "proc": {"on":"fistEnrage","deal":{"coeff":1700,"hits":2,"targets":8},"debuff":{"stat":"RECV_DMG","value":15,"target":"enemy","dur":10,"used":true}} }
+      ]}
+    }},
+
+    { "id": "captain", "name": "캡틴", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "적 6명 17% 피해 3회, 1.5초 기절", "deal": {"coeff":17,"hits":3,"targets":6}, "cc":"기절1.5초" },
+        { "type": "passive", "raw": "동료+플레이어 공격 속도 10% 증가", "buffs": [ {"stat":"ATK_SPEED","value":10,"target":"both","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "적 8명 50% 피해 3회, 2초 기절", "deal": {"coeff":50,"hits":3,"targets":8}, "cc":"기절2초" },
+        { "type": "active", "cd": 30, "dur": 20, "raw": "20초간 3초마다 대상 95% 피해 2회", "dot": {"coeff":95,"hits":2,"period":3,"dur":20,"targets":1} },
+        { "type": "passive", "raw": "동료+플레이어 공격 속도 10% 증가", "buffs": [ {"stat":"ATK_SPEED","value":10,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "동료 공격력 10% 증가", "buffs": [ {"stat":"ATK_PCT","value":10,"target":"companion","used":true} ] }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "적 10명 150% 피해 3회, 2.5초 기절", "deal": {"coeff":150,"hits":3,"targets":10}, "cc":"기절2.5초" },
+        { "type": "active", "cd": 30, "dur": 20, "raw": "[쌍권총 크루] 20초간 3초마다 대상 280% 피해 2회", "dot": {"coeff":280,"hits":2,"period":3,"dur":20,"targets":1} },
+        { "type": "active", "cd": 20, "dur": 30, "raw": "30초간 2.5초마다 적 4명 290% 피해", "dot": {"coeff":290,"hits":1,"period":2.5,"dur":30,"targets":4} },
+        { "type": "passive", "raw": "동료+플레이어 공격 속도 10% 증가", "buffs": [ {"stat":"ATK_SPEED","value":10,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "동료 공격력 10% 증가", "buffs": [ {"stat":"ATK_PCT","value":10,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 3, "raw": "쌍권총 크루 소환 시 4초마다 적 3명 190% 피해 3회", "proc": {"on":"period","period":4,"deal":{"coeff":190,"hits":3,"targets":3},"cond":"쌍권총 크루 소환 중"} }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "적 10명 300% 피해 5회, 3초 기절", "deal": {"coeff":300,"hits":5,"targets":10}, "cc":"기절3초" },
+        { "type": "active", "cd": 25, "dur": 20, "raw": "[쌍권총 크루] 20초간 3초마다 대상 950% 피해 2회", "dot": {"coeff":950,"hits":2,"period":3,"dur":20,"targets":1} },
+        { "type": "active", "cd": 15, "dur": 30, "raw": "30초간 2.5초마다 적 4명 1200% 피해", "dot": {"coeff":1200,"hits":1,"period":2.5,"dur":30,"targets":4} },
+        { "type": "active", "cd": 20, "lvl": 4, "raw": "[배틀쉽] 3초 후 도착, 적 5명 3800% 피해 2회, 이후 30초간 3초마다 전방 적 3300% 피해", "deal": {"coeff":3800,"hits":2,"targets":5}, "dot": {"coeff":3300,"hits":1,"period":3,"dur":30,"targets":1} },
+        { "type": "passive", "raw": "동료+플레이어 공격 속도 10% 증가", "buffs": [ {"stat":"ATK_SPEED","value":10,"target":"both","used":true} ] },
+        { "type": "passive", "raw": "동료 공격력 10% 증가", "buffs": [ {"stat":"ATK_PCT","value":10,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 2, "raw": "쌍권총 크루 소환 시 4초마다 적 3명 1000% 피해 3회", "proc": {"on":"period","period":4,"deal":{"coeff":1000,"hits":3,"targets":3},"cond":"쌍권총 크루 소환 중"} },
+        { "type": "passive", "lvl": 3, "raw": "동료+플레이어 스킬 데미지 15% 증가", "buffs": [ {"stat":"SKILL_DMG","value":15,"target":"both","used":true} ] }
+      ]}
+    }}
+  ]
 }

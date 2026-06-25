@@ -39,6 +39,8 @@ let buffDirty = false;
 let allyPresets = loadJSON(ALLYP_KEY, null);
 let allyDirty = false;
 let companions = loadJSON(CACHE_COMPANIONS, []);
+const CACHE_MONDEF = "mekicalc.cache.monsterDefense.v1";   // 몬스터 방어력(챕터별, 정적)
+let monsterDefense = loadJSON(CACHE_MONDEF, null);
 let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
 const slotCache = {};                  // "부위|등급" -> slots[3][]
 
@@ -313,6 +315,7 @@ function showPanel(name) {
 // 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
 function recalcActivePanel() {
   calcDamage();
+  if (currentSub === "ally") allyRecalc();   // 동료 탭: 스탯/프리셋 바뀌면 동료 딜 재계산
   if (!$("panel-cube").hidden) calcEvaluate();
   else if (!$("panel-recommend").hidden) runRecommend(true);
   else if (!$("panel-compare").hidden) refreshCompareOnPresetChange();
@@ -576,6 +579,7 @@ async function refreshQual() {
 // ──────────────────── 예상 데미지 ────────────────────
 
 // 데미지 표시(즉시 페인트·실계산 공용). data = {normal, boss, detail:{normal:{min,max,avg,dps}, boss:{...}}}.
+let lastDamage = null;   // 마지막 데미지 결과(대상별 절대 데미지 계산용)
 function showDamage(data) {
   const n = data ? data.normal : null, b = data ? data.boss : null;
   $("dmg-normal").textContent = n == null ? "—" : fmt(n);
@@ -583,6 +587,67 @@ function showDamage(data) {
   $("dmg-normal-unit").textContent = n == null ? "" : "(" + koreanUnit(n) + ")";
   $("dmg-boss-unit").textContent = b == null ? "" : "(" + koreanUnit(b) + ")";
   renderDmgDetail(data && data.detail);
+  lastDamage = data;
+  renderTargetDamage();   // 대상 선택돼 있으면 절대 데미지 갱신
+}
+
+// ──────────────────── 대상별 절대 데미지(몬스터 방어력 반영) ────────────────────
+// 방어항 = 5000/(6000 + 방어력 × (1 − 방관%/100)). 현재 모델은 방어 미반영(상대 비교)이라, 이 배수를 곱하면 절대 데미지.
+const TARGET_KEY = "mekicalc.target.v1";
+function renderTargetSelector() {
+  const box = $("target-box");
+  if (!box || !monsterDefense || !monsterDefense.chapters) return;
+  box.hidden = false;
+  const csel = $("tg-chapter");
+  const chs = Object.keys(monsterDefense.chapters).filter((c) => +c <= 41 && hasTargets(c)).sort((a, b) => +a - +b);  // 캠페인 챕터
+  csel.innerHTML = chs.map((c) => `<option value="${c}">${c}챕터</option>`).join("");
+  const saved = loadJSON(TARGET_KEY, null);
+  if (saved && monsterDefense.chapters[saved.ch]) csel.value = saved.ch;
+  fillTargetStages(csel.value, saved && saved.stage);
+  csel.addEventListener("change", () => { fillTargetStages(csel.value, null); renderTargetDamage(); });
+  $("tg-stage").addEventListener("change", renderTargetDamage);
+  renderTargetDamage();
+}
+function hasTargets(ch) {
+  const c = monsterDefense.chapters[ch];
+  return c && ((c.stages && Object.keys(c.stages).length) || c.boss != null);
+}
+function fillTargetStages(ch, selected) {
+  const ssel = $("tg-stage"); const c = monsterDefense.chapters[ch];
+  if (!c) { ssel.innerHTML = ""; return; }
+  const opts = [];
+  const stages = c.stages || {};
+  for (const s of Object.keys(stages).sort((a, b) => +a - +b)) opts.push(`<option value="stage:${s}">${ch}-${s} 일반몹 (방어 ${fmt(stages[s])})</option>`);
+  if (c.boss != null) opts.push(`<option value="boss">${ch} 보스 (방어 ${fmt(c.boss)})</option>`);
+  ssel.innerHTML = opts.join("");
+  if (selected && [...ssel.options].some((o) => o.value === selected)) ssel.value = selected;
+}
+// 선택된 대상의 {방어력, 보스여부}
+function currentTarget() {
+  if (!$("tg-chapter") || !monsterDefense) return null;
+  const ch = $("tg-chapter").value, sv = $("tg-stage").value;
+  const c = monsterDefense.chapters && monsterDefense.chapters[ch];
+  if (!c || !sv) return null;
+  if (sv === "boss") return { def: c.boss, boss: true, label: `${ch} 보스` };
+  const s = sv.split(":")[1];
+  return { def: (c.stages || {})[s], boss: false, label: `${ch}-${s} 일반몹` };
+}
+function renderTargetDamage() {
+  const box = $("target-result");
+  if (!box || !$("tg-stage")) return;
+  const t = currentTarget();
+  if (!t || t.def == null || !lastDamage || !lastDamage.detail) { if (box) box.innerHTML = ""; return; }
+  saveJSON(TARGET_KEY, { ch: $("tg-chapter").value, stage: $("tg-stage").value });
+  const pen = (parseFloat(collectStats().DEF_PEN) || 0) / 100;
+  const defFactor = 5000 / (6000 + t.def * (1 - pen));
+  const det = t.boss ? lastDamage.detail.boss : lastDamage.detail.normal;
+  const hit = det ? det.avg : (t.boss ? lastDamage.boss : lastDamage.normal);
+  const dps = det && det.dps ? det.dps.total : null;
+  const absHit = hit * defFactor, absDps = dps != null ? dps * defFactor : null;
+  box.innerHTML =
+    `<div class="tg-line"><span>${t.label} · 방어력 ${fmt(t.def)} · 방관 ${num1s(pen * 100)}% → 방어 배수 ×${defFactor.toFixed(3)}</span></div>` +
+    `<div class="tg-main">절대 1타 평균딜 <b>${fmt(Math.round(absHit))}</b> <span class="ku">(${koreanUnit(absHit)})</span></div>` +
+    (absDps != null ? `<div class="tg-main">절대 전체 DPS <b>${fmt(Math.round(absDps))}</b> <span class="ku">(${koreanUnit(absDps)})</span></div>` : "");
 }
 
 // 상세 표 셀: 전체 숫자 + (조/억 읽기). 값 없으면 —.
@@ -602,11 +667,13 @@ function renderDmgDetail(detail) {
   $("d-avg-n").innerHTML = dmgCell(n.avg); $("d-avg-b").innerHTML = dmgCell(b.avg);
   fillDps(n.dps, "n"); fillDps(b.dps, "b");
 }
-// dps = {basic, skill, total} 또는 null(공용 직업)
+// dps = {basic, skill, companion, total} 또는 null(공용 직업)
 function fillDps(d, suf) {
-  if (!d) { $("d-dpsb-" + suf).textContent = "—"; $("d-dpss-" + suf).textContent = "—"; $("d-dpst-" + suf).textContent = "—"; return; }
+  const cc = $("d-dpsc-" + suf);
+  if (!d) { $("d-dpsb-" + suf).textContent = "—"; $("d-dpss-" + suf).textContent = "—"; if (cc) cc.textContent = "—"; $("d-dpst-" + suf).textContent = "—"; return; }
   $("d-dpsb-" + suf).innerHTML = dmgCellShare(d.basic, d.total);
   $("d-dpss-" + suf).innerHTML = dmgCellShare(d.skill, d.total);
+  if (cc) cc.innerHTML = (d.companion == null) ? "<span class='ku'>동료 미선택</span>" : dmgCellShare(d.companion, d.total);
   $("d-dpst-" + suf).innerHTML = dmgCell(d.total);
 }
 
@@ -626,7 +693,7 @@ async function calcDamage() {
   if (!refreshing) $("status").textContent = "계산 중…";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const data = await postJson("/api/damage", { stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval });
+      const data = await postJson("/api/damage", Object.assign({ stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval }, activeCompanionSel()));
       showDamage(data);
       saveJSON(CACHE_DMG, data);   // 직전 데미지(상세 포함, 다음 로드 즉시 표시용)
       damageShown = true;
@@ -1577,22 +1644,59 @@ function renderAlly() {
     '<label class="ctl">등급<select id="al-grade"></select></label>' +
     '<label class="ctl">레벨<input id="al-level" type="number" min="1" step="1"></label>' +
     '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" min="0" step="any"></label>' +
-    '</div>';
+    '<label class="ctl">대상<select id="al-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select></label>' +
+    '</div>' +
+    '<div id="ally-result" class="ally-result"></div>';
   const csel = $("al-companion");
   for (const c of companions) csel.add(new Option(c.name || c.id, c.id));
   csel.value = p.companionId || companions[0].id;
   fillAllyGrades(csel.value, p.grade);
   $("al-level").value = p.level != null ? p.level : 1;
   $("al-ratio").value = p.ratio != null ? p.ratio : 0;
-  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; });
-  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; });
+  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; allyRecalc(); });
+  for (const id of ["al-grade", "al-level", "al-ratio", "al-boss"]) $(id).addEventListener("change", () => { allyDirty = true; allyRecalc(); });
+  allyRecalc();
 }
+
+// 동료 종합 딜 계산 → 결과 표시(네 프리셋 스탯 + 동료 입력). 소환 유지창 기준 own-DPS + 항목별.
+// 요청 순번(allyReqSeq) 가드: 동료를 빠르게 바꿔 여러 요청이 겹칠 때, 늦게 도착한 옛 응답이 최신 결과를 덮어쓰지 못하게 한다.
+let allyReqSeq = 0;
+async function allyRecalc() {
+  const box = $("ally-result");
+  if (!box || !$("al-companion")) return;
+  const a = collectAlly();
+  const boss = $("al-boss") ? $("al-boss").value === "true" : true;
+  const seq = ++allyReqSeq;
+  try {
+    const d = await postJson("/api/companion-dps", { stats: collectStats(), conversions: myConv, bossMode: boss, companionId: a.companionId, grade: a.grade, level: a.level, ratio: a.ratio, buffs: activeBuffs() });
+    if (seq !== allyReqSeq) return;   // 더 새 요청이 떴으면 이 응답은 폐기(옛 동료 값으로 덮어쓰기 방지)
+    if (!d.valid) { box.innerHTML = '<p class="status">이 등급 데이터가 없어요.</p>'; return; }
+    const items = Object.entries(d.detail || {}).sort((x, y) => y[1] - x[1])
+      .map(([k, v]) => `<div class="buff-tip-row"><span>${k}</span><b>${fmtBig(v)}</b></div>`).join("");
+    box.innerHTML =
+      `<div class="ally-sum">동료 종합 딜 <b>${fmtBig(d.ownDps)}</b> <span class="muted">/ 초 (${boss ? "보스" : "일반몹"}, 소환 유지창 기준)</span></div>` +
+      `<div class="ally-sub">평타 ${fmtBig(d.basicDps)} · 스킬 ${fmtBig(d.skillDps)} · 계승 ${num1s(d.ratioUsed)}%(참고 ${num1s(d.refRatio)}%) · 가동률 ${(d.uptime * 100).toFixed(0)}%</div>` +
+      `<details class="ally-detail"><summary>항목별 보기</summary>${items}</details>`;
+  } catch (e) { if (seq === allyReqSeq) box.innerHTML = '<p class="status">계산 실패: ' + e.message + '</p>'; }
+  if (seq === allyReqSeq) calcDamage();   // 최신 요청일 때만 예상 데미지 카드의 동료 DPS 갱신
+}
+
+// 큰 수 → 조/억 표기.
+function fmtBig(v) {
+  v = Number(v) || 0;
+  if (v >= 1e12) return (v / 1e12).toFixed(2) + "조";
+  if (v >= 1e8) return (v / 1e8).toFixed(2) + "억";
+  if (v >= 1e4) return (v / 1e4).toFixed(1) + "만";
+  return fmt(v);
+}
+function num1s(v) { return (Math.round((Number(v) || 0) * 10) / 10); }
 
 function fillAllyGrades(companionId, selected) {
   const gsel = $("al-grade");
   gsel.innerHTML = "";
-  const grades = (companionById(companionId) || {}).grades || [];
-  for (const g of grades) gsel.add(new Option(gradeKo(g), g));
+  const g = (companionById(companionId) || {}).grades || [];
+  const grades = Array.isArray(g) ? g : Object.keys(g);   // grades는 객체({RARE:{...}}) 또는 배열 둘 다 허용
+  for (const x of grades) gsel.add(new Option(gradeKo(x), x));
   if (selected && grades.includes(selected)) gsel.value = selected;
 }
 
@@ -1604,6 +1708,14 @@ function collectAlly() {
     level: parseInt($("al-level").value, 10) || 1,
     ratio: parseFloat($("al-ratio").value) || 0,
   };
+}
+
+// 예상 데미지에 합산할 활성 동료 = 동료 탭에 떠 있으면 라이브 입력, 아니면 저장된 활성 프리셋. 미선택이면 {}.
+function activeCompanionSel() {
+  const live = (currentSub === "ally") ? collectAlly() : null;
+  const p = (live && live.companionId) ? live : (allyPresets && allyPresets.presets[allyPresets.active]) || {};
+  if (!p.companionId) return {};
+  return { companionId: p.companionId, grade: p.grade, level: p.level != null ? p.level : 1, ratio: p.ratio != null ? p.ratio : 0 };
 }
 
 function apApply(name) {
@@ -1920,6 +2032,8 @@ async function loadMeta(pre) {
     if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
     else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
     if (boot && boot.companions) { companions = boot.companions; saveJSON(CACHE_COMPANIONS, companions); }   // 동료 목록(정적)
+    if (boot && boot.monsterDefense) { monsterDefense = boot.monsterDefense; saveJSON(CACHE_MONDEF, monsterDefense); }   // 몬스터 방어력(정적)
+    renderTargetSelector();      // 예상 데미지: 대상(스테이지/보스) 선택
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
     renderConvSettings();        // 딜 환산 설정 목록
     renderRangeSettings();       // 추천 범위 설정 목록
