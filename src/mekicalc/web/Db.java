@@ -92,7 +92,10 @@ public final class Db {
             st.execute("CREATE TABLE IF NOT EXISTS users ("
                     + "sub TEXT PRIMARY KEY, name TEXT, email TEXT, "
                     + "bundle JSONB NOT NULL DEFAULT '{}'::jsonb, "
+                    + "created_at TIMESTAMPTZ NOT NULL DEFAULT now(), "
                     + "updated_at TIMESTAMPTZ NOT NULL DEFAULT now())");
+            // 기존 DB 마이그레이션(멱등): created_at 없으면 추가. upsert의 DO UPDATE는 건드리지 않아 가입 시각 보존.
+            st.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()");
             st.execute("CREATE TABLE IF NOT EXISTS sessions ("
                     + "token TEXT PRIMARY KEY, sub TEXT NOT NULL, name TEXT, email TEXT, "
                     + "expires_at TIMESTAMPTZ NOT NULL)");

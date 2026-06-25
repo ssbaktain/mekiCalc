@@ -42,7 +42,7 @@ public final class StatsSnapshot {
         Path snapDir = dataDir.resolveSibling("logs").resolve("snapshots");
         Files.createDirectories(snapDir);
 
-        List<String[]> users = loadUsers(dataDir);   // [sub, name, email, bundleText]
+        List<String[]> users = loadUsers(dataDir);   // [sub, name, email, createdAt, bundleText]
         Map<String, Object> state = loadState(snapDir.resolve(".state.json"));
 
         String runTs = Instant.now().toString();
@@ -52,8 +52,8 @@ public final class StatsSnapshot {
         List<String> lines = new ArrayList<>();
         int total = 0, changed = 0, skipped = 0;
         for (String[] u : users) {
-            String sub = u[0], name = u[1], email = u[2];
-            String bundle = minify(u[3] == null ? "" : u[3]);
+            String sub = u[0], name = u[1], email = u[2], createdAt = u[3];
+            String bundle = minify(u[4] == null ? "" : u[4]);
             if (bundle.isEmpty() || bundle.equals("{}")) continue;   // 빈 프리셋 제외
             total++;
             String hash = sha256(bundle);
@@ -62,7 +62,8 @@ public final class StatsSnapshot {
             changed++;
             // bundle 은 이미 검증된 JSON(minify된 한 줄) → 중첩 객체로 그대로 인라인
             lines.add("{\"ts\":" + j(runTs) + ",\"sub\":" + j(sub) + ",\"name\":" + j(name)
-                    + ",\"email\":" + j(email) + ",\"bundle\":" + bundle + "}\n");
+                    + ",\"email\":" + j(email) + ",\"createdAt\":" + j(createdAt)
+                    + ",\"bundle\":" + bundle + "}\n");
         }
 
         if (!lines.isEmpty()) {
@@ -87,11 +88,12 @@ public final class StatsSnapshot {
         List<String[]> out = new ArrayList<>();
         Db db = Db.load(dataDir);
         if (db.enabled) {
-            String sql = "SELECT sub, name, email, bundle::text FROM users";
+            String sql = "SELECT sub, name, email, created_at, bundle::text FROM users";
             try (Connection c = db.open(); PreparedStatement ps = c.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    out.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)});
+                    out.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3),
+                            rs.getString(4), rs.getString(5)});
                 }
                 return out;
             } catch (Exception e) {
@@ -106,7 +108,7 @@ public final class StatsSnapshot {
                     String fn = f.getFileName().toString();
                     if (!fn.endsWith(".json")) continue;
                     String sub = fn.substring(0, fn.length() - ".json".length());
-                    out.add(new String[]{sub, null, null, Files.readString(f)});
+                    out.add(new String[]{sub, null, null, null, Files.readString(f)});
                 }
             } catch (Exception e) {
                 System.err.println("스냅샷 파일 읽기 실패: " + e);
