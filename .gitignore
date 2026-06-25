@@ -53,6 +53,9 @@ data/sessions.json
 data/users/
 data/db.json
 
+### 개발PC 전용 도구(인프라 정보 포함 — 커밋 제외) ###
+db-tunnel.ps1
+
 ### 로컬 백업 / 임시 산출물 ###
 mydata_backup/
 logs/
