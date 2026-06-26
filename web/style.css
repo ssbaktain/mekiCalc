@@ -254,15 +254,6 @@ main {
 
 .th-sub { font-size: 11px; font-weight: 400; color: var(--muted); }
 
-/* 예상 데미지: 대상별 절대 데미지 */
-.target-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-.target-ctrls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.target-title { font-size: 13px; font-weight: 700; color: var(--accent); }
-.target-result { margin-top: 8px; }
-.target-result .tg-line { font-size: 12px; color: var(--muted); }
-.target-result .tg-main { font-size: 15px; margin-top: 3px; }
-.target-result .tg-main b { color: var(--accent); }
-.target-result .ku { font-size: 12px; color: var(--muted); }
 
 /* 동료 탭: 결과 */
 .ally-result { margin-top: 14px; }
@@ -684,4 +675,196 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 @media (max-width: 640px) {
   .quick-presets { right: 12px; bottom: 12px; }
   .qp-fab { width: 50px; height: 50px; font-size: 22px; }
+}
+
+/* ──────────────────── 홈 대시보드 ──────────────────── */
+.home-status { margin: 0 0 6px; }
+.home-foot { margin: 6px 2px 0; font-size: 12px; line-height: 1.6; }
+
+/* 히어로: 일반몹 / 보스몹 1타 (클릭=대상 선택) */
+.home-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.hero-card {
+  text-align: left; cursor: pointer; padding: 18px 22px; border-radius: 14px; min-width: 0;
+  background: linear-gradient(155deg, var(--card2) 0%, var(--card) 100%);
+  border: 1px solid var(--border); color: var(--text); transition: transform .12s, border-color .12s, box-shadow .12s;
+  position: relative; overflow: hidden;
+}
+.hero-card::after { content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; box-shadow: inset 0 0 0 0 transparent; transition: box-shadow .12s; }
+.hero-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.hero-card.active { border-color: var(--accent); box-shadow: 0 6px 22px -10px var(--accent2); }
+.hero-card.active::after { box-shadow: inset 0 2px 0 0 var(--accent); }
+.hero-top { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+.hero-icon { font-size: 18px; }
+.hero-tag { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: var(--card2); border: 1px solid var(--border); color: var(--muted); font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+.hero-value { font-size: clamp(20px, 4.6vw, 32px); font-weight: 800; margin-top: 10px; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.15; overflow-wrap: anywhere; }
+.hero-card[data-target="boss"] .hero-value { color: #f5b14a; }
+.hero-unit { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+
+/* 2열 대시보드 — 두 카드 높이를 맞추고(stretch) 내부를 고르게 분산해 하단까지 채움.
+   minmax(0,1fr): 콘텐츠 최소너비가 트랙을 밀어 카드가 컨테이너 밖으로 넘치는 것 방지 */
+.home-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+.dash-card { margin-bottom: 18px; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dash-card .dash-head { margin-bottom: 0; }
+.dash-card .stat-tiles, .dash-card .dps-bars, .dash-card .donut-body { margin-top: 0; }
+/* 딜 상세 카드: 도넛 카드와 높이를 맞추되, 내부 요소를 위·아래로 고르게 벌려 빈 공간을 메움 */
+.dash-card #home-stats { margin-bottom: auto; }
+.dash-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.dash-head h2 { margin: 0; font-size: 17px; }
+.dash-sub { font-size: 12px; color: var(--muted); }
+
+/* 도넛 카드 본문: 데스크톱 = 도넛(중앙) → 범례(아래 풀폭) → 분할바, 모바일 = [도넛][세로분할] / [범례 풀폭] */
+.donut-body {
+  display: grid; grid-template-columns: 1fr;
+  grid-template-areas: "donut" "legend" "split";
+  gap: 18px; justify-items: stretch;
+}
+.donut-chart { grid-area: donut; justify-self: center; }
+.donut-legend { grid-area: legend; min-width: 0; width: 100%; }
+.pc-split { grid-area: split; min-width: 0; }
+.donut-svg { width: 220px; height: 220px; display: block; }
+.pie-seg { transition: opacity .12s; cursor: default; }
+.pie-seg.dim { opacity: .25; }
+.donut-center-top { text-anchor: middle; fill: var(--muted); font-size: 11px; font-weight: 600; }
+.donut-center-val { text-anchor: middle; fill: var(--text); font-size: 18px; font-weight: 800; }
+.donut-empty { width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+/* 범례를 도넛 아래 풀폭으로 두므로 2열 그리드로 펴서 스킬 이름이 잘리지 않게 함 */
+.donut-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 14px; }
+.lg-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; font-size: 13px; cursor: default; }
+.lg-row.active { background: var(--card2); }
+.lg-cnt { font-size: 10.5px; font-weight: 700; color: var(--muted); background: var(--card2); border: 1px solid var(--border); padding: 0 5px; border-radius: 5px; margin-left: 4px; vertical-align: middle; }
+/* '기타' 묶음: 헤더 + 세부 종류 펼침(그래프는 기타 한 조각) — 범례 풀폭 차지 */
+.lg-group { grid-column: 1 / -1; margin-top: 3px; padding-top: 6px; border-top: 1px solid var(--border); }
+.lg-other-head { cursor: help; }
+.lg-sublist { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px 14px; padding-left: 18px; margin-top: 1px; }
+.lg-subrow { font-size: 12px; color: var(--muted); padding: 3px 8px; }
+.lg-subrow .lg-pct, .lg-subrow .lg-val { font-weight: 600; }
+.lg-subdot { width: 6px; height: 6px; border-radius: 2px; background: var(--muted); flex-shrink: 0; opacity: .7; }
+.lg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.lg-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+.lg-pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+.lg-val { color: var(--muted); font-size: 12px; min-width: 52px; text-align: right; }
+
+/* 플레이어 vs 동료 분할 바 (데스크톱=가로, 모바일=세로 — 크기는 --seg) */
+.pc-split { padding-top: 16px; border-top: 1px solid var(--border); }
+.pc-head { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 7px; }
+.pc-bar { display: flex; height: 28px; border-radius: 8px; overflow: hidden; background: var(--card2); }
+.pc-seg { width: var(--seg); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #1c1f26; min-width: 0; transition: width .25s, height .25s; }
+.pc-seg span { padding: 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-player { background: var(--accent); }
+.pc-comp { background: #f5a623; }
+.pc-legend { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.pc-i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+.pc-i.pc-player { background: var(--accent); }
+.pc-i.pc-comp { background: #f5a623; }
+
+/* 상세 타일 */
+.stat-tiles { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.tile { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.tile-accent { border-color: var(--accent2); }
+.tile-label { font-size: 12px; color: var(--muted); text-align: center; }
+.tile-val { font-size: 20px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: center; }
+.tile-accent .tile-val { color: var(--accent); }
+.tile-ku { font-size: 12px; color: var(--muted); margin-top: 2px; text-align: center; }
+
+/* 해석식 vs 시뮬 비교(검증용) */
+.sim-cmp { margin-top: 4px; padding: 12px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; }
+.sim-head { font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+.sim-head .sim-sub { font-weight: 400; }
+.sim-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 3px; }
+.sim-row span:first-child { color: var(--muted); min-width: 96px; }
+.sim-row b { font-variant-numeric: tabular-nums; }
+.sim-diff { margin-left: auto; font-weight: 700; font-size: 12px; }
+.sim-diff.up { color: #6fcf6f; }
+.sim-diff.down { color: #f0846a; }
+
+/* DPS 막대 */
+.dps-bars { margin-top: 20px; }
+.bars-head { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+.bars-sub { font-weight: 600; color: var(--accent); font-size: 11px; }
+.bar-row { display: grid; grid-template-columns: 86px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bar-name { font-size: 13px; font-weight: 600; }
+.bar-sub { display: block; font-size: 10px; color: var(--muted); font-weight: 400; }
+.bar-track { height: 12px; background: var(--card2); border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; transition: width .25s; }
+.bar-val { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.bar-pct { display: inline-block; min-width: 42px; text-align: right; color: var(--text); font-weight: 700; }
+/* 동료 DPS 두 기준(순수/사이클) 표기 */
+.comp-dps-note { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.comp-dps-note b { color: var(--text); font-weight: 700; }
+.comp-dps-note .sub { font-size: 11px; }
+.comp-dps-note .cdot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+
+/* 대상 선택 바(챕터/스테이지 → 일반몹/보스몹) */
+.target-select { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 18px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+.target-select .ts-label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.target-select .ctl { font-size: 13px; display: inline-flex; align-items: center; gap: 7px; }
+.target-select .ts-name { color: var(--muted); font-weight: 600; }
+.cube-target-hint { font-size: 12.5px; color: var(--muted); }
+.cube-target-hint .ct-hint-val { color: var(--accent); font-weight: 700; }
+.target-select .ts-mode { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--accent); }
+
+/* (구) 대상별 절대 데미지 카드 — 좌(결과)·우(추이) 2열로 빈 공간 채움 */
+.target-card .target-ctrls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.target-card .ctl { font-size: 13px; }
+.target-grid { display: grid; grid-template-columns: minmax(180px, 0.85fr) minmax(0, 1.15fr); gap: 22px; align-items: stretch; }
+.target-result { display: flex; flex-direction: column; gap: 12px; }
+.tg-badge { align-self: flex-start; padding: 5px 12px; border-radius: 999px; background: var(--card2); border: 1px solid var(--border); font-size: 13px; font-weight: 700; }
+.tg-badge-boss { color: #f5b14a; border-color: #6a5326; background: #2e2716; }
+.tg-metric { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tg-k { font-size: 12px; color: var(--muted); }
+.tg-v { font-size: 26px; font-weight: 800; color: var(--accent); margin-top: 3px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.1; }
+.tg-v.alt { color: #f5b14a; }
+.tg-v.cut { color: #6fcf6f; }
+.tg-unit { font-size: 14px; font-weight: 700; color: var(--muted); margin-left: 3px; }
+.tg-k-sub { font-size: 10.5px; color: var(--muted); font-weight: 400; margin-left: 5px; }
+.tg-est { font-size: 10px; font-weight: 700; color: #e0a23a; background: rgba(224,162,58,.14); border: 1px solid rgba(224,162,58,.3); padding: 1px 6px; border-radius: 6px; vertical-align: middle; }
+.tg-full { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.tg-foot { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: auto; }
+
+/* 스테이지별 절대 딜 추이 막대 그래프 */
+.chapter-trend { display: flex; flex-direction: column; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-height: 160px; }
+.ct-head { font-size: 13px; color: var(--text); font-weight: 700; margin-bottom: 12px; }
+.ct-sub { font-weight: 400; color: var(--muted); font-size: 11px; }
+.ct-zoom { font-weight: 600; font-size: 10px; color: var(--accent); background: rgba(124,156,255,.14); padding: 1px 6px; border-radius: 6px; }
+.ct-bars { flex: 1; display: flex; align-items: flex-end; gap: 4px; min-height: 110px; }
+.ct-col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; cursor: default; }
+.ct-barwrap { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; }
+.ct-lab { font-size: 9px; font-weight: 700; color: var(--accent); margin-bottom: 3px; white-space: nowrap; }
+.ct-bar { width: 80%; max-width: 20px; background: linear-gradient(180deg, var(--accent2), #3f4d8a); border-radius: 3px 3px 0 0; transition: height .2s; min-height: 4px; }
+.ct-col.ct-sel .ct-bar { background: linear-gradient(180deg, var(--accent), var(--accent2)); box-shadow: 0 0 0 2px rgba(124,156,255,.25); }
+.ct-col:hover .ct-bar { filter: brightness(1.2); }
+.ct-x { font-size: 9px; color: var(--muted); margin-top: 5px; }
+.ct-col.ct-sel .ct-x { color: var(--accent); font-weight: 700; }
+.ct-axis { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 10.5px; color: var(--muted); flex-wrap: wrap; }
+.ct-drop { color: #f0846a; font-weight: 600; }
+
+/* 그래프 등장 애니메이션 (새로고침/접속 시 바로 재생) */
+@keyframes mc-growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes mc-growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes mc-popIn { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
+.bar-fill { transform-origin: left center; animation: mc-growX .55s cubic-bezier(.2, .8, .2, 1) both; }
+.ct-bar { transform-origin: bottom center; animation: mc-growY .6s cubic-bezier(.2, .8, .2, 1) both; }
+.pc-bar { transform-origin: left center; animation: mc-growX .5s cubic-bezier(.2, .8, .2, 1) both; }
+.donut-svg { animation: mc-popIn .5s cubic-bezier(.2, .8, .2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill, .ct-bar, .pc-bar, .donut-svg { animation: none; }
+}
+
+@media (max-width: 760px) {
+  .home-grid { grid-template-columns: 1fr; }
+  .target-grid { grid-template-columns: 1fr; gap: 16px; }
+  .target-card .dash-head { flex-direction: column; align-items: flex-start; }
+  /* 차트 카드: 도넛 + 세로 분할바를 좌우로, 범례는 아래 풀폭 */
+  .donut-body { grid-template-areas: "donut split" "legend legend"; grid-template-columns: auto auto; justify-content: space-between; gap: 14px; }
+  .donut-svg, .donut-empty { width: 168px; height: 168px; }
+  .pc-split { border-top: none; padding-top: 0; min-width: 110px; }
+  .pc-bar { flex-direction: column; height: 168px; width: 92px; margin: 0 auto; transform-origin: bottom center; animation-name: mc-growY; }
+  .pc-seg { width: 100%; height: var(--seg); }
+  .pc-legend { flex-direction: column; gap: 4px; }
+}
+@media (max-width: 480px) {
+  .dash-card { padding: 18px; }
+  .donut-body { gap: 10px; }
+  .donut-svg, .donut-empty { width: 150px; height: 150px; }
+  .pc-bar { height: 150px; width: 84px; }
 }

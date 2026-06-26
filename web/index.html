@@ -42,55 +42,45 @@
       <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
     </div>
 
-    <!-- 프리셋 (예상 데미지 + 스탯/큐브 선택) -->
-    <section id="panel-presets" class="panel">
-      <div class="card damage-card">
-        <div class="result-row">
-          <div class="result">
-            <div class="label">예상 데미지 (일반몹 · 평타 1타)</div>
-            <div id="dmg-normal" class="value">—</div>
-            <div id="dmg-normal-unit" class="value-unit"></div>
-          </div>
-          <div class="result">
-            <div class="label">예상 데미지 (보스몹 · 평타 1타)</div>
-            <div id="dmg-boss" class="value">—</div>
-            <div id="dmg-boss-unit" class="value-unit"></div>
-          </div>
-        </div>
-        <button id="dmg-toggle" class="dmg-toggle" type="button" aria-expanded="false">자세히 <span class="caret">▾</span></button>
-        <div id="dmg-detail" class="dmg-detail" hidden>
-          <table class="dmg-table">
-            <thead><tr><th></th><th>일반몹</th><th>보스몹</th></tr></thead>
-            <tbody>
-              <tr><th>1타 최소딜</th><td id="d-min-n">—</td><td id="d-min-b">—</td></tr>
-              <tr><th>1타 최대딜</th><td id="d-max-n">—</td><td id="d-max-b">—</td></tr>
-              <tr><th>1타 평균딜</th><td id="d-avg-n">—</td><td id="d-avg-b">—</td></tr>
-              <tr><th>평타 DPS</th><td id="d-dpsb-n">—</td><td id="d-dpsb-b">—</td></tr>
-              <tr><th>스킬 DPS</th><td id="d-dpss-n">—</td><td id="d-dpss-b">—</td></tr>
-              <tr><th>동료 DPS<br><span class="th-sub">90초 사이클</span></th><td id="d-dpsc-n">—</td><td id="d-dpsc-b">—</td></tr>
-              <tr><th>전체 DPS</th><td id="d-dpst-n">—</td><td id="d-dpst-b">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div id="target-box" class="target-box" hidden>
-          <div class="target-ctrls">
-            <span class="target-title">대상별 절대 데미지</span>
-            <label class="ctl">챕터<select id="tg-chapter"></select></label>
-            <label class="ctl">대상<select id="tg-stage"></select></label>
-          </div>
-          <div id="target-result" class="target-result"></div>
-        </div>
-        <p id="status" class="status"></p>
+    <!-- 홈 (로고 클릭으로 진입) — 예상 데미지 대시보드 -->
+    <section id="panel-home" class="panel">
+      <p id="status" class="status home-status"></p>
+
+      <!-- 대상 선택: 챕터/스테이지. 보스 스테이지=보스몹 계산, 일반 스테이지=일반몹 계산(해당 몹 방어력 반영) -->
+      <div id="target-box" class="target-select" hidden>
+        <span class="ts-label">대상</span>
+        <label class="ctl"><select id="tg-chapter"></select><span class="ts-name">챕터</span></label>
+        <label class="ctl"><select id="tg-stage"></select><span class="ts-name">스테이지</span></label>
+        <span id="ts-mode" class="ts-mode"></span>
       </div>
 
-      <div class="subtabs">
-        <button class="subtab active" data-sub="stat" type="button">스탯</button>
-        <button class="subtab" data-sub="buff" type="button">스킬</button>
-        <button class="subtab" data-sub="ally" type="button">동료</button>
-        <button class="subtab" data-sub="relic" type="button">유물</button>
-        <button class="subtab" data-sub="cube" type="button">큐브</button>
-        <button class="subtab subtab-right" data-sub="settings" type="button">⚙ 설정</button>
+      <div class="home-grid">
+        <!-- 좌: 딜 비중 도넛 + 범례(아래) + 플레이어/동료 분할 -->
+        <div class="card dash-card">
+          <div class="dash-head">
+            <h2 id="dash-title">딜 비중</h2>
+            <span class="dash-sub" id="dash-share-sub"></span>
+          </div>
+          <div class="donut-body">
+            <div id="donut-chart" class="donut-chart"></div>
+            <div id="pc-split" class="pc-split"></div>
+            <div id="donut-legend" class="donut-legend"></div>
+          </div>
+        </div>
+
+        <!-- 우: 상세 + DPS 막대 -->
+        <div class="card dash-card">
+          <div class="dash-head"><h2>딜 상세</h2><span class="dash-sub" id="dash-detail-sub"></span></div>
+          <div id="home-stats" class="stat-tiles"></div>
+          <div id="home-dpsbars" class="dps-bars"></div>
+        </div>
       </div>
+
+      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료) 기준이에요. 프리셋은 상단 메뉴 <b>프리셋</b>에서, 빠른 전환은 우하단 ⚡에서.</p>
+    </section>
+
+    <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->
+    <section id="panel-presets" class="panel" hidden>
 
       <!-- 스탯 -->
       <div id="sub-stat" class="subpanel">
@@ -100,6 +90,10 @@
             <div class="head-right">
               <label class="ctl inline">직업
                 <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option></select>
+              </label>
+              <label class="ctl inline">대상
+                <select id="spt-chapter" title="챕터"></select>
+                <select id="spt-stage" title="스테이지"></select>
               </label>
               <button id="stat-reset" class="mini-btn ghost" type="button">초기화</button>
             </div>
@@ -254,9 +248,7 @@
               <option value="2">3슬롯</option>
             </select>
           </label>
-          <label class="ctl">기준
-            <select id="ev-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select>
-          </label>
+          <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
           <label class="ctl">정렬
             <select id="ev-sort">
               <option value="1">딜 증가량 순</option>
@@ -277,9 +269,7 @@
     <section id="panel-optcompare" class="panel" hidden>
       <div class="card">
         <div class="controls">
-          <label class="ctl">기준
-            <select id="oc-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select>
-          </label>
+          <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
         </div>
         <div class="opt-sides">
           <div class="opt-side">
@@ -318,9 +308,7 @@
               <option value="3">최종 효율</option>
             </select>
           </label>
-          <label class="ctl">기준
-            <select id="rc-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select>
-          </label>
+          <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
           <label class="ctl chk"><input type="checkbox" id="rc-upper" checked />윗잠</label>
           <label class="ctl chk"><input type="checkbox" id="rc-lower" checked />아랫잠</label>
         </div>
@@ -343,9 +331,7 @@
         <div class="controls">
           <label class="ctl">부위<select id="cmp-part"></select></label>
           <label class="ctl">줄<select id="cmp-line"><option value="upper">윗잠</option><option value="lower">아랫잠</option></select></label>
-          <label class="ctl">기준
-            <select id="cmp-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select>
-          </label>
+          <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
           <label class="ctl">변경 후 스택<input id="cmp-stack" type="number" min="0" value="0" /></label>
         </div>
         <div id="cmp-editor" class="cmp-editor"></div>
@@ -386,9 +372,7 @@
   <div id="quick-presets" class="quick-presets">
     <div id="qp-panel" class="qp-panel" hidden>
       <div class="qp-title">프리셋 빠른 전환</div>
-      <label class="qp-row"><span>스탯</span><select id="qs-sp"></select></label>
-      <label class="qp-row"><span>큐브</span><select id="qs-cp"></select></label>
-      <label class="qp-row" id="qp-row-skill"><span>스킬</span><select id="qs-bp"></select></label>
+      <div id="qp-rows"></div>
     </div>
     <button id="qp-fab" class="qp-fab" type="button" aria-label="프리셋 빠른 전환" aria-expanded="false">⚡</button>
   </div>

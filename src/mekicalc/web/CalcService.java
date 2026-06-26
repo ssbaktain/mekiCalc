@@ -40,6 +40,8 @@ public final class CalcService {
             "UNIQUE", "유니크", "LEGENDARY", "레전드리", "MYTHIC", "미스틱");
 
     private static final int JOB_NIGHTLORD = 1;
+    private static final double NORMAL_SECONDS = 90;   // 일반몹(챕터 스테이지) 기준 전투시간
+    private static final double BOSS_SECONDS = 70;      // 보스(챕터 보스) 기준 전투시간
 
     private final GameContent content;
 
@@ -72,17 +74,48 @@ public final class CalcService {
      * 데스크톱 {@code AppModel.dealModel()}을 무상태로 옮긴 것.
      */
     private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval) {
+        return dealModel(current, conv, boss, buffs, hitInterval, null);
+    }
+    /** targetDef!=null이면 나이트로드 딜 모델이 그 방어배수로 방관까지 환산. */
+    private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval, Double targetDef) {
+        return dealModel(current, conv, boss, buffs, hitInterval, targetDef, null, null, 0, 0);
+    }
+    /**
+     * companionId!=null이면 동료(해석식) DPS를 출력에 합산하고 소환 중 동료 버프를 플레이어에 블렌딩 → 동소지·동료딜·동료버프를 큐브가 환산.
+     * 동료 효율 계산은 빠른 해석식({@link CompanionDps#dpsOverSecondsAnalytic})을 쓴다(전투시간 보스 70 / 일반 90초 기준).
+     */
+    private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval, Double targetDef,
+                               String companionId, String grade, int companionLevel, double ratio) {
         DamageModel dm = content.damageModel(conv);
         if ((int) current.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
             try {
                 NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs, hitInterval);
-                return new NightlordDealModel(nd, dm, boss);
+                CompanionDps comp = null;
+                if (companionId != null && !companionId.isEmpty()) {
+                    comp = new CompanionDps(dm, content.companionRoot, companionId, grade, companionLevel, ratio).singleTarget(true);
+                    if (!comp.valid()) comp = null;
+                }
+                return new NightlordDealModel(nd, dm, boss, targetDef, comp, boss ? BOSS_SECONDS : NORMAL_SECONDS);
             } catch (RuntimeException ex) {
                 // 안전 폴백: 공용 모델
             }
         }
         return new CommonDealModel(dm, boss);
     }
+
+    /** 대상(챕터/스테이지)의 몹 방어력(서버 전용). target="boss"=챕터 보스, 아니면 스테이지. 데이터 없으면 null(방관 미환산). */
+    @SuppressWarnings("unchecked")
+    private Double targetDef(String chapter, String target) {
+        Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
+        if (!(cObj instanceof Map) || chapter == null) return null;
+        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
+        if (c == null || c.isEmpty()) return null;
+        if ("boss".equals(target)) return c.get("boss") instanceof Number ? ((Number) c.get("boss")).doubleValue() : null;
+        String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
+        return stageDef(c, stage);
+    }
+    /** 큐브 대상 모드: 스테이지가 보스면 보스 계산. */
+    private static boolean isBossTarget(String target) { return "boss".equals(target); }
 
     /** 추천 범위 맵(statId→Range) → 추천 엔진용 오프셋(enabled만, statId→{lo, hi}). */
     private static Map<String, double[]> rangeOffsets(Map<String, RangeIO.Range> ranges) {
@@ -225,6 +258,7 @@ public final class CalcService {
         CompanionDps comp = companionId == null ? null
                 : new CompanionDps(m, content.companionRoot, companionId, grade, companionLevel, inheritRatio);
         if (comp != null && !comp.valid()) comp = null;
+        if (comp != null) comp.singleTarget(true);   // 카드/홈은 "1마리 기준" — 플레이어 dpsBreakdown(singleTarget)과 동일 기준으로 동료도 1마리
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
@@ -248,8 +282,18 @@ public final class CalcService {
                 double[] pn = blendPlayer(nd, b, false, comp, uptime, Rp);
                 double[] pb = blendPlayer(nd, b, true, comp, uptime, Rp);
                 // 카드 DPS는 1마리(단일 대상) 기준 — 일반몹도 대상수 미반영(평타 1타 표기와 일관). 추천/평가는 대상수 반영(2-arg) 유지.
-                detail.put("normal", hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false)));
-                detail.put("boss", hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true)));
+                // 전투시간 기준: 일반몹(스테이지)=90초, 보스(챕터보스)=70초. 동료 기여는 이 시간창 평균.
+                Map<String, Object> dn = hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false, NORMAL_SECONDS));
+                Map<String, Object> db = hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true, BOSS_SECONDS));
+                dn.put("shares", sharesList(nd, b, false, pn[2], comp, inh, NORMAL_SECONDS));   // 홈 도넛(스킬별 지분 + 동료)
+                db.put("shares", sharesList(nd, b, true, pb[2], comp, inh, BOSS_SECONDS));
+                // 플레이어 DPS 검증용: 해석식 vs 시뮬(버프 겹침 타이밍) — 동료 미포함 순수 플레이어 기준
+                dn.put("playerAnalytic", safe(nd.dpsBreakdown(b, false, true)[2]));
+                dn.put("playerSim", safe(nd.dpsSimulate(b, false, true, NORMAL_SECONDS)));
+                db.put("playerAnalytic", safe(nd.dpsBreakdown(b, true, true)[2]));
+                db.put("playerSim", safe(nd.dpsSimulate(b, true, true, BOSS_SECONDS)));
+                detail.put("normal", dn);
+                detail.put("boss", db);
                 out.put("detail", detail);
                 return out;
             } catch (RuntimeException ex) {
@@ -301,15 +345,54 @@ public final class CalcService {
         return out;
     }
 
-    /** {평타, 스킬, 동료, 전체} DPS 맵. bd = 블렌딩된 플레이어 [평타만, 스킬만, 전체]. comp 있으면 90초 사이클 동료 DPS 합산. */
-    private static Map<String, Object> dpsMap(double[] bd, CompanionDps comp, StatBlock player, boolean boss) {
+    /**
+     * {평타, 스킬, 동료(사이클), 동료(소환중), 전체} DPS 맵. bd = 블렌딩된 플레이어 [평타만, 스킬만, 전체].
+     * companion = 90초 한 사이클 평균(소환쿨 반영), companionWindow = 소환 시작~종료 동안의 순수 DPS(가동 중).
+     * 전체 DPS는 사이클 기준 동료를 합산(상시 운영 평균).
+     */
+    private static Map<String, Object> dpsMap(double[] bd, CompanionDps comp, StatBlock player, boolean boss, double seconds) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("basic", safe(bd[0]));
         m.put("skill", safe(bd[1]));
-        double companion = (comp == null) ? 0 : comp.cycleBreakdown(player, boss)[2];
-        m.put("companion", comp == null ? null : safe(companion));   // 동료 90초 사이클 평균(미선택=null)
+        double companion = (comp == null) ? 0 : comp.dpsOverSeconds(player, boss, seconds)[2];   // 전투시간(70/90초) 평균
+        double companionWindow = (comp == null) ? 0 : comp.dpsBreakdown(player, boss)[2];         // 소환 기간 기준 DPS
+        m.put("companion", comp == null ? null : safe(companion));
+        m.put("companionWindow", comp == null ? null : safe(companionWindow));
+        m.put("summonSeconds", comp == null ? null : safe(comp.window(player)));   // 소환 지속(초) — SUMMON_DURATION 반영
+        m.put("windowSeconds", seconds);                                            // 전투시간(70/90초)
         m.put("total", safe(bd[2] + companion));
         return m;
+    }
+
+    /**
+     * 홈 도넛용 지분 목록 = 플레이어 스킬별 DPS(블렌딩 총합에 맞춰 스케일) + 동료 한 조각.
+     * 스킬별 분해는 base(동료 버프 전) 기준이라, 합이 블렌딩된 플레이어 총합(blendedTotal)과 같도록 비례 보정한다.
+     * 각 항목 = {name, dps, companion?}. 내림차순(동료는 값 그대로 끼움).
+     */
+    private static List<Map<String, Object>> sharesList(NightlordDps nd, StatBlock b, boolean boss,
+                                                        double blendedTotal, CompanionDps comp, StatBlock inh, double seconds) {
+        List<Map<String, Object>> raw = nd.dpsBySkill(b, boss, true);
+        double baseTotal = 0;
+        for (Map<String, Object> r : raw) baseTotal += ((Number) r.get("dps")).doubleValue();
+        double scale = baseTotal > 0 ? blendedTotal / baseTotal : 1;
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> r : raw) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", r.get("name"));
+            row.put("dps", safe(((Number) r.get("dps")).doubleValue() * scale));
+            out.add(row);
+        }
+        if (comp != null) {
+            double companion = comp.dpsOverSeconds(inh, boss, seconds)[2];
+            if (companion > 0) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("name", "동료");
+                row.put("dps", safe(companion));
+                row.put("companion", true);
+                out.add(row);
+            }
+        }
+        return out;
     }
 
     /** 평균(평균 데미지범위 반영값) → [최소, 최대] (최소·최대 데미지범위 배율로 환산). 공용 모델용. */
@@ -345,9 +428,106 @@ public final class CalcService {
 
     // ──────────────────── 동료 ────────────────────
 
-    /** 몬스터 방어력 데이터(챕터별 스테이지 일반몹/보스). 대상별 절대 데미지용. */
-    public Map<String, Object> monsterDefense() {
-        return content.monsterDefense;
+    /**
+     * 대상 카탈로그(드롭다운용) — 방어력 수치는 빼고 <b>구조만</b>(챕터 → 스테이지 인덱스 목록 + 보스 유무).
+     * 방어력은 우리 데이터라 클라이언트에 노출하지 않는다(절대 데미지 계산은 {@link #targetDamage}에서 서버가 수행).
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> targetCatalog() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        Map<String, Object> chapters = new LinkedHashMap<>();
+        Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
+        if (cObj instanceof Map) {
+            for (Map.Entry<String, Object> e : ((Map<String, Object>) cObj).entrySet()) {
+                Map<String, Object> c = Json.asMap(e.getValue());
+                Map<String, Object> outC = new LinkedHashMap<>();
+                Object st = c.get("stages");
+                if (st instanceof Map) outC.put("stages", new ArrayList<>(((Map<String, Object>) st).keySet()));
+                outC.put("boss", c.get("boss") != null);
+                chapters.put(e.getKey(), outC);
+            }
+        }
+        out.put("chapters", chapters);
+        return out;
+    }
+
+    /** 챕터 c의 방어력 맵에서 스테이지 인덱스의 방어력(없으면 null). 서버 전용. */
+    private Double stageDef(Map<String, Object> c, String stage) {
+        Object st = c.get("stages");
+        if (!(st instanceof Map)) return null;
+        Object v = ((Map<?, ?>) st).get(stage);
+        return v instanceof Number ? ((Number) v).doubleValue() : null;
+    }
+
+    /** monster_hp.json에서 챕터 c의 스테이지 일반몹 체력(없으면 null). 서버 전용(클라 미노출). */
+    @SuppressWarnings("unchecked")
+    private Double stageHp(String chapter, String stage) {
+        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
+        if (!(cObj instanceof Map)) return null;
+        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
+        if (c == null) return null;
+        Object st = c.get("stages");
+        if (!(st instanceof Map)) return null;
+        Object v = ((Map<?, ?>) st).get(stage);
+        return v instanceof Number ? ((Number) v).doubleValue() : null;
+    }
+
+    /** monster_hp.json에서 챕터 c의 보스 체력(없으면 null). 서버 전용. */
+    @SuppressWarnings("unchecked")
+    private Double bossHp(String chapter) {
+        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
+        if (!(cObj instanceof Map)) return null;
+        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
+        if (c == null) return null;
+        Object v = c.get("boss");
+        return v instanceof Number ? ((Number) v).doubleValue() : null;
+    }
+
+    /** 체력이 추정값(기본 k 사용 챕터)인지. 실측 보정된 챕터는 false. 클라에 "추정" 표시용. */
+    @SuppressWarnings("unchecked")
+    private boolean hpEstimated(String chapter) {
+        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
+        if (!(cObj instanceof Map)) return true;
+        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
+        if (c == null) return true;
+        Object v = c.get("estimated");
+        return !(v instanceof Boolean) || (Boolean) v;
+    }
+
+    /** 평타컷 = ⌈체력 ÷ (방어반영 평타딜)⌉. 체력·평타딜이 유효하지 않으면 null, 1 미만이면 1로 보정. */
+    private Long cutCount(Double hp, double hitWithDef) {
+        if (hp == null || hp <= 0 || hitWithDef <= 0) return null;
+        double n = Math.ceil(hp / hitWithDef);
+        if (n < 1) n = 1;
+        if (n > Long.MAX_VALUE) return Long.MAX_VALUE;
+        return (long) n;
+    }
+
+    /**
+     * 선택 대상(챕터/스테이지)의 방어배수만 반환. 배수 = 5000/(6000 + 방어력 × (1 − 방관%/100)).
+     * 방어력 수치는 응답에 미포함(서버 전용) — 클라는 이 배수를 표시 데미지에 곱해 '해당 몹 기준' 딜을 보여준다.
+     * 방어력 데이터가 없으면 factor=1(미반영).
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> targetDamage(String chapter, String target, double penPct) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        boolean boss = "boss".equals(target);
+        out.put("boss", boss);
+        Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
+        Map<String, Object> chapters = cObj instanceof Map ? (Map<String, Object>) cObj : new LinkedHashMap<>();
+        Map<String, Object> c = Json.asMap(chapters.get(chapter));
+        Double def = null;
+        if (c != null && !c.isEmpty()) {
+            if (boss) def = c.get("boss") instanceof Number ? ((Number) c.get("boss")).doubleValue() : null;
+            else {
+                String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
+                def = stageDef(c, stage);
+            }
+        }
+        double pen = penPct / 100.0;
+        double f = (def != null) ? 5000.0 / (6000.0 + def * (1 - pen)) : 1.0;
+        out.put("factor", safe(f));
+        return out;
     }
 
     /** 메인 동료 목록(원본) — 동료 탭 드롭다운용. normalOnly(지망생)은 거의 안 쓰여 목록에서 제외(데이터는 보존). */
@@ -437,10 +617,12 @@ public final class CalcService {
      * 0~2이면 그 슬롯만. 딜 증가량 내림차순(정성적은 뒤로).
      */
     public Map<String, Object> evaluate(String part, String grade, Integer slot,
-                                        Map<String, Double> stats, Map<String, Double> conv, boolean boss,
-                                        Set<String> buffs, double hitInterval) {
+                                        Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
+                                        Set<String> buffs, double hitInterval,
+                                        String companionId, String companionGrade, int companionLevel, double ratio) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval);
+        boolean boss = isBossTarget(target);
+        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
         List<CubeEvaluator.Result> res = (slot == null)
                 ? CubeEvaluator.evaluate(content.equip, dm, current, part, grade)
                 : CubeEvaluator.evaluateSlot(content.equip, dm, current, part, grade, slot);
@@ -479,12 +661,14 @@ public final class CalcService {
      * @param sortKey     0=딜 증가량, 1=등장 확률, 2=1회 리롤, 3=최종 효율
      * @return {"maxDivisions": n, "recs": [...]}
      */
-    public Map<String, Object> recommend(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+    public Map<String, Object> recommend(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
                                          int sliderValue, int sortKey, boolean upper, boolean lower,
-                                         Set<String> buffs, double hitInterval) {
+                                         Set<String> buffs, double hitInterval,
+                                         String companionId, String companionGrade, int companionLevel, double ratio) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval);
+        boolean boss = isBossTarget(target);
+        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
         double upPrice = content.currency.getOrDefault("미라클큐브", 1.0);
@@ -608,10 +792,12 @@ public final class CalcService {
      */
     public Map<String, Object> optCompare(String lPart, String lGrade, List<Map<String, Object>> lOpts,
                                           String rPart, String rGrade, List<Map<String, Object>> rOpts,
-                                          Map<String, Double> stats, Map<String, Double> conv, boolean boss,
-                                          Set<String> buffs, double hitInterval) {
+                                          Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
+                                          Set<String> buffs, double hitInterval,
+                                          String companionId, String companionGrade, int companionLevel, double ratio) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval);
+        boolean boss = isBossTarget(target);
+        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("left", sideEval(lPart, lGrade, lOpts, current, dm));
         out.put("right", sideEval(rPart, rGrade, rOpts, current, dm));
@@ -644,12 +830,14 @@ public final class CalcService {
      * 딜 증가량 차이·최종 효율·1회 리롤 두 확률을 계산한다(데스크톱 AppModel.myCompare와 동일 정의).
      * @param rightOpts 오른쪽 가정 옵션 [{statId, value}, …]
      */
-    public Map<String, Object> myCompare(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+    public Map<String, Object> myCompare(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
                                          String part, boolean upper, String rightGrade,
-                                         List<Map<String, Object>> rightOpts, Set<String> buffs, double hitInterval) {
+                                         List<Map<String, Object>> rightOpts, Set<String> buffs, double hitInterval,
+                                         String companionId, String companionGrade, int companionLevel, double ratio) {
         StatBlock current = block(stats);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval);
+        boolean boss = isBossTarget(target);
+        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
 

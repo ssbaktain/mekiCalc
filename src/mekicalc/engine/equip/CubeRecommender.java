@@ -285,7 +285,8 @@ public final class CubeRecommender {
             for (PotentialDraw d : opts) delta.set(d.statId(), delta.get(d.statId()) + d.value());
             StatBlock combined = model.combine(baseline, delta);
             if (!withinRanges(combined, current, ranges)) return;   // 허용 범위 밖 후보 제외
-            double deal = curBase > 0 ? model.output(combined) / curBase - 1.0 : 0;
+            // increase()를 타서 곱배수 조합은 닫힌식(빠른 경로)으로 — output() 직접 호출은 닫힌식을 우회해 동료 포함 시 매우 느림.
+            double deal = curBase > 0 ? model.increase(baseline, delta) : 0;
             if (deal - curDeal <= 1e-12) return;
             setDeal.put(key, deal);
             setOpts.put(key, opts);

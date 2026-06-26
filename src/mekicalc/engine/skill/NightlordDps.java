@@ -1,6 +1,7 @@
 package mekicalc.engine.skill;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,12 +142,17 @@ public final class NightlordDps {
      * 상시 스탯 패시브(공격력% 제외)는 이미 입력에 포함되어 건드리지 않는다.
      */
     public Buffed buffed(StatBlock input) { return buffed(input, false); }
+    public Buffed buffed(StatBlock input, boolean fullBuff) { return buffed(input, fullBuff, null); }
+
+    /** 시뮬 스냅샷: 시간제 버프를 가동률 평균이 아니라 '지금 켜진 것만 100%'로 적용(버프 겹침 비선형 포착). */
+    public Buffed buffedActive(StatBlock input, Set<String> active) { return buffed(input, false, active); }
 
     /**
      * fullBuff=true면 모든 사용 버프를 <b>가동률 1(풀버프)</b>로 적용한다(동료 계승 기준: 풀버프 상태에서 소환).
-     * 장기 평균(false)과 달리 소환 순간의 최대 스냅샷을 만든다. 페이크 반격 버프손실도 미적용(풀버프 가정).
+     * active!=null이면 시뮬 스냅샷: 시간제 버프는 active에 든 것만 100%, 나머지 0%.
+     * 둘 다 아니면 장기 평균(가동률 u). 페이크 반격 버프손실은 평균 모드에서만 적용.
      */
-    public Buffed buffed(StatBlock input, boolean fullBuff) {
+    private Buffed buffed(StatBlock input, boolean fullBuff, Set<String> active) {
         int cl = charLevel(input);
         double atkSpeedBase = input.get(ATK_SPEED);   // 순환 방지: 가동률은 입력 공속 기준
         double buffDur = input.get(BUFF_DURATION);    // 버프 지속시간 증가% → 가동률↑
@@ -176,7 +182,8 @@ public final class NightlordDps {
             boolean fixed = Json.bool(m, "fixed", false);
             // 버프 효과값 스케일: 기본 kind growth + 스킬별 valueGrowth override(buffValueScale).
             double scale = fixed ? 1.0 : buffValueScale(m, cl, input);
-            double u = fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl);
+            double u = active != null ? (active.contains(Json.str(m, "id", "")) ? 1.0 : 0.0)
+                    : (fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl));
 
             double atkPct = Json.num(m, "atkPct", 0);
             if (atkPct != 0) skillAtkSum += atkPct * scale * u;
@@ -194,13 +201,14 @@ public final class NightlordDps {
         // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
         Map<String, Object> pg = buffById("purge");
         if (pg != null && wantsBuff(pg, cl) && cl >= Json.num(pg, "critTakenOpen", Double.MAX_VALUE)) {
-            double boost = Json.num(pg, "critTaken", 0) / 100.0 * (fullBuff ? 1.0 : purgeUptime(eff));
+            double pu = active != null ? (active.contains("purge") ? 1.0 : 0.0) : (fullBuff ? 1.0 : purgeUptime(eff));
+            double boost = Json.num(pg, "critTaken", 0) / 100.0 * pu;
             if (boost != 0) add(eff, CRIT_DMG, eff.get(CRIT_DMG) * boost);
         }
 
         // 페이크 반격 발동 시 최종뎀+10% 버프가 3초간 소실(피격주기 기반). 입력엔 100% 가정이라 손실분 차감.
         // 버프 유지 마스터리(buffKeepMasteryOpen) 습득 시 손실 없음. 피격주기=0이면 미적용.
-        if (!fullBuff && hitInterval > 0) {
+        if (active == null && !fullBuff && hitInterval > 0) {
             Map<String, Object> fk = buffById("fake");
             if (fk != null && wantsBuff(fk, cl)) {
                 Map<String, Object> c = Json.asMap(fk.get("counter"));
@@ -749,7 +757,10 @@ public final class NightlordDps {
      * singleTarget=true면 일반몹도 1마리 기준(카드용). 추천/평가는 2-arg(대상수 반영) 사용.
      */
     public double[] dpsBreakdown(StatBlock input, boolean boss, boolean singleTarget) {
-        Buffed bf = buffed(input);
+        return dpsBreakdownWith(buffed(input), boss, singleTarget);
+    }
+    /** 주어진 버프 스냅샷(평균/스냅)으로 [평타만, 스킬만, 전체] DPS. 시뮬은 시점별 스냅샷으로 이걸 적분. */
+    public double[] dpsBreakdownWith(Buffed bf, boolean boss, boolean singleTarget) {
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
         int cl = charLevel(eff);
@@ -825,6 +836,86 @@ public final class NightlordDps {
     }
 
     /**
+     * 종합 DPS를 <b>출처별</b>로 분해한 목록(파이/지분 시각화용). {@link #dpsBreakdown}와 동일 로직·동일 총합이며,
+     * 합치는 대신 출처(평타·각 딜 스킬·마크·추가타·베놈·페이크 반격)별로 나눠 담는다. 내림차순 정렬, dps>0만 포함.
+     * 각 항목 = {name, dps}. 모든 값에 받피증(recv) 반영.
+     */
+    public List<Map<String, Object>> dpsBySkill(StatBlock input, boolean boss, boolean singleTarget) {
+        Buffed bf = buffed(input);
+        StatBlock eff = bf.stats;
+        double atkF = bf.skillAtkFactor;
+        int cl = charLevel(eff);
+        double slotsPerSec = 1 + eff.get(ATK_SPEED) / 100.0;
+
+        Map<String, Double> parts = new LinkedHashMap<>();   // name -> dps(받피증 전, 마지막에 일괄 곱)
+        double procActionsPerSec = 0;
+        double skillActionsPerSec = 0;
+
+        for (Skill s : data.skills()) {
+            if (!s.kind.equals("dealActive")) continue;
+            if (!wants(s.id, s.open, cl)) continue;
+            double cd = cooldown(s, eff);
+            if (cd <= 0) continue;
+            skillActionsPerSec += 1.0 / cd;
+            int hits = hitsPerCast(s, eff);
+            double targets = (boss || singleTarget) ? 1 : s.num("targets", 1);
+            double contrib = perHit(s, bf, boss) * hits * targets / cd;
+            double procAttempts = s.id.equals("darkFlare")
+                    ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
+            procActionsPerSec += procAttempts * targets / cd;
+            if (s.id.equals("suddenRaid")) contrib += suddenDotPerCast(eff, boss) * atkF * targets / cd;
+            parts.merge(s.name, contrib, Double::sum);
+        }
+
+        double basicActionsPerSec = Math.max(0, slotsPerSec - skillActionsPerSec);
+        Skill basic = highestBasic(cl);
+        if (basic != null) {
+            int hits = basicHits(basic, eff);
+            double targets = (boss || singleTarget) ? 1 : basicTargets(basic, eff);
+            parts.merge("평타", perHit(basic, bf, boss) * hits * targets * basicActionsPerSec, Double::sum);
+            procActionsPerSec += targets * basicActionsPerSec;
+        }
+
+        Skill mark = data.skill("markOfAssassin");
+        if (mark != null && wants("markOfAssassin", mark.open, cl)) {
+            double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
+            boolean nl = cl >= mark.num("nightlordOpen", Double.MAX_VALUE);
+            double targets = (boss || singleTarget) ? 1 : (nl ? mark.num("targetsNightlord", mark.num("targetsBase", 1)) : mark.num("targetsBase", 1));
+            if (period > 0) parts.merge(mark.name, markPerHit(eff, boss) * atkF * targets / period, Double::sum);
+        }
+
+        double procPerProc = (shadowExtraPerHit(eff, boss) + fatalExtraPerHit(eff, boss)) * atkF;
+        double procDps = procActionsPerSec * procPerProc;
+        if (procDps > 0) parts.merge("추가타(쉐도우·페이탈)", procDps, Double::sum);
+
+        double venomDps = venomDotDps(eff, boss) * atkF;
+        if (venomDps > 0) parts.merge("베놈", venomDps, Double::sum);
+
+        if (hitInterval > 0) {
+            Map<String, Object> fk = buffById("fake");
+            Map<String, Object> c = (fk == null) ? null : Json.asMap(fk.get("counter"));
+            if (c != null && wantsBuff(fk, cl)) {
+                double rate = (Json.num(c, "proc", 0) / 100.0) / hitInterval;
+                double counterDps = fakeCounterPerHit(eff, boss) * atkF * rate;
+                if (counterDps > 0) parts.merge("페이크 반격", counterDps, Double::sum);
+            }
+        }
+
+        double recv = recvDmgFactor(eff);
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map.Entry<String, Double> e : parts.entrySet()) {
+            double dps = e.getValue() * recv;
+            if (dps <= 0) continue;
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", e.getKey());
+            row.put("dps", dps);
+            out.add(row);
+        }
+        out.sort((a, b2) -> Double.compare((double) b2.get("dps"), (double) a.get("dps")));
+        return out;
+    }
+
+    /**
      * delta 만큼 스탯을 더했을 때의 종합 DPS 증가율(0.05 == +5%).
      * 회색 스탯(쿨감·공속·스킬레벨·대상수 등)을 DPS로 환산하는 자리.
      * 스탯 합성은 기존 {@link DamageModel#combine}(SUM/DIMINISHING/주스탯 전파) 규칙을 그대로 쓴다.
@@ -852,6 +943,45 @@ public final class NightlordDps {
                 ? Json.num(m, "valueGrowth", 0)
                 : data.growth(kind.isEmpty() ? "statPassive" : kind);
         return 1 + g / 100.0 * lv;
+    }
+
+    /**
+     * 플레이어 종합 DPS를 시간스텝 시뮬레이션(시간제 버프를 가동률 평균이 아니라 on/off 구간으로 적용 → 버프 겹침 비선형 포착).
+     * 각 버프 창 = active during [k·period, k·period+dur), period=dur/가동률(가동률 보존), 위상 0(시작에 모두 켬).
+     * 동료 시뮬과 동일하게 매 스텝 순간 DPS를 평균(rate×DT 적분). 해석식 {@link #dpsBreakdown}과 비교용. 반환=전체 DPS.
+     */
+    public double dpsSimulate(StatBlock input, boolean boss, boolean singleTarget, double seconds) {
+        final double DT = 0.1;
+        int cl = charLevel(input);
+        double atkSpeedBase = input.get(ATK_SPEED);
+        double buffDur = input.get(BUFF_DURATION);
+        List<String> ids = new ArrayList<>();
+        List<double[]> win = new ArrayList<>();   // {dur, period}
+        for (Map<String, Object> m : data.buffs()) {
+            if (Json.bool(m, "always", false) || !wantsBuff(m, cl)) continue;   // 상시·미사용 제외
+            double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", cl))
+                    * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0)
+                    * (1 + (Json.bool(m, "ignoreBuffDuration", false) ? 0 : buffDur) / 100.0);
+            double u = buffUptime(m, atkSpeedBase, buffDur, cl);
+            if (dur <= 0 || u <= 0) continue;
+            ids.add(Json.str(m, "id", ""));
+            win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});   // u≥1이면 항상 active(period=dur)
+        }
+        if (ids.isEmpty()) return totalDps(input, boss, singleTarget);   // 시간제 버프 없으면 해석식과 동일
+        double T = seconds > 0 ? seconds : 90;
+        int steps = Math.max(1, (int) Math.round(T / DT));
+        double sum = 0;
+        Set<String> active = new HashSet<>();
+        for (int k = 0; k < steps; k++) {
+            double t = k * DT;
+            active.clear();
+            for (int i = 0; i < ids.size(); i++) {
+                double dur = win.get(i)[0], period = win.get(i)[1];
+                if (period <= 0 || (t % period) < dur) active.add(ids.get(i));
+            }
+            sum += dpsBreakdownWith(buffedActive(input, active), boss, singleTarget)[2];
+        }
+        return sum / steps;   // 스텝 평균 = 시간 평균 DPS
     }
 
     /** 버프 가동률: triggerCasts 있으면 발동형, 아니면 쿨 기반. 지속 마스터리·버프지속% 레벨 게이팅. */

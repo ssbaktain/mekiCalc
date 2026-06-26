@@ -39,8 +39,8 @@ let buffDirty = false;
 let allyPresets = loadJSON(ALLYP_KEY, null);
 let allyDirty = false;
 let companions = loadJSON(CACHE_COMPANIONS, []);
-const CACHE_MONDEF = "mekicalc.cache.monsterDefense.v1";   // 몬스터 방어력(챕터별, 정적)
-let monsterDefense = loadJSON(CACHE_MONDEF, null);
+const CACHE_MONDEF = "mekicalc.cache.targetCatalog.v1";   // 대상 카탈로그(챕터/스테이지 구조, 방어력 미포함, 정적)
+let targetCatalog = loadJSON(CACHE_MONDEF, null);
 let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
 const slotCache = {};                  // "부위|등급" -> slots[3][]
 
@@ -54,6 +54,10 @@ let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
 let damageShown = false;      // 데미지 값이 한 번 표시됐는지(이후 갱신은 조용히 — '계산 중'·'오류' 텍스트 안 띄움)
+// 홈 대시보드 상태(buildMenu가 최상위에서 renderHome을 호출하므로, 그 선언보다 먼저 초기화돼야 함 — TDZ 방지)
+let lastDamage = null;        // 마지막 데미지 결과(홈 대시보드·대상별 절대 데미지용)
+const HOME_TARGET_KEY = "mekicalc.home.target.v1";   // 'normal' | 'boss' (사용자가 누른 적 있으면 고정)
+let homeTarget = null;        // 현재 선택된 히어로(일반/보스). null이면 데이터로 자동 선택.
 let syncTimer = null;
 function syncUp() {
   if (!me.loggedIn || suppressSync) return;
@@ -290,7 +294,15 @@ async function getSlots(part, grade) {
 // 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
-  { label: "프리셋", panel: "presets" },
+  { label: "예상 데미지", panel: "home" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입
+  { label: "프리셋", items: [
+    { label: "스탯", panel: "presets", sub: "stat" },
+    { label: "스킬", panel: "presets", sub: "buff" },
+    { label: "동료", panel: "presets", sub: "ally" },
+    { label: "유물", panel: "presets", sub: "relic" },
+    { label: "큐브", panel: "presets", sub: "cube" },
+    { label: "설정", panel: "presets", sub: "settings" },
+  ]},
   { label: "큐브", items: [
     { label: "큐브 기댓값", panel: "cube" },
     { label: "옵션 비교", panel: "optcompare" },
@@ -306,10 +318,22 @@ const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
 
 function showPanel(name) {
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
+  if (name === "home") renderHome();               // 홈 대시보드(로고로 진입)
   if (name === "compare") renderCompareEditor(true);
   if (name === "optcompare") renderOptCompare();
   if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
   if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
+}
+
+// 홈(=예상 데미지 탭)으로 이동. 로고 클릭·기본 진입 공용. 첫 메뉴(예상 데미지)를 활성표시.
+function goHome() {
+  if (!canLeaveEditors()) return;
+  closeMenus();
+  const first = document.querySelector("#menubar .menu-item");
+  if (first) setActiveMenu(first);
+  if (typeof mobileMenuEls !== "undefined") mobileMenuEls.forEach((x) => x.btn.classList.toggle("active", x.leaf === MENU[0]));
+  showPanel("home");
+  window.scrollTo({ top: 0 });
 }
 
 // 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
@@ -412,9 +436,11 @@ function buildMenu() {
   bar.appendChild(right);
   bar.addEventListener("mouseleave", closeMenus);   // 메뉴바 벗어나면 드롭다운 닫기
   buildMobileMenu(itemEls);   // 모바일 햄버거 메뉴(좁은 화면용)
-  // 첫 메뉴(프리셋)를 기본 활성 + 스탯 서브탭
-  const first = left.querySelector(".menu-item");
-  if (first) { setActiveMenu(first); showPanel("presets"); selectSub("stat"); }
+  // 기본 진입 = 예상 데미지(홈). 첫 메뉴 활성 + 프리셋 서브탭은 미리 스탯으로 세팅.
+  selectSub("stat");
+  const firstItem = left.querySelector(".menu-item");
+  if (firstItem) setActiveMenu(firstItem);
+  showPanel("home");
 }
 
 // 모바일(좁은 화면) 햄버거 메뉴. 모든 항목을 펼친 세로 목록으로 → 한 번 터치로 이동(호버 불필요).
@@ -479,15 +505,9 @@ function buildMobileMenu(itemEls) {
 document.addEventListener("click", closeMenus);
 buildMenu();
 
-// 브랜드(로고+타이틀) 클릭 → 홈(프리셋 패널)으로. 현재 서브탭은 유지(미저장 변경 보존).
+// 브랜드(로고+타이틀) 클릭 → 홈 대시보드로.
 const brandEl = document.querySelector("header .brand");
-if (brandEl) {
-  brandEl.addEventListener("click", () => {
-    const first = document.querySelector("#menubar .menu-item");
-    if (first) selectLeaf(MENU[0], first);
-    window.scrollTo({ top: 0 });
-  });
-}
+if (brandEl) brandEl.addEventListener("click", goHome);
 
 // 인앱(임베디드) 브라우저 감지 → 구글 로그인이 차단되므로 외부 브라우저로 열도록 안내.
 (function inAppBrowserNotice() {
@@ -579,75 +599,132 @@ async function refreshQual() {
 // ──────────────────── 예상 데미지 ────────────────────
 
 // 데미지 표시(즉시 페인트·실계산 공용). data = {normal, boss, detail:{normal:{min,max,avg,dps}, boss:{...}}}.
-let lastDamage = null;   // 마지막 데미지 결과(대상별 절대 데미지 계산용)
 function showDamage(data) {
-  const n = data ? data.normal : null, b = data ? data.boss : null;
-  $("dmg-normal").textContent = n == null ? "—" : fmt(n);
-  $("dmg-boss").textContent = b == null ? "—" : fmt(b);
-  $("dmg-normal-unit").textContent = n == null ? "" : "(" + koreanUnit(n) + ")";
-  $("dmg-boss-unit").textContent = b == null ? "" : "(" + koreanUnit(b) + ")";
-  renderDmgDetail(data && data.detail);
   lastDamage = data;
-  renderTargetDamage();   // 대상 선택돼 있으면 절대 데미지 갱신
+  refreshTargetFactor().then(renderHome);   // 선택 몹 방어배수 반영해 렌더
 }
 
-// ──────────────────── 대상별 절대 데미지(몬스터 방어력 반영) ────────────────────
-// 방어항 = 5000/(6000 + 방어력 × (1 − 방관%/100)). 현재 모델은 방어 미반영(상대 비교)이라, 이 배수를 곱하면 절대 데미지.
-const TARGET_KEY = "mekicalc.target.v1";
-function renderTargetSelector() {
-  const box = $("target-box");
-  if (!box || !monsterDefense || !monsterDefense.chapters) return;
-  box.hidden = false;
-  const csel = $("tg-chapter");
-  const chs = Object.keys(monsterDefense.chapters).filter((c) => +c <= 41 && hasTargets(c)).sort((a, b) => +a - +b);  // 캠페인 챕터
-  csel.innerHTML = chs.map((c) => `<option value="${c}">${c}챕터</option>`).join("");
-  const saved = loadJSON(TARGET_KEY, null);
-  if (saved && monsterDefense.chapters[saved.ch]) csel.value = saved.ch;
-  fillTargetStages(csel.value, saved && saved.stage);
-  csel.addEventListener("change", () => { fillTargetStages(csel.value, null); renderTargetDamage(); });
-  $("tg-stage").addEventListener("change", renderTargetDamage);
-  renderTargetDamage();
+// 현재 대상(일반/보스) — 스테이지 드롭다운에서 결정(보스 스테이지=보스몹, 일반 스테이지=일반몹).
+function currentTarget() {
+  const sv = $("tg-stage") && $("tg-stage").value;
+  return sv === "boss" ? "boss" : "normal";
 }
-function hasTargets(ch) {
-  const c = monsterDefense.chapters[ch];
-  return c && ((c.stages && Object.keys(c.stages).length) || c.boss != null);
+
+// 선택 몹의 방어배수(서버 계산, 방어력 수치 미노출). 표시 딜에 곱해 '해당 몹 기준' 데미지로.
+let targetFactor = 1;
+async function refreshTargetFactor() {
+  const sv = $("tg-stage") && $("tg-stage").value;
+  if (!sv) { targetFactor = 1; return; }
+  try {
+    const res = await postJson("/api/target-damage", {
+      chapter: $("tg-chapter").value, target: sv, pen: parseFloat(collectStats().DEF_PEN) || 0,
+    });
+    targetFactor = (res && res.factor > 0) ? res.factor : 1;
+  } catch (e) { targetFactor = 1; }
 }
-function fillTargetStages(ch, selected) {
-  const ssel = $("tg-stage"); const c = monsterDefense.chapters[ch];
+// 방어배수를 데미지 상세에 곱한 사본(비율/시간 값은 보존).
+function scaleDetail(det, f) {
+  if (!det || !(f > 0) || f === 1) return det;
+  const sc = (v) => (v == null ? v : v * f);
+  const d = Object.assign({}, det, { avg: sc(det.avg), min: sc(det.min), max: sc(det.max) });
+  if (det.dps) d.dps = Object.assign({}, det.dps, {
+    total: sc(det.dps.total), basic: sc(det.dps.basic), skill: sc(det.dps.skill),
+    companion: sc(det.dps.companion), companionWindow: sc(det.dps.companionWindow),
+  });
+  if (Array.isArray(det.shares)) d.shares = det.shares.map((s) => Object.assign({}, s, { dps: sc(s.dps) }));
+  return d;
+}
+
+// ──────────────────── 대상 선택(챕터/스테이지 → 일반몹/보스몹) ────────────────────
+// 대상은 직업처럼 '스탯 프리셋'에 포함된다(preset.target = {ch, stage}). 프리셋 전환 시 함께 바뀜.
+const TARGET_KEY = "mekicalc.target.v1";   // 마이그레이션·폴백용(프리셋에 target 없을 때)
+function activeStatPreset() {
+  return statPresets && statPresets.presets && statPresets.presets[statPresets.active];
+}
+function targetOfActivePreset() {
+  const p = activeStatPreset();
+  return (p && p.target) || loadJSON(TARGET_KEY, null) || null;
+}
+// 대상 선택기 인스턴스(같은 값을 공유): 홈 + 스탯 프리셋 패널(직업 옆).
+const TARGET_PAIRS = [["tg-chapter", "tg-stage"], ["spt-chapter", "spt-stage"]];
+function currentTargetSel() {
+  for (const [chId, stId] of TARGET_PAIRS) {
+    const st = $(stId);
+    if (st && st.value) return { ch: $(chId).value, stage: st.value };
+  }
+  return targetOfActivePreset() || undefined;
+}
+// 스탯 프리셋 저장 페이로드(스탯 + 대상). 모든 저장 지점에서 사용.
+function statPresetPayload() { return { stats: collectStats(), target: currentTargetSel() }; }
+// 큐브/계산 API에 보낼 대상(챕터/스테이지). 보스/일반·방어력은 서버가 이걸로 결정.
+function targetForApi() {
+  const t = currentTargetSel();
+  return t ? { chapter: t.ch, target: t.stage } : { chapter: "", target: "" };
+}
+// 큐브 탭 '대상' 힌트(보스 토글 대체) — 현재 프리셋 대상 표시.
+function updateCubeTargetHint() {
+  const t = currentTargetSel();
+  let label = "프리셋 기준";
+  if (t) {
+    const boss = t.stage === "boss";
+    label = boss ? `${t.ch}챕터 보스 · 보스몹` : `${t.ch}-${String(t.stage).replace("stage:", "")} · 일반몹`;
+  }
+  document.querySelectorAll(".ct-hint-val").forEach((e) => { e.textContent = label; });
+}
+function fillStages(ssel, ch, selected) {
+  if (!ssel) return;
+  const c = targetCatalog && targetCatalog.chapters[ch];
   if (!c) { ssel.innerHTML = ""; return; }
-  const opts = [];
-  const stages = c.stages || {};
-  for (const s of Object.keys(stages).sort((a, b) => +a - +b)) opts.push(`<option value="stage:${s}">${ch}-${s} 일반몹 (방어 ${fmt(stages[s])})</option>`);
-  if (c.boss != null) opts.push(`<option value="boss">${ch} 보스 (방어 ${fmt(c.boss)})</option>`);
+  const stages = (c.stages || []).slice().sort((a, b) => +a - +b);
+  const opts = stages.map((s) => `<option value="stage:${s}">${s}</option>`);   // 스테이지 숫자만
+  if (c.boss) {                                                                  // 보스 = 마지막 스테이지 다음 번호 + (보스)
+    const bossNo = stages.length ? Math.max(...stages.map((s) => +s)) + 1 : "";
+    opts.push(`<option value="boss">${bossNo} (보스)</option>`);
+  }
   ssel.innerHTML = opts.join("");
   if (selected && [...ssel.options].some((o) => o.value === selected)) ssel.value = selected;
 }
-// 선택된 대상의 {방어력, 보스여부}
-function currentTarget() {
-  if (!$("tg-chapter") || !monsterDefense) return null;
-  const ch = $("tg-chapter").value, sv = $("tg-stage").value;
-  const c = monsterDefense.chapters && monsterDefense.chapters[ch];
-  if (!c || !sv) return null;
-  if (sv === "boss") return { def: c.boss, boss: true, label: `${ch} 보스` };
-  const s = sv.split(":")[1];
-  return { def: (c.stages || {})[s], boss: false, label: `${ch}-${s} 일반몹` };
+// 모든 대상 선택기를 활성 프리셋의 대상으로 동기화(프리셋 전환·부팅 시).
+function syncTargetSelector() {
+  if (!targetCatalog || !targetCatalog.chapters) return;
+  const t = targetOfActivePreset();
+  for (const [chId, stId] of TARGET_PAIRS) {
+    const csel = $(chId), ssel = $(stId);
+    if (!csel || !ssel) continue;
+    if (t && targetCatalog.chapters[t.ch]) csel.value = t.ch;
+    fillStages(ssel, csel.value, t && t.stage);
+  }
+  updateCubeTargetHint();
 }
-function renderTargetDamage() {
-  const box = $("target-result");
-  if (!box || !$("tg-stage")) return;
-  const t = currentTarget();
-  if (!t || t.def == null || !lastDamage || !lastDamage.detail) { if (box) box.innerHTML = ""; return; }
-  saveJSON(TARGET_KEY, { ch: $("tg-chapter").value, stage: $("tg-stage").value });
-  const pen = (parseFloat(collectStats().DEF_PEN) || 0) / 100;
-  const defFactor = 5000 / (6000 + t.def * (1 - pen));
-  const det = t.boss ? lastDamage.detail.boss : lastDamage.detail.normal;
-  const hit = det ? det.avg : (t.boss ? lastDamage.boss : lastDamage.normal);
-  const dps = det && det.dps ? det.dps.total : null;
-  const absHit = hit * defFactor, absDps = dps != null ? dps * defFactor : null;
-  box.innerHTML =
-    `<div class="tg-line"><span>${t.label} · 방어력 ${fmt(t.def)} · 방관 ${num1s(pen * 100)}% → 방어 배수 ×${defFactor.toFixed(3)}</span></div>` +
-    `<div class="tg-main">절대 1타 평균딜 <b>${fmt(Math.round(absHit))}</b> <span class="ku">(${koreanUnit(absHit)})</span></div>` +
-    (absDps != null ? `<div class="tg-main">절대 전체 DPS <b>${fmt(Math.round(absDps))}</b> <span class="ku">(${koreanUnit(absDps)})</span></div>` : "");
+function renderTargetSelector() {
+  if (!targetCatalog || !targetCatalog.chapters) return;
+  const chs = Object.keys(targetCatalog.chapters).filter((c) => +c <= 41 && hasTargets(c)).sort((a, b) => +a - +b);  // 캠페인 챕터
+  const opts = chs.map((c) => `<option value="${c}">${c}</option>`).join("");   // 챕터 숫자만
+  for (const [chId, stId] of TARGET_PAIRS) {
+    const csel = $(chId), ssel = $(stId);
+    if (!csel || !ssel) continue;
+    csel.innerHTML = opts;
+    csel.addEventListener("change", () => { fillStages(ssel, csel.value, null); onTargetChange(chId, stId); });
+    ssel.addEventListener("change", () => onTargetChange(chId, stId));
+  }
+  const box = $("target-box"); if (box) box.hidden = false;
+  syncTargetSelector();
+  refreshTargetFactor().then(renderHome);   // 부팅 시엔 프리셋에 쓰지 않고 표시만
+}
+// 사용자가 (어느 선택기든) 대상을 바꾸면 활성 스탯 프리셋의 target에 저장하고 다른 선택기도 동기화.
+function onTargetChange(chId, stId) {
+  const csel = $(chId || "tg-chapter"), ssel = $(stId || "tg-stage");
+  if (!ssel || !ssel.value) return;
+  const t = { ch: csel.value, stage: ssel.value };
+  const p = activeStatPreset();
+  if (p) { p.target = t; saveJSON(STATP_KEY, statPresets); }   // 프리셋에 귀속(자동 저장)
+  saveJSON(TARGET_KEY, t);                                     // 폴백/호환 유지
+  syncTargetSelector();                                        // 홈·스탯패널 선택기 동기화
+  refreshTargetFactor().then(renderHome);
+}
+function hasTargets(ch) {
+  const c = targetCatalog.chapters[ch];
+  return c && ((c.stages && c.stages.length) || c.boss);
 }
 
 // 상세 표 셀: 전체 숫자 + (조/억 읽기). 값 없으면 —.
@@ -660,33 +737,180 @@ function dmgCellShare(v, total) {
   const share = (total > 0) ? Math.round((v / total) * 100) : 0;
   return fmt(v) + "<br><span class='ku'>(" + koreanUnit(v) + ") · " + share + "%</span>";
 }
-function renderDmgDetail(detail) {
-  const n = (detail && detail.normal) || {}, b = (detail && detail.boss) || {};
-  $("d-min-n").innerHTML = dmgCell(n.min); $("d-min-b").innerHTML = dmgCell(b.min);
-  $("d-max-n").innerHTML = dmgCell(n.max); $("d-max-b").innerHTML = dmgCell(b.max);
-  $("d-avg-n").innerHTML = dmgCell(n.avg); $("d-avg-b").innerHTML = dmgCell(b.avg);
-  fillDps(n.dps, "n"); fillDps(b.dps, "b");
-}
-// dps = {basic, skill, companion, total} 또는 null(공용 직업)
-function fillDps(d, suf) {
-  const cc = $("d-dpsc-" + suf);
-  if (!d) { $("d-dpsb-" + suf).textContent = "—"; $("d-dpss-" + suf).textContent = "—"; if (cc) cc.textContent = "—"; $("d-dpst-" + suf).textContent = "—"; return; }
-  $("d-dpsb-" + suf).innerHTML = dmgCellShare(d.basic, d.total);
-  $("d-dpss-" + suf).innerHTML = dmgCellShare(d.skill, d.total);
-  if (cc) cc.innerHTML = (d.companion == null) ? "<span class='ku'>동료 미선택</span>" : dmgCellShare(d.companion, d.total);
-  $("d-dpst-" + suf).innerHTML = dmgCell(d.total);
+// ──────────────────── 홈 대시보드 ────────────────────
+
+const PIE_COLORS = ["#7c9cff", "#5bd1c2", "#c98bff", "#6fcf6f", "#ff8a9b", "#5b9bd5", "#d98cc0", "#86c5a8", "#b7a3ff", "#7fd1e8"];
+const COMPANION_COLOR = "#f5a623";   // 동료 = 골드(로고색 계열)
+const OTHER_COLOR = "#6b7280";       // 기타 = 회색
+
+function renderHome() {
+  if (!lastDamage) return;
+  const tgt = currentTarget();   // 스테이지 드롭다운에서 일반/보스 결정
+  const rawDet = lastDamage.detail && (tgt === "boss" ? lastDamage.detail.boss : lastDamage.detail.normal);
+  const det = scaleDetail(rawDet, targetFactor);   // 선택 몹 방어배수 반영(서버 계산)
+  const tname = tgt === "boss" ? "보스몹" : "일반몹";
+  const dps = det && det.dps;
+  const secs = dps && dps.windowSeconds ? Math.round(dps.windowSeconds) : (tgt === "boss" ? 70 : 90);
+  if ($("ts-mode")) $("ts-mode").textContent = `${tgt === "boss" ? "👑 보스몹" : "🗡️ 일반몹"} 기준`;
+  if ($("dash-share-sub")) $("dash-share-sub").textContent = `${tname} · ${secs}초 기준`;
+  $("dash-detail-sub").textContent = `${tname} · ${secs}초 기준`;
+
+  const shares = (det && det.shares) || [];
+  renderDonut(shares);
+  renderPcSplit(shares, dps);
+  renderHomeStats(det, dps);
+  renderDpsBars(dps);
 }
 
-// 자세히 토글(상태 유지)
-const DMG_DETAIL_KEY = "mekicalc.dmgDetailOpen.v1";
-function setDmgDetail(open) {
-  $("dmg-detail").hidden = !open;
-  $("dmg-toggle").setAttribute("aria-expanded", open ? "true" : "false");
-  $("dmg-toggle").firstChild.textContent = open ? "접기 " : "자세히 ";
-  localStorage.setItem(DMG_DETAIL_KEY, open ? "1" : "0");
+// shares = [{name, dps, companion?}] (내림차순). 작은 조각은 '기타'로 묶고, 동료는 항상 따로.
+function buildSlices(shares) {
+  const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
+  if (total <= 0) return { slices: [], total: 0 };
+  const comp = shares.find((x) => x.companion);
+  const players = shares.filter((x) => !x.companion).slice().sort((a, b) => b.dps - a.dps);   // 딜 지분 내림차순
+  const slices = [];
+  let ci = 0, otherDps = 0; const otherItems = [];
+  for (const p of players) {
+    if ((p.dps / total) >= 0.04 && slices.length < 8) slices.push({ name: p.name, dps: p.dps, color: PIE_COLORS[ci++ % PIE_COLORS.length] });
+    else { otherDps += p.dps; otherItems.push({ name: p.name, dps: p.dps }); }   // 기타에 묶인 항목들(호버용)
+  }
+  if (otherDps > 0) slices.push({ name: "기타", dps: otherDps, color: OTHER_COLOR, other: true, items: otherItems });
+  if (comp && comp.dps > 0) slices.push({ name: "동료", dps: comp.dps, color: COMPANION_COLOR, companion: true });
+  return { slices, total };
 }
-$("dmg-toggle").addEventListener("click", () => setDmgDetail($("dmg-detail").hidden));
-if (localStorage.getItem(DMG_DETAIL_KEY) === "1") setDmgDetail(true);
+
+function polar(cx, cy, r, deg) { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+function ringPath(cx, cy, R, r, a0, a1) {
+  const large = (a1 - a0) > 180 ? 1 : 0;
+  const [ox0, oy0] = polar(cx, cy, R, a0), [ox1, oy1] = polar(cx, cy, R, a1);
+  const [ix1, iy1] = polar(cx, cy, r, a1), [ix0, iy0] = polar(cx, cy, r, a0);
+  return `M${ox0.toFixed(2)} ${oy0.toFixed(2)} A${R} ${R} 0 ${large} 1 ${ox1.toFixed(2)} ${oy1.toFixed(2)} L${ix1.toFixed(2)} ${iy1.toFixed(2)} A${r} ${r} 0 ${large} 0 ${ix0.toFixed(2)} ${iy0.toFixed(2)} Z`;
+}
+
+function renderDonut(shares) {
+  const chart = $("donut-chart"), legend = $("donut-legend");
+  if (!chart) return;
+  const { slices, total } = buildSlices(shares);
+  if (!slices.length) { chart.innerHTML = "<div class='donut-empty'>데이터 없음</div>"; legend.innerHTML = ""; return; }
+  // 툴팁: '기타'면 묶인 항목 내역까지 펼쳐 보여줌
+  const tip = (s) => {
+    let t = `${s.name} · ${num1s(s.dps / total * 100)}%`;
+    if (s.other && s.items && s.items.length) {
+      t += "\n" + s.items.map((it) => `· ${it.name} ${num1s(it.dps / total * 100)}% (${koreanUnit(it.dps)})`).join("\n");
+    }
+    return t;
+  };
+  const S = 180, cx = S / 2, cy = S / 2, R = 84, r = 50;
+  let a = 0, paths = "";
+  slices.forEach((s, i) => {
+    const frac = s.dps / total, deg = frac * 360;
+    const a1 = (i === slices.length - 1) ? 360 : a + deg;   // 마지막은 360까지(부동소수 틈 방지)
+    let d;
+    if (slices.length === 1) d = ringPath(cx, cy, R, r, 0.01, 359.99);
+    else d = ringPath(cx, cy, R, r, a, a1);
+    paths += `<path d="${d}" fill="${s.color}" class="pie-seg" data-i="${i}"><title>${escapeHtml(tip(s))}</title></path>`;
+    a = a1;
+  });
+  const compPct = slices.filter((s) => s.companion).reduce((p, s) => p + s.dps, 0) / total * 100;
+  chart.innerHTML =
+    `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛">${paths}` +
+    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 DPS</text>` +
+    `<text x="${cx}" y="${cy + 14}" class="donut-center-val">${total > 0 ? koreanUnit(total) : "—"}</text></svg>`;
+  const lgRow = (cls, di, dot, name, pct, val, title) =>
+    `<div class="${cls}" data-i="${di}"${title ? ` title="${escapeHtml(title)}"` : ""}>` +
+    dot + `<span class="lg-name">${name}</span>` +
+    `<span class="lg-pct">${num1s(pct)}%</span><span class="lg-val">${koreanUnit(val)}</span></div>`;
+  legend.innerHTML = slices.map((s, i) => {
+    // 기타: 그래프엔 한 조각, 범례엔 세부 종류를 다 적되 '기타'로 묶어 펼침
+    if (s.other && s.items && s.items.length) {
+      const head = lgRow("lg-row lg-other-head", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
+        `기타 <span class="lg-cnt">${s.items.length}개</span>`, s.dps / total * 100, s.dps, tip(s));
+      const subs = s.items.map((it) =>
+        lgRow("lg-row lg-subrow", i, `<span class="lg-subdot"></span>`, escapeHtml(it.name), it.dps / total * 100, it.dps, "")
+      ).join("");
+      return `<div class="lg-group" data-i="${i}">${head}<div class="lg-sublist">${subs}</div></div>`;
+    }
+    return lgRow("lg-row", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
+      escapeHtml(s.name), s.dps / total * 100, s.dps, tip(s));
+  }).join("");
+  // 범례 ↔ 조각 하이라이트 연동
+  const segs = chart.querySelectorAll(".pie-seg"), rows = legend.querySelectorAll(".lg-row");
+  const hi = (i, on) => {
+    segs.forEach((p) => p.classList.toggle("dim", on && +p.dataset.i !== i));
+    rows.forEach((rw) => rw.classList.toggle("active", on && +rw.dataset.i === i));
+  };
+  segs.forEach((p) => { p.addEventListener("mouseenter", () => hi(+p.dataset.i, true)); p.addEventListener("mouseleave", () => hi(0, false)); });
+  rows.forEach((rw) => { rw.addEventListener("mouseenter", () => hi(+rw.dataset.i, true)); rw.addEventListener("mouseleave", () => hi(0, false)); });
+}
+
+// 플레이어 vs 동료 비율 스택 바(데스크톱=가로, 모바일=세로 — 크기는 CSS의 --seg로 제어).
+function renderPcSplit(shares, dps) {
+  const box = $("pc-split"); if (!box) return;
+  const comp = shares.find((x) => x.companion);
+  if (!comp) { box.innerHTML = ""; box.hidden = true; return; }
+  box.hidden = false;
+  const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
+  const cDps = comp.dps, pDps = total - cDps;
+  const pPct = total > 0 ? pDps / total * 100 : 0, cPct = 100 - pPct;
+  box.innerHTML =
+    `<div class="pc-head"><span>플레이어 vs 동료</span></div>` +
+    `<div class="pc-bar">` +
+      `<div class="pc-seg pc-player" style="--seg:${pPct}%"><span>${num1s(pPct)}%</span></div>` +
+      `<div class="pc-seg pc-comp" style="--seg:${cPct}%"><span>${num1s(cPct)}%</span></div>` +
+    `</div>` +
+    `<div class="pc-legend"><span><i class="pc-i pc-player"></i>플레이어 ${koreanUnit(pDps)}</span>` +
+    `<span><i class="pc-i pc-comp"></i>동료 ${koreanUnit(cDps)}</span></div>`;
+}
+
+// 1타 최소/최대/평균 + 전체 DPS 타일
+function renderHomeStats(det, dps) {
+  const box = $("home-stats"); if (!box) return;
+  if (!det) { box.innerHTML = ""; return; }
+  const tile = (label, v, accent) =>
+    `<div class="tile${accent ? " tile-accent" : ""}"><div class="tile-label">${label}</div>` +
+    `<div class="tile-val">${v == null ? "—" : koreanUnit(v)}</div>` +
+    `<div class="tile-ku">${v == null ? "" : fmt(Math.round(v))}</div></div>`;
+  let cmp = "";
+  if (det.playerAnalytic != null && det.playerSim != null && det.playerAnalytic > 0) {
+    const diff = (det.playerSim / det.playerAnalytic - 1) * 100;
+    cmp = `<div class="sim-cmp"><div class="sim-head">플레이어 DPS <span class="sim-sub">해석식 vs 시뮬 · 동료 제외 검증용</span></div>` +
+      `<div class="sim-row"><span>해석식</span><b>${koreanUnit(det.playerAnalytic)}</b></div>` +
+      `<div class="sim-row"><span>시뮬(버프 겹침)</span><b>${koreanUnit(det.playerSim)}</b>` +
+      `<span class="sim-diff ${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : ""}${num1s(diff)}%</span></div></div>`;
+  }
+  box.innerHTML =
+    tile("1타 평균딜", det.avg, true) + tile("1타 최소딜", det.min) + tile("1타 최대딜", det.max) +
+    tile("전체 DPS", dps ? dps.total : null, true) + cmp;
+}
+
+// 평타 / 스킬 / 동료(90초 사이클) DPS 가로 막대(전체 대비) + 동료 순수 DPS 별도 표기
+function renderDpsBars(dps) {
+  const box = $("home-dpsbars"); if (!box) return;
+  if (!dps) { box.innerHTML = "<p class='status'>이 직업은 DPS 모델이 없어요.</p>"; return; }
+  const total = dps.total || 0;
+  const secs = dps.windowSeconds ? Math.round(dps.windowSeconds) : null;
+  const rows = [
+    { name: "평타 DPS", v: dps.basic, c: PIE_COLORS[0] },
+    { name: "스킬 DPS", v: dps.skill, c: PIE_COLORS[1] },
+  ];
+  if (dps.companion != null) rows.push({ name: "동료 DPS", v: dps.companion, c: COMPANION_COLOR, sub: secs ? `${secs}초 기준` : "" });
+  let html = `<div class="bars-head">DPS 구성${secs ? ` <span class="bars-sub">(${secs}초)</span>` : ""}</div>` + rows.map((rw) => {
+    const pct = total > 0 ? (rw.v || 0) / total * 100 : 0;
+    return `<div class="bar-row"><div class="bar-name">${rw.name}${rw.sub ? `<span class="bar-sub">${rw.sub}</span>` : ""}</div>` +
+      `<div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${rw.c}"></div></div>` +
+      `<div class="bar-val">${koreanUnit(rw.v || 0)}<span class="bar-pct">${num1s(pct)}%</span></div></div>`;
+  }).join("");
+  // 동료 DPS 한 줄: 소환 지속(초, SUMMON_DURATION 반영)과 소환 기간 기준 DPS
+  if (dps.companionWindow != null) {
+    const sd = dps.summonSeconds ? num1s(dps.summonSeconds) : null;
+    html += `<div class="comp-dps-note">` +
+      `<span><i class="cdot" style="background:${COMPANION_COLOR}"></i>동료 DPS <b>${koreanUnit(dps.companionWindow)}</b>` +
+      `${sd ? ` <span class="sub">${sd}초 소환 기준</span>` : ""}</span></div>`;
+  }
+  box.innerHTML = html;
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 async function calcDamage() {
   // 이미 값이 떠 있으면(즉시 페인트·이전 계산) 백그라운드 갱신은 조용히 — '계산 중'/'오류' 텍스트로 방해하지 않음.
   const refreshing = damageShown;
@@ -723,7 +947,7 @@ async function calcEvaluate() {
     const data = await postJson("/api/evaluate", {
       part: $("ev-part").value, grade: $("ev-grade").value,
       slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
-      bossMode: $("ev-boss").value === "true",
+      ...targetForApi(), ...companionParams(),
       stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
     });
     evResults = data.results;
@@ -759,7 +983,7 @@ function renderEval() {
   $("ev-table").hidden = rows.length === 0;
 }
 // 입력(부위·등급·슬롯·기준) 변경 시 자동 계산. 정렬만 바꾸면 재요청 없이 재정렬.
-for (const id of ["ev-part", "ev-grade", "ev-slot", "ev-boss"]) $(id).addEventListener("change", calcEvaluate);
+for (const id of ["ev-part", "ev-grade", "ev-slot"]) $(id).addEventListener("change", calcEvaluate);
 $("ev-sort").addEventListener("change", () => { if (evResults.length) renderEval(); });
 
 // ──────────────────── 내 큐브 편집기 ────────────────────
@@ -910,7 +1134,7 @@ async function runRecommend(useSliderMax) {
   const done = deferLoading("rc-status");
   try {
     const data = await postJson("/api/recommend", {
-      stats: collectStats(), conversions: myConv, bossMode: $("rc-boss").value === "true",
+      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       sliderValue: parseInt($("rc-slider").value, 10) || 0,
       sortKey: parseInt($("rc-sort").value, 10) || 0,
@@ -965,7 +1189,6 @@ function renderRecs(recs) {
 }
 
 $("rc-sort").addEventListener("change", () => runRecommend(false));
-$("rc-boss").addEventListener("change", () => runRecommend(true));
 $("rc-upper").addEventListener("change", () => runRecommend(false));
 $("rc-lower").addEventListener("change", () => runRecommend(false));
 $("rc-slider").addEventListener("input", () => { $("rc-slider-val").textContent = $("rc-slider").value; });
@@ -1035,7 +1258,7 @@ async function runOptCompare() {
     const data = await postJson("/api/optcompare", {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
       right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
-      stats: collectStats(), conversions: myConv, bossMode: $("oc-boss").value === "true", buffs: activeBuffs(), hitInterval: myHitInterval,
+      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(), buffs: activeBuffs(), hitInterval: myHitInterval,
     });
     $("oc-l-result").innerHTML = ocResultHtml(data.left);
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
@@ -1112,7 +1335,7 @@ async function runCompare() {
       if (p) rightOpts.push({ statId: p.stat, value: p.value });
     }
     const data = await postJson("/api/compare", {
-      stats: collectStats(), conversions: myConv, bossMode: $("cmp-boss").value === "true",
+      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
       rightGrade: $("cmp-right-grade").value, rightOpts,
@@ -1155,7 +1378,7 @@ async function runApply() {
     const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
     // 2) 스탯 폼 + 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
     fillStats(data.stats);
-    statPresets.presets[statPresets.active] = { stats: collectStats() };
+    statPresets.presets[statPresets.active] = statPresetPayload();
     saveJSON(STATP_KEY, statPresets);
     statDirty = false;
     // 3) 큐브 줄 + 활성 큐브 프리셋에 반영
@@ -1303,13 +1526,14 @@ function spApply(name, skipRecompute) {
   if (!p) return;
   fillStats(p.stats);
   $("job-sel").value = String(Math.round((p.stats && p.stats.JOB) || 0));
+  syncTargetSelector();   // 대상(챕터/스테이지)도 프리셋 값으로 — 직업처럼 함께 전환
   statDirty = false;   // 프리셋 적용 = 저장된 상태
   if (skipRecompute) return;
   refreshQual();
-  recalcActivePanel();   // 프리셋 전환 시 보이는 패널까지 즉시 재계산
+  recalcActivePanel();   // 프리셋 전환 시 보이는 패널까지 즉시 재계산(대상 반영 딜 포함)
 }
 function initStatPresets() {
-  if (!statPresets) statPresets = { active: "기본", presets: { "기본": { stats: collectStats() } } };
+  if (!statPresets) statPresets = { active: "기본", presets: { "기본": statPresetPayload() } };
   else spApply(statPresets.active, booting);   // 초기화 중엔 재계산 미룸(init 끝에서 1번)
   saveJSON(STATP_KEY, statPresets);
   fillPresetSel($("sp-sel"), statPresets);
@@ -1323,7 +1547,7 @@ $("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.a
 $("sp-new").addEventListener("click", () => {
   const name = (prompt("새 스탯 프리셋 이름") || "").trim();
   if (!name || statPresets.presets[name]) return;
-  statPresets.presets[name] = { stats: collectStats() };
+  statPresets.presets[name] = statPresetPayload();
   statPresets.active = name; saveJSON(STATP_KEY, statPresets); fillPresetSel($("sp-sel"), statPresets);
   statDirty = false;   // 현재 입력이 새 프리셋으로 저장됨
 });
@@ -1718,6 +1942,13 @@ function activeCompanionSel() {
   return { companionId: p.companionId, grade: p.grade, level: p.level != null ? p.level : 1, ratio: p.ratio != null ? p.ratio : 0 };
 }
 
+// 큐브 페이로드용 동료 파라미터(장비 grade/level과 키 충돌 방지: companion* 접두). 미선택이면 {}.
+function companionParams() {
+  const c = activeCompanionSel();
+  if (!c.companionId) return {};
+  return { companionId: c.companionId, companionGrade: c.grade, companionLevel: c.level, companionRatio: c.ratio };
+}
+
 function apApply(name) {
   if (!allyPresets.presets[name]) return;
   allyDirty = false;
@@ -1766,34 +1997,45 @@ $("ap-rename").addEventListener("click", () => {
 });
 
 // ──────────────────── 프리셋 빠른 전환(플로팅) ────────────────────
-// 어디서든 우하단 ⚡ → 작은 패널에서 스탯/큐브/스킬 프리셋만 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
+// 어디서든 우하단 ⚡ → 작은 패널에서 프리셋을 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
+// 프리셋 종류를 추가할 땐 이 목록에만 한 줄 추가하면 플로팅 패널에 자동 반영됨(순서도 이 배열 순서).
+const QP_TYPES = [
+  { key: "sp", label: "스탯", main: "sp-sel", store: () => statPresets, saveKey: STATP_KEY,
+    canLeave: () => canLeaveStat(), apply: (n) => spApply(n) },
+  { key: "bp", label: "스킬", main: "bp-sel", store: () => buffPresets, saveKey: BUFFP_KEY,
+    canLeave: () => !buffDirty || confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => bpApply(n) },
+  { key: "ap", label: "동료", main: "ap-sel", store: () => allyPresets, saveKey: ALLYP_KEY,
+    canLeave: () => !allyDirty || confirm("저장하지 않은 동료 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => apApply(n) },
+  { key: "cp", label: "큐브", main: "cp-sel", store: () => cubePresets, saveKey: CUBEP_KEY,
+    canLeave: () => canLeaveCube(), apply: (n) => cpApply(n) },
+];
+function buildQuickPanel() {
+  const rows = $("qp-rows"); if (!rows) return;
+  rows.innerHTML = QP_TYPES.map((t) => `<label class="qp-row"><span>${t.label}</span><select id="qs-${t.key}"></select></label>`).join("");
+  for (const t of QP_TYPES) {
+    $("qs-" + t.key).addEventListener("change", async () => {
+      const store = t.store(); if (!store) return;
+      const sel = $("qs-" + t.key);
+      if (!t.canLeave()) { sel.value = store.active; return; }
+      store.active = sel.value; saveJSON(t.saveKey, store);
+      await t.apply(store.active);
+      const main = $(t.main); if (main) main.value = store.active;
+      toast(`${t.label} → '${store.active}'`);
+    });
+  }
+}
 function syncQuickPanel() {
-  if (statPresets) fillPresetSel($("qs-sp"), statPresets);
-  if (cubePresets) fillPresetSel($("qs-cp"), cubePresets);
-  if (buffPresets) fillPresetSel($("qs-bp"), buffPresets);
+  for (const t of QP_TYPES) { const store = t.store(); if (store) fillPresetSel($("qs-" + t.key), store); }
 }
 function toggleQuickPanel(open) {
   $("qp-panel").hidden = !open;
   $("qp-fab").setAttribute("aria-expanded", open ? "true" : "false");
   if (open) syncQuickPanel();   // 열 때마다 최신 프리셋 목록·활성값 반영
 }
-$("qp-fab").addEventListener("click", () => toggleQuickPanel($("qp-panel").hidden));   // 오직 플로팅 버튼으로만 열고 닫음(바깥 클릭 무시)
-
-$("qs-sp").addEventListener("change", () => {
-  if (!canLeaveStat()) { $("qs-sp").value = statPresets.active; return; }
-  statPresets.active = $("qs-sp").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
-  $("sp-sel").value = statPresets.active; toast(`스탯 → '${statPresets.active}'`);
-});
-$("qs-cp").addEventListener("change", async () => {
-  if (!canLeaveCube()) { $("qs-cp").value = cubePresets.active; return; }
-  cubePresets.active = $("qs-cp").value; saveJSON(CUBEP_KEY, cubePresets); await cpApply(cubePresets.active);
-  $("cp-sel").value = cubePresets.active; toast(`큐브 → '${cubePresets.active}'`);
-});
-$("qs-bp").addEventListener("change", () => {
-  if (buffDirty && !confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?")) { $("qs-bp").value = buffPresets.active; return; }
-  buffPresets.active = $("qs-bp").value; saveJSON(BUFFP_KEY, buffPresets); bpApply(buffPresets.active);
-  $("bp-sel").value = buffPresets.active; toast(`스킬 → '${buffPresets.active}'`);
-});
+buildQuickPanel();
+$("qp-fab").addEventListener("click", (e) => { e.stopPropagation(); toggleQuickPanel($("qp-panel").hidden); });
+$("qp-panel").addEventListener("click", (e) => e.stopPropagation());   // 패널 내부 클릭은 닫지 않음
+document.addEventListener("click", () => { if (!$("qp-panel").hidden) toggleQuickPanel(false); });   // 바깥 클릭 시 닫기
 
 // ──────────────────── 프리셋 내보내기 / 불러오기 (.mkbak) ────────────────────
 
@@ -2032,7 +2274,7 @@ async function loadMeta(pre) {
     if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
     else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
     if (boot && boot.companions) { companions = boot.companions; saveJSON(CACHE_COMPANIONS, companions); }   // 동료 목록(정적)
-    if (boot && boot.monsterDefense) { monsterDefense = boot.monsterDefense; saveJSON(CACHE_MONDEF, monsterDefense); }   // 몬스터 방어력(정적)
+    if (boot && boot.targetCatalog) { targetCatalog = boot.targetCatalog; saveJSON(CACHE_MONDEF, targetCatalog); }   // 대상 카탈로그(정적, 방어력 미포함)
     renderTargetSelector();      // 예상 데미지: 대상(스테이지/보스) 선택
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
     renderConvSettings();        // 딜 환산 설정 목록

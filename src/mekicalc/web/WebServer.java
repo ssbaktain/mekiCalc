@@ -72,26 +72,29 @@ public final class WebServer {
             Map<String, Object> req = readJsonBody(ex);
             return service.evaluate(
                     str(req, "part"), str(req, "grade"), intOrNull(req, "slot"),
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
-                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
         http.createContext("/api/recommend", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             return service.recommend(
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                     (int) num(req, "sliderValue", 0), (int) num(req, "sortKey", 0),
-                    bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
+                    bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
         http.createContext("/api/compare", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             return service.myCompare(
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                     req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                     str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")),
-                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
         http.createContext("/api/slotdraws", json("POST", ex -> {
@@ -111,8 +114,9 @@ public final class WebServer {
             return service.optCompare(
                     str(l, "part"), str(l, "grade"), mapList(l.get("opts")),
                     str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
-                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), bool(req, "bossMode", true),
-                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0));
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
         // ──────────────────── 로그인(OAuth) ────────────────────
@@ -164,9 +168,15 @@ public final class WebServer {
             out.put("meta", service.meta());
             out.put("mydata", service.myData());
             out.put("companions", service.companions());
-            out.put("monsterDefense", service.monsterDefense());
+            out.put("targetCatalog", service.targetCatalog());   // 대상 드롭다운(방어력 수치 미포함 — 서버 전용)
             out.put("me", meInfo(sessionFrom(ex)));
             return out;
+        }));
+
+        // 대상 방어배수(서버에서 방어력 적용 — 방어력 수치는 응답에 미포함). 클라가 표시 딜에 곱함.
+        http.createContext("/api/target-damage", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.targetDamage(str(req, "chapter"), str(req, "target"), num(req, "pen", 0));
         }));
 
         // 동료 공격력 계승 비율 데이터 수집(저장 시). 추후 비율 공식 모델링용.
@@ -285,6 +295,12 @@ public final class WebServer {
         Object v = m.get(key);
         if (v == null) throw new IllegalArgumentException("필수 키 누락: " + key);
         return v.toString();
+    }
+
+    /** 선택 키(누락 시 null). 동료 선택 등 옵션 파라미터용. */
+    private static String strOpt(Map<String, Object> m, String key) {
+        Object v = m.get(key);
+        return v == null ? null : v.toString();
     }
 
     private static boolean bool(Map<String, Object> m, String key, boolean def) {

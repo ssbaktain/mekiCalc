@@ -28,6 +28,8 @@ public final class CompanionDps {
     private final double inheritRatioPct;
     /** 플레이어가 적에 건 받피증 합(분수). 동료도 같은 적을 때려 공유 → buildRecv에 합연산. 0이면 미반영. */
     private double playerRecvBonus = 0;
+    /** 카드/홈 "1마리 기준" 표시용. true면 일반몹도 대상수 1(플레이어 카드 dpsBreakdown(singleTarget) 과 동일 기준). */
+    private boolean singleTarget = false;
 
     public CompanionDps(DamageModel dm, Map<String, Object> root, String companionId,
                         String grade, int companionLevel, double inheritRatioPct) {
@@ -41,6 +43,9 @@ public final class CompanionDps {
 
     /** 플레이어가 적에 건 받피증 합(분수, 예: 0.5=+50%)을 동료에도 공유시킨다. 체이닝 반환. */
     public CompanionDps playerRecvBonus(double bonus) { this.playerRecvBonus = bonus; return this; }
+
+    /** 일반몹 대상수를 1로 강제(플레이어 카드 "1마리 기준"과 동일 기준 비교용). 체이닝 반환. */
+    public CompanionDps singleTarget(boolean v) { this.singleTarget = v; return this; }
 
     private static Map<String, Object> findCompanion(Map<String, Object> root, String id) {
         Object arr = root.get("companions");
@@ -87,9 +92,235 @@ public final class CompanionDps {
     /** 동료 DPS [평타, 스킬, 합] — 90초 한 사이클 기준(W초 가동 + 나머지 휴면 평균). 예상 데미지 통합용. */
     public double[] cycleBreakdown(StatBlock player, boolean boss) { return simulate(player, boss, null, cyclePeriod(player)); }
 
+    /**
+     * 동료 DPS [평타, 스킬, 합] — 고정 전투시간 T초 기준(보스=70, 일반=90 등). T초 동안 소환쿨마다 소환되어
+     * 각 소환창(W) 동안 딜 → 총딜 ÷ T. 마지막 소환이 T를 넘기면 비례(부분 가동)로 반영.
+     */
+    public double[] dpsOverSeconds(StatBlock player, boolean boss, double T) {
+        if (T <= 0) return new double[]{0, 0, 0};
+        double W = window(player);
+        if (W <= 0) return new double[]{0, 0, 0};
+        double[] win = simulate(player, boss, null, 1.0);   // 한 소환창(W) 동안의 총딜
+        double cd = Json.num(root, "summonCd", 90);
+        if (cd <= 0) cd = W;
+        double[] out = new double[3];
+        for (double s = 0; s < T - 1e-9; s += cd) {
+            double frac = Math.min(1.0, (T - s) / W);       // 소환창이 전투 끝을 넘기면 부분 가동
+            for (int i = 0; i < 3; i++) out[i] += win[i] * frac;
+        }
+        for (int i = 0; i < 3; i++) out[i] /= T;
+        return out;
+    }
+
     /** 사이클 주기 = max(소환쿨, 유지창). 유지창이 쿨보다 길면 상시 소환(가동률 1). */
     private double cyclePeriod(StatBlock player) {
         return Math.max(Json.num(root, "summonCd", 90), window(player));
+    }
+
+    // ──────────────────── 해석식(닫힌식) 동료 DPS — 시뮬과 별개·성능/정확도 비교용 ────────────────────
+    // 시간제 버프를 가동률 평균으로 한 번 반영(buildStatsAvg)하고 각 성분을 레이트로 합산(시간스텝 없음).
+    // 시뮬과 같은 성분: 평타 / 패시브 프록 / 도트(가동률) / 소환·액티브 즉발 본딜. 버프 겹침 비선형은 평균으로 근사.
+
+    /** 소환 중(유지창 W) 동료 DPS [평타, 스킬, 합] — {@link #dpsBreakdown}의 해석식 버전. */
+    public double[] dpsBreakdownAnalytic(StatBlock player, boolean boss) {
+        Map<String, Object> g = gradeData();
+        if (g == null) return new double[]{0, 0, 0};
+        double W = window(player);
+        if (W <= 0) return new double[]{0, 0, 0};
+        List<Object> skills = Json.asList(g.get("skills"));
+        StatBlock c = buildStatsAvg(player, boss, W);
+        double recv = 1 + companionRecvAvg(boss, W) + playerRecvBonus;
+        double atkRate = 1 + c.get(ATK_SPEED) / 100.0;
+        double skillCastsPerSec = 0;
+        for (Object so : skills) {
+            Map<String, Object> s = Json.asMap(so);
+            if (!learned(s)) continue;
+            String t = Json.str(s, "type", "");
+            if ("summon".equals(t)) skillCastsPerSec += 1.0 / W;
+            else if ("active".equals(t)) { double cd = Json.num(s, "cd", 0); if (cd > 0) skillCastsPerSec += (Math.floor(W / cd) + 1) / W; }
+        }
+        double attackRate = atkRate + skillCastsPerSec;
+
+        double basicDps = 0, skillDps = 0;
+        Object gbo = Json.asMap(root.get("gradeBasicAttack")).get(grade);
+        Map<String, Object> gb = gbo == null ? null : Json.asMap(gbo);
+        if (gb != null && !gb.isEmpty()) {
+            double coeff = Json.num(gb, "coeff", 0) / 100.0;
+            int hits = (int) Json.num(gb, "hits", 0);
+            int targets = (boss || singleTarget) ? 1 : (int) Json.num(gb, "targets", 1);
+            basicDps = dm.globalMultiplier(c, boss) * dm.basicAtkDmgFactor(c) * coeff * hits * targets * atkRate;
+        }
+        for (Object so : skills) {                         // 연속 성분(패시브 프록·도트)
+            Map<String, Object> s = Json.asMap(so);
+            if (s.containsKey("modifies") || !learned(s)) continue;
+            String type = Json.str(s, "type", "");
+            if ("passive".equals(type)) {
+                skillDps += passiveProcRate(s, c, boss, atkRate, attackRate, W, skills);
+            } else if (s.get("dot") instanceof Map) {
+                Map<String, Object> dot = Json.asMap(s.get("dot"));
+                double u = uptimeOf(type, Json.num(dot, "dur", 0), Json.num(s, "cd", 0), W);
+                if (u > 0) skillDps += dotPerSec(dot, c, boss) * u;
+            }
+        }
+        for (Object so : skills) {                         // 이산 성분(소환·액티브 즉발 본딜): W내 시전수 ÷ W
+            Map<String, Object> s = Json.asMap(so);
+            if (s.containsKey("modifies") || !learned(s)) continue;
+            String type = Json.str(s, "type", "");
+            if ("summon".equals(type)) skillDps += dealPerCast(s, c, boss) / W;
+            else if ("active".equals(type)) {
+                double cd = Json.num(s, "cd", 0);
+                if (cd > 0) skillDps += dealPerCast(s, c, boss) * (Math.floor((W - 1e-9) / cd) + 1) / W;
+            }
+        }
+        basicDps *= recv; skillDps *= recv;
+        return new double[]{basicDps, skillDps, basicDps + skillDps};
+    }
+
+    /** 고정 전투시간 T초 기준 동료 DPS [평타,스킬,합] — {@link #dpsOverSeconds}의 해석식 버전(소환 가동률 가중). */
+    public double[] dpsOverSecondsAnalytic(StatBlock player, boolean boss, double T) {
+        if (T <= 0) return new double[]{0, 0, 0};
+        double W = window(player);
+        if (W <= 0) return new double[]{0, 0, 0};
+        double[] a = dpsBreakdownAnalytic(player, boss);   // 소환창 W 기준 DPS → a×W = 소환 1번 총딜
+        double cd = Json.num(root, "summonCd", 90);
+        if (cd <= 0) cd = W;
+        double[] out = new double[3];
+        for (double s = 0; s < T - 1e-9; s += cd) {        // 시뮬 dpsOverSeconds와 동일한 T 기준 정규화
+            double frac = Math.min(1.0, (T - s) / W);       // 소환창이 전투 끝을 넘기면 부분 가동
+            for (int i = 0; i < 3; i++) out[i] += a[i] * W * frac;
+        }
+        for (int i = 0; i < 3; i++) out[i] /= T;
+        return out;
+    }
+
+    /** 동료 자체 스탯에 시간제 버프를 가동률 평균으로 반영한 스냅샷(해석식용). */
+    private StatBlock buildStatsAvg(StatBlock player, boolean boss, double W) {
+        StatBlock c = new StatBlock(player);
+        c.set(ATK_FLAT, player.get(ATK_FLAT) * (1 + player.get(ATK_PCT) / 100.0) * inheritRatioPct / 100.0);
+        c.set(ATK_PCT, 0);
+        if ("UNIQUE".equals(grade) || "LEGENDARY".equals(grade)) {
+            Map<String, Object> ulf = Json.asMap(root.get("uniqueLegendaryFinalDmg"));
+            double per = Json.num(ulf, "perLevel", 0);
+            for (Object lv : Json.asList(ulf.get("levels"))) if (lv instanceof Number && companionLevel >= ((Number) lv).intValue()) c.set(FINAL_DMG, multPct(c.get(FINAL_DMG), per));
+        }
+        Map<String, Object> g = gradeData();
+        for (Object so : Json.asList(g.get("skills"))) {
+            Map<String, Object> s = Json.asMap(so);
+            if (!learned(s)) continue;
+            collectBuffsAvg(s, boss, W, false, (stat, v) -> applyStat(c, stat, v));
+        }
+        return c;
+    }
+
+    /**
+     * 동료 버프(선물)를 가동률 평균으로 한 번에 수집 — {@link #playerGift}의 해석식 버전(480스텝 시뮬 제거).
+     * wantPlayer=true면 플레이어 대상(player/both) 버프, recvBonus는 동료가 적에 건 받피증 공유분(가동률 평균).
+     */
+    public Map<String, Object> playerGiftAnalytic(StatBlock player, boolean boss) {
+        Map<String, Object> buffs = new java.util.LinkedHashMap<>();
+        Map<String, Object> g = gradeData();
+        double W = window(player);
+        double recvSum = 0;
+        if (g != null && W > 0) {
+            for (Object so : Json.asList(g.get("skills"))) {
+                Map<String, Object> s = Json.asMap(so);
+                if (!learned(s)) continue;
+                collectBuffsAvg(s, boss, W, true, (stat, v) -> addD(buffs, stat, v));
+            }
+            recvSum = companionRecvAvg(boss, W);
+        }
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("buffs", buffs);
+        out.put("recvBonus", recvSum);
+        return out;
+    }
+
+    private void collectBuffsAvg(Map<String, Object> s, boolean boss, double W, boolean wantPlayer, BuffSink sink) {
+        String type = Json.str(s, "type", "");
+        if (s.get("buffs") instanceof List)
+            for (Object bo : Json.asList(s.get("buffs"))) emitBuffAvg(s, Json.asMap(bo), type, boss, W, wantPlayer, false, sink);
+        if (s.get("proc") instanceof Map) {
+            Object pb = Json.asMap(s.get("proc")).get("buff");
+            if (pb instanceof Map) emitBuffAvg(s, Json.asMap(pb), type, boss, W, wantPlayer, true, sink);
+        }
+    }
+
+    private void emitBuffAvg(Map<String, Object> s, Map<String, Object> b, String type, boolean boss, double W, boolean wantPlayer, boolean isProc, BuffSink sink) {
+        if (!Json.bool(b, "used", false) || !condMet(b)) return;
+        String tgt = Json.str(b, "target", "");
+        boolean ok = wantPlayer ? ("player".equals(tgt) || "both".equals(tgt)) : ("companion".equals(tgt) || "both".equals(tgt));
+        if (!ok) return;
+        double u, stacks;
+        if (isProc) { u = 1.0; stacks = Json.num(b, "maxStacks", 1); }   // 발동형: 소환 중 풀가동 가정
+        else {
+            double dur = Json.num(b, "dur", Json.num(s, "dur", 0));
+            u = uptimeOf(type, dur, Json.num(s, "cd", 0), W);
+            stacks = avgStacks(b, boss, W);
+        }
+        if (u <= 0) return;
+        String stat = Json.str(b, "stat", "");
+        double base = Json.num(b, "value", 0);
+        double full = "FINAL_DMG".equals(stat) ? (Math.pow(1 + base / 100.0, stacks) - 1) * 100 : base * stacks;
+        sink.add(stat, full * u);   // 가동률 평균
+    }
+
+    /** 동료 자체 받피증 합(분수) — 가동률 평균. {@link #companionRecvSum}의 해석식 버전. */
+    private double companionRecvAvg(boolean boss, double W) {
+        Map<String, Object> g = gradeData();
+        if (g == null) return 0;
+        double sum = 0;
+        for (Object so : Json.asList(g.get("skills"))) {
+            Map<String, Object> s = Json.asMap(so);
+            if (!learned(s)) continue;
+            String type = Json.str(s, "type", "");
+            if (s.get("debuffs") instanceof List) {
+                for (Object dobj : Json.asList(s.get("debuffs"))) {
+                    Map<String, Object> d = Json.asMap(dobj);
+                    if (!Json.bool(d, "used", false) || !"RECV_DMG".equals(Json.str(d, "stat", ""))) continue;
+                    if (Json.bool(d, "bossOnly", false) && !boss) continue;
+                    double u = uptimeOf(type, Json.num(d, "dur", Json.num(s, "dur", 0)), Json.num(s, "cd", 0), W);
+                    sum += Json.num(d, "value", 0) * (boss ? Json.num(d, "bossMult", 1) : 1) * u;
+                }
+            }
+            if ("passive".equals(type) && s.get("proc") instanceof Map) {
+                Object dbo = Json.asMap(s.get("proc")).get("debuff");
+                if (dbo instanceof Map) {
+                    Map<String, Object> d = Json.asMap(dbo);
+                    if (Json.bool(d, "used", false) && "RECV_DMG".equals(Json.str(d, "stat", "")))
+                        sum += Json.num(d, "value", 0) * (boss ? Json.num(d, "bossMult", 1) : 1);
+                }
+            }
+        }
+        return sum / 100.0;
+    }
+
+    /** 효과 가동률 = 활성 시간 ÷ W. 패시브=1, 소환=min(dur,W)/W, 액티브=쿨마다 dur 활성 누적/W. */
+    private static double uptimeOf(String type, double dur, double cd, double W) {
+        if ("passive".equals(type)) return 1.0;
+        if (dur <= 0 || W <= 0) return 0;
+        if (!"active".equals(type) || cd <= 0) return Math.min(dur, W) / W;   // summon 또는 쿨없음
+        double active = 0, prevEnd = 0;                       // 시전 구간 '합집합'(재시전=갱신) → 시뮬 activeAt와 동일, 최대 1.0
+        for (double k = 0; k * cd < W - 1e-9; k++) {
+            double st = Math.max(k * cd, prevEnd), en = Math.min(W, k * cd + dur);
+            if (en > st) active += en - st;
+            prevEnd = Math.max(prevEnd, en);
+        }
+        return active / W;
+    }
+
+    /** 평균 중첩 수: perEnemy=보스1/일반최대, stackPeriod=램프 시간평균(시뮬 floor(t/sp) 적분), 그 외=max. */
+    private double avgStacks(Map<String, Object> b, boolean boss, double W) {
+        if (!b.containsKey("maxStacks")) return 1;
+        double max = Json.num(b, "maxStacks", 1);
+        if (Json.bool(b, "perEnemy", false)) return boss ? 1 : max;
+        if (b.containsKey("stackPeriod")) {
+            double sp = Math.max(Json.num(b, "stackPeriod", 1), 1e-9);
+            double R = max * sp;                                    // 램프가 max에 닿는 시각
+            double avg = W <= R ? W / (2 * sp)                       // 램프 도중에 창이 끝남
+                                : (sp * max * (max - 1) / 2.0 + max * (W - R)) / W;   // 램프 후 max 유지
+            return Math.min(max, Math.max(0, avg));
+        }
+        return max;
     }
 
     /** 항목별 동료 DPS(평타 + 스킬별 기여) — 디버그/검증용. 키=항목 라벨, 값=DPS(W 기준). */
@@ -133,7 +364,7 @@ public final class CompanionDps {
             if (gb != null && !gb.isEmpty()) {
                 double coeff = Json.num(gb, "coeff", 0) / 100.0;
                 int hits = (int) Json.num(gb, "hits", 0);
-                int targets = boss ? 1 : (int) Json.num(gb, "targets", 1);
+                int targets = (boss || singleTarget) ? 1 : (int) Json.num(gb, "targets", 1);
                 double inc = dm.globalMultiplier(c, boss) * dm.basicAtkDmgFactor(c) * coeff * hits * targets * atkRate * DT * recv;
                 basicDmg += inc; addD(detail, "평타(기본공격)", inc);
             }
@@ -411,7 +642,7 @@ public final class CompanionDps {
     private double oneDeal(Map<String, Object> deal, StatBlock c, boolean boss) {
         double coeff = Json.num(deal, "coeff", 0) / 100.0;
         int hits = (int) Json.num(deal, "hits", 1);
-        int targets = boss ? 1 : (int) Json.num(deal, "targets", 1);
+        int targets = (boss || singleTarget) ? 1 : (int) Json.num(deal, "targets", 1);
         double bossMult = boss ? Json.num(deal, "bossMult", 1) : 1;
         int repeat = (int) Json.num(deal, "repeat", 1);
         return dm.globalMultiplier(c, boss) * dm.skillDmgFactor(c) * coeff * hits * targets * bossMult * Math.max(1, repeat);
@@ -421,7 +652,7 @@ public final class CompanionDps {
     private double dotPerSec(Map<String, Object> dot, StatBlock c, boolean boss) {
         double coeff = Json.num(dot, "coeff", 0) / 100.0;
         int hits = (int) Json.num(dot, "hits", 1);
-        int targets = boss ? 1 : (int) Json.num(dot, "targets", 1);
+        int targets = (boss || singleTarget) ? 1 : (int) Json.num(dot, "targets", 1);
         double period = Json.num(dot, "period", 1);
         if (period <= 0) period = 1;
         return dm.globalMultiplier(c, boss) * dm.skillDmgFactor(c) * coeff * hits * targets / period;

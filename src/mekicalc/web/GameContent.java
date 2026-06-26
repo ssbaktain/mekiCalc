@@ -40,6 +40,8 @@ public final class GameContent {
     public final Map<String, Object> companionRoot;
     /** monster_defense.json 전체 맵(챕터별 스테이지 일반몹/보스 방어력). 대상별 절대 데미지용. 없으면 빈 맵. */
     public final Map<String, Object> monsterDefense;
+    /** monster_hp.json 전체 맵(챕터별 스테이지 일반몹/보스 체력). 평타컷 계산용(서버 전용). 없으면 빈 맵. */
+    public final Map<String, Object> monsterHp;
     /** 데이터 폴더 경로(개발 환경 개인 데이터 불러오기용 — 배포 시 개인 파일 없으면 빈 값). */
     public final Path dataDir;
 
@@ -47,7 +49,7 @@ public final class GameContent {
                         Map<String, Double> currency, List<StatSource> sources,
                         EquipmentPotential equip, SkillData skillData,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
-                        Map<String, Object> monsterDefense, Path dataDir) {
+                        Map<String, Object> monsterDefense, Map<String, Object> monsterHp, Path dataDir) {
         this.stats = stats;
         this.profile = profile;
         this.currency = currency;
@@ -57,6 +59,7 @@ public final class GameContent {
         this.companions = companions;
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
+        this.monsterHp = monsterHp;
         this.dataDir = dataDir;
     }
 
@@ -75,8 +78,9 @@ public final class GameContent {
         Object arr = compRoot.get("companions");
         if (arr != null) for (Object o : Json.asList(arr)) comps.add(Json.asMap(o));
         Map<String, Object> monDef = loadJsonMap(dataDir, "monster_defense.json");
+        Map<String, Object> monHp = loadJsonMap(dataDir, "monster_hp.json");
         return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData,
-                comps, compRoot, monDef, dataDir);
+                comps, compRoot, monDef, monHp, dataDir);
     }
 
     /** dataDir의 JSON 파일을 맵으로 읽는다. 없거나 손상 시 빈 맵. */

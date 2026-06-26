@@ -2,6 +2,7 @@ package mekicalc.engine;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import mekicalc.model.Profile;
 import mekicalc.model.StatBlock;
 import mekicalc.model.StatDef;
@@ -65,6 +66,24 @@ public final class DamageModel implements DealModel {
     private static final String SKILL_LEVEL_2 = "SKILL_LEVEL_2";
     private static final String SKILL_LEVEL_3 = "SKILL_LEVEL_3";
     private static final String SKILL_LEVEL_4 = "SKILL_LEVEL_4";
+
+    /**
+     * 곱배수 스탯: {@link #globalMultiplier}에 균일하게 곱해지는(모든 1타에 동일 비율) 스탯들.
+     * 이 스탯들만으로 된 델타는 종합 DPS가 정확히 globalMultiplier 비율만큼 스케일되므로,
+     * 전체 모델(시뮬·스킬 루프) 없이 globalMultiplier 비율 차이(닫힌식)로 증가율을 구할 수 있다(재사용용).
+     * 평타뎀·스킬뎀(부분 곱)·스킬레벨·공속·쿨감·대상수·버프지속은 제외(전체 모델 필요).
+     */
+    public static final Set<String> MULT_STATS = Set.of(
+            ATK_FLAT, ATK_PCT, MAIN_STAT_FLAT, MAIN_STAT_PCT, DMG, DMG_AMP, STAT_PROP_DMG,
+            CRIT_RATE, CRIT_DMG, MIN_DMG_MULT, MAX_DMG_MULT, FINAL_DMG, BOSS_DMG, NORMAL_DMG);
+
+    /** delta가 곱배수 스탯({@link #MULT_STATS})으로만 이루어졌는지(닫힌식 빠른 경로 가능). 빈 델타는 false. */
+    public boolean isPureMult(StatBlock delta) {
+        Map<String, Double> m = delta.asMap();
+        if (m.isEmpty()) return false;
+        for (String id : m.keySet()) if (!MULT_STATS.contains(id)) return false;
+        return true;
+    }
 
     private final Map<String, StatDef> stats;
     private final Profile profile;
