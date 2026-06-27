@@ -807,10 +807,13 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 .comp-dps-note .cdot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 
 /* 대상 선택 바(챕터/스테이지 → 일반몹/보스몹) */
-.target-select { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 18px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+.target-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 26px; margin-bottom: 18px; padding: 16px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
 .target-select .ts-label { font-size: 13px; font-weight: 700; color: var(--muted); }
-.target-select .ctl { font-size: 13px; display: inline-flex; align-items: center; gap: 7px; }
-.target-select .ts-name { color: var(--muted); font-weight: 600; }
+.target-select .ts-purpose { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700; color: var(--muted); cursor: help; }
+.target-select .ts-purpose b { color: var(--accent); }
+.target-select .ctl { font-size: 15px; display: inline-flex; flex-direction: row; align-items: center; gap: 6px; }
+.target-select .ctl select { min-width: 110px; padding: 10px 14px; font-size: 16px; text-align: center; text-align-last: center; }
+.target-select .ts-name { color: var(--muted); font-weight: 600; font-size: 15px; }
 .cube-target-hint { font-size: 12.5px; color: var(--muted); }
 .cube-target-hint .ct-hint-val { color: var(--accent); font-weight: 700; }
 .target-select .ts-mode { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--accent); }

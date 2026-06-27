@@ -694,6 +694,7 @@ function syncTargetSelector() {
     if (t && targetCatalog.chapters[t.ch]) csel.value = t.ch;
     fillStages(ssel, csel.value, t && t.stage);
   }
+  const pn = $("ts-preset-name"); if (pn) pn.textContent = "‘" + ((statPresets && statPresets.active) || "") + "’";
   updateCubeTargetHint();
 }
 function renderTargetSelector() {
