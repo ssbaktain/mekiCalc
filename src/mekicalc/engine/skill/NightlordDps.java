@@ -884,9 +884,11 @@ public final class NightlordDps {
             if (period > 0) parts.merge(mark.name, markPerHit(eff, boss) * atkF * targets / period, Double::sum);
         }
 
-        double procPerProc = (shadowExtraPerHit(eff, boss) + fatalExtraPerHit(eff, boss)) * atkF;
-        double procDps = procActionsPerSec * procPerProc;
-        if (procDps > 0) parts.merge("추가타(쉐도우·페이탈)", procDps, Double::sum);
+        // 추가타(발동 딜)는 스킬별로 따로 표기 — 미습득/미선택은 0이라 항목 자체가 빠진다.
+        double shadowDps = procActionsPerSec * shadowExtraPerHit(eff, boss) * atkF;
+        if (shadowDps > 0) parts.merge(data.skill("shadowPartner").name, shadowDps, Double::sum);
+        double fatalDps = procActionsPerSec * fatalExtraPerHit(eff, boss) * atkF;
+        if (fatalDps > 0) parts.merge(data.skill("fatalVenom").name, fatalDps, Double::sum);
 
         double venomDps = venomDotDps(eff, boss) * atkF;
         if (venomDps > 0) parts.merge("베놈", venomDps, Double::sum);
