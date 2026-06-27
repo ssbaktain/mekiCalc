@@ -744,10 +744,16 @@ const PIE_COLORS = ["#7c9cff", "#5bd1c2", "#c98bff", "#6fcf6f", "#ff8a9b", "#5b9
 const COMPANION_COLOR = "#f5a623";   // 동료 = 골드(로고색 계열)
 const OTHER_COLOR = "#6b7280";       // 기타 = 회색
 
+// 부팅 땐 renderHome이 동일 데이터로 여러 번(초기 계산 + 로그인 동기화 재계산 등) 호출돼 DOM을 계속 새로 만들고,
+// 그때마다 차트 진입 애니메이션이 재생→즉시 다음 렌더에 덮여 부자연스러웠다. → 결과가 같으면 재렌더를 건너뛴다(애니메이션 1회).
+let lastHomeSig = null;
 function renderHome() {
   if (!lastDamage) return;
   const tgt = currentTarget();   // 스테이지 드롭다운에서 일반/보스 결정
   const rawDet = lastDamage.detail && (tgt === "boss" ? lastDamage.detail.boss : lastDamage.detail.normal);
+  const sig = JSON.stringify([tgt, targetFactor, rawDet]);
+  if (sig === lastHomeSig) return;   // 동일 결과 → 재렌더 스킵(중복 애니메이션·덮어쓰기 방지)
+  lastHomeSig = sig;
   const det = scaleDetail(rawDet, targetFactor);   // 선택 몹 방어배수 반영(서버 계산)
   const tname = tgt === "boss" ? "보스몹" : "일반몹";
   const dps = det && det.dps;
@@ -2332,7 +2338,7 @@ async function loadMeta(pre) {
         const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
         initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
         renderConvSettings(); renderRangeSettings();
-        const cDmg = loadJSON(CACHE_DMG, null); if (cDmg) { showDamage(cDmg); damageShown = true; }   // 직전 데미지 즉시(상세 포함, 이후 갱신은 조용히)
+        // 홈 차트는 캐시로 먼저 그리지 않고 '계산 완료 후 1회'만 렌더 → 진입 애니메이션 1회만(캐시→신선 이중 애니메이션 방지).
       } catch (e) { console.error("즉시 페인트 실패(무시하고 정상 로드)", e); }
     }
 
