@@ -287,11 +287,6 @@ public final class CalcService {
                 Map<String, Object> db = hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true, BOSS_SECONDS));
                 dn.put("shares", sharesList(nd, b, false, pn[2], comp, inh, NORMAL_SECONDS));   // 홈 도넛(스킬별 지분 + 동료)
                 db.put("shares", sharesList(nd, b, true, pb[2], comp, inh, BOSS_SECONDS));
-                // 플레이어 DPS 검증용: 해석식 vs 시뮬(버프 겹침 타이밍) — 동료 미포함 순수 플레이어 기준
-                dn.put("playerAnalytic", safe(nd.dpsBreakdown(b, false, true)[2]));
-                dn.put("playerSim", safe(nd.dpsSimulate(b, false, true, NORMAL_SECONDS)));
-                db.put("playerAnalytic", safe(nd.dpsBreakdown(b, true, true)[2]));
-                db.put("playerSim", safe(nd.dpsSimulate(b, true, true, BOSS_SECONDS)));
                 detail.put("normal", dn);
                 detail.put("boss", db);
                 out.put("detail", detail);

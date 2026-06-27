@@ -871,17 +871,9 @@ function renderHomeStats(det, dps) {
     `<div class="tile${accent ? " tile-accent" : ""}"><div class="tile-label">${label}</div>` +
     `<div class="tile-val">${v == null ? "—" : koreanUnit(v)}</div>` +
     `<div class="tile-ku">${v == null ? "" : fmt(Math.round(v))}</div></div>`;
-  let cmp = "";
-  if (det.playerAnalytic != null && det.playerSim != null && det.playerAnalytic > 0) {
-    const diff = (det.playerSim / det.playerAnalytic - 1) * 100;
-    cmp = `<div class="sim-cmp"><div class="sim-head">플레이어 DPS <span class="sim-sub">해석식 vs 시뮬 · 동료 제외 검증용</span></div>` +
-      `<div class="sim-row"><span>해석식</span><b>${koreanUnit(det.playerAnalytic)}</b></div>` +
-      `<div class="sim-row"><span>시뮬(버프 겹침)</span><b>${koreanUnit(det.playerSim)}</b>` +
-      `<span class="sim-diff ${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : ""}${num1s(diff)}%</span></div></div>`;
-  }
   box.innerHTML =
     tile("1타 평균딜", det.avg, true) + tile("1타 최소딜", det.min) + tile("1타 최대딜", det.max) +
-    tile("전체 DPS", dps ? dps.total : null, true) + cmp;
+    tile("전체 DPS", dps ? dps.total : null, true);
 }
 
 // 평타 / 스킬 / 동료(90초 사이클) DPS 가로 막대(전체 대비) + 동료 순수 DPS 별도 표기

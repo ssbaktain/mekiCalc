@@ -778,17 +778,6 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 .tile-accent .tile-val { color: var(--accent); }
 .tile-ku { font-size: 12px; color: var(--muted); margin-top: 2px; text-align: center; }
 
-/* 해석식 vs 시뮬 비교(검증용) */
-.sim-cmp { margin-top: 4px; padding: 12px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; }
-.sim-head { font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
-.sim-head .sim-sub { font-weight: 400; }
-.sim-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 3px; }
-.sim-row span:first-child { color: var(--muted); min-width: 96px; }
-.sim-row b { font-variant-numeric: tabular-nums; }
-.sim-diff { margin-left: auto; font-weight: 700; font-size: 12px; }
-.sim-diff.up { color: #6fcf6f; }
-.sim-diff.down { color: #f0846a; }
-
 /* DPS 막대 */
 .dps-bars { margin-top: 20px; }
 .bars-head { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
