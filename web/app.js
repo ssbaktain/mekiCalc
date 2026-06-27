@@ -2089,15 +2089,19 @@ function mergePresetCollection(into, from) {
   return into;
 }
 
-// 백업 문자열을 받아 적용. merge=true면 기존 프리셋 위에 '추가'(덮어쓰지 않음).
-// 번들에 있는 섹션만 적용하고 없는/모르는 섹션은 무시 → 구버전 백업·향후 새 프리셋 타입 모두 호환.
-async function applyBundle(text, merge) {
+// 백업 문자열 → 정규화 번들 객체(format/구버전/데스크톱 호환). 적용 전 미리보기·선택용으로도 사용.
+function parseBundle(text) {
   const raw = JSON.parse(text);
-  let b;
-  if (raw.format === BACKUP_FORMAT) b = raw;
-  else if (raw.statPresets && raw.cubePresets) b = fromDesktopBackup(raw);   // 데스크톱/구버전 백업 호환
-  else throw new Error("MekiCalc 프리셋 데이터가 아닙니다.");
+  if (raw.format === BACKUP_FORMAT) return raw;
+  if (raw.statPresets && raw.cubePresets) return fromDesktopBackup(raw);   // 데스크톱/구버전 백업 호환
+  throw new Error("MekiCalc 프리셋 데이터가 아닙니다.");
+}
 
+// 백업 문자열을 받아 적용. merge=true면 기존 프리셋 위에 '추가'(덮어쓰지 않음).
+async function applyBundle(text, merge) { await applyBundleObj(parseBundle(text), merge); }
+
+// 정규화된 번들 객체를 적용. 번들에 있는 섹션만 적용하고 없는/모르는 섹션은 무시 → 구버전 백업·향후 새 프리셋 타입 모두 호환.
+async function applyBundleObj(b, merge) {
   if (merge) {
     // 추가(병합): 이름 있는 프리셋 컬렉션만 합치고, 전역 설정(환산·범위)은 현재 것 유지.
     statPresets = mergePresetCollection(statPresets, b.statPresets); saveJSON(STATP_KEY, statPresets);
@@ -2138,16 +2142,97 @@ $("export-btn").addEventListener("click", () => {
   URL.revokeObjectURL(url);
   toast("파일로 내보냈습니다.");
 });
-// 파일에서 불러오기
+// ── 선택 불러오기: 백업을 파싱해 프리셋 목록을 체크박스로 보여주고, 고른 것만 병합 ──
+const IMPORT_SECTIONS = [
+  { key: "statPresets", label: "스탯" },
+  { key: "cubePresets", label: "큐브" },
+  { key: "buffPresets", label: "스킬" },
+  { key: "allyPresets", label: "동료" },
+];
+let pendingBundle = null;   // 선택 대기 중인 파싱된 번들
+
+// 컬렉션({active,presets})에서 선택된 이름만 남긴다(활성=선택 중 마지막).
+function filterCollection(coll, nameSet) {
+  const presets = {};
+  let active = coll.active;
+  for (const [n, v] of Object.entries(coll.presets || {})) if (nameSet.has(n)) { presets[n] = v; active = n; }
+  return { active, presets };
+}
+
+// 백업 텍스트를 파싱해 선택 패널을 연다(프리셋 없으면 안내).
+function openImportSelection(text) {
+  let b;
+  try { b = parseBundle(text); }
+  catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; return; }
+  const list = $("import-select-list");
+  list.innerHTML = "";
+  let any = false;
+  for (const sec of IMPORT_SECTIONS) {
+    const coll = b[sec.key];
+    const names = coll && coll.presets ? Object.keys(coll.presets) : [];
+    if (!names.length) continue;
+    any = true;
+    const group = document.createElement("div");
+    group.className = "imp-group";
+    const title = document.createElement("div");
+    title.className = "imp-group-title";
+    title.textContent = `${sec.label} (${names.length})`;
+    group.appendChild(title);
+    for (const n of names) {
+      const row = document.createElement("label");
+      row.className = "imp-row";
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "imp-cb"; cb.checked = true;
+      cb.dataset.sec = sec.key; cb.dataset.name = n;
+      const span = document.createElement("span");
+      span.textContent = n;
+      row.appendChild(cb); row.appendChild(span);
+      group.appendChild(row);
+    }
+    list.appendChild(group);
+  }
+  if (!any) { $("backup-status").textContent = "백업에 불러올 프리셋이 없습니다."; $("import-select").hidden = true; pendingBundle = null; return; }
+  pendingBundle = b;
+  $("imp-all").checked = true;
+  $("import-select").hidden = false;
+  $("backup-status").textContent = "";
+}
+
+// 전체 선택 토글
+$("imp-all").addEventListener("change", () => {
+  const on = $("imp-all").checked;
+  document.querySelectorAll(".imp-cb").forEach((cb) => { cb.checked = on; });
+});
+// 개별 체크가 바뀌면 '전체' 상태 반영
+$("import-select-list").addEventListener("change", () => {
+  const all = [...document.querySelectorAll(".imp-cb")];
+  $("imp-all").checked = all.length > 0 && all.every((cb) => cb.checked);
+});
+// 선택한 프리셋만 병합 적용
+$("import-apply-btn").addEventListener("click", async () => {
+  if (!pendingBundle) return;
+  const checked = [...document.querySelectorAll(".imp-cb:checked")];
+  if (!checked.length) { $("backup-status").textContent = "불러올 프리셋을 하나 이상 선택하세요."; return; }
+  const sel = {};
+  for (const cb of checked) { (sel[cb.dataset.sec] = sel[cb.dataset.sec] || new Set()).add(cb.dataset.name); }
+  const filtered = { format: BACKUP_FORMAT, version: 1 };
+  for (const sec of IMPORT_SECTIONS) if (sel[sec.key] && pendingBundle[sec.key]) filtered[sec.key] = filterCollection(pendingBundle[sec.key], sel[sec.key]);
+  try {
+    await applyBundleObj(filtered, true);
+    toast(`${checked.length}개 프리셋을 불러왔습니다.`);
+    $("import-select").hidden = true; pendingBundle = null; $("backup-status").textContent = "";
+  } catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
+});
+// 취소
+$("import-cancel-btn").addEventListener("click", () => { $("import-select").hidden = true; pendingBundle = null; });
+
+// 파일에서 불러오기 → 선택 패널 열기
 $("import-btn").addEventListener("click", () => $("import-file").click());
 $("import-file").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onload = async () => {
-      try { await applyBundle(reader.result, true); toast("불러온 프리셋을 추가했습니다."); $("backup-status").textContent = ""; }
-      catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
-    };
+    reader.onload = () => openImportSelection(reader.result);
     reader.readAsText(file);
   }
   e.target.value = "";
@@ -2159,12 +2244,11 @@ $("export-text-btn").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(s); toast("텍스트를 복사했습니다."); $("backup-status").textContent = ""; }
   catch { $("backup-status").textContent = "아래 칸의 텍스트를 복사하세요(자동 복사 실패)."; }
 });
-// 텍스트로 불러오기 — 텍스트 칸 내용 적용
-$("import-text-btn").addEventListener("click", async () => {
+// 텍스트로 불러오기 — 텍스트 칸 내용 파싱 후 선택 패널 열기
+$("import-text-btn").addEventListener("click", () => {
   const s = $("backup-text").value.trim();
   if (!s) { $("backup-status").textContent = "먼저 백업 텍스트를 붙여넣으세요."; return; }
-  try { await applyBundle(s, true); toast("불러온 프리셋을 추가했습니다."); $("backup-status").textContent = ""; }
-  catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
+  openImportSelection(s);
 });
 
 // ──────────────────── 계정(로그인) ────────────────────

@@ -555,6 +555,18 @@ main {
 .backup-text-label .hint { color: var(--muted); font-weight: 400; }
 @media (max-width: 560px) { .backup-grid { grid-template-columns: 1fr; } }
 
+/* 프리셋 선택 불러오기 패널 */
+.import-select { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.import-select-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.import-select-head .imp-all { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.import-select-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 320px; overflow-y: auto; }
+.imp-group { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.imp-group-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.imp-row { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; word-break: break-all; }
+.imp-row input { flex: none; }
+.import-select-foot { display: flex; gap: 8px; }
+.import-select-foot .mini-btn { width: auto; }
+
 /* 토스트 알림 */
 .toast {
   position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%) translateY(8px);
