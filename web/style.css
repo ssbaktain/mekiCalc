@@ -859,7 +859,8 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
   .target-grid { grid-template-columns: 1fr; gap: 16px; }
   .target-card .dash-head { flex-direction: column; align-items: flex-start; }
   /* 차트 카드: 도넛 + 세로 분할바를 좌우로, 범례는 아래 풀폭 */
-  .donut-body { grid-template-areas: "donut split" "legend legend"; grid-template-columns: auto auto; justify-content: space-between; gap: 14px; }
+  .donut-body { grid-template-areas: "donut split" "legend legend"; grid-template-columns: auto auto; justify-content: space-evenly; align-items: center; gap: 14px; }
+  .donut-legend, .lg-sublist { grid-template-columns: 1fr; }   /* 모바일: 스킬 지분 범례 항상 1열(2열은 가독성 저하) */
   .donut-svg, .donut-empty { width: 168px; height: 168px; }
   .pc-split { border-top: none; padding-top: 0; min-width: 110px; }
   .pc-bar { flex-direction: column; height: 168px; width: 92px; margin: 0 auto; transform-origin: bottom center; animation-name: mc-growY; }
