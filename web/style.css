@@ -777,6 +777,14 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 .tile-val { font-size: 20px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: center; }
 .tile-accent .tile-val { color: var(--accent); }
 .tile-ku { font-size: 12px; color: var(--muted); margin-top: 2px; text-align: center; }
+/* 동료 기여 카드 */
+.comp-card { margin-top: 18px; }
+.comp-tiles { grid-template-columns: repeat(3, 1fr); }
+.tile-comp { border-color: #f5a623; }
+.tile-comp .tile-val { color: #f5a623; }
+.tile-good { border-color: #4fa86a; }
+.tile-good .tile-val { color: #6fcf6f; }
+@media (max-width: 760px) { .comp-tiles { grid-template-columns: 1fr; } }
 
 /* DPS 막대 */
 .dps-bars { margin-top: 20px; }

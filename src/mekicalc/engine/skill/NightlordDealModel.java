@@ -41,10 +41,15 @@ public final class NightlordDealModel implements DealModel {
         this.seconds = seconds;
     }
 
-    /** 대상 방어배수 f = 5000/(6000 + 방어력 × (1 − 방관%/100)). 대상 없으면 1. 방관·방어력은 globalMultiplier처럼 균일 곱. */
+    /**
+     * 대상 방어배수 f = 5000/(6000 + 방어력 × max(0, 1 − (방관 + 동료 적방어감소 + 동료 방관)/100)). 대상 없으면 1.
+     * 동료 디버프(적 방어력 감소)·동료 방관을 방관 항에 합산 → 플레이어·동료 딜에 일관 반영(단일 factor).
+     */
     private double defFactor(StatBlock b) {
         if (targetDef == null) return 1.0;
-        return 5000.0 / (6000.0 + targetDef * (1 - b.get(DEF_PEN) / 100.0));
+        double penPct = b.get(DEF_PEN);
+        if (comp != null) penPct += comp.enemyDefReducePct(b, boss) + comp.companionDefPenPct(b, boss);
+        return 5000.0 / (6000.0 + targetDef * Math.max(0, 1 - penPct / 100.0));
     }
 
     @Override public double output(StatBlock b) {
@@ -53,7 +58,7 @@ public final class NightlordDealModel implements DealModel {
         double conv = base.customConvFactor(b, BASIC_ATK_TARGETS);   // 단일대상이라 대상수 native=0 → 설정 시 커스텀 환산만
         if (targetDef == null) conv *= base.customConvFactor(b, DEF_PEN);
         if (comp == null) conv *= base.customConvFactor(b, SUMMON_DURATION);   // 동료 없으면 동소지 커스텀 환산
-        double dps = comp == null ? nd.totalDps(b, boss, true) : combinedDps(b);
+        double dps = comp == null ? nd.totalDps(b, boss) : combinedDps(b);
         return dps * defFactor(b) * conv;
     }
 
@@ -71,7 +76,7 @@ public final class NightlordDealModel implements DealModel {
     /** 소환 가동률만큼 동료 버프/받피증을 블렌딩한 플레이어 전체 DPS. {@code CalcService.blendPlayer}의 엔진 버전. */
     @SuppressWarnings("unchecked")
     private double playerBlendedTotal(StatBlock b, NightlordDps.Buffed buf, double pRecv) {
-        double base0 = nd.dpsBreakdownWith(buf, boss, true)[2];        // buf 재사용(buffed 재계산 없음)
+        double base0 = nd.dpsBreakdownWith(buf, boss)[2];        // buf 재사용(buffed 재계산 없음)
         Map<String, Object> gift = comp.playerGiftAnalytic(b, boss);   // 해석식(시뮬 480스텝 제거) — 큐브 핫패스 성능
 
         Map<String, Object> giftBuffs = (Map<String, Object>) gift.get("buffs");
@@ -79,7 +84,7 @@ public final class NightlordDealModel implements DealModel {
         StatBlock summonInput = new StatBlock(b);
         CompanionDps.applyGift(summonInput, giftBuffs);                 // 공퍼 외 버프(최종뎀·크리 등) 적용
         nd.setExternalAtkPct(compAtkPct);                              // 동료 공퍼를 플레이어 스킬 공퍼 합에 합산
-        double summon = nd.dpsBreakdown(summonInput, boss, true)[2];
+        double summon = nd.dpsBreakdown(summonInput, boss)[2];
         nd.setExternalAtkPct(0);                                       // 원복
         double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
         double Rp = 1 + pRecv;

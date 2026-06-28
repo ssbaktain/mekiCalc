@@ -619,9 +619,10 @@ async function refreshTargetFactor() {
   const sv = $("tg-stage") && $("tg-stage").value;
   if (!sv) { targetFactor = 1; return; }
   try {
-    const res = await postJson("/api/target-damage", {
+    const res = await postJson("/api/target-damage", Object.assign({
       chapter: $("tg-chapter").value, target: sv, pen: parseFloat(collectStats().DEF_PEN) || 0,
-    });
+      stats: collectStats(), conversions: myConv,   // 동료 소환창·방어감소 계산용
+    }, companionParams()));   // 동료 적 방어력 감소·방관을 방어배수에 반영
     targetFactor = (res && res.factor > 0) ? res.factor : 1;
     saveJSON(CACHE_TGTFACTOR, { tgt: currentTarget(), factor: targetFactor });   // 다음 즉시 페인트용
   } catch (e) { targetFactor = 1; }
@@ -771,6 +772,29 @@ function renderHome() {
   renderPcSplit(shares, dps);
   renderHomeStats(det, dps);
   renderDpsBars(dps);
+  renderCompanionCard(dps);
+}
+
+// 동료 기여 카드: 동료 딜(전투 평균·소환 중) / 플레이어+동료 딜 / 동료 기여도(동료 없을 때 대비 증가율). 동료 선택 시에만.
+function renderCompanionCard(dps) {
+  const box = $("home-companion"); if (!box) return;
+  if (!dps || dps.companion == null) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  const total = dps.total || 0;
+  const share = total > 0 ? dps.companion / total * 100 : 0;     // 동료 비중(전체 대비)
+  const contrib = dps.companionContrib != null ? dps.companionContrib * 100 : null;   // 동료 없을 때 대비 증가율
+  const sd = dps.summonSeconds ? num1s(dps.summonSeconds) : null;
+  const secs = dps.windowSeconds ? Math.round(dps.windowSeconds) : null;
+  const tile = (label, valHtml, sub, cls) =>
+    `<div class="tile${cls ? " " + cls : ""}"><div class="tile-label">${label}</div>` +
+    `<div class="tile-val">${valHtml}</div><div class="tile-ku">${sub || ""}</div></div>`;
+  box.innerHTML =
+    `<div class="dash-head"><h2>동료 기여</h2><span class="dash-sub">${secs ? `전투 ${secs}초 평균` : "전투 평균"} 기준</span></div>` +
+    `<div class="stat-tiles comp-tiles">` +
+      tile("동료 딜", koreanUnit(dps.companion), dps.companionWindow != null ? `소환 중 ${koreanUnit(dps.companionWindow)}${sd ? ` · ${sd}초` : ""}` : "", "tile-comp") +
+      tile("플레이어+동료 딜", koreanUnit(total), `동료 비중 ${num1s(share)}%`, "tile-accent") +
+      tile("동료 기여도", contrib == null ? "—" : `+${num1s(contrib)}%`, "동료 없을 때 대비", "tile-good") +
+    `</div>`;
 }
 
 // shares = [{name, dps, companion?}] (내림차순). 작은 조각은 '기타'로 묶고, 동료는 항상 따로.
@@ -1873,7 +1897,6 @@ function renderAlly() {
     '<label class="ctl">등급<select id="al-grade"></select></label>' +
     '<label class="ctl">레벨<input id="al-level" type="number" min="1" step="1"></label>' +
     '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" min="0" step="any"></label>' +
-    '<label class="ctl">대상<select id="al-boss"><option value="true">보스몹</option><option value="false">일반몹</option></select></label>' +
     '</div>' +
     '<div id="ally-result" class="ally-result"></div>';
   const csel = $("al-companion");
@@ -1883,7 +1906,7 @@ function renderAlly() {
   $("al-level").value = p.level != null ? p.level : 1;
   $("al-ratio").value = p.ratio != null ? p.ratio : 0;
   csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; allyRecalc(); });
-  for (const id of ["al-grade", "al-level", "al-ratio", "al-boss"]) $(id).addEventListener("change", () => { allyDirty = true; allyRecalc(); });
+  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; allyRecalc(); });
   allyRecalc();
 }
 
@@ -1894,16 +1917,16 @@ async function allyRecalc() {
   const box = $("ally-result");
   if (!box || !$("al-companion")) return;
   const a = collectAlly();
-  const boss = $("al-boss") ? $("al-boss").value === "true" : true;
+  const boss = currentTarget() === "boss";   // 보스/일반 판정은 활성 스탯 프리셋의 대상을 따름
   const seq = ++allyReqSeq;
   try {
-    const d = await postJson("/api/companion-dps", { stats: collectStats(), conversions: myConv, bossMode: boss, companionId: a.companionId, grade: a.grade, level: a.level, ratio: a.ratio, buffs: activeBuffs() });
+    const d = await postJson("/api/companion-dps", Object.assign({ stats: collectStats(), conversions: myConv, companionId: a.companionId, grade: a.grade, level: a.level, ratio: a.ratio, buffs: activeBuffs() }, targetForApi()));   // 대상(챕터/스테이지) → 방어배수 일관 적용
     if (seq !== allyReqSeq) return;   // 더 새 요청이 떴으면 이 응답은 폐기(옛 동료 값으로 덮어쓰기 방지)
     if (!d.valid) { box.innerHTML = '<p class="status">이 등급 데이터가 없어요.</p>'; return; }
     const items = Object.entries(d.detail || {}).sort((x, y) => y[1] - x[1])
       .map(([k, v]) => `<div class="buff-tip-row"><span>${k}</span><b>${fmtBig(v)}</b></div>`).join("");
     box.innerHTML =
-      `<div class="ally-sum">동료 종합 딜 <b>${fmtBig(d.ownDps)}</b> <span class="muted">/ 초 (${boss ? "보스" : "일반몹"}, 소환 유지창 기준)</span></div>` +
+      `<div class="ally-sum">동료 종합 딜 <b>${fmtBig(d.ownDps)}</b> <span class="muted">/ 초 (${boss ? "보스" : "일반몹"} · 스탯 프리셋 대상 기준, 소환 유지창 기준)</span></div>` +
       `<div class="ally-sub">평타 ${fmtBig(d.basicDps)} · 스킬 ${fmtBig(d.skillDps)} · 계승 ${num1s(d.ratioUsed)}%(참고 ${num1s(d.refRatio)}%) · 가동률 ${(d.uptime * 100).toFixed(0)}%</div>` +
       `<details class="ally-detail"><summary>항목별 보기</summary>${items}</details>`;
   } catch (e) { if (seq === allyReqSeq) box.innerHTML = '<p class="status">계산 실패: ' + e.message + '</p>'; }

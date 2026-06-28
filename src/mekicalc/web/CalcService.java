@@ -92,7 +92,7 @@ public final class CalcService {
                 NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs, hitInterval);
                 CompanionDps comp = null;
                 if (companionId != null && !companionId.isEmpty()) {
-                    comp = new CompanionDps(dm, content.companionRoot, companionId, grade, companionLevel, ratio).singleTarget(true);
+                    comp = new CompanionDps(dm, content.companionRoot, companionId, grade, companionLevel, ratio);
                     if (!comp.valid()) comp = null;
                 }
                 return new NightlordDealModel(nd, dm, boss, targetDef, comp, boss ? BOSS_SECONDS : NORMAL_SECONDS);
@@ -258,7 +258,6 @@ public final class CalcService {
         CompanionDps comp = companionId == null ? null
                 : new CompanionDps(m, content.companionRoot, companionId, grade, companionLevel, inheritRatio);
         if (comp != null && !comp.valid()) comp = null;
-        if (comp != null) comp.singleTarget(true);   // 카드/홈은 "1마리 기준" — 플레이어 dpsBreakdown(singleTarget)과 동일 기준으로 동료도 1마리
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
@@ -281,10 +280,13 @@ public final class CalcService {
                 // 플레이어 DPS는 동료 버프/받피증을 소환 가동률만큼 블렌딩(소환 중=버프받음, 평상시=본인).
                 double[] pn = blendPlayer(nd, b, false, comp, uptime, Rp);
                 double[] pb = blendPlayer(nd, b, true, comp, uptime, Rp);
-                // 카드 DPS는 1마리(단일 대상) 기준 — 일반몹도 대상수 미반영(평타 1타 표기와 일관). 추천/평가는 대상수 반영(2-arg) 유지.
+                // 모든 DPS는 단일대상 기준(대상수 곱 계산은 엔진에서 제거됨). 보스/일반 차이는 보스뎀(BOSS_DMG)뿐.
                 // 전투시간 기준: 일반몹(스테이지)=90초, 보스(챕터보스)=70초. 동료 기여는 이 시간창 평균.
-                Map<String, Object> dn = hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false, NORMAL_SECONDS));
-                Map<String, Object> db = hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true, BOSS_SECONDS));
+                // 동료 없을 때 플레이어 단독 총합(동료 기여도 기준선). 동료 있으면 base(동료버프 미반영) DPS.
+                double soloN = comp == null ? pn[2] : nd.dpsBreakdown(b, false)[2];
+                double soloB = comp == null ? pb[2] : nd.dpsBreakdown(b, true)[2];
+                Map<String, Object> dn = hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false, NORMAL_SECONDS, soloN));
+                Map<String, Object> db = hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true, BOSS_SECONDS, soloB));
                 dn.put("shares", sharesList(nd, b, false, pn[2], comp, inh, NORMAL_SECONDS));   // 홈 도넛(스킬별 지분 + 동료)
                 db.put("shares", sharesList(nd, b, true, pb[2], comp, inh, BOSS_SECONDS));
                 detail.put("normal", dn);
@@ -321,7 +323,7 @@ public final class CalcService {
      * 소환 중 = 동료 버프(target player/both) 적용 + 동료 받피증 공유, 평상시 = 본인. comp=null이면 본인 그대로.
      */
     private static double[] blendPlayer(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp) {
-        double[] base = nd.dpsBreakdown(b, boss, true);
+        double[] base = nd.dpsBreakdown(b, boss);
         if (comp == null) return base;
         Map<String, Object> gift = comp.playerGift(b, boss);
         @SuppressWarnings("unchecked")
@@ -331,7 +333,7 @@ public final class CalcService {
         StatBlock summonInput = new StatBlock(b);
         CompanionDps.applyGift(summonInput, giftBuffs);              // 공퍼 외 버프(최종뎀·크리·최대뎀배율 등) 적용
         nd.setExternalAtkPct(compAtkPct);                           // 동료 공퍼를 플레이어 스킬 공퍼 합에 합산
-        double[] summon = nd.dpsBreakdown(summonInput, boss, true);
+        double[] summon = nd.dpsBreakdown(summonInput, boss);
         nd.setExternalAtkPct(0);                                    // 원복(평상시 계산 오염 방지)
         double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
         double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;          // 동료 받피증을 플레이어 받피증 위에 합연산
@@ -345,7 +347,7 @@ public final class CalcService {
      * companion = 90초 한 사이클 평균(소환쿨 반영), companionWindow = 소환 시작~종료 동안의 순수 DPS(가동 중).
      * 전체 DPS는 사이클 기준 동료를 합산(상시 운영 평균).
      */
-    private static Map<String, Object> dpsMap(double[] bd, CompanionDps comp, StatBlock player, boolean boss, double seconds) {
+    private static Map<String, Object> dpsMap(double[] bd, CompanionDps comp, StatBlock player, boolean boss, double seconds, double playerSolo) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("basic", safe(bd[0]));
         m.put("skill", safe(bd[1]));
@@ -355,7 +357,11 @@ public final class CalcService {
         m.put("companionWindow", comp == null ? null : safe(companionWindow));
         m.put("summonSeconds", comp == null ? null : safe(comp.window(player)));   // 소환 지속(초) — SUMMON_DURATION 반영
         m.put("windowSeconds", seconds);                                            // 전투시간(70/90초)
-        m.put("total", safe(bd[2] + companion));
+        double total = bd[2] + companion;
+        m.put("total", safe(total));
+        m.put("playerSolo", safe(playerSolo));   // 동료 없을 때 플레이어 단독 총합
+        // 동료 기여도 = (플레이어+동료) / 플레이어 단독 − 1. 방어배수는 비율이라 상쇄(전·후 동일).
+        m.put("companionContrib", (comp == null || playerSolo <= 0) ? null : safe(total / playerSolo - 1));
         return m;
     }
 
@@ -366,7 +372,7 @@ public final class CalcService {
      */
     private static List<Map<String, Object>> sharesList(NightlordDps nd, StatBlock b, boolean boss,
                                                         double blendedTotal, CompanionDps comp, StatBlock inh, double seconds) {
-        List<Map<String, Object>> raw = nd.dpsBySkill(b, boss, true);
+        List<Map<String, Object>> raw = nd.dpsBySkill(b, boss);
         double baseTotal = 0;
         for (Map<String, Object> r : raw) baseTotal += ((Number) r.get("dps")).doubleValue();
         double scale = baseTotal > 0 ? blendedTotal / baseTotal : 1;
@@ -498,30 +504,35 @@ public final class CalcService {
         return (long) n;
     }
 
+    /** 방어배수 f = 5000/(6000 + 방어력 × max(0, 1 − 총방관%/100)). def==null이면 1. 전 경로(홈·동료·큐브) 공용 공식. */
+    private static double defenseFactor(Double def, double totalPenPct) {
+        if (def == null) return 1.0;
+        return 5000.0 / (6000.0 + def * Math.max(0, 1 - totalPenPct / 100.0));
+    }
+
+    /** 동료 디버프 방관 보정(%) = 적 방어력 감소 + 동료 방관. 동료 없으면 0. 방관 항에 더해 방어배수에 반영. */
+    private double companionPenBonus(StatBlock b, Map<String, Double> conv, boolean boss,
+                                     String companionId, String grade, int level, double ratio) {
+        if (companionId == null || companionId.isEmpty()) return 0;
+        CompanionDps comp = new CompanionDps(content.damageModel(conv), content.companionRoot, companionId, grade, level, ratio);
+        if (!comp.valid()) return 0;
+        return comp.enemyDefReducePct(b, boss) + comp.companionDefPenPct(b, boss);
+    }
+
     /**
-     * 선택 대상(챕터/스테이지)의 방어배수만 반환. 배수 = 5000/(6000 + 방어력 × (1 − 방관%/100)).
+     * 선택 대상(챕터/스테이지)의 방어배수만 반환. 배수 = 5000/(6000 + 방어력 × max(0,1 − (방관+동료보정)%/100)).
      * 방어력 수치는 응답에 미포함(서버 전용) — 클라는 이 배수를 표시 데미지에 곱해 '해당 몹 기준' 딜을 보여준다.
-     * 방어력 데이터가 없으면 factor=1(미반영).
+     * 동료가 주어지면 동료의 적 방어력 감소·방관을 함께 반영(홈 카드도 큐브와 동일 기준). 방어력 데이터 없으면 factor=1.
      */
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> targetDamage(String chapter, String target, double penPct) {
+    public Map<String, Object> targetDamage(String chapter, String target, double penPct,
+                                            Map<String, Double> stats, Map<String, Double> conv,
+                                            String companionId, String grade, int level, double ratio) {
         Map<String, Object> out = new LinkedHashMap<>();
-        boolean boss = "boss".equals(target);
+        boolean boss = isBossTarget(target);
         out.put("boss", boss);
-        Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
-        Map<String, Object> chapters = cObj instanceof Map ? (Map<String, Object>) cObj : new LinkedHashMap<>();
-        Map<String, Object> c = Json.asMap(chapters.get(chapter));
-        Double def = null;
-        if (c != null && !c.isEmpty()) {
-            if (boss) def = c.get("boss") instanceof Number ? ((Number) c.get("boss")).doubleValue() : null;
-            else {
-                String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
-                def = stageDef(c, stage);
-            }
-        }
-        double pen = penPct / 100.0;
-        double f = (def != null) ? 5000.0 / (6000.0 + def * (1 - pen)) : 1.0;
-        out.put("factor", safe(f));
+        Double def = targetDef(chapter, target);
+        double bonus = companionPenBonus(block(stats), conv, boss, companionId, grade, level, ratio);
+        out.put("factor", safe(defenseFactor(def, penPct + bonus)));
         return out;
     }
 
@@ -540,13 +551,14 @@ public final class CalcService {
      * 메인 동료 DPS 기여 미리보기(Stage 1: 계승·소환 가동률·동료 평타). 계승비율은 입력값(ratio) 사용(A안).
      * @return {valid, ratioUsed, refRatio(참고), uptime, basicDps}
      */
-    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                                 String companionId, String grade, int level, double ratio) {
-        return companionPreview(stats, conv, boss, companionId, grade, level, ratio, null);
+        return companionPreview(stats, conv, chapter, target, companionId, grade, level, ratio, null);
     }
 
-    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, boolean boss,
+    public Map<String, Object> companionPreview(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                                 String companionId, String grade, int level, double ratio, Set<String> buffs) {
+        boolean boss = isBossTarget(target);
         StatBlock raw = block(stats);
         DamageModel dm = content.damageModel(conv);
         // 동료 계승 기준 = 풀버프 스냅샷 + 플레이어 받피증(나이트로드 모델 있을 때). 그 외 직업은 원본 스탯·받피증 0.
@@ -563,20 +575,31 @@ public final class CalcService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("valid", cd.valid());
         if (!cd.valid()) return out;
+        // 방어배수: 스탯 프리셋 대상(챕터/스테이지) + 동료 방어감소·방관 → 홈·큐브와 동일 기준으로 동료 딜도 '해당 몹 기준'.
+        double pen = b.get("DEF_PEN") + cd.enemyDefReducePct(b, boss) + cd.companionDefPenPct(b, boss);
+        double f = defenseFactor(targetDef(chapter, target), pen);
         double[] bd = cd.dpsBreakdown(b, boss);   // 30초 시간진행 시뮬레이션 [평타, 스킬, 합](받피증 포함)
         out.put("ratioUsed", ratio);
         out.put("refRatio", cd.refRatioPct(b));
         out.put("uptime", cd.summonUptime(b));
-        out.put("basicDps", safe(bd[0]));
-        out.put("skillDps", safe(bd[1]));
-        out.put("ownDps", safe(bd[2]));
+        out.put("basicDps", safe(bd[0] * f));
+        out.put("skillDps", safe(bd[1] * f));
+        out.put("ownDps", safe(bd[2] * f));
         double[] cyc = cd.cycleBreakdown(b, boss);   // 90초 한 사이클 평균(소환쿨 고려) — 예상 데미지 통합 기준
-        out.put("cycleBasicDps", safe(cyc[0]));
-        out.put("cycleSkillDps", safe(cyc[1]));
-        out.put("cycleDps", safe(cyc[2]));
-        out.put("detail", cd.detail(b, boss));   // 항목별 DPS(평타·스킬별) — 검증용
-        out.put("statsView", cd.statsView(b, boss));   // 동료 유효 스탯(자체버프 반영 확인용)
+        out.put("cycleBasicDps", safe(cyc[0] * f));
+        out.put("cycleSkillDps", safe(cyc[1] * f));
+        out.put("cycleDps", safe(cyc[2] * f));
+        out.put("detail", scaleMap(cd.detail(b, boss), f));   // 항목별 DPS(방어배수 반영)
+        out.put("statsView", cd.statsView(b, boss));   // 동료 유효 스탯(자체버프 반영 확인용 — 방어배수 미적용)
         return out;
+    }
+
+    /** Map의 숫자 값에만 배수 f를 곱한 사본(라벨·비숫자 보존). 동료 항목별 DPS에 방어배수 적용용. */
+    private static Map<String, Object> scaleMap(Map<String, Object> m, double f) {
+        Map<String, Object> r = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> e : m.entrySet())
+            r.put(e.getKey(), e.getValue() instanceof Number ? safe(((Number) e.getValue()).doubleValue() * f) : e.getValue());
+        return r;
     }
 
     /**

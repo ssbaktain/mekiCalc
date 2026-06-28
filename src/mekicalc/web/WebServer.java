@@ -176,7 +176,10 @@ public final class WebServer {
         // 대상 방어배수(서버에서 방어력 적용 — 방어력 수치는 응답에 미포함). 클라가 표시 딜에 곱함.
         http.createContext("/api/target-damage", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
-            return service.targetDamage(str(req, "chapter"), str(req, "target"), num(req, "pen", 0));
+            return service.targetDamage(str(req, "chapter"), str(req, "target"), num(req, "pen", 0),
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"),
+                    (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
         // 동료 공격력 계승 비율 데이터 수집(저장 시). 추후 비율 공식 모델링용.
@@ -186,7 +189,7 @@ public final class WebServer {
         http.createContext("/api/companion-dps", json("POST", ex -> {
             Map<String, Object> req = readJsonBody(ex);
             return service.companionPreview(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
-                    bool(req, "bossMode", true), str(req, "companionId"), str(req, "grade"),
+                    str(req, "chapter"), str(req, "target"), str(req, "companionId"), str(req, "grade"),
                     (int) num(req, "level", 1), num(req, "ratio", 0), toStrSet(req.get("buffs")));
         }));
 

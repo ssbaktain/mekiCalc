@@ -196,7 +196,7 @@
         { "type": "passive", "raw": "플레이어 최대 데미지 배율 24% 증가", "buffs": [ {"stat":"MAX_DMG_MULT","value":24,"target":"player","used":true} ] },
         { "type": "passive", "raw": "2초마다 플레이어 MP 3% 회복, MP 50%↑면 5초간 최종 데미지 8% 증가", "proc": {"on":"period","period":2,"buff":{"stat":"FINAL_DMG","value":8,"target":"player","dur":5,"cond":"MP>=50%","used":true}}, "extra": {"stat":"MP","used":false} },
         { "type": "passive", "lvl": 2, "cd": 3, "raw": "공격 시 20% 확률 적 7명 2600% 추가 피해", "proc": {"on":"companionAttack","chance":20,"cd":3,"deal":{"coeff":2600,"hits":1,"targets":7}} },
-        { "type": "passive", "lvl": 3, "raw": "플레이어 현재 HP 10%마다 크리티컬 데미지 4%, 공격 속도 2% 증가", "buffs": [ {"stat":"CRIT_DMG","value":4,"target":"player","perHp10":true,"used":false,"note":"현재HP 비례(불확정)"}, {"stat":"ATK_SPEED","value":2,"target":"player","perHp10":true,"used":false,"note":"현재HP 비례(불확정)"} ] }
+        { "type": "passive", "lvl": 3, "raw": "플레이어 현재 HP 10%마다 크리티컬 데미지 4%, 공격 속도 2% 증가", "buffs": [ {"stat":"CRIT_DMG","value":4,"target":"player","perHp10":true,"used":true,"note":"현재HP 비례 → HP100% 최대효율(×10)"}, {"stat":"ATK_SPEED","value":2,"target":"player","perHp10":true,"used":true,"note":"현재HP 비례 → HP100% 최대효율(×10)"} ] }
       ]}
     }},
 
@@ -227,7 +227,7 @@
         { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
         { "type": "passive", "raw": "1초마다 대상 145% 피해, 3초간 받는 피해 5% 증가", "proc": {"on":"period","period":1,"deal":{"coeff":145,"hits":1,"targets":1},"debuff":{"stat":"RECV_DMG","value":5,"target":"enemy","dur":3,"used":true}} },
         { "type": "passive", "lvl": 2, "raw": "동료가 적 타격 시 10% 확률 10초간 동료 공격력 1.5% 증가, 최대 100중첩", "proc": {"on":"companionHit","chance":10,"buff":{"stat":"ATK_PCT","value":1.5,"target":"companion","dur":10,"maxStacks":100,"used":true}} },
-        { "type": "passive", "lvl": 3, "raw": "1초마다 동료 방어 관통력 1% 증가", "buffs": [ {"stat":"DEF_PEN","value":1,"target":"companion","stackPeriod":1,"used":false,"note":"방관(현재 딜 미환산)"} ] }
+        { "type": "passive", "lvl": 3, "raw": "1초마다 동료 방어 관통력 1% 증가", "buffs": [ {"stat":"DEF_PEN","value":1,"target":"companion","stackPeriod":1,"used":false,"note":"방관(방어배수에 반영, 무캡 램프)"} ] }
       ]}
     }},
 

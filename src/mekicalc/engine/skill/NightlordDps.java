@@ -28,7 +28,6 @@ public final class NightlordDps {
     private static final String FINAL_DMG = "FINAL_DMG";
     private static final String CDR_PCT = "COOLDOWN_REDUCTION_PCT";
     private static final String CDR_FLAT = "COOLDOWN_REDUCTION";
-    private static final String BASIC_ATK_TARGETS = "BASIC_ATK_TARGETS";
     private static final String BUFF_DURATION = "BUFF_DURATION";
     private static final String BASIC_ATK_DMG = "BASIC_ATK_DMG";
     private static final String MIN_DMG_MULT = "MIN_DMG_MULT";
@@ -720,13 +719,6 @@ public final class NightlordDps {
         return best;
     }
 
-    /** 일반몹 모드 평타 대상수 = 기본 + 차수 대상 마스터리 + 프리셋 대상수 스탯. */
-    public double basicTargets(Skill basic, StatBlock eff) {
-        return basic.num("targetsBase", basic.num("targets", 1))
-                + sumLevelPlus(basic, "targetPlus", charLevel(eff))
-                + eff.get(BASIC_ATK_TARGETS);
-    }
-
     /** 한 시전당 액티브 타격수(다크플레어 틱·타격 마스터리 레벨 게이팅 포함). */
     private int hitsPerCast(Skill s, StatBlock eff) {
         if (s.id.equals("darkFlare")) {
@@ -740,27 +732,23 @@ public final class NightlordDps {
 
     /**
      * 종합 DPS = (평타 + 액티브 + 마크 + 써든도트 + 추가타(쉐파·페이탈) + 베놈도트) × 받는피해 디버프.
-     * boss=true 보스 단일, false 일반몹(대상수 곱·보스뎀 제외).
+     * boss=true 보스, false 일반몹(보스뎀 제외). 항상 단일대상 — 대상수 곱 계산은 제거됨.
      * 추가타는 모든 타격(평타+액티브 본타)에 타격당 기대값으로 적용.
      */
     public double totalDps(StatBlock input, boolean boss) {
-        return totalDps(input, boss, false);
-    }
-
-    public double totalDps(StatBlock input, boolean boss, boolean singleTarget) {
-        return dpsBreakdown(input, boss, singleTarget)[2];
+        return dpsBreakdown(input, boss)[2];
     }
 
     /**
      * [평타만, 스킬만, 전체] 종합 DPS(장기 평균). 쿨 스킬=데미지÷쿨, 버프=가동률 평균 → 1초 스냅샷이 아니라
      * 정상상태(3분이든 무한이든 동일) 1초 평균. 평타만=평타 직접 타격, 스킬만=나머지(액티브·마크·도트·추가타).
-     * singleTarget=true면 일반몹도 1마리 기준(카드용). 추천/평가는 2-arg(대상수 반영) 사용.
+     * 항상 단일대상(1마리) 기준 — 대상수 곱 계산은 제거됨.
      */
-    public double[] dpsBreakdown(StatBlock input, boolean boss, boolean singleTarget) {
-        return dpsBreakdownWith(buffed(input), boss, singleTarget);
+    public double[] dpsBreakdown(StatBlock input, boolean boss) {
+        return dpsBreakdownWith(buffed(input), boss);
     }
     /** 주어진 버프 스냅샷(평균/스냅)으로 [평타만, 스킬만, 전체] DPS. 시뮬은 시점별 스냅샷으로 이걸 적분. */
-    public double[] dpsBreakdownWith(Buffed bf, boolean boss, boolean singleTarget) {
+    public double[] dpsBreakdownWith(Buffed bf, boolean boss) {
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
         int cl = charLevel(eff);
@@ -770,7 +758,7 @@ public final class NightlordDps {
 
         double baseDps = 0;          // 코어(평타+액티브+마크+써든도트), 추가타 제외
         double basicDps = 0;         // 그중 평타 직접 타격분(평타만/스킬만 분리용)
-        double procActionsPerSec = 0; // 쉐파/페이탈 발동 횟수(시전당 판정, 타수 무관, 대상수 가중)
+        double procActionsPerSec = 0; // 쉐파/페이탈 발동 횟수(시전당 판정, 타수 무관)
         double skillActionsPerSec = 0;   // 액티브가 먹는 슬롯
 
         for (Skill s : data.skills()) {
@@ -780,14 +768,13 @@ public final class NightlordDps {
             if (cd <= 0) continue;
             skillActionsPerSec += 1.0 / cd;   // 시전 1회 = 평타 1슬롯
             int hits = hitsPerCast(s, eff);
-            double targets = (boss || singleTarget) ? 1 : s.num("targets", 1);
-            baseDps += perHit(s, bf, boss) * hits * targets / cd;
+            baseDps += perHit(s, bf, boss) * hits / cd;
             // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
             double procAttempts = s.id.equals("darkFlare")
                     ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
-            procActionsPerSec += procAttempts * targets / cd;
+            procActionsPerSec += procAttempts / cd;
             if (s.id.equals("suddenRaid")) {
-                baseDps += suddenDotPerCast(eff, boss) * atkF * targets / cd;   // 도트는 타수 아님
+                baseDps += suddenDotPerCast(eff, boss) * atkF / cd;   // 도트는 타수 아님
             }
         }
 
@@ -796,19 +783,16 @@ public final class NightlordDps {
         Skill basic = highestBasic(cl);
         if (basic != null) {
             int hits = basicHits(basic, eff);
-            double targets = (boss || singleTarget) ? 1 : basicTargets(basic, eff);
-            basicDps = perHit(basic, bf, boss) * hits * targets * basicActionsPerSec;   // 평타 직접 타격(평타만 DPS)
+            basicDps = perHit(basic, bf, boss) * hits * basicActionsPerSec;   // 평타 직접 타격(평타만 DPS)
             baseDps += basicDps;
-            procActionsPerSec += targets * basicActionsPerSec;   // 발동은 시전당(타수 무관)
+            procActionsPerSec += basicActionsPerSec;   // 발동은 시전당(타수 무관)
         }
 
         // 마크: 기존 타격에 얹히는 보너스(새 타수 아님). 주기 = period − 주기 마스터리(레벨 게이팅).
         Skill mark = data.skill("markOfAssassin");
         if (mark != null && wants("markOfAssassin", mark.open, cl)) {
             double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
-            boolean nl = cl >= mark.num("nightlordOpen", Double.MAX_VALUE);
-            double targets = (boss || singleTarget) ? 1 : (nl ? mark.num("targetsNightlord", mark.num("targetsBase", 1)) : mark.num("targetsBase", 1));
-            if (period > 0) baseDps += markPerHit(eff, boss) * atkF * targets / period;
+            if (period > 0) baseDps += markPerHit(eff, boss) * atkF / period;
         }
 
         // 추가타(쉐파+페이탈): 시전(공격)당 발동 — 1차든 4차든 발동 확률 동일(타수 무관).
@@ -840,7 +824,7 @@ public final class NightlordDps {
      * 합치는 대신 출처(평타·각 딜 스킬·마크·추가타·베놈·페이크 반격)별로 나눠 담는다. 내림차순 정렬, dps>0만 포함.
      * 각 항목 = {name, dps}. 모든 값에 받피증(recv) 반영.
      */
-    public List<Map<String, Object>> dpsBySkill(StatBlock input, boolean boss, boolean singleTarget) {
+    public List<Map<String, Object>> dpsBySkill(StatBlock input, boolean boss) {
         Buffed bf = buffed(input);
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
@@ -858,12 +842,11 @@ public final class NightlordDps {
             if (cd <= 0) continue;
             skillActionsPerSec += 1.0 / cd;
             int hits = hitsPerCast(s, eff);
-            double targets = (boss || singleTarget) ? 1 : s.num("targets", 1);
-            double contrib = perHit(s, bf, boss) * hits * targets / cd;
+            double contrib = perHit(s, bf, boss) * hits / cd;
             double procAttempts = s.id.equals("darkFlare")
                     ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
-            procActionsPerSec += procAttempts * targets / cd;
-            if (s.id.equals("suddenRaid")) contrib += suddenDotPerCast(eff, boss) * atkF * targets / cd;
+            procActionsPerSec += procAttempts / cd;
+            if (s.id.equals("suddenRaid")) contrib += suddenDotPerCast(eff, boss) * atkF / cd;
             parts.merge(s.name, contrib, Double::sum);
         }
 
@@ -871,17 +854,14 @@ public final class NightlordDps {
         Skill basic = highestBasic(cl);
         if (basic != null) {
             int hits = basicHits(basic, eff);
-            double targets = (boss || singleTarget) ? 1 : basicTargets(basic, eff);
-            parts.merge("평타", perHit(basic, bf, boss) * hits * targets * basicActionsPerSec, Double::sum);
-            procActionsPerSec += targets * basicActionsPerSec;
+            parts.merge("평타", perHit(basic, bf, boss) * hits * basicActionsPerSec, Double::sum);
+            procActionsPerSec += basicActionsPerSec;
         }
 
         Skill mark = data.skill("markOfAssassin");
         if (mark != null && wants("markOfAssassin", mark.open, cl)) {
             double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
-            boolean nl = cl >= mark.num("nightlordOpen", Double.MAX_VALUE);
-            double targets = (boss || singleTarget) ? 1 : (nl ? mark.num("targetsNightlord", mark.num("targetsBase", 1)) : mark.num("targetsBase", 1));
-            if (period > 0) parts.merge(mark.name, markPerHit(eff, boss) * atkF * targets / period, Double::sum);
+            if (period > 0) parts.merge(mark.name, markPerHit(eff, boss) * atkF / period, Double::sum);
         }
 
         // 추가타(발동 딜)는 스킬별로 따로 표기 — 미습득/미선택은 0이라 항목 자체가 빠진다.
@@ -952,7 +932,7 @@ public final class NightlordDps {
      * 각 버프 창 = active during [k·period, k·period+dur), period=dur/가동률(가동률 보존), 위상 0(시작에 모두 켬).
      * 동료 시뮬과 동일하게 매 스텝 순간 DPS를 평균(rate×DT 적분). 해석식 {@link #dpsBreakdown}과 비교용. 반환=전체 DPS.
      */
-    public double dpsSimulate(StatBlock input, boolean boss, boolean singleTarget, double seconds) {
+    public double dpsSimulate(StatBlock input, boolean boss, double seconds) {
         final double DT = 0.1;
         int cl = charLevel(input);
         double atkSpeedBase = input.get(ATK_SPEED);
@@ -969,7 +949,7 @@ public final class NightlordDps {
             ids.add(Json.str(m, "id", ""));
             win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});   // u≥1이면 항상 active(period=dur)
         }
-        if (ids.isEmpty()) return totalDps(input, boss, singleTarget);   // 시간제 버프 없으면 해석식과 동일
+        if (ids.isEmpty()) return totalDps(input, boss);   // 시간제 버프 없으면 해석식과 동일
         double T = seconds > 0 ? seconds : 90;
         int steps = Math.max(1, (int) Math.round(T / DT));
         double sum = 0;
@@ -981,7 +961,7 @@ public final class NightlordDps {
                 double dur = win.get(i)[0], period = win.get(i)[1];
                 if (period <= 0 || (t % period) < dur) active.add(ids.get(i));
             }
-            sum += dpsBreakdownWith(buffedActive(input, active), boss, singleTarget)[2];
+            sum += dpsBreakdownWith(buffedActive(input, active), boss)[2];
         }
         return sum / steps;   // 스텝 평균 = 시간 평균 DPS
     }

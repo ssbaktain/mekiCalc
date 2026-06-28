@@ -422,9 +422,12 @@ public final class SelfTest {
         // 레벨150: 페이탈 피해 마스터리(130렙) 개방, 스킬레벨150 → 계수9.6 → 100×9.6×2.0×0.2×0.8 = 307.2
         check("nl.fatal", nd.fatalExtraPerHit(b150, true), 307.2);
         check("nl.recvDebuff", nd.recvDmgFactor(b), 1.096);          // 베놈약화 0.12×0.8 (퍼지·마크 미개방)
-        // 종합 DPS: 양수, 일반몹(대상수 곱) > 보스(단일)
+        // 종합 DPS: 양수. 대상수 곱 제거 → 단일대상이라 보스/일반 차이는 보스뎀(BOSS_DMG)뿐.
         checkTrue("nl.total.pos", nd.totalDps(b, true) > 0);
-        checkTrue("nl.total.mobGtBoss", nd.totalDps(b, false) > nd.totalDps(b, true));
+        check("nl.total.mobEqBossNoBossDmg", nd.totalDps(b, false), nd.totalDps(b, true));   // BOSS_DMG 미설정 → 동일
+        StatBlock bBoss = new StatBlock().set("LEVEL", 100).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100).set("BOSS_DMG", 50);
+        checkTrue("nl.total.bossGtMobWithBossDmg", nd.totalDps(bBoss, true) > nd.totalDps(bBoss, false));
 
         // 회색 스탯 환산: DPS 증가율. 레벨200(전 스킬 개방) 기준.
         StatBlock big = new StatBlock().set("LEVEL", 200).set("ATK_FLAT", 100)
@@ -433,9 +436,9 @@ public final class SelfTest {
         checkTrue("nl.conv.atkSpeed", nd.increase(big, new StatBlock().set("ATK_SPEED", 10), true) > 0);
         checkTrue("nl.conv.cdrFlat", nd.increase(big, new StatBlock().set("COOLDOWN_REDUCTION", 3), true) > 0);
         checkTrue("nl.conv.cdrPct", nd.increase(big, new StatBlock().set("COOLDOWN_REDUCTION_PCT", 20), true) > 0);
-        // 대상수: 보스(단일)는 효과 없음(=0), 일반몹은 증가
+        // 대상수(BASIC_ATK_TARGETS): 대상수 곱 제거 → 보스·일반 모두 DPS 무효(=0)
         check("nl.conv.targetsBoss", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), true), 0);
-        checkTrue("nl.conv.targetsMob", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), false) > 0);
+        check("nl.conv.targetsMob", nd.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1), false), 0);
 
         // 실제 캐릭터 데이터(data/character.json) 경로: 예외 없이 동작하고 쿨감·모스렙이 DPS로 잡혀야 함.
         NightlordDealModel ndm = new NightlordDealModel(nd, g.model, true);
@@ -454,10 +457,9 @@ public final class SelfTest {
         NightlordDealModel ndmBig = new NightlordDealModel(nd, g.model, true);
         checkTrue("nl.buffDur.valued", ndmBig.increase(big, new StatBlock().set("BUFF_DURATION", 20)) > 0);
         checkTrue("nl.buffDur.notQual", !ndmBig.hasQualitative(new StatBlock().set("BUFF_DURATION", 20)));
-        // 기본 공격 대상 수: 일반몹 모드면 평타 딜 환산(계산), 보스 모드면 계산 불가.
+        // 기본 공격 대상 수(BASIC_ATK_TARGETS): 대상수 곱 제거 → 커스텀 환산 없으면 보스·일반 모두 '딜 미환산'.
         NightlordDealModel ndmMob = new NightlordDealModel(nd, g.model, false);
-        checkTrue("nl.targets.mobValued", ndmMob.increase(big, new StatBlock().set("BASIC_ATK_TARGETS", 1)) > 0);
-        checkTrue("nl.targets.mobNotQual", !ndmMob.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
+        checkTrue("nl.targets.mobQual", ndmMob.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
         checkTrue("nl.targets.bossQual", ndmBig.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
     }
 
