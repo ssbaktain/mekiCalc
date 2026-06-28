@@ -788,8 +788,9 @@ function renderCompanionCard(dps) {
   const tile = (label, valHtml, sub, cls) =>
     `<div class="tile${cls ? " " + cls : ""}"><div class="tile-label">${label}</div>` +
     `<div class="tile-val">${valHtml}</div><div class="tile-ku">${sub || ""}</div></div>`;
+  const nm = activeCompanionName();
   box.innerHTML =
-    `<div class="dash-head"><h2>동료 기여</h2><span class="dash-sub">${secs ? `전투 ${secs}초 평균` : "전투 평균"} 기준</span></div>` +
+    `<div class="dash-head"><h2>동료 기여${nm ? " — " + nm : ""}</h2><span class="dash-sub">${secs ? `전투 ${secs}초 평균` : "전투 평균"} 기준</span></div>` +
     `<div class="stat-tiles comp-tiles">` +
       tile("동료 딜", koreanUnit(dps.companion), dps.companionWindow != null ? `소환 중 ${koreanUnit(dps.companionWindow)}${sd ? ` · ${sd}초` : ""}` : "", "tile-comp") +
       tile("플레이어+동료 딜", koreanUnit(total), `동료 비중 ${num1s(share)}%`, "tile-accent") +
@@ -810,7 +811,7 @@ function buildSlices(shares) {
     else { otherDps += p.dps; otherItems.push({ name: p.name, dps: p.dps }); }   // 기타에 묶인 항목들(호버용)
   }
   if (otherDps > 0) slices.push({ name: "기타", dps: otherDps, color: OTHER_COLOR, other: true, items: otherItems });
-  if (comp && comp.dps > 0) slices.push({ name: "동료", dps: comp.dps, color: COMPANION_COLOR, companion: true });
+  if (comp && comp.dps > 0) slices.push({ name: activeCompanionLabel(), dps: comp.dps, color: COMPANION_COLOR, companion: true });
   return { slices, total };
 }
 
@@ -887,14 +888,15 @@ function renderPcSplit(shares, dps) {
   const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
   const cDps = comp.dps, pDps = total - cDps;
   const pPct = total > 0 ? pDps / total * 100 : 0, cPct = 100 - pPct;
+  const cl = activeCompanionLabel();
   box.innerHTML =
-    `<div class="pc-head"><span>플레이어 vs 동료</span></div>` +
+    `<div class="pc-head"><span>플레이어 vs ${cl}</span></div>` +
     `<div class="pc-bar">` +
       `<div class="pc-seg pc-player" style="--seg:${pPct}%"><span>${num1s(pPct)}%</span></div>` +
       `<div class="pc-seg pc-comp" style="--seg:${cPct}%"><span>${num1s(cPct)}%</span></div>` +
     `</div>` +
     `<div class="pc-legend"><span><i class="pc-i pc-player"></i>플레이어 ${koreanUnit(pDps)}</span>` +
-    `<span><i class="pc-i pc-comp"></i>동료 ${koreanUnit(cDps)}</span></div>`;
+    `<span><i class="pc-i pc-comp"></i>${cl} ${koreanUnit(cDps)}</span></div>`;
 }
 
 // 1타 최소/최대/평균 + 전체 DPS 타일
@@ -920,7 +922,7 @@ function renderDpsBars(dps) {
     { name: "평타 DPS", v: dps.basic, c: PIE_COLORS[0] },
     { name: "스킬 DPS", v: dps.skill, c: PIE_COLORS[1] },
   ];
-  if (dps.companion != null) rows.push({ name: "동료 DPS", v: dps.companion, c: COMPANION_COLOR, sub: secs ? `${secs}초 기준` : "" });
+  if (dps.companion != null) rows.push({ name: activeCompanionLabel() + " DPS", v: dps.companion, c: COMPANION_COLOR, sub: secs ? `${secs}초 기준` : "" });
   let html = `<div class="bars-head">DPS 구성${secs ? ` <span class="bars-sub">(${secs}초)</span>` : ""}</div>` + rows.map((rw) => {
     const pct = total > 0 ? (rw.v || 0) / total * 100 : 0;
     return `<div class="bar-row"><div class="bar-name">${rw.name}${rw.sub ? `<span class="bar-sub">${rw.sub}</span>` : ""}</div>` +
@@ -931,7 +933,7 @@ function renderDpsBars(dps) {
   if (dps.companionWindow != null) {
     const sd = dps.summonSeconds ? num1s(dps.summonSeconds) : null;
     html += `<div class="comp-dps-note">` +
-      `<span><i class="cdot" style="background:${COMPANION_COLOR}"></i>동료 DPS <b>${koreanUnit(dps.companionWindow)}</b>` +
+      `<span><i class="cdot" style="background:${COMPANION_COLOR}"></i>${activeCompanionLabel()} DPS <b>${koreanUnit(dps.companionWindow)}</b>` +
       `${sd ? ` <span class="sub">${sd}초 소환 기준</span>` : ""}</span></div>`;
   }
   box.innerHTML = html;
@@ -1968,6 +1970,19 @@ function activeCompanionSel() {
   const p = (live && live.companionId) ? live : (allyPresets && allyPresets.presets[allyPresets.active]) || {};
   if (!p.companionId) return {};
   return { companionId: p.companionId, grade: p.grade, level: p.level != null ? p.level : 1, ratio: p.ratio != null ? p.ratio : 0 };
+}
+
+// 활성 동료 이름(없으면 ""). 예: "캡틴".
+function activeCompanionName() {
+  const c = activeCompanionSel();
+  if (!c || !c.companionId) return "";
+  const m = companionById(c.companionId);
+  return (m && (m.name || m.id)) || "";
+}
+// 활성 동료 표시 라벨. 동료 선택 시 "동료(이름)", 없으면 "동료". 예상 데미지 라벨에 동료 종류 표기용.
+function activeCompanionLabel() {
+  const nm = activeCompanionName();
+  return nm ? `동료(${nm})` : "동료";
 }
 
 // 큐브 페이로드용 동료 파라미터(장비 grade/level과 키 충돌 방지: companion* 접두). 미선택이면 {}.

@@ -41,13 +41,22 @@ header .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 /* 우상단 계정 영역 */
 .header-account { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 4px; }
 .login-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: 8px;
-  background: #fff; color: #3c4043; font-weight: 700; font-size: 14px;
-  text-decoration: none; border: 1px solid #dadce0;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 15px; border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff; font-weight: 700; font-size: 14px; letter-spacing: -0.2px;
+  text-decoration: none; border: 1px solid var(--accent2);
+  box-shadow: 0 2px 8px rgba(91, 120, 224, 0.35);
+  transition: filter .15s ease, transform .05s ease, box-shadow .15s ease;
 }
-.login-btn:hover { filter: brightness(0.96); }
-.login-btn .g-mark { font-weight: 800; color: #4285f4; font-family: Arial, sans-serif; }
+.login-btn:hover { filter: brightness(1.08); box-shadow: 0 3px 12px rgba(91, 120, 224, 0.45); }
+.login-btn:active { transform: translateY(1px); }
+.login-btn .g-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; color: #4285f4; font-weight: 800; font-size: 12px; line-height: 1;
+  font-family: Arial, sans-serif;
+}
 .acct-chip {
   display: inline-flex; align-items: center; gap: 6px;
   max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
