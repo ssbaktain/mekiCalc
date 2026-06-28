@@ -13,6 +13,7 @@ const CACHE_STATS = "mekicalc.cache.statDefs.v1";
 const CACHE_META  = "mekicalc.cache.meta.v1";
 const CACHE_ME    = "mekicalc.cache.me.v1";
 const CACHE_DMG   = "mekicalc.cache.damage.v1";
+const CACHE_TGTFACTOR = "mekicalc.cache.tgtfactor.v1";   // 직전 방어배수({tgt,factor}) — 즉시 페인트 시 신선값과 일치시켜 애니메이션 1회 유지
 const CACHE_SKILLS = "mekicalc.cache.skills.v1";   // 스킬 탭 목록(즉시 페인트용, 직업별)
 const CACHE_COMPANIONS = "mekicalc.cache.companions.v1";   // 동료 목록(정적, 즉시 표시용)
 
@@ -601,13 +602,15 @@ async function refreshQual() {
 // 데미지 표시(즉시 페인트·실계산 공용). data = {normal, boss, detail:{normal:{min,max,avg,dps}, boss:{...}}}.
 function showDamage(data) {
   lastDamage = data;
-  refreshTargetFactor().then(renderHome);   // 선택 몹 방어배수 반영해 렌더
+  renderHome();   // 방어배수(targetFactor)는 호출 전에 갱신돼 있다고 가정(calcDamage가 병렬로 미리 받음)
 }
 
 // 현재 대상(일반/보스) — 스테이지 드롭다운에서 결정(보스 스테이지=보스몹, 일반 스테이지=일반몹).
 function currentTarget() {
   const sv = $("tg-stage") && $("tg-stage").value;
-  return sv === "boss" ? "boss" : "normal";
+  if (sv) return sv === "boss" ? "boss" : "normal";
+  const t = targetOfActivePreset();   // 선택기 미구성(부팅 즉시 페인트) 시 저장된 프리셋 대상으로 판정
+  return (t && t.stage === "boss") ? "boss" : "normal";
 }
 
 // 선택 몹의 방어배수(서버 계산, 방어력 수치 미노출). 표시 딜에 곱해 '해당 몹 기준' 데미지로.
@@ -620,6 +623,7 @@ async function refreshTargetFactor() {
       chapter: $("tg-chapter").value, target: sv, pen: parseFloat(collectStats().DEF_PEN) || 0,
     });
     targetFactor = (res && res.factor > 0) ? res.factor : 1;
+    saveJSON(CACHE_TGTFACTOR, { tgt: currentTarget(), factor: targetFactor });   // 다음 즉시 페인트용
   } catch (e) { targetFactor = 1; }
 }
 // 방어배수를 데미지 상세에 곱한 사본(비율/시간 값은 보존).
@@ -820,7 +824,7 @@ function renderDonut(shares) {
   });
   const compPct = slices.filter((s) => s.companion).reduce((p, s) => p + s.dps, 0) / total * 100;
   chart.innerHTML =
-    `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛">${paths}` +
+    `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛"><g class="donut-ring">${paths}</g>` +
     `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 DPS</text>` +
     `<text x="${cx}" y="${cy + 14}" class="donut-center-val">${total > 0 ? koreanUnit(total) : "—"}</text></svg>`;
   const lgRow = (cls, di, dot, name, pct, val, title) =>
@@ -916,7 +920,9 @@ async function calcDamage() {
   if (!refreshing) $("status").textContent = "계산 중…";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
+      const factorP = refreshTargetFactor();   // 방어배수와 데미지를 동시에 요청(서로 의존 없음 → 직렬 왕복 ~0.8s 제거)
       const data = await postJson("/api/damage", Object.assign({ stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval }, activeCompanionSel()));
+      await factorP;   // 방어배수까지 확정된 뒤 1회 렌더
       showDamage(data);
       saveJSON(CACHE_DMG, data);   // 직전 데미지(상세 포함, 다음 로드 즉시 표시용)
       damageShown = true;
@@ -2338,7 +2344,16 @@ async function loadMeta(pre) {
         const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
         initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
         renderConvSettings(); renderRangeSettings();
-        // 홈 차트는 캐시로 먼저 그리지 않고 '계산 완료 후 1회'만 렌더 → 진입 애니메이션 1회만(캐시→신선 이중 애니메이션 방지).
+        // 홈 차트도 캐시로 즉시 그림(서버 대기 0). 방어배수까지 직전 값을 복원해 신선값과 서명이 일치 →
+        // calcDamage 완료 시 renderHome이 재렌더를 건너뜀(진입 애니메이션 1회 유지). 값이 실제로 바뀐 경우만 1회 더.
+        const cDmg = loadJSON(CACHE_DMG, null);
+        if (cDmg) {
+          const cf = loadJSON(CACHE_TGTFACTOR, null);
+          if (cf && cf.tgt === currentTarget() && cf.factor > 0) targetFactor = cf.factor;
+          lastDamage = cDmg;
+          renderHome();
+          damageShown = true;   // 이후 갱신은 조용히(‘계산 중’·‘오류’ 텍스트 안 띄움)
+        }
       } catch (e) { console.error("즉시 페인트 실패(무시하고 정상 로드)", e); }
     }
 

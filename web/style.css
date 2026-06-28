@@ -845,13 +845,24 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 /* 그래프 등장 애니메이션 (새로고침/접속 시 바로 재생) */
 @keyframes mc-growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes mc-growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-@keyframes mc-popIn { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
 .bar-fill { transform-origin: left center; animation: mc-growX .55s cubic-bezier(.2, .8, .2, 1) both; }
 .ct-bar { transform-origin: bottom center; animation: mc-growY .6s cubic-bezier(.2, .8, .2, 1) both; }
 .pc-bar { transform-origin: left center; animation: mc-growX .5s cubic-bezier(.2, .8, .2, 1) both; }
-.donut-svg { animation: mc-popIn .5s cubic-bezier(.2, .8, .2, 1) both; }
+/* 도넛: 맨 위(12시)에서 시계방향으로 펼쳐지는 스윕. conic-gradient 마스크 각도를 @property로 애니메이션.
+   revealed 영역 = 시계각 [0, sweep] → top에서 시계방향으로 확장. */
+@property --donut-sweep { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes mc-sweepCW { from { --donut-sweep: 0deg; } to { --donut-sweep: 360deg; } }
+@keyframes mc-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.donut-ring {   /* 링(조각)만 스윕 마스크 — 중앙 텍스트는 제외 */
+  --donut-sweep: 0deg;
+  -webkit-mask-image: conic-gradient(from 0deg, #000 0 var(--donut-sweep), transparent var(--donut-sweep) 360deg);
+  mask-image: conic-gradient(from 0deg, #000 0 var(--donut-sweep), transparent var(--donut-sweep) 360deg);
+  animation: mc-sweepCW .5s ease-out both;
+}
+.donut-center-top, .donut-center-val { animation: mc-fadeIn .5s ease-out both; }   /* 중앙 총합 DPS는 페이드인 */
 @media (prefers-reduced-motion: reduce) {
-  .bar-fill, .ct-bar, .pc-bar, .donut-svg { animation: none; }
+  .bar-fill, .ct-bar, .pc-bar, .donut-ring, .donut-center-top, .donut-center-val { animation: none; }
+  .donut-ring { -webkit-mask-image: none; mask-image: none; }   /* 마스크 풀어 정상 표시 */
 }
 
 @media (max-width: 760px) {
