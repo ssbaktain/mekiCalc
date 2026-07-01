@@ -2337,6 +2337,7 @@ const IMPORT_SECTIONS = [
   { key: "cubePresets", label: "큐브" },
   { key: "buffPresets", label: "스킬" },
   { key: "allyPresets", label: "동료" },
+  { key: "relicPresets", label: "유물" },
 ];
 let pendingBundle = null;   // 선택 대기 중인 파싱된 번들
 
