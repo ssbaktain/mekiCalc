@@ -8,6 +8,9 @@ const STATP_KEY = "mekicalc.statPresets.v1";
 const CUBEP_KEY = "mekicalc.cubePresets.v1";
 const BUFFP_KEY = "mekicalc.buffPresets.v1";
 const ALLYP_KEY = "mekicalc.allyPresets.v1";
+const RELIC_KEY = "mekicalc.relic.v1";          // 유물 작업 상태([{id,awaken,on}])
+const RELICP_KEY = "mekicalc.relicPresets.v1";  // 유물 프리셋 {active, presets:{name:[rows]}}
+const CACHE_ARTIFACTS = "mekicalc.cache.artifacts.v1";   // 유물 카탈로그(목록+슬롯임계, 정적)
 // 즉시 페인트용 캐시(서버 대기 없이 화면 먼저 그림). 정적 데이터는 계정 무관, 데미지는 직전 값.
 const CACHE_STATS = "mekicalc.cache.statDefs.v1";
 const CACHE_META  = "mekicalc.cache.meta.v1";
@@ -40,6 +43,11 @@ let buffDirty = false;
 let allyPresets = loadJSON(ALLYP_KEY, null);
 let allyDirty = false;
 let companions = loadJSON(CACHE_COMPANIONS, []);
+// 유물: 작업 상태 myRelic=[{id,awaken,on}], 프리셋 relicPresets. 카탈로그=목록+슬롯임계(bootstrap).
+let artifactCatalog = loadJSON(CACHE_ARTIFACTS, { list: [], slotByAwakenSum: [] });
+let myRelic = normalizeRelic(loadJSON(RELIC_KEY, null));   // { awaken:{id:0~5}, equipped:[id...] }
+let relicPresets = loadJSON(RELICP_KEY, null);
+let relicDirty = false;
 const CACHE_MONDEF = "mekicalc.cache.targetCatalog.v1";   // 대상 카탈로그(챕터/스테이지 구조, 방어력 미포함, 정적)
 let targetCatalog = loadJSON(CACHE_MONDEF, null);
 let qualSet = new Set();               // 현재 직업에서 '딜 미환산'인 스탯 id 집합
@@ -50,7 +58,7 @@ function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); if
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ── 계정/서버 동기화 상태 ──
-const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, CONV_KEY, RANGE_KEY]);
+const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, RELICP_KEY, CONV_KEY, RANGE_KEY]);
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
@@ -340,7 +348,7 @@ function goHome() {
 // 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
 function recalcActivePanel() {
   calcDamage();
-  if (currentSub === "ally") allyRecalc();   // 동료 탭: 스탯/프리셋 바뀌면 동료 딜 재계산
+  if (currentSub === "ally") calcDamage();   // 동료 탭: 스탯/프리셋 바뀌면 홈 예상 데미지 갱신
   if (!$("panel-cube").hidden) calcEvaluate();
   else if (!$("panel-recommend").hidden) runRecommend(true);
   else if (!$("panel-compare").hidden) refreshCompareOnPresetChange();
@@ -381,6 +389,7 @@ function selectSub(name) {
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
   if (name === "buff") renderBuffs();   // 버프 목록은 현재 스탯 기준 계산이라 탭 열 때마다 최신화
   if (name === "ally") renderAlly();
+  if (name === "relic") renderRelic();
 }
 for (const b of document.querySelectorAll(".subtab")) {
   b.addEventListener("click", () => {
@@ -631,10 +640,14 @@ async function refreshTargetFactor() {
 function scaleDetail(det, f) {
   if (!det || !(f > 0) || f === 1) return det;
   const sc = (v) => (v == null ? v : v * f);
-  const d = Object.assign({}, det, { avg: sc(det.avg), min: sc(det.min), max: sc(det.max) });
+  const scState = (s) => (s ? { avg: sc(s.avg), min: sc(s.min), max: sc(s.max), dps: sc(s.dps) } : s);
+  const d = Object.assign({}, det, { solo: scState(det.solo), summon: scState(det.summon) });
+  const scMap = (m) => { if (!m) return m; const o = {}; for (const k in m) o[k] = sc(m[k]); return o; };
   if (det.dps) d.dps = Object.assign({}, det.dps, {
     total: sc(det.dps.total), basic: sc(det.dps.basic), skill: sc(det.dps.skill),
     companion: sc(det.dps.companion), companionWindow: sc(det.dps.companionWindow),
+    companionBasic: sc(det.dps.companionBasic), companionSkill: sc(det.dps.companionSkill),
+    companionDetail: scMap(det.dps.companionDetail),
   });
   if (Array.isArray(det.shares)) d.shares = det.shares.map((s) => Object.assign({}, s, { dps: sc(s.dps) }));
   return d;
@@ -770,32 +783,43 @@ function renderHome() {
   const shares = (det && det.shares) || [];
   renderDonut(shares);
   renderPcSplit(shares, dps);
-  renderHomeStats(det, dps);
+  renderHomeStats(det);
   renderDpsBars(dps);
-  renderCompanionCard(dps);
+  renderCompanionCard(det);
 }
 
-// 동료 기여 카드: 동료 딜(전투 평균·소환 중) / 플레이어+동료 딜 / 동료 기여도(동료 없을 때 대비 증가율). 동료 선택 시에만.
-function renderCompanionCard(dps) {
+// 동료 기여 카드: 동료 평타·딜 스킬·버프의 데미지와 기여도(모두 소환 유지창 기준). 상단 딜 상세와 중복되는 합계 타일은 없앰. 동료 선택 시에만.
+function renderCompanionCard(det) {
   const box = $("home-companion"); if (!box) return;
+  const dps = det && det.dps;
   if (!dps || dps.companion == null) { box.hidden = true; box.innerHTML = ""; return; }
   box.hidden = false;
-  const total = dps.total || 0;
-  const share = total > 0 ? dps.companion / total * 100 : 0;     // 동료 비중(전체 대비)
-  const contrib = dps.companionContrib != null ? dps.companionContrib * 100 : null;   // 동료 없을 때 대비 증가율
-  const sd = dps.summonSeconds ? num1s(dps.summonSeconds) : null;
-  const secs = dps.windowSeconds ? Math.round(dps.windowSeconds) : null;
-  const tile = (label, valHtml, sub, cls) =>
-    `<div class="tile${cls ? " " + cls : ""}"><div class="tile-label">${label}</div>` +
-    `<div class="tile-val">${valHtml}</div><div class="tile-ku">${sub || ""}</div></div>`;
   const nm = activeCompanionName();
+  const sw = dps.summonSeconds ? Math.round(dps.summonSeconds) : null;   // 소환 유지창(예: 48초)
+  // 기준선(동료 없을 때 플레이어 딜) = det.solo.dps(방어배수 스케일 적용본). dps.playerSolo는 미스케일이라 동료 값과 단위가 안 맞음.
+  const solo = (det.solo && det.solo.dps) || 0;
+  const cBasic = dps.companionBasic || 0, cSkill = dps.companionSkill || 0, cWin = dps.companionWindow || 0;
+  const playerSummon = det.summon && det.summon.dps != null ? det.summon.dps - cWin : solo;   // 소환 중 플레이어 딜(동료 버프 받은)
+  const buffBoost = Math.max(0, playerSummon - solo);                     // 동료 버프로 늘어난 플레이어 딜
+  const pctOf = (v) => (solo > 0 ? v / solo * 100 : 0);
+  const rows = [
+    { name: "동료 평타", dmg: koreanUnit(cBasic), pct: pctOf(cBasic), c: COMPANION_COLOR },
+    { name: "동료 딜 스킬", dmg: koreanUnit(cSkill), pct: pctOf(cSkill), c: "#c78bff" },
+    { name: "동료 버프", dmg: `플레이어 딜 +${koreanUnit(buffBoost)}`, pct: pctOf(buffBoost), c: "#f5a623" },
+  ];
+  const totalPct = rows.reduce((s, r) => s + r.pct, 0);
+  const items = rows.map((r) =>
+    `<div class="cc-item">` +
+      `<div class="cc-item-top"><span class="cc-name">${r.name}</span>` +
+      `<span class="cc-vals"><span class="cc-dmg">${r.dmg}</span><span class="cc-pct" style="color:${r.c}">+${num1s(r.pct)}%</span></span></div>` +
+      `<div class="cc-track"><div class="cc-fill" style="width:${totalPct > 0 ? Math.min(100, r.pct / totalPct * 100) : 0}%;background:${r.c}"></div></div>` +
+    `</div>`).join("");
   box.innerHTML =
-    `<div class="dash-head"><h2>동료 기여${nm ? " — " + nm : ""}</h2><span class="dash-sub">${secs ? `전투 ${secs}초 평균` : "전투 평균"} 기준</span></div>` +
-    `<div class="stat-tiles comp-tiles">` +
-      tile("동료 딜", koreanUnit(dps.companion), dps.companionWindow != null ? `소환 중 ${koreanUnit(dps.companionWindow)}${sd ? ` · ${sd}초` : ""}` : "", "tile-comp") +
-      tile("플레이어+동료 딜", koreanUnit(total), `동료 비중 ${num1s(share)}%`, "tile-accent") +
-      tile("동료 기여도", contrib == null ? "—" : `+${num1s(contrib)}%`, "동료 없을 때 대비", "tile-good") +
-    `</div>`;
+    `<div class="dash-head cc-dhead">` +
+      `<div class="cc-head-l"><h2>동료 기여${nm ? " — " + nm : ""}</h2><span class="dash-sub">소환 유지${sw ? " " + sw + "초" : ""} · 동료 없을 때 대비</span></div>` +
+      `<div class="cc-total"><span class="cc-total-label">소환 중 총 기여도</span><b class="cc-total-val">+${num1s(totalPct)}%</b></div>` +
+    `</div>` +
+    `<div class="cc-items">${items}</div>`;
 }
 
 // shares = [{name, dps, companion?}] (내림차순). 작은 조각은 '기타'로 묶고, 동료는 항상 따로.
@@ -899,17 +923,20 @@ function renderPcSplit(shares, dps) {
     `<span><i class="pc-i pc-comp"></i>${cl} ${koreanUnit(cDps)}</span></div>`;
 }
 
-// 1타 최소/최대/평균 + 전체 DPS 타일
-function renderHomeStats(det, dps) {
+// 딜 상세: 2열(동료 미소환/소환) × {평균딜·최소딜·최대딜(사이클 중 평타 범위)·DPS}. 동료 없으면 1열.
+function renderHomeStats(det) {
   const box = $("home-stats"); if (!box) return;
-  if (!det) { box.innerHTML = ""; return; }
+  if (!det || !det.solo) { box.innerHTML = ""; return; }
   const tile = (label, v, accent) =>
     `<div class="tile${accent ? " tile-accent" : ""}"><div class="tile-label">${label}</div>` +
     `<div class="tile-val">${v == null ? "—" : koreanUnit(v)}</div>` +
     `<div class="tile-ku">${v == null ? "" : fmt(Math.round(v))}</div></div>`;
-  box.innerHTML =
-    tile("1타 평균딜", det.avg, true) + tile("1타 최소딜", det.min) + tile("1타 최대딜", det.max) +
-    tile("전체 DPS", dps ? dps.total : null, true);
+  const col = (title, s) =>
+    `<div class="stat-col"><div class="stat-col-h">${title}</div>` +
+    tile("1타 평균딜", s.avg, true) + tile("1타 최소딜", s.min) + tile("1타 최대딜", s.max) + tile("DPS", s.dps, true) + `</div>`;
+  const summon = det.summon;
+  box.innerHTML = `<div class="stat-cols${summon ? "" : " single"}">` +
+    col("동료 미소환", det.solo) + (summon ? col("동료 소환", summon) : "") + `</div>`;
 }
 
 // 평타 / 스킬 / 동료(90초 사이클) DPS 가로 막대(전체 대비) + 동료 순수 DPS 별도 표기
@@ -947,7 +974,7 @@ async function calcDamage() {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const factorP = refreshTargetFactor();   // 방어배수와 데미지를 동시에 요청(서로 의존 없음 → 직렬 왕복 ~0.8s 제거)
-      const data = await postJson("/api/damage", Object.assign({ stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval }, activeCompanionSel()));
+      const data = await postJson("/api/damage", Object.assign({ stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval, artifacts: activeRelic() }, activeCompanionSel()));
       await factorP;   // 방어배수까지 확정된 뒤 1회 렌더
       showDamage(data);
       saveJSON(CACHE_DMG, data);   // 직전 데미지(상세 포함, 다음 로드 즉시 표시용)
@@ -1899,40 +1926,16 @@ function renderAlly() {
     '<label class="ctl">등급<select id="al-grade"></select></label>' +
     '<label class="ctl">레벨<input id="al-level" type="number" min="1" step="1"></label>' +
     '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" min="0" step="any"></label>' +
-    '</div>' +
-    '<div id="ally-result" class="ally-result"></div>';
+    '</div>';
   const csel = $("al-companion");
   for (const c of companions) csel.add(new Option(c.name || c.id, c.id));
   csel.value = p.companionId || companions[0].id;
   fillAllyGrades(csel.value, p.grade);
   $("al-level").value = p.level != null ? p.level : 1;
   $("al-ratio").value = p.ratio != null ? p.ratio : 0;
-  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; allyRecalc(); });
-  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; allyRecalc(); });
-  allyRecalc();
-}
-
-// 동료 종합 딜 계산 → 결과 표시(네 프리셋 스탯 + 동료 입력). 소환 유지창 기준 own-DPS + 항목별.
-// 요청 순번(allyReqSeq) 가드: 동료를 빠르게 바꿔 여러 요청이 겹칠 때, 늦게 도착한 옛 응답이 최신 결과를 덮어쓰지 못하게 한다.
-let allyReqSeq = 0;
-async function allyRecalc() {
-  const box = $("ally-result");
-  if (!box || !$("al-companion")) return;
-  const a = collectAlly();
-  const boss = currentTarget() === "boss";   // 보스/일반 판정은 활성 스탯 프리셋의 대상을 따름
-  const seq = ++allyReqSeq;
-  try {
-    const d = await postJson("/api/companion-dps", Object.assign({ stats: collectStats(), conversions: myConv, companionId: a.companionId, grade: a.grade, level: a.level, ratio: a.ratio, buffs: activeBuffs() }, targetForApi()));   // 대상(챕터/스테이지) → 방어배수 일관 적용
-    if (seq !== allyReqSeq) return;   // 더 새 요청이 떴으면 이 응답은 폐기(옛 동료 값으로 덮어쓰기 방지)
-    if (!d.valid) { box.innerHTML = '<p class="status">이 등급 데이터가 없어요.</p>'; return; }
-    const items = Object.entries(d.detail || {}).sort((x, y) => y[1] - x[1])
-      .map(([k, v]) => `<div class="buff-tip-row"><span>${k}</span><b>${fmtBig(v)}</b></div>`).join("");
-    box.innerHTML =
-      `<div class="ally-sum">동료 종합 딜 <b>${fmtBig(d.ownDps)}</b> <span class="muted">/ 초 (${boss ? "보스" : "일반몹"} · 스탯 프리셋 대상 기준, 소환 유지창 기준)</span></div>` +
-      `<div class="ally-sub">평타 ${fmtBig(d.basicDps)} · 스킬 ${fmtBig(d.skillDps)} · 계승 ${num1s(d.ratioUsed)}%(참고 ${num1s(d.refRatio)}%) · 가동률 ${(d.uptime * 100).toFixed(0)}%</div>` +
-      `<details class="ally-detail"><summary>항목별 보기</summary>${items}</details>`;
-  } catch (e) { if (seq === allyReqSeq) box.innerHTML = '<p class="status">계산 실패: ' + e.message + '</p>'; }
-  if (seq === allyReqSeq) calcDamage();   // 최신 요청일 때만 예상 데미지 카드의 동료 DPS 갱신
+  // 동료 딜은 홈 예상 데미지에서 확인. 여기선 입력만 받고, 바뀌면 홈을 갱신.
+  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; calcDamage(); });
+  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; calcDamage(); });
 }
 
 // 큰 수 → 조/억 표기.
@@ -2039,6 +2042,144 @@ $("ap-rename").addEventListener("click", () => {
   toast("동료 프리셋 이름을 변경했습니다.");
 });
 
+// ──────────────────── 유물 ────────────────────
+// 저장 포맷 정규화: { awaken:{id:0~5}, equipped:[id...] }. 구버전(행 배열)도 변환.
+function normalizeRelic(r) {
+  if (r && !Array.isArray(r) && typeof r === "object") return { awaken: r.awaken || {}, equipped: Array.isArray(r.equipped) ? r.equipped.slice() : [] };
+  const out = { awaken: {}, equipped: [] };
+  if (Array.isArray(r)) for (const row of r) { if (row && row.id) { out.awaken[row.id] = parseInt(row.awaken, 10) || 0; if (row.on) out.equipped.push(row.id); } }
+  return out;
+}
+function relicHas(id) { return Object.prototype.hasOwnProperty.call(myRelic.awaken || {}, id); }   // 보유 여부(미보유=키 없음, 0각=키 있고 값 0)
+function relicAwaken(id) { return parseInt((myRelic.awaken || {})[id], 10) || 0; }
+function relicAwakenSum() { return Object.values(myRelic.awaken || {}).reduce((s, n) => s + (parseInt(n, 10) || 0), 0); }
+function relicSlots() {
+  const sum = relicAwakenSum();
+  for (const t of (artifactCatalog.slotByAwakenSum || [])) {
+    if (t.else) return t.slots || 4;
+    if (typeof t.under === "number" && sum < t.under) return t.slots;
+  }
+  return 4;
+}
+function relicOwned() { return (artifactCatalog.list || []).filter((a) => relicHas(a.id)); }
+
+// 딜에 반영할 장착 유물 = equipped 중 보유(0각 포함)한 것, 슬롯 수 상한. 중복 제거.
+function activeRelic() {
+  const slots = relicSlots(); const seen = new Set(); const out = [];
+  for (const id of (myRelic.equipped || [])) {
+    if (!id || seen.has(id) || !relicHas(id)) continue;
+    seen.add(id); out.push({ id, awaken: relicAwaken(id) });
+    if (out.length >= slots) break;
+  }
+  return out;
+}
+function saveRelic() { myRelic.equipped = (myRelic.equipped || []).filter((id) => relicHas(id)); saveJSON(RELIC_KEY, myRelic); relicDirty = true; }
+
+const RELIC_CAT = { compute: ["딜 반영", "ok"], preReflected: ["선반영", "muted"], content: ["컨텐츠 전용", "muted"], survival: ["생존", "muted"] };
+function relicCatById(id) { return ((artifactCatalog.list || []).find((a) => a.id === id) || {}).category; }
+function relicBadge(id) { const m = RELIC_CAT[relicCatById(id)]; return m ? `<span class="relic-badge ${m[1]}">${m[0]}</span>` : ""; }
+
+function initRelicPresets() {
+  if (!relicPresets) relicPresets = { active: "기본", presets: { "기본": clone(myRelic) } };
+  saveJSON(RELICP_KEY, relicPresets);
+  fillPresetSel($("rp-sel"), relicPresets);
+  relicDirty = false;
+}
+function rpApply(name) {
+  if (!relicPresets || !relicPresets.presets[name]) return;
+  myRelic = normalizeRelic(clone(relicPresets.presets[name]));
+  saveJSON(RELIC_KEY, myRelic); relicDirty = false;
+  if (currentSub === "relic") renderRelic();
+  calcDamage();
+}
+function renderRelic() {
+  if (!relicPresets) initRelicPresets();
+  const grid = $("relic-grid"); if (!grid) return;
+  const cat = artifactCatalog.list || [];
+  if (!cat.length) { grid.innerHTML = '<p class="status">유물 데이터 준비 중이에요.</p>'; return; }
+  // 보유현황 4열 그리드 — 각 유물의 각성도 입력
+  grid.innerHTML = cat.map((a) => relicCellHtml(a)).join("");
+  grid.querySelectorAll("select[data-id]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      const id = sel.dataset.id;
+      if (sel.value === "") delete myRelic.awaken[id];   // 미보유
+      else myRelic.awaken[id] = Math.max(0, Math.min(5, parseInt(sel.value, 10) || 0));   // 0~5각
+      saveRelic(); renderRelic(); calcDamage();
+    });
+  });
+  renderRelicEquip();
+  updateRelicSlotInfo();
+}
+function relicCellHtml(a) {
+  const has = relicHas(a.id), aw = relicAwaken(a.id);
+  const opts = `<option value=""${!has ? " selected" : ""}>미보유</option>` +
+    [0, 1, 2, 3, 4, 5].map((n) => `<option value="${n}"${has && n === aw ? " selected" : ""}>${n}각</option>`).join("");
+  return `<div class="relic-cell${has ? " owned" : ""}">` +
+    `<div class="relic-cell-top"><span class="relic-cell-name" title="${a.name}">${a.name}</span>${relicBadge(a.id)}</div>` +
+    `<select class="relic-cell-aw" data-id="${a.id}">${opts}</select>` +
+    `</div>`;
+}
+// 장착 패널(PC 왼쪽 / 모바일 위): 슬롯 수만큼 보유 유물 중 선택.
+function renderRelicEquip() {
+  const box = $("relic-slots"); if (!box) return;
+  const slots = relicSlots(), owned = relicOwned();
+  const eq = (myRelic.equipped || []).filter((id) => relicAwaken(id) > 0);
+  let html = "";
+  for (let i = 0; i < slots; i++) {
+    const cur = eq[i] || "";
+    const opts = '<option value="">— 비움 —</option>' + owned.map((a) => {
+      if (eq.some((x, j) => x === a.id && j !== i)) return "";   // 다른 슬롯이 이미 사용
+      return `<option value="${a.id}"${a.id === cur ? " selected" : ""}>${a.name} (${relicAwaken(a.id)}각)</option>`;
+    }).join("");
+    html += `<label class="relic-slot"><span class="relic-slot-n">${i + 1}</span><select data-slot="${i}">${opts}</select></label>`;
+  }
+  if (!owned.length) html = '<p class="status muted">오른쪽(모바일은 아래) 그리드에서 보유 유물의 각성을 먼저 입력하세요.</p>';
+  box.innerHTML = html;
+  box.querySelectorAll("select[data-slot]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      const i = parseInt(sel.dataset.slot, 10);
+      const arr = (myRelic.equipped || []).filter((id) => relicAwaken(id) > 0).slice(0, slots);
+      while (arr.length < slots) arr.push("");
+      arr[i] = sel.value;
+      myRelic.equipped = arr.filter(Boolean);
+      saveRelic(); renderRelic(); calcDamage();
+    });
+  });
+}
+function updateRelicSlotInfo() {
+  const sum = relicAwakenSum(), slots = relicSlots(), eq = activeRelic().length;
+  if ($("rl-slots-badge")) $("rl-slots-badge").textContent = `(${slots}칸)`;
+  if ($("rl-suminfo")) $("rl-suminfo").innerHTML = `각성 총합 <b>${sum}</b> → 슬롯 <b>${slots}</b>칸 · 장착 ${eq}/${slots}`;
+}
+$("rp-sel").addEventListener("change", () => {
+  if (relicDirty && !confirm("저장하지 않은 유물 변경이 있습니다. 버리고 전환할까요?")) { $("rp-sel").value = relicPresets.active; return; }
+  relicPresets.active = $("rp-sel").value; saveJSON(RELICP_KEY, relicPresets); rpApply(relicPresets.active);
+});
+$("rp-save").addEventListener("click", () => {
+  relicPresets.presets[relicPresets.active] = clone(myRelic);
+  saveJSON(RELICP_KEY, relicPresets); relicDirty = false;
+  toast(`'${relicPresets.active}' 유물 프리셋 저장됨`);
+});
+$("rp-new").addEventListener("click", () => {
+  const name = (prompt("새 유물 프리셋 이름") || "").trim();
+  if (!name || relicPresets.presets[name]) return;
+  relicPresets.presets[name] = clone(myRelic);
+  relicPresets.active = name; saveJSON(RELICP_KEY, relicPresets); fillPresetSel($("rp-sel"), relicPresets);
+  relicDirty = false;
+});
+$("rp-del").addEventListener("click", () => {
+  const names = Object.keys(relicPresets.presets);
+  if (names.length <= 1) return;
+  delete relicPresets.presets[relicPresets.active];
+  relicPresets.active = Object.keys(relicPresets.presets)[0];
+  saveJSON(RELICP_KEY, relicPresets); fillPresetSel($("rp-sel"), relicPresets); rpApply(relicPresets.active);
+});
+$("rp-rename").addEventListener("click", () => {
+  if (renamePreset(relicPresets) == null) return;
+  saveJSON(RELICP_KEY, relicPresets); fillPresetSel($("rp-sel"), relicPresets);
+  toast("유물 프리셋 이름을 변경했습니다.");
+});
+
 // ──────────────────── 프리셋 빠른 전환(플로팅) ────────────────────
 // 어디서든 우하단 ⚡ → 작은 패널에서 프리셋을 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
 // 프리셋 종류를 추가할 땐 이 목록에만 한 줄 추가하면 플로팅 패널에 자동 반영됨(순서도 이 배열 순서).
@@ -2051,6 +2192,8 @@ const QP_TYPES = [
     canLeave: () => !allyDirty || confirm("저장하지 않은 동료 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => apApply(n) },
   { key: "cp", label: "큐브", main: "cp-sel", store: () => cubePresets, saveKey: CUBEP_KEY,
     canLeave: () => canLeaveCube(), apply: (n) => cpApply(n) },
+  { key: "rp", label: "유물", main: "rp-sel", store: () => relicPresets, saveKey: RELICP_KEY,
+    canLeave: () => !relicDirty || confirm("저장하지 않은 유물 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => rpApply(n) },
 ];
 function buildQuickPanel() {
   const rows = $("qp-rows"); if (!rows) return;
@@ -2085,7 +2228,7 @@ document.addEventListener("click", () => { if (!$("qp-panel").hidden) toggleQuic
 const BACKUP_FORMAT = "mekicalc-presets";
 
 function bundleString() {
-  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, buffPresets, allyPresets, conversions: myConv, ranges: myRanges }, null, 2);
+  return JSON.stringify({ format: BACKUP_FORMAT, version: 1, statPresets, cubePresets, buffPresets, allyPresets, relicPresets, conversions: myConv, ranges: myRanges }, null, 2);
 }
 
 // 데스크톱(구버전) .mkbak → 웹 번들로 변환.
@@ -2151,12 +2294,14 @@ async function applyBundleObj(b, merge) {
     cubePresets = mergePresetCollection(cubePresets, b.cubePresets); saveJSON(CUBEP_KEY, cubePresets);
     if (b.buffPresets) { buffPresets = mergePresetCollection(buffPresets, b.buffPresets); saveJSON(BUFFP_KEY, buffPresets); }
     if (b.allyPresets) { allyPresets = mergePresetCollection(allyPresets, b.allyPresets); saveJSON(ALLYP_KEY, allyPresets); }
+    if (b.relicPresets) { relicPresets = mergePresetCollection(relicPresets, b.relicPresets); saveJSON(RELICP_KEY, relicPresets); }
   } else {
     // 덮어쓰기(서버 동기화 등). 섹션이 있을 때만 교체 → 없는 섹션은 현재 유지.
     if (b.statPresets) { statPresets = b.statPresets; saveJSON(STATP_KEY, statPresets); }
     if (b.cubePresets) { cubePresets = b.cubePresets; saveJSON(CUBEP_KEY, cubePresets); }
     if (b.buffPresets) { buffPresets = b.buffPresets; saveJSON(BUFFP_KEY, buffPresets); }
     if (b.allyPresets) { allyPresets = b.allyPresets; saveJSON(ALLYP_KEY, allyPresets); }
+    if (b.relicPresets) { relicPresets = b.relicPresets; saveJSON(RELICP_KEY, relicPresets); }
     if (b.conversions) { myConv = b.conversions; saveJSON(CONV_KEY, myConv); }
     if (b.ranges) { myRanges = b.ranges; saveJSON(RANGE_KEY, myRanges); }
   }
@@ -2172,6 +2317,7 @@ async function applyBundleObj(b, merge) {
     if (currentSub === "buff") renderBuffs();
   }
   if (allyPresets) { fillPresetSel($("ap-sel"), allyPresets); allyDirty = false; if (currentSub === "ally") renderAlly(); }
+  if (relicPresets) { fillPresetSel($("rp-sel"), relicPresets); rpApply(relicPresets.active); }
   renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
 }
 
@@ -2410,6 +2556,7 @@ async function loadMeta(pre) {
     if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
     else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
     if (boot && boot.companions) { companions = boot.companions; saveJSON(CACHE_COMPANIONS, companions); }   // 동료 목록(정적)
+    if (boot && boot.artifacts) { artifactCatalog = boot.artifacts; saveJSON(CACHE_ARTIFACTS, artifactCatalog); }   // 유물 카탈로그(정적)
     if (boot && boot.targetCatalog) { targetCatalog = boot.targetCatalog; saveJSON(CACHE_MONDEF, targetCatalog); }   // 대상 카탈로그(정적, 방어력 미포함)
     renderTargetSelector();      // 예상 데미지: 대상(스테이지/보스) 선택
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
@@ -2419,6 +2566,7 @@ async function loadMeta(pre) {
     await initCubePresets();     // 큐브 프리셋
     initBuffPresets();           // 버프 프리셋(없으면 현재 직업 기준 '기본' 생성)
     initAllyPresets();           // 동료 프리셋(메인 동료)
+    initRelicPresets();          // 유물 프리셋
     // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)
     booting = false;
     await Promise.all([refreshQual(), calcDamage()]);

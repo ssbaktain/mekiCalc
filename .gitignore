@@ -68,4 +68,5 @@ data/companion_ratios.jsonl
 ### 클뜯/리버싱 산출물 (대용량·저작권 — 커밋·배포 제외) ###
 textAsset/
 ally.txt
+artifact.txt
 il2cpp_dump/

@@ -1,0 +1,215 @@
+{
+  "_comment": "유물 데이터(2026-07-01). 계산대상=반영 안 된 조건/트리거 장착효과(category:compute)만. category=preReflected(항상발동→프리셋 선반영)/survival(비딜)/content(특정컨텐츠전용, 33챕터 계산 0)는 슬롯만 차지, 딜 기여 0. 수치는 0~5각 6원소 배열(values). raw=0각 원문(각성별 수치는 values가 authoritative). 규칙: perEnemy(적수 선형,maxEnemies)/dmgMult(DMG스탯×(1+Σ%))/refresh(재발동시 지속리셋, 지속>=주기면 상시; individualDur=은펜던트만 개별)/assumeMax(조건부 최대치 가정)/debuffCase(불타는용암: 버프바닥+내직업·동료 디버프시 상향)/bossOnly/bossZero/window[시작,끝]/content. used=딜계산 반영여부.",
+  "slotByAwakenSum": [
+    { "under": 10, "slots": 1 },
+    { "under": 30, "slots": 2 },
+    { "under": 50, "slots": 3 },
+    { "else": true, "slots": 4 }
+  ],
+  "gradeKo": { "EPIC": "에픽", "UNIQUE": "유니크", "LEGENDARY": "레전더리" },
+
+  "artifacts": [
+    { "id": "deadmans_charm", "name": "죽은자의 부적", "grade": "EPIC", "category": "compute",
+      "raw": "10초마다 5초간 공격력이 10%(5각 20%) 증가",
+      "effects": [
+        { "stat": "ATK_PCT", "target": "player", "values": [10,12,14,16,18,20], "trigger": "period", "period": 10, "dur": 5, "used": true, "note": "지속<주기 → 50% 가동" }
+      ]},
+
+    { "id": "pig_ribbon", "name": "돼지의 리본", "grade": "EPIC", "category": "survival",
+      "raw": "공격 시 20% 확률로 HP/MP를 1%(5각 2%) 회복. 재사용 5초",
+      "effects": [
+        { "stat": "HP_MP_REGEN", "target": "player", "values": [1,1.2,1.4,1.6,1.8,2], "trigger": "onAttack", "chance": 20, "cd": 5, "used": false, "note": "회복=비딜" }
+      ]},
+
+    { "id": "shrine_bead", "name": "무녀의 구슬", "grade": "EPIC", "category": "preReflected",
+      "raw": "버프 지속시간이 6%(5각 12%) 증가",
+      "effects": [
+        { "stat": "BUFF_DURATION", "target": "player", "values": [6,7.2,8.4,9.6,10.8,12], "trigger": "always", "used": false, "note": "항상발동 스탯 → 선반영" }
+      ]},
+
+    { "id": "dark_contract", "name": "어둠의 계약서", "grade": "EPIC", "category": "compute",
+      "raw": "보스 공격 시 크리티컬 확률이 8%(5각 16%) 증가",
+      "effects": [
+        { "stat": "CRIT_RATE", "target": "player", "values": [8,9.6,11.2,12.8,14.4,16], "trigger": "bossAttack", "bossOnly": true, "used": true, "note": "보스전 상시, 일반=0" }
+      ]},
+
+    { "id": "rainbow_snail_shell", "name": "무지개색 달팽이 등껍질", "grade": "UNIQUE", "category": "compute",
+      "raw": "전투 시작 시 15초간 크확 15%(5각 30%), 크뎀 20%(5각 40%) 증가",
+      "effects": [
+        { "stat": "CRIT_RATE", "target": "player", "values": [15,18,21,24,27,30], "trigger": "combatStart", "dur": 15, "used": true },
+        { "stat": "CRIT_DMG", "target": "player", "values": [20,24,28,32,36,40], "trigger": "combatStart", "dur": 15, "used": true }
+      ]},
+
+    { "id": "hexcrystal_necklace", "name": "육각 수정 목걸이", "grade": "UNIQUE", "category": "compute",
+      "raw": "20초마다 30초간 데미지가 현재 수치의 15%(5각 30%)만큼 증가, 최대 3중첩",
+      "effects": [
+        { "stat": "DMG", "target": "player", "values": [15,18,21,24,27,30], "dmgMult": true, "maxStacks": 3, "trigger": "period", "period": 20, "dur": 30, "refresh": true, "used": true, "note": "지속>주기 → 상시 3중첩. DMG×(1+값×3/100), 5각 ×1.9" }
+      ]},
+
+    { "id": "arwen_glass_shoes", "name": "아르웬의 유리구두", "grade": "UNIQUE", "category": "preReflected",
+      "raw": "동료의 소환 지속시간이 20%(5각 40%) 증가",
+      "effects": [
+        { "stat": "SUMMON_DURATION", "target": "companion", "values": [20,24,28,32,36,40], "trigger": "always", "used": false, "note": "항상발동 → 선반영" }
+      ]},
+
+    { "id": "mushmom_hat", "name": "머쉬맘의 갓", "grade": "UNIQUE", "category": "compute",
+      "raw": "명중 5(5각 10) 증가, 회피 초과 명중 1당 데미지 1%(5각 2%)↑ 최대 20%(5각 40%)",
+      "effects": [
+        { "stat": "ACC", "target": "player", "values": [5,6,7,8,9,10], "trigger": "always", "used": false, "note": "명중=비딜" },
+        { "stat": "DMG", "target": "player", "values": [20,24,28,32,36,40], "trigger": "always", "assumeMax": true, "used": true, "note": "회피초과 명중 데미지, 최대치 가정. 데미지 스탯 가산" }
+      ]},
+
+    { "id": "clear_spring", "name": "맑은 샘물", "grade": "UNIQUE", "category": "content",
+      "raw": "[성장 던전] 전투 시 최종 데미지가 10%(5각 20%) 증가",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [10,12,14,16,18,20], "content": "성장던전", "used": false }
+      ]},
+
+    { "id": "helena_gloves", "name": "헬레나의 오래된 장갑", "grade": "UNIQUE", "category": "compute",
+      "raw": "공격 속도 8%(5각 16%)↑, 공속의 25%(5각 50%)만큼 최대 데미지 배율↑",
+      "effects": [
+        { "stat": "ATK_SPEED", "target": "player", "values": [8,9.6,11.2,12.8,14.4,16], "trigger": "always", "used": false, "note": "공속 자체=선반영(프리셋 반영)" },
+        { "stat": "MAX_DMG_MULT", "target": "player", "derived": { "from": "ATK_SPEED", "ratio": [25,30,35,40,45,50] }, "trigger": "always", "used": true, "note": "최대뎀배율 = 라이브 총 공속 × 비율(동적, 버프로 공속 변하면 같이 변함). 프리셋엔 미포함 가정" }
+      ]},
+
+    { "id": "zakum_stone", "name": "자쿰의 돌조각", "grade": "UNIQUE", "category": "content",
+      "raw": "[레이드-자쿰] 최종뎀 20%(5각 60%), 디버프내성 15(5각 45), HP물약쿨 20%(5각 60%)↓",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [20,28,36,44,52,60], "content": "레이드-자쿰", "used": false }
+      ]},
+
+    { "id": "horntail_scale", "name": "혼테일의 비늘", "grade": "UNIQUE", "category": "content",
+      "raw": "[레이드-혼테일] 최종뎀 20%(5각 60%), HP물약쿨 20%(5각 60%)↓, 디버프 제거",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [20,28,36,44,52,60], "content": "레이드-혼테일", "used": false }
+      ]},
+
+    { "id": "holy_grail", "name": "성배", "grade": "LEGENDARY", "category": "compute",
+      "raw": "적 처치 시 2% 확률(보스 확정) 30초간 최종뎀 15%(5각 30%)↑",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [15,18,21,24,27,30], "trigger": "onKill", "dur": 30, "refresh": true, "bossZero": true, "used": true, "note": "일반=잦은처치로 상시. 보스=처치가 전투종료라 전투중 0" }
+      ]},
+
+    { "id": "old_music_box", "name": "낡은 오르골", "grade": "LEGENDARY", "category": "compute",
+      "raw": "디버프 걸리면 1개 제거, 25초간 공격력 25%(5각 50%)↑. 재사용 20초",
+      "effects": [
+        { "stat": "ATK_PCT", "target": "player", "values": [25,30,35,40,45,50], "trigger": "onDebuffed", "dur": 25, "cd": 20, "assumeMax": true, "used": true, "note": "디버프 피격 트리거, 최대치 가정 상시" }
+      ]},
+
+    { "id": "silver_pendant", "name": "은 펜던트", "grade": "LEGENDARY", "category": "compute",
+      "raw": "공격 시 15% 확률 대상 받피 5초간 10%(5각 20%)↑, 최대 5중첩(지속 개별)",
+      "effects": [
+        { "stat": "RECV_DMG", "target": "enemy", "values": [10,12,14,16,18,20], "trigger": "onAttack", "chance": 15, "dur": 5, "maxStacks": 5, "individualDur": true, "used": true, "note": "지속 개별적용 → 발동률×지속으로 실제 중첩 계산(상시화 아님)" }
+      ]},
+
+    { "id": "star_stone", "name": "별의 돌", "grade": "LEGENDARY", "category": "preReflected",
+      "raw": "받는 피해 20%(5각 40%)↑, 보스 몬스터 데미지 50%(5각 100%)↑",
+      "effects": [
+        { "stat": "PLAYER_RECV_DMG", "target": "player", "values": [20,24,28,32,36,40], "trigger": "always", "used": false, "note": "받는피해증가=자신 생존페널티" },
+        { "stat": "BOSS_DMG", "target": "player", "values": [50,60,70,80,90,100], "trigger": "always", "used": false, "note": "항상발동 → 선반영" }
+      ]},
+
+    { "id": "ancient_book", "name": "고대의 책", "grade": "LEGENDARY", "category": "compute",
+      "raw": "크확 10%(5각 20%)↑, 크확의 30%(5각 60%)만큼 크뎀↑",
+      "effects": [
+        { "stat": "CRIT_RATE", "target": "player", "values": [10,12,14,16,18,20], "trigger": "always", "used": false, "note": "크확 자체=선반영(프리셋 반영)" },
+        { "stat": "CRIT_DMG", "target": "player", "derived": { "from": "CRIT_RATE", "ratio": [30,36,42,48,54,60] }, "trigger": "always", "used": true, "note": "크뎀 = 라이브 총 크확 × 비율(동적, 버프로 크확 변하면 같이 변함). 프리셋엔 미포함 가정" }
+      ]},
+
+    { "id": "wollo", "name": "월로", "grade": "LEGENDARY", "category": "survival",
+      "raw": "피해 시 5% 확률 HP 3%(5각 6%) 회복, 1초(5각 2초) 면역. 재사용 5초",
+      "effects": [
+        { "stat": "IMMUNE", "target": "player", "values": [1,1.2,1.4,1.6,1.8,2], "trigger": "onHit", "chance": 5, "cd": 5, "used": false, "note": "생존" }
+      ]},
+
+    { "id": "flame_grass", "name": "화염초", "grade": "LEGENDARY", "category": "compute",
+      "raw": "주변 적 1명당 최종뎀 1%(5각 2%)↑, 최대 10명",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [1,1.2,1.4,1.6,1.8,2], "perEnemy": true, "maxEnemies": 10, "used": true, "note": "선형. 일반=×10, 보스=×1" }
+      ]},
+
+    { "id": "soul_contract", "name": "영혼의 계약서", "grade": "LEGENDARY", "category": "compute",
+      "raw": "[챕터 사냥] 스킬 재사용 대기시간 20%(5각 40%)↓",
+      "effects": [
+        { "stat": "COOLDOWN_REDUCTION_PCT", "target": "player", "values": [20,24,28,32,36,40], "content": "챕터사냥", "normalOnly": true, "used": true, "note": "챕터사냥(일반스테이지)만. 프리셋 스킬쿨 필드로 바로 적용 가능" }
+      ]},
+
+    { "id": "lit_lamp", "name": "불이 켜진 램프", "grade": "LEGENDARY", "category": "content",
+      "raw": "[월드보스] 최종뎀 20%(5각 40%)↑",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [20,24,28,32,36,40], "content": "월드보스", "used": false }
+      ]},
+
+    { "id": "soul_pouch", "name": "영혼의 주머니", "grade": "LEGENDARY", "category": "content",
+      "raw": "[아레나] 최종뎀 20%(5각 40%)↑",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [20,24,28,32,36,40], "content": "아레나", "used": false }
+      ]},
+
+    { "id": "ancient_document", "name": "고대문서 조각", "grade": "LEGENDARY", "category": "content",
+      "raw": "[길드 토벌전] 최종뎀 20%(5각 40%)↑",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [20,24,28,32,36,40], "content": "길드토벌전", "used": false }
+      ]},
+
+    { "id": "ice_soul_stone", "name": "얼음의 영혼석", "grade": "LEGENDARY", "category": "compute",
+      "raw": "2초마다 MP 1% 회복. MP 50%↑ 크뎀 20%(5각 40%)↑, MP 75%↑면 2배",
+      "effects": [
+        { "stat": "CRIT_DMG", "target": "player", "values": [40,48,56,64,72,80], "trigger": "always", "assumeMax": true, "used": true, "note": "MP75%↑ 가정 → 기본×2 (표기값=이미 2배)" }
+      ]},
+
+    { "id": "burning_lava", "name": "불타는 용암", "grade": "LEGENDARY", "category": "compute",
+      "raw": "공격 시 대상 버프면 최종뎀 4%(5각 8%), 디버프면 8%(5각 16%), 보호막이면 60%(5각 120%)",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "debuffCase": true,
+          "buffValues": [4,4.8,5.6,6.4,7.2,8], "debuffValues": [8,9.6,11.2,12.8,14.4,16], "used": true,
+          "note": "보호막 없음 가정. 버프 상시 바닥(X). 내 직업/동료가 적 디버프 줄 때만 디버프케이스(2X)로 상향(더좋은쪽 우선)" }
+      ]},
+
+    { "id": "seiram_necklace", "name": "세이람의 목걸이", "grade": "LEGENDARY", "category": "compute",
+      "raw": "적 2명↑ 일반몹뎀 30%(5각 60%)↑, 적 1명 보스몹뎀 10%(5각 20%)↑",
+      "effects": [
+        { "stat": "NORMAL_DMG", "target": "player", "values": [30,36,42,48,54,60], "targetMode": "multi", "used": true, "note": "적 2+ (일반몹 계산에서만)" },
+        { "stat": "BOSS_DMG", "target": "player", "values": [10,12,14,16,18,20], "targetMode": "single", "used": true, "note": "적 1 (보스 계산에서만)" }
+      ]},
+
+    { "id": "emotion_bottle", "name": "감정의 물병", "grade": "LEGENDARY", "category": "compute",
+      "raw": "공격력 15%(5각 30%)↑. 60% 초과 공속 3%당 최종뎀 0.5%(5각 1%)↑ 최대 10%(5각 20%)",
+      "effects": [
+        { "stat": "ATK_PCT", "target": "player", "values": [15,18,21,24,27,30], "trigger": "always", "used": false, "note": "항상 공격력 → 선반영(계산 제외)" },
+        { "stat": "FINAL_DMG", "target": "player", "values": [10,12,14,16,18,20], "trigger": "always", "assumeMax": true, "used": true, "note": "공속 초과분 최종뎀, 최대치 가정" }
+      ]},
+
+    { "id": "cheondo_elixir", "name": "천도나무용 명약", "grade": "LEGENDARY", "category": "compute",
+      "raw": "공격 시 20% 확률 5초간 대상 받피 15%(5각 30%)↑. 전투 중 한 번, 버프 보유면 제거+받피 15%(5각 30%) 추가",
+      "effects": [
+        { "stat": "RECV_DMG", "target": "enemy", "values": [30,36,42,48,54,60], "trigger": "onAttack", "dur": 5, "assumeMax": true, "used": true, "note": "딜 최대치: 기본 받피 + 전투중1회 추가 받피 둘다 활성 = 표기값(2배 합산)" }
+      ]},
+
+    { "id": "candle", "name": "양초", "grade": "LEGENDARY", "category": "compute",
+      "raw": "전투 시작 최종뎀 8%(5각 16%), 20초 후 보스뎀 30%(5각 60%). 30초 후 전부 소멸",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "player", "values": [8,9.6,11.2,12.8,14.4,16], "trigger": "combatStart", "window": [0,30], "used": true },
+        { "stat": "BOSS_DMG", "target": "player", "values": [30,36,42,48,54,60], "trigger": "combatStart", "window": [20,30], "bossOnly": true, "used": true }
+      ]},
+
+    { "id": "alliance_token", "name": "동맹의 증표", "grade": "LEGENDARY", "category": "preReflected",
+      "raw": "아군 플레이어 공격력 10%(5각 20%)↑ (솔로 본인 적용)",
+      "effects": [
+        { "stat": "ATK_PCT", "target": "player", "values": [10,12,14,16,18,20], "trigger": "always", "used": false, "note": "항상발동(솔로 본인) → 선반영" }
+      ]},
+
+    { "id": "horn", "name": "뿔피리", "grade": "LEGENDARY", "category": "compute",
+      "raw": "동료 소환 중 자신+동료 최종뎀 10%(5각 20%)↑. [챕터 보스] 자신 효과 2배",
+      "effects": [
+        { "stat": "FINAL_DMG", "target": "both", "values": [10,12,14,16,18,20], "trigger": "companionSummoned", "bossSelfMult": 2, "used": true, "note": "가동률=동료 소환 가동률. 보스전엔 플레이어 자신분만 2배(동료분 그대로)" }
+      ]},
+
+    { "id": "cursed_doll", "name": "저주받은 인형", "grade": "LEGENDARY", "category": "compute",
+      "raw": "명중 15(5각 30), 최종뎀 7%(5각 14%)↑. 회피당하면 5초간 최종뎀 사라지고 명중 3배",
+      "effects": [
+        { "stat": "ACC", "target": "player", "values": [15,18,21,24,27,30], "trigger": "always", "used": false, "note": "명중=비딜" },
+        { "stat": "FINAL_DMG", "target": "player", "values": [7,8.4,9.8,11.2,12.6,14], "trigger": "always", "assumeMax": true, "used": true, "note": "회피 안당함 가정 → 최종뎀 페널티 없음(상시)" }
+      ]}
+  ]
+}

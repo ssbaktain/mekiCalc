@@ -42,6 +42,10 @@ public final class GameContent {
     public final Map<String, Object> monsterDefense;
     /** monster_hp.json 전체 맵(챕터별 스테이지 일반몹/보스 체력). 평타컷 계산용(서버 전용). 없으면 빈 맵. */
     public final Map<String, Object> monsterHp;
+    /** artifact.json 전체 맵(유물 데이터 + 슬롯 임계 등 상수). 없으면 빈 맵. */
+    public final Map<String, Object> artifactRoot;
+    /** 유물 목록(artifact.json의 artifacts 배열, 원본 맵). 없으면 빈 목록(유물 탭 "준비 중"). */
+    public final List<Map<String, Object>> artifacts;
     /** 데이터 폴더 경로(개발 환경 개인 데이터 불러오기용 — 배포 시 개인 파일 없으면 빈 값). */
     public final Path dataDir;
 
@@ -49,7 +53,8 @@ public final class GameContent {
                         Map<String, Double> currency, List<StatSource> sources,
                         EquipmentPotential equip, SkillData skillData,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
-                        Map<String, Object> monsterDefense, Map<String, Object> monsterHp, Path dataDir) {
+                        Map<String, Object> monsterDefense, Map<String, Object> monsterHp,
+                        Map<String, Object> artifactRoot, List<Map<String, Object>> artifacts, Path dataDir) {
         this.stats = stats;
         this.profile = profile;
         this.currency = currency;
@@ -60,6 +65,8 @@ public final class GameContent {
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
         this.monsterHp = monsterHp;
+        this.artifactRoot = artifactRoot;
+        this.artifacts = artifacts;
         this.dataDir = dataDir;
     }
 
@@ -79,8 +86,12 @@ public final class GameContent {
         if (arr != null) for (Object o : Json.asList(arr)) comps.add(Json.asMap(o));
         Map<String, Object> monDef = loadJsonMap(dataDir, "monster_defense.json");
         Map<String, Object> monHp = loadJsonMap(dataDir, "monster_hp.json");
+        Map<String, Object> artRoot = loadJsonMap(dataDir, "artifact.json");
+        List<Map<String, Object>> arts = new ArrayList<>();
+        Object artArr = artRoot.get("artifacts");
+        if (artArr != null) for (Object o : Json.asList(artArr)) arts.add(Json.asMap(o));
         return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData,
-                comps, compRoot, monDef, monHp, dataDir);
+                comps, compRoot, monDef, monHp, artRoot, arts, dataDir);
     }
 
     /** dataDir의 JSON 파일을 맵으로 읽는다. 없거나 손상 시 빈 맵. */

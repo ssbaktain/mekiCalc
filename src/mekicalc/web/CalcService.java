@@ -18,6 +18,7 @@ import mekicalc.engine.DealModel;
 import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.PotentialDraw;
+import mekicalc.engine.skill.ArtifactEffects;
 import mekicalc.engine.skill.CompanionDps;
 import mekicalc.engine.skill.NightlordDealModel;
 import mekicalc.engine.skill.NightlordDps;
@@ -244,7 +245,7 @@ public final class CalcService {
     // ──────────────────── 예상 데미지 ────────────────────
 
     public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv, Set<String> buffs, double hitInterval) {
-        return previewDamage(stats, customConv, buffs, hitInterval, null, null, 0, 0);
+        return previewDamage(stats, customConv, buffs, hitInterval, null, null, 0, 0, null);
     }
 
     /**
@@ -252,12 +253,14 @@ public final class CalcService {
      * 분해에 추가하고 전체에 합산한다(소환 유지/소환쿨 반영). 동료 미선택/무효 시 종전과 동일.
      */
     public Map<String, Object> previewDamage(Map<String, Double> stats, Map<String, Double> customConv, Set<String> buffs, double hitInterval,
-                                             String companionId, String grade, int companionLevel, double inheritRatio) {
+                                             String companionId, String grade, int companionLevel, double inheritRatio,
+                                             List<ArtifactEffects.Equip> artifacts) {
         StatBlock b = block(stats);
         DamageModel m = content.damageModel(customConv);
         CompanionDps comp = companionId == null ? null
                 : new CompanionDps(m, content.companionRoot, companionId, grade, companionLevel, inheritRatio);
         if (comp != null && !comp.valid()) comp = null;
+        ArtifactEffects art = (artifacts == null || artifacts.isEmpty()) ? null : new ArtifactEffects(content.artifactRoot, artifacts);
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
@@ -265,30 +268,24 @@ public final class CalcService {
         if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
             try {
                 NightlordDps nd = new NightlordDps(m, new SkillDpsModel(content.skillData), buffs, hitInterval);
-                double[] n = nd.basicHitStats(b, false), bo = nd.basicHitStats(b, true);
-                out.put("normal", safe(n[2]));   // 헤드라인 = 1타 평균딜(플레이어 본인)
-                out.put("boss", safe(bo[2]));
-                // 동료는 풀버프 스냅샷 계승 + 플레이어 받피증 공유(같은 적 타격).
-                StatBlock inh = b;
-                double uptime = 0, Rp = 1;
+                // 불타는용암 debuffCase 판정: 내 직업(받피 디버프 보유) 또는 동료가 적에 디버프를 주는가.
+                boolean enemyDebuff = art != null && (nd.playerRecvBonus(b) > 1e-9
+                        || (comp != null && (comp.enemyDefReducePct(b, false) > 0 || comp.enemyDefReducePct(b, true) > 0)));
+                // 동료 계승 스냅샷 = 풀버프 + 유물(발동 중 소환 시 육각목걸이 DMG 등 계승). 대상별(일반/보스)로 유물 다름.
+                StatBlock inhN = b, inhB = b;
+                double uptime = 0, Rp = 1, playerRecv = 0;
                 if (comp != null) {
-                    inh = nd.fullBuffStats(b);
-                    comp.playerRecvBonus(nd.playerRecvBonus(nd.buffed(b).stats));
+                    inhN = nd.fullBuffStats(b, false, NORMAL_SECONDS, simCtx(art, b, enemyDebuff, 1));
+                    inhB = nd.fullBuffStats(b, true, BOSS_SECONDS, simCtx(art, b, enemyDebuff, 1));
+                    playerRecv = nd.playerRecvBonus(nd.buffed(b).stats);
                     uptime = comp.summonUptime(b);
-                    Rp = 1 + nd.playerRecvBonus(nd.buffed(b).stats);
+                    Rp = 1 + playerRecv;
                 }
-                // 플레이어 DPS는 동료 버프/받피증을 소환 가동률만큼 블렌딩(소환 중=버프받음, 평상시=본인).
-                double[] pn = blendPlayer(nd, b, false, comp, uptime, Rp);
-                double[] pb = blendPlayer(nd, b, true, comp, uptime, Rp);
-                // 모든 DPS는 단일대상 기준(대상수 곱 계산은 엔진에서 제거됨). 보스/일반 차이는 보스뎀(BOSS_DMG)뿐.
-                // 전투시간 기준: 일반몹(스테이지)=90초, 보스(챕터보스)=70초. 동료 기여는 이 시간창 평균.
-                // 동료 없을 때 플레이어 단독 총합(동료 기여도 기준선). 동료 있으면 base(동료버프 미반영) DPS.
-                double soloN = comp == null ? pn[2] : nd.dpsBreakdown(b, false)[2];
-                double soloB = comp == null ? pb[2] : nd.dpsBreakdown(b, true)[2];
-                Map<String, Object> dn = hitMap(n[0], n[1], n[2], dpsMap(pn, comp, inh, false, NORMAL_SECONDS, soloN));
-                Map<String, Object> db = hitMap(bo[0], bo[1], bo[2], dpsMap(pb, comp, inh, true, BOSS_SECONDS, soloB));
-                dn.put("shares", sharesList(nd, b, false, pn[2], comp, inh, NORMAL_SECONDS));   // 홈 도넛(스킬별 지분 + 동료)
-                db.put("shares", sharesList(nd, b, true, pb[2], comp, inh, BOSS_SECONDS));
+                // 딜 상세 = 대상별로 solo(동료 미소환) + summon(동료 소환) 상태의 {평균/최소/최대 평타딜, DPS} + 동료카드/도넛용 dps/shares.
+                Map<String, Object> dn = detailFor(nd, b, false, NORMAL_SECONDS, comp, inhN, uptime, Rp, playerRecv, art, enemyDebuff);
+                Map<String, Object> db = detailFor(nd, b, true, BOSS_SECONDS, comp, inhB, uptime, Rp, playerRecv, art, enemyDebuff);
+                out.put("normal", ((Map<?, ?>) dn.get("solo")).get("avg"));   // 헤드라인 = 동료 미소환 평균 평타딜
+                out.put("boss", ((Map<?, ?>) db.get("solo")).get("avg"));
                 detail.put("normal", dn);
                 detail.put("boss", db);
                 out.put("detail", detail);
@@ -319,11 +316,58 @@ public final class CalcService {
     }
 
     /**
+     * 한 대상(boss)의 딜 상세: solo(동료 미소환)·summon(동료 소환) 상태별 {평균/최소/최대 평타딜, DPS} + 동료카드/도넛용 dps·shares.
+     * summon DPS = 플레이어(동료 버프)×받피 + 동료 소환 중 딜. 동료 없으면 summon 생략.
+     */
+    private Map<String, Object> detailFor(NightlordDps nd, StatBlock b, boolean boss, double seconds, CompanionDps comp,
+                                          StatBlock inh, double uptime, double Rp, double playerRecv,
+                                          ArtifactEffects art, boolean enemyDebuff) {
+        Map<String, Object> det = new LinkedHashMap<>();
+        NightlordDps.SimContext ctxSolo = simCtx(art, b, enemyDebuff, 0);
+        det.put("solo", stateMap(nd.basicHitStatsCtx(b, boss, seconds, ctxSolo), nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2]));
+        if (comp != null) {
+            Map<String, Object> gift = comp.playerGift(b, boss);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> giftBuffs = (Map<String, Object>) gift.get("buffs");
+            double compAtkPct = giftBuffs.containsKey("ATK_PCT") ? ((Number) giftBuffs.remove("ATK_PCT")).doubleValue() : 0;
+            StatBlock summonInput = new StatBlock(b);
+            CompanionDps.applyGift(summonInput, giftBuffs);
+            nd.setExternalAtkPct(compAtkPct);
+            NightlordDps.SimContext ctxSummon = simCtx(art, b, enemyDebuff, 1);
+            double[] sumHit = nd.basicHitStatsCtx(summonInput, boss, seconds, ctxSummon);
+            double sumPlayer = nd.dpsSimulateBreakdown(summonInput, boss, seconds, ctxSummon)[2];
+            nd.setExternalAtkPct(0);
+            double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
+            double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;
+            comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
+            double compWin = comp.dpsBreakdown(inh, boss)[2];
+            det.put("summon", stateMap(sumHit, sumPlayer * recvScale + compWin));
+        }
+        // 동료 카드·도넛용(기존 유지): 블렌드 DPS + 항목별 지분.
+        double[] pp = blendPlayer(nd, b, boss, comp, uptime, Rp, seconds, art, enemyDebuff);
+        double solo = comp == null ? pp[2] : nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2];
+        if (comp != null) comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
+        det.put("dps", dpsMap(pp, comp, inh, boss, seconds, solo));
+        det.put("shares", sharesList(nd, b, boss, pp[2], comp, inh, seconds));
+        return det;
+    }
+
+    private static Map<String, Object> stateMap(double[] hit, double dps) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("min", safe(hit[0]));
+        m.put("max", safe(hit[1]));
+        m.put("avg", safe(hit[2]));
+        m.put("dps", safe(dps));
+        return m;
+    }
+
+    /**
      * 플레이어 [평타, 스킬, 전체] DPS — 동료가 있으면 소환 가동률만큼 동료 버프/받피증을 블렌딩.
      * 소환 중 = 동료 버프(target player/both) 적용 + 동료 받피증 공유, 평상시 = 본인. comp=null이면 본인 그대로.
      */
-    private static double[] blendPlayer(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp) {
-        double[] base = nd.dpsBreakdown(b, boss);
+    private static double[] blendPlayer(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp, double seconds,
+                                        ArtifactEffects art, boolean enemyDebuff) {
+        double[] base = nd.dpsSimulateBreakdown(b, boss, seconds, simCtx(art, b, enemyDebuff, 0));   // 홈=시뮬(동료 없음: 뿔피리 등 0)
         if (comp == null) return base;
         Map<String, Object> gift = comp.playerGift(b, boss);
         @SuppressWarnings("unchecked")
@@ -333,13 +377,29 @@ public final class CalcService {
         StatBlock summonInput = new StatBlock(b);
         CompanionDps.applyGift(summonInput, giftBuffs);              // 공퍼 외 버프(최종뎀·크리·최대뎀배율 등) 적용
         nd.setExternalAtkPct(compAtkPct);                           // 동료 공퍼를 플레이어 스킬 공퍼 합에 합산
-        double[] summon = nd.dpsBreakdown(summonInput, boss);
+        double[] summon = nd.dpsSimulateBreakdown(summonInput, boss, seconds, simCtx(art, b, enemyDebuff, 1));   // 소환 중(뿔피리 등 활성)
         nd.setExternalAtkPct(0);                                    // 원복(평상시 계산 오염 방지)
         double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
         double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;          // 동료 받피증을 플레이어 받피증 위에 합연산
         double[] out = new double[3];
         for (int i = 0; i < 3; i++) out[i] = base[i] * (1 - uptime) + summon[i] * recvScale * uptime;
         return out;
+    }
+
+    /** 유물 적 받피증(분수) — 동료와 공유. inh=계승 스냅샷(공속으로 은펜던트 중첩 추정). art=null이면 0. */
+    private static double artRecv(ArtifactEffects art, StatBlock inh, boolean boss, double seconds) {
+        return art == null ? 0 : art.enemyRecvDmgPct(boss, 1 + inh.get("ATK_SPEED") / 100.0, seconds, -1) / 100.0;
+    }
+
+    /** 유물 시뮬 컨텍스트. art=null이면 null(순수 플레이어). base=파생 델타 기준(프리셋 원본), compUptime=동료 소환 가동률. */
+    private static NightlordDps.SimContext simCtx(ArtifactEffects art, StatBlock base, boolean enemyDebuff, double compUptime) {
+        if (art == null) return null;
+        NightlordDps.SimContext cx = new NightlordDps.SimContext();
+        cx.artifacts = art;
+        cx.base = base;
+        cx.enemyDebuff = enemyDebuff;
+        cx.compUptime = compUptime;
+        return cx;
     }
 
     /**
@@ -352,9 +412,17 @@ public final class CalcService {
         m.put("basic", safe(bd[0]));
         m.put("skill", safe(bd[1]));
         double companion = (comp == null) ? 0 : comp.dpsOverSeconds(player, boss, seconds)[2];   // 전투시간(70/90초) 평균
-        double companionWindow = (comp == null) ? 0 : comp.dpsBreakdown(player, boss)[2];         // 소환 기간 기준 DPS
+        double[] cwin = (comp == null) ? null : comp.dpsBreakdown(player, boss);   // 소환 중 [평타, 스킬, 합]
+        double companionWindow = cwin == null ? 0 : cwin[2];                        // 소환 기간 기준 DPS
         m.put("companion", comp == null ? null : safe(companion));
         m.put("companionWindow", comp == null ? null : safe(companionWindow));
+        if (comp != null) {   // 동료 기여 카드 상세용(소환 중 기준)
+            m.put("companionBasic", safe(cwin[0]));
+            m.put("companionSkill", safe(cwin[1]));
+            m.put("companionRefRatio", safe(comp.refRatioPct(player)));   // 참고 계승 비율%
+            m.put("companionUptime", safe(comp.summonUptime(player)));    // 소환 가동률(0~1)
+            m.put("companionDetail", comp.detail(player, boss));          // 항목별 동료 딜(소환창 기준, 방어배수는 클라에서)
+        }
         m.put("summonSeconds", comp == null ? null : safe(comp.window(player)));   // 소환 지속(초) — SUMMON_DURATION 반영
         m.put("windowSeconds", seconds);                                            // 전투시간(70/90초)
         double total = bd[2] + companion;
@@ -533,6 +601,23 @@ public final class CalcService {
         Double def = targetDef(chapter, target);
         double bonus = companionPenBonus(block(stats), conv, boss, companionId, grade, level, ratio);
         out.put("factor", safe(defenseFactor(def, penPct + bonus)));
+        return out;
+    }
+
+    /** 유물 탭용 메타: 유물 목록(id/name/grade/category) + 슬롯 임계(slotByAwakenSum). */
+    public Map<String, Object> artifactCatalog() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Map<String, Object> a : content.artifacts) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", a.get("id"));
+            m.put("name", a.get("name"));
+            m.put("grade", a.get("grade"));
+            m.put("category", a.get("category"));
+            list.add(m);
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("list", list);
+        out.put("slotByAwakenSum", content.artifactRoot.get("slotByAwakenSum"));
         return out;
     }
 

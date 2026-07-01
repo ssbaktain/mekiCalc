@@ -10,6 +10,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import mekicalc.config.RangeIO;
+import mekicalc.engine.skill.ArtifactEffects;
 import mekicalc.json.Json;
 
 /**
@@ -60,7 +62,7 @@ public final class WebServer {
             return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
                     toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                     cid == null ? null : cid.toString(), gr == null ? null : gr.toString(),
-                    (int) num(req, "level", 0), num(req, "ratio", 0));
+                    (int) num(req, "level", 0), num(req, "ratio", 0), toEquipList(req.get("artifacts")));
         }));
 
         http.createContext("/api/buffs", json("POST", ex -> {
@@ -168,6 +170,7 @@ public final class WebServer {
             out.put("meta", service.meta());
             out.put("mydata", service.myData());
             out.put("companions", service.companions());
+            out.put("artifacts", service.artifactCatalog());     // 유물 탭(목록 + 슬롯 임계)
             out.put("targetCatalog", service.targetCatalog());   // 대상 드롭다운(방어력 수치 미포함 — 서버 전용)
             out.put("me", meInfo(sessionFrom(ex)));
             return out;
@@ -347,6 +350,17 @@ public final class WebServer {
         if (!(o instanceof List)) return out;
         for (Object el : (List<Object>) o) {
             if (el instanceof Map) out.add((Map<String, Object>) el);
+        }
+        return out;
+    }
+
+    /** 유물 장착 배열 [{id, awaken}] → List&lt;Equip&gt;. null/비배열이면 빈 리스트. */
+    private static List<ArtifactEffects.Equip> toEquipList(Object o) {
+        List<ArtifactEffects.Equip> out = new ArrayList<>();
+        for (Map<String, Object> e : mapList(o)) {
+            Object id = e.get("id");
+            if (id == null) continue;
+            out.add(new ArtifactEffects.Equip(id.toString(), (int) Json.num(e, "awaken", 0)));
         }
         return out;
     }

@@ -237,6 +237,17 @@ public final class NightlordDps {
         return s;
     }
 
+    /**
+     * 유물까지 반영한 동료 계승 기준 풀버프 스냅샷. 유물 발동 중 소환하면 동료가 유물 부스트(육각목걸이 DMG 등)를 계승한다.
+     * ctx=null이면 {@link #fullBuffStats(StatBlock)}와 동일. 계승 모드라 뿔피리 보스 자기 2배는 제외(동료 몫만).
+     */
+    public StatBlock fullBuffStats(StatBlock input, boolean boss, double seconds, SimContext ctx) {
+        Buffed bf = withArtifacts(buffed(input, true), input, boss, seconds, -1, ctx, true);
+        StatBlock s = new StatBlock(bf.stats);
+        s.set("ATK_FLAT", s.get("ATK_FLAT") * bf.skillAtkFactor);
+        return s;
+    }
+
     /** 플레이어가 적에게 거는 받피증 디버프 합(분수, 가동률 평균). 동료도 같은 적을 때리므로 공유. recvDmgFactor−1. */
     public double playerRecvBonus(StatBlock eff) {
         return recvDmgFactor(eff) - 1.0;
@@ -285,6 +296,28 @@ public final class NightlordDps {
         double min = avg * (mn / 100.0) / fAvg;
         double max = avg * ((mn > mx ? mn : mx) / 100.0) / fAvg;
         return new double[]{min, max, avg};
+    }
+
+    /**
+     * 유물·상태 반영 평타 1타 [최소, 최대, 평균]. 사이클 중 평타 딜 범위를 뜻한다:
+     * 최대 = 풀버프 × 최대 데미지범위, 최소 = 무(시간)버프 × 최소 데미지범위, 평균 = 가동률 평균. ctx로 유물 주입.
+     */
+    public double[] basicHitStatsCtx(StatBlock input, boolean boss, double seconds, SimContext ctx) {
+        Skill basic = highestBasic(charLevel(input));
+        if (basic == null) return new double[]{0, 0, 0};
+        Buffed avgBf = withArtifacts(buffed(input), input, boss, seconds, -1, ctx, false);
+        double avg = perHit(basic, avgBf, boss) * recvDmgFactor(avgBf.stats);
+        double max = basicAtRoll(basic, withArtifacts(buffed(input, true), input, boss, seconds, -1, ctx, false), boss, true);
+        double min = basicAtRoll(basic, withArtifacts(buffedActive(input, java.util.Collections.emptySet()), input, boss, seconds, -1, ctx, false), boss, false);
+        return new double[]{min, max, avg};
+    }
+    /** 평타 1타를 최대(true)/최소(false) 데미지범위 롤로. perHit의 fAvg(범위평균) 내장을 해당 롤로 환산. */
+    private double basicAtRoll(Skill basic, Buffed bf, boolean boss, boolean useMax) {
+        double base = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);
+        double mn = bf.stats.get(MIN_DMG_MULT), mx = bf.stats.get(MAX_DMG_MULT);
+        double fAvg = (mn > mx) ? mn / 100.0 : (mn + mx) / 200.0;
+        if (fAvg <= 0) return base;
+        return base * ((useMax ? (mn > mx ? mn : mx) : mn) / 100.0) / fAvg;
     }
 
     /** 버프 반영 평타 DPS. */
@@ -927,12 +960,19 @@ public final class NightlordDps {
         return 1 + g / 100.0 * lv;
     }
 
-    /**
-     * 플레이어 종합 DPS를 시간스텝 시뮬레이션(시간제 버프를 가동률 평균이 아니라 on/off 구간으로 적용 → 버프 겹침 비선형 포착).
-     * 각 버프 창 = active during [k·period, k·period+dur), period=dur/가동률(가동률 보존), 위상 0(시작에 모두 켬).
-     * 동료 시뮬과 동일하게 매 스텝 순간 DPS를 평균(rate×DT 적분). 해석식 {@link #dpsBreakdown}과 비교용. 반환=전체 DPS.
-     */
+    /** 시뮬식 전체 DPS(= {@link #dpsSimulateBreakdown}[2]). 기존 호출부 호환. */
     public double dpsSimulate(StatBlock input, boolean boss, double seconds) {
+        return dpsSimulateBreakdown(input, boss, seconds, null)[2];
+    }
+
+    /**
+     * <b>시뮬식(기준값)</b> [평타만, 스킬만, 전체] DPS. 시간제 버프를 가동률 평균이 아니라 on/off 구간으로 적용해
+     * 버프 겹침 비선형(크리×최종×공퍼 곱)을 포착하고, 매 스텝 {@link #dpsBreakdownWith} 순간 DPS를 적분한다(동료
+     * 시뮬과 동일 구조). 각 버프 창 = [k·period, k·period+dur), period=dur/가동률(=실질 쿨), 위상 0.
+     * {@link #dpsBreakdown}(해석식)은 이 결과의 빠른 근사다. 시간제 버프가 없으면 해석식과 동일.
+     * @param ctx 통합 시뮬 컨텍스트(동료·유물 상호작용 주입). null이면 순수 플레이어 시뮬.
+     */
+    public double[] dpsSimulateBreakdown(StatBlock input, boolean boss, double seconds, SimContext ctx) {
         final double DT = 0.1;
         int cl = charLevel(input);
         double atkSpeedBase = input.get(ATK_SPEED);
@@ -949,10 +989,10 @@ public final class NightlordDps {
             ids.add(Json.str(m, "id", ""));
             win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});   // u≥1이면 항상 active(period=dur)
         }
-        if (ids.isEmpty()) return totalDps(input, boss);   // 시간제 버프 없으면 해석식과 동일
+        if (ids.isEmpty() && ctx == null) return dpsBreakdown(input, boss);   // 시간제 버프·컨텍스트 없으면 해석식과 동일
         double T = seconds > 0 ? seconds : 90;
         int steps = Math.max(1, (int) Math.round(T / DT));
-        double sum = 0;
+        double[] sum = new double[3];
         Set<String> active = new HashSet<>();
         for (int k = 0; k < steps; k++) {
             double t = k * DT;
@@ -961,9 +1001,42 @@ public final class NightlordDps {
                 double dur = win.get(i)[0], period = win.get(i)[1];
                 if (period <= 0 || (t % period) < dur) active.add(ids.get(i));
             }
-            sum += dpsBreakdownWith(buffedActive(input, active), boss)[2];
+            Buffed bf = withArtifacts(buffedActive(input, active), input, boss, T, t, ctx, false);
+            double[] d = dpsBreakdownWith(bf, boss);
+            if (ctx != null && ctx.artifacts != null) {   // 유물 적 받피증(플레이어 딜에 곱) — 동료 공유는 2b-3
+                double rm = 1 + ctx.artifacts.enemyRecvDmgPct(boss, 1 + bf.stats.get(ATK_SPEED) / 100.0, T, t) / 100.0;
+                for (int j = 0; j < 3; j++) d[j] *= rm;
+            }
+            for (int j = 0; j < 3; j++) sum[j] += d[j];
         }
-        return sum / steps;   // 스텝 평균 = 시간 평균 DPS
+        for (int j = 0; j < 3; j++) sum[j] /= steps;
+        return sum;
+    }
+
+    /**
+     * 통합 시뮬 컨텍스트. 하나의 전투 타임라인에서 플레이어+동료+유물이 함께 진행되도록 상호작용을 주입한다.
+     * null이면 순수 플레이어 시뮬. 필드 개별 null 허용.
+     */
+    public static final class SimContext {
+        /** 유물 효과(시각 t에서 플레이어 버프·적 받피증 기여). null이면 유물 없음. */
+        public ArtifactEffects artifacts;
+        /** 프리셋 원본 스탯(유물 파생 델타 기준: 비율×(라이브−base)). */
+        public StatBlock base;
+        /** 적이 (내 직업/동료가 준) 디버프 보유 판정 — 불타는용암 debuffCase. */
+        public boolean enemyDebuff;
+        /** 동료 소환 가동률(companionSummoned 트리거: 뿔피리 등). base 계산=0, 소환 계산=1. */
+        public double compUptime;
+        /** 동료(단일 타임라인 통합, 2b-3). null이면 동료 시뮬 미포함. */
+        public Object companion;
+    }
+
+    /** 시각 t(시뮬)/−1(해석)에서 버프 스냅샷 bf에 유물 델타를 얹은 새 Buffed. inheritance=동료 계승용(뿔피리 보스2배 제외). */
+    private Buffed withArtifacts(Buffed bf, StatBlock input, boolean boss, double seconds, double t, SimContext ctx, boolean inheritance) {
+        if (ctx == null || ctx.artifacts == null) return bf;
+        StatBlock eff = new StatBlock(bf.stats);
+        double[] atk = {0};
+        ctx.artifacts.applyPlayer(eff, ctx.base != null ? ctx.base : input, atk, boss, ctx.enemyDebuff, seconds, ctx.compUptime, t, inheritance);
+        return new Buffed(eff, bf.skillAtkFactor + atk[0] / 100.0);   // 유물 공퍼를 버킷에 합산
     }
 
     /** 버프 가동률: triggerCasts 있으면 발동형, 아니면 쿨 기반. 지속 마스터리·버프지속% 레벨 게이팅. */

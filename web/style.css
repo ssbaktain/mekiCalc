@@ -780,6 +780,13 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 
 /* 상세 타일 */
 .stat-tiles { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.stat-cols { display: flex; flex-wrap: wrap; gap: 12px; }   /* 2열 유지, 자리 없으면(≈280px 미만) 자동 줄넘김 */
+.stat-cols.single { max-width: 260px; margin: 0 auto; }
+.stat-col { flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.stat-col-h { font-weight: 700; text-align: center; padding: 5px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+.stat-col .tile { padding: 10px 12px; }
+.stat-col .tile-val { font-size: 17px; }
+@media (max-width: 560px) { .stat-cols.single { max-width: none; } }
 .tile { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
 .tile-accent { border-color: var(--accent2); }
 .tile-label { font-size: 12px; color: var(--muted); text-align: center; }
@@ -789,6 +796,20 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 /* 동료 기여 카드 */
 .comp-card { margin-top: 18px; }
 .comp-tiles { grid-template-columns: repeat(3, 1fr); }
+/* 동료 기여 카드 */
+.cc-dhead { margin-bottom: 14px; align-items: center; }
+.cc-head-l { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cc-total { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.05; flex: 0 0 auto; }
+.cc-total-label { font-size: 12px; color: var(--muted); }
+.cc-total-val { font-size: 30px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(124, 156, 255, .3); }
+.cc-items { display: flex; flex-direction: column; gap: 13px; }
+.cc-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.cc-name { font-weight: 600; font-size: 14px; }
+.cc-vals { display: flex; gap: 10px; align-items: baseline; white-space: nowrap; }
+.cc-dmg { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cc-pct { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.cc-track { height: 8px; background: var(--card); border-radius: 5px; overflow: hidden; }
+.cc-fill { height: 100%; border-radius: 5px; min-width: 2px; transition: width .4s ease; }
 .tile-comp { border-color: #f5a623; }
 .tile-comp .tile-val { color: #f5a623; }
 .tile-good { border-color: #4fa86a; }
@@ -900,4 +921,34 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
   .donut-body { gap: 10px; }
   .donut-svg, .donut-empty { width: 150px; height: 150px; }
   .pc-bar { height: 150px; width: 84px; }
+}
+
+/* ── 유물 탭 ── */
+/* PC·모바일 모두 장착(장착 유물)을 위, 보유현황 그리드를 아래로 세로 스택 → 그리드가 전체폭 사용(넘침 방지). */
+.relic-layout { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+.relic-equip { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.relic-equip-head { font-weight: 700; margin-bottom: 10px; }
+.relic-equip-head span { color: var(--accent); font-size: 13px; }
+#relic-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.relic-slot { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.relic-slot-n { flex: 0 0 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: var(--card); color: var(--muted); font-size: 12px; }
+.relic-slot select { flex: 1 1 auto; min-width: 0; padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }
+.relic-sum { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+.relic-sum b { color: var(--accent); }
+.relic-grid-wrap { min-width: 0; }
+.relic-grid-head { font-weight: 700; margin-bottom: 10px; }
+.relic-grid-head .hint { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 4px; }
+.relic-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.relic-cell { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.relic-cell.owned { border-color: var(--accent2); background: rgba(124, 156, 255, .07); }
+.relic-cell-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
+.relic-cell-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.relic-cell-aw { padding: 5px 6px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+.relic-badge { font-size: 10px; padding: 1px 6px; border-radius: 999px; white-space: nowrap; flex: 0 0 auto; }
+.relic-badge.ok { background: rgba(124, 156, 255, .2); color: var(--accent); }
+.relic-badge.muted { background: rgba(154, 160, 171, .15); color: var(--muted); }
+@media (max-width: 720px) {
+  .relic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #relic-slots { flex-direction: column; }
+  .relic-slot { flex: 1 1 auto; }
 }

@@ -79,7 +79,7 @@
       <!-- 동료 기여: 동료 딜 / 플레이어+동료 딜 / 동료 기여도 (동료 선택 시에만 표시) -->
       <div id="home-companion" class="card dash-card comp-card" hidden></div>
 
-      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료) 기준이에요. 프리셋은 상단 메뉴 <b>프리셋</b>에서, 빠른 전환은 우하단 ⚡에서.</p>
+      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료·유물) 기준이에요. 좌측은 동료 미소환, 우측은 동료 소환 상태예요. DPS는 전투시간(일반 90초·보스 70초) 시뮬레이션 평균이고, 1타 딜은 한 대 기준(평균/최소/최대 — 버프·최소/최대뎀·유물 반영)이에요. 프리셋은 상단 프리셋 메뉴, 빠른 전환은 우하단 ⚡에서 바꿔요.</p>
     </section>
 
     <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->
@@ -189,10 +189,28 @@
 
       <!-- 유물 -->
       <div id="sub-relic" class="subpanel" hidden>
-        <div class="card soon-card">
-          <div class="soon-icon">🚧</div>
-          <h2>유물 — 준비 중</h2>
-          <p class="status">이 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p>
+        <div class="card">
+          <div class="card-head"><h2>유물</h2></div>
+          <div class="preset-bar">
+            <span class="preset-label">유물 프리셋</span>
+            <select id="rp-sel"></select>
+            <button id="rp-save" class="mini-btn" type="button">저장</button>
+            <button id="rp-new" class="mini-btn ghost" type="button">추가</button>
+            <button id="rp-rename" class="mini-btn ghost" type="button">이름변경</button>
+            <button id="rp-del" class="mini-btn ghost" type="button">삭제</button>
+          </div>
+          <div class="relic-layout">
+            <div class="relic-equip">
+              <div class="relic-equip-head">장착 유물 <span id="rl-slots-badge"></span></div>
+              <div id="relic-slots"></div>
+              <div class="relic-sum" id="rl-suminfo"></div>
+            </div>
+            <div class="relic-grid-wrap">
+              <div class="relic-grid-head">보유 현황 · 각성도 <span class="hint">유물별 각성을 입력하면 총합으로 슬롯 수가 정해져요</span></div>
+              <div id="relic-grid" class="relic-grid"></div>
+            </div>
+          </div>
+          <p class="status">그리드에 보유 유물의 각성도를 입력하세요 — <b>미보유</b>(보유 X) / <b>0각</b>(보유·각성 X) / 1~5각. 각성 총합으로 장착 슬롯 수(10미만 1칸·30미만 2칸·50미만 3칸·50이상 4칸)가 정해지고, 위쪽 장착에서 슬롯 수만큼 고른 유물만 예상 데미지에 반영됩니다. 뱃지 — <b>딜 반영</b>(조건/트리거 유물만 계산) / <b>선반영·컨텐츠 전용·생존</b>(딜 기여 0, 스탯 프리셋에 이미 포함).</p>
         </div>
       </div>
 
@@ -375,7 +393,7 @@
   </main>
 
   <footer>
-    <p class="footer-disclaimer">MekiCalc은 비공식 팬 계산기입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
+    <p class="footer-disclaimer">MekiCalc은 비공식 팬 사이트입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
     <p class="footer-links"><a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:ssbaktain@gmail.com">문의</a></p>
     <p class="footer-copy">© 2026 MekiCalc · 프리셋·설정은 이 브라우저(로그인 시 계정)에 저장됩니다.</p>
   </footer>
