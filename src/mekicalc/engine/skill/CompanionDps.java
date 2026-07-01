@@ -149,7 +149,7 @@ public final class CompanionDps {
             if (s.containsKey("modifies") || !learned(s)) continue;
             String type = Json.str(s, "type", "");
             if ("passive".equals(type)) {
-                skillDps += passiveProcRate(s, c, boss, atkRate, attackRate, W, skills);
+                skillDps += passiveProcRate(s, c, boss, atkRate, attackRate, W, skills, -1);   // 해석식: 시간평균
             } else if (s.get("dot") instanceof Map) {
                 Map<String, Object> dot = Json.asMap(s.get("dot"));
                 double u = uptimeOf(type, Json.num(dot, "dur", 0), Json.num(s, "cd", 0), W);
@@ -257,7 +257,7 @@ public final class CompanionDps {
         String stat = Json.str(b, "stat", "");
         double base = Json.num(b, "value", 0);
         if (Json.bool(b, "perHp10", false)) base *= 10;   // 현재HP 10%마다 → HP100% 최대효율(×10)
-        double full = "FINAL_DMG".equals(stat) ? (Math.pow(1 + base / 100.0, stacks) - 1) * 100 : base * stacks;
+        double full = finalDmgStack(stat, base, stacks, Json.bool(b, "perEnemy", false));
         sink.add(stat, full * u);   // 가동률 평균
     }
 
@@ -427,7 +427,7 @@ public final class CompanionDps {
                 if (s.containsKey("modifies") || !learned(s)) continue;
                 String type = Json.str(s, "type", "");
                 if ("passive".equals(type)) {
-                    double inc = passiveProcRate(s, c, boss, atkRate, attackRate, W, skills) * DT * recv;
+                    double inc = passiveProcRate(s, c, boss, atkRate, attackRate, W, skills, t) * DT * recv;
                     skillDmg += inc; addD(detail, label(s), inc);
                 } else if (s.get("dot") instanceof Map) {
                     Map<String, Object> dot = Json.asMap(s.get("dot"));
@@ -538,7 +538,16 @@ public final class CompanionDps {
         String stat = Json.str(b, "stat", "");
         double base = Json.num(b, "value", 0);
         if (Json.bool(b, "perHp10", false)) base *= 10;   // 현재HP 10%마다 → HP100% 최대효율(×10)
-        sink.add(stat, "FINAL_DMG".equals(stat) ? (Math.pow(1 + base / 100.0, stacks) - 1) * 100 : base * stacks);
+        sink.add(stat, finalDmgStack(stat, base, stacks, Json.bool(b, "perEnemy", false)));
+    }
+
+    /**
+     * 최종뎀 다중첩값. perEnemy(불독 '적 1명당 +n%')는 인원수만큼 <b>즉시 선형 가산</b>(10명=+30%),
+     * 그 외 최종뎀 중첩(시간 램프 등)은 곱연산으로 근사. 최종뎀이 아니면 선형(base×stacks).
+     */
+    private static double finalDmgStack(String stat, double base, double stacks, boolean perEnemy) {
+        if (!"FINAL_DMG".equals(stat) || perEnemy) return base * stacks;
+        return (Math.pow(1 + base / 100.0, stacks) - 1) * 100;
     }
 
     /** gradeBasicAttack의 타수(발동 트리거 'companionHit' 빈도 추정용). */
@@ -668,8 +677,11 @@ public final class CompanionDps {
         return max;   // 발동스택 등은 근사로 최대
     }
 
-    /** 패시브 발동 딜의 순간 DPS(초당). 주기형=1/period, 공격형=공격빈도×확률(내부쿨 상한). 조건/바이퍼 대체 처리. */
-    private double passiveProcRate(Map<String, Object> s, StatBlock c, boolean boss, double atkRate, double attackRate, double W, List<Object> skills) {
+    /**
+     * 패시브 발동 딜의 순간 DPS(초당). 주기형=1/period, 공격형=공격빈도×확률(내부쿨 상한). 조건/바이퍼 대체 처리.
+     * @param t 시뮬용 현재 시각(≥0: 그 순간 액티브 창 여부로 판정) / 해석식이면 음수(−1) → 가동률 시간평균.
+     */
+    private double passiveProcRate(Map<String, Object> s, StatBlock c, boolean boss, double atkRate, double attackRate, double W, List<Object> skills, double t) {
         Object po = s.get("proc");
         if (!(po instanceof Map)) return 0;
         Map<String, Object> p = Json.asMap(po);
@@ -681,8 +693,8 @@ public final class CompanionDps {
         double condGate = 1.0;
         if (p.containsKey("cond")) {                       // 보스 상태/특정 액티브 가동 조건
             String cond = Json.str(p, "cond", "");
-            if (cond.contains("상태이상")) return 0;          // 보스 기절 면역 → 미발동
-            if (cond.contains("버프")) return perProc * 2.0 / W;   // 30초 창에 보스 버프 2회 가정
+            if (cond.contains("상태이상")) return 0;          // 적 상태이상: 발동 안 시킴(보스 면역 + 유저 결정 2026-07-01)
+            if (cond.contains("버프")) return perProc * 2.0 / W;   // 대상 버프 보유(섀도어): 소환창당 2회 발동 가정
             if (cond.contains("소환 중") || cond.contains("소환중"))   // 예: "쌍권총 크루 소환 중" → 그 액티브 가동률만큼만 발동
                 condGate = referencedActiveUptime(cond, skills, W);
         }
@@ -700,7 +712,7 @@ public final class CompanionDps {
             return 0;   // 미상 트리거(특정 액티브 발동 연동 등)는 미반영
         }
         rate *= condGate;   // 특정 액티브 가동 조건(소환 중 등) 반영
-        // 바이퍼: 버스트→어썰트 대체. '이 스킬이 버스트일 때만'(raw가 어썰트의 modifies와 일치) 적용.
+        // 바이퍼: 씨 서펜트 버스트 → 서펜트 어썰트 대체. '이 스킬이 버스트일 때만'(raw가 어썰트의 modifies와 일치) 적용.
         for (Object sib : skills) {
             Map<String, Object> sm = Json.asMap(sib);
             Object spo = sm.get("proc");
@@ -710,9 +722,29 @@ public final class CompanionDps {
             String modifies = Json.str(sm, "modifies", "");
             if (modifies.isEmpty() || !Json.str(s, "raw", "").contains(modifies)) continue;
             double R = Json.num(sp, "replaceOfBurst", 0) / 100.0;
-            return (perProc * (1 - R) + oneDeal(Json.asMap(sp.get("deal")), c, boss) * R) * rate;
+            double assaultDeal = oneDeal(Json.asMap(sp.get("deal")), c, boss);
+            double offVal = (perProc * (1 - R) + assaultDeal * R) * rate;   // 평소: 3초 쿨 슬롯이 버스트/어썰트 R:1-R 혼합
+            // [서펜트 어썰트] 100% 발동 액티브 창 동안엔 3초 쿨은 그대로(빈도 유지)지만 그 슬롯이 전부 어썰트(40% 게이트만 100%로).
+            Map<String, Object> ov = assaultActive(skills);
+            if (ov == null) return offVal;
+            double fullBase = "companionBasicAttack".equals(on) ? atkRate : ("companionAttack".equals(on) ? attackRate : 0);
+            double onRate = fullBase > 0 ? (cd > 0 ? Math.min(fullBase, 1.0 / cd) : fullBase) * condGate : rate;   // 창 중: 확률 100%
+            double onVal = assaultDeal * onRate;   // 어썰트만
+            double dur = Json.num(ov, "dur", 0), ocd = Json.num(ov, "cd", 0);
+            if (t >= 0) return activeAt("active", dur, ocd, t) ? onVal : offVal;   // 시뮬: 그 순간 창 여부
+            double u = uptimeOf("active", dur, ocd, W);                            // 해석식: 가동률 시간평균 블렌딩
+            return u * onVal + (1 - u) * offVal;
         }
         return perProc * rate;
+    }
+
+    /** [서펜트 어썰트] 100% 발동 액티브(enablesAssault100, 지속 중 버스트 슬롯을 어썰트로 전환) 중 학습된 것. 없으면 null. */
+    private Map<String, Object> assaultActive(List<Object> skills) {
+        for (Object o : skills) {
+            Map<String, Object> s = Json.asMap(o);
+            if (Json.bool(s, "enablesAssault100", false) && learned(s)) return s;
+        }
+        return null;
     }
 
     /** cond("OO 소환 중")이 가리키는 액티브의 가동률. 그 이름을 raw에 포함한 액티브를 찾아 uptimeOf 반환(못 찾으면 1). */
