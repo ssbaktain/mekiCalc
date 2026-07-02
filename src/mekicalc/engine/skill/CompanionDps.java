@@ -643,6 +643,86 @@ public final class CompanionDps {
     }
 
     /**
+     * 소환 중 동료가 <b>플레이어</b>에게 주는 버프의 범위(가동률 평균 아님). 딜 상세 최소/최대딜용.
+     * peak=true: 모든 플레이어 대상 버프를 최대치(전부 동시 ON·최대중첩)로 → 최대딜 기준.
+     * peak=false: <b>소환 내내 항상 켜져있는 상시 패시브</b>만 → 최소딜 기준(시간제·발동형 제외).
+     * @return {"buffs": Map&lt;stat,값&gt;, "recvBonus": 받피증(분수)}
+     */
+    public Map<String, Object> playerGiftRange(StatBlock player, boolean boss, boolean peak) {
+        Map<String, Object> buffs = new java.util.LinkedHashMap<>();
+        double recvSum = 0;
+        Map<String, Object> g = gradeData();
+        double W = window(player);
+        if (g != null && W > 0) {
+            double atkRate = 1 + player.get(ATK_SPEED) / 100.0;
+            for (Object so : Json.asList(g.get("skills"))) {
+                Map<String, Object> s = Json.asMap(so);
+                if (!learned(s)) continue;
+                String type = Json.str(s, "type", "");
+                boolean alwaysOn = "passive".equals(type);   // 상시 패시브(소환 내내 항상 활성)
+                recvSum += giftRecvRange(s, type, boss, peak, alwaysOn);
+                if (s.get("buffs") instanceof List)
+                    for (Object bo : Json.asList(s.get("buffs")))
+                        emitGiftRange(s, Json.asMap(bo), boss, peak, alwaysOn, false, (st, v) -> addD(buffs, st, v));
+                if (s.get("proc") instanceof Map) {
+                    Object pb = Json.asMap(s.get("proc")).get("buff");
+                    if (pb instanceof Map) emitGiftRange(s, Json.asMap(pb), boss, peak, alwaysOn, true, (st, v) -> addD(buffs, st, v));
+                }
+            }
+        }
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("buffs", buffs);
+        out.put("recvBonus", recvSum);
+        return out;
+    }
+
+    /** 피크/바닥 gift의 개별 버프 방출. peak=전부 최대치, floor=상시 패시브 직접버프만(발동형·시간제 제외). */
+    private void emitGiftRange(Map<String, Object> s, Map<String, Object> b, boolean boss,
+                               boolean peak, boolean alwaysOn, boolean isProc, BuffSink sink) {
+        if (!Json.bool(b, "used", false) || !condMet(b)) return;
+        String tgt = Json.str(b, "target", "");
+        if (!("player".equals(tgt) || "both".equals(tgt))) return;
+        if (isProc && !peak) return;        // 발동형은 상시 아님 → 최소딜에서 제외
+        if (!isProc && !peak && !alwaysOn) return;   // 최소딜: 상시 패시브 직접버프만
+        double base = Json.num(b, "value", 0);
+        if (Json.bool(b, "perHp10", false)) base *= 10;
+        double stacks = peakStacks(b, boss);   // 최대 중첩(피크=전부ON, 바닥=상시패시브 정상값)
+        sink.add(Json.str(b, "stat", ""), finalDmgStack(Json.str(b, "stat", ""), base, stacks, Json.bool(b, "perEnemy", false)));
+    }
+
+    /** 피크/바닥 gift의 받피증(RECV_DMG) 공유분. peak=전부, floor=상시 패시브만. */
+    private double giftRecvRange(Map<String, Object> s, String type, boolean boss, boolean peak, boolean alwaysOn) {
+        double sum = 0;
+        if (s.get("debuffs") instanceof List) {
+            for (Object dobj : Json.asList(s.get("debuffs"))) {
+                Map<String, Object> d = Json.asMap(dobj);
+                if (!Json.bool(d, "used", false) || !"RECV_DMG".equals(Json.str(d, "stat", ""))) continue;
+                if (Json.bool(d, "bossOnly", false) && !boss) continue;
+                if (!peak && !alwaysOn) continue;   // 최소딜: 상시 패시브 디버프만
+                sum += Json.num(d, "value", 0) * (boss ? Json.num(d, "bossMult", 1) : 1);
+            }
+        }
+        // 패시브 발동형 받피증(보우마 등)은 소환 내내 갱신 → 상시 취급(피크·바닥 모두 포함)
+        if ("passive".equals(type) && s.get("proc") instanceof Map) {
+            Object dbo = Json.asMap(s.get("proc")).get("debuff");
+            if (dbo instanceof Map) {
+                Map<String, Object> d = Json.asMap(dbo);
+                if (Json.bool(d, "used", false) && "RECV_DMG".equals(Json.str(d, "stat", "")))
+                    sum += Json.num(d, "value", 0) * (boss ? Json.num(d, "bossMult", 1) : 1);
+            }
+        }
+        return sum / 100.0;
+    }
+
+    /** 최대 중첩값(perEnemy는 보스 1·일반 max, stackPeriod 등은 최대). */
+    private static double peakStacks(Map<String, Object> b, boolean boss) {
+        if (!b.containsKey("maxStacks")) return 1;
+        double max = Json.num(b, "maxStacks", 1);
+        if (Json.bool(b, "perEnemy", false)) return boss ? 1 : max;
+        return max;
+    }
+
+    /**
      * 플레이어 스탯에 동료 선물 버프 적용. 공격력%는 거대한 기어 공퍼풀에 합산하면 묻히므로 <b>별도 곱버킷</b>(ATK_FLAT×(1+v/100))으로 처리
      * (플레이어 본인 스킬 공퍼와 동일 취급). 최종뎀=곱, 공속=DIMINISHING, 그 외=가산.
      */

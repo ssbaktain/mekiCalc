@@ -326,7 +326,7 @@ public final class CalcService {
         NightlordDps.SimContext ctxSolo = simCtx(art, b, enemyDebuff, 0);
         det.put("solo", stateMap(nd.basicHitStatsCtx(b, boss, seconds, ctxSolo), nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2]));
         if (comp != null) {
-            Map<String, Object> gift = comp.playerGift(b, boss);
+            Map<String, Object> gift = comp.playerGift(b, boss);        // 가동률 평균 — 평균딜·DPS용
             @SuppressWarnings("unchecked")
             Map<String, Object> giftBuffs = (Map<String, Object>) gift.get("buffs");
             double compAtkPct = giftBuffs.containsKey("ATK_PCT") ? ((Number) giftBuffs.remove("ATK_PCT")).doubleValue() : 0;
@@ -334,14 +334,17 @@ public final class CalcService {
             CompanionDps.applyGift(summonInput, giftBuffs);
             nd.setExternalAtkPct(compAtkPct);
             NightlordDps.SimContext ctxSummon = simCtx(art, b, enemyDebuff, 1);
-            double[] sumHit = nd.basicHitStatsCtx(summonInput, boss, seconds, ctxSummon);
+            double avgHit = nd.basicHitStatsCtx(summonInput, boss, seconds, ctxSummon)[2];   // 평균 = 동료·플레이어 버프 가동률평균
             double sumPlayer = nd.dpsSimulateBreakdown(summonInput, boss, seconds, ctxSummon)[2];
             nd.setExternalAtkPct(0);
+            // 최대딜 = 동료 버프 전부 ON + 플레이어 풀버프, 최소딜 = 동료 상시 패시브만 + 플레이어 무버프.
+            double maxHit = giftState(nd, b, boss, seconds, comp.playerGiftRange(b, boss, true),  art, enemyDebuff, 1);
+            double minHit = giftState(nd, b, boss, seconds, comp.playerGiftRange(b, boss, false), art, enemyDebuff, 0);
             double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
             double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;
             comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
             double compWin = comp.dpsBreakdown(inh, boss)[2];
-            det.put("summon", stateMap(sumHit, sumPlayer * recvScale + compWin));
+            det.put("summon", stateMap(new double[]{minHit, maxHit, avgHit}, sumPlayer * recvScale + compWin));
         }
         // 동료 카드·도넛용(기존 유지): 블렌드 DPS + 항목별 지분.
         double[] pp = blendPlayer(nd, b, boss, comp, uptime, Rp, seconds, art, enemyDebuff);
@@ -359,6 +362,23 @@ public final class CalcService {
         m.put("avg", safe(hit[2]));
         m.put("dps", safe(dps));
         return m;
+    }
+
+    /**
+     * 동료 선물(피크/바닥)을 적용한 상태의 평타 1타를 계산해 원하는 롤만 반환.
+     * idx: 0=최소딜(플레이어 무버프×최소롤), 1=최대딜(플레이어 풀버프×최대롤), 2=평균.
+     */
+    private double giftState(NightlordDps nd, StatBlock b, boolean boss, double seconds,
+                             Map<String, Object> gift, ArtifactEffects art, boolean enemyDebuff, int idx) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> gb = new LinkedHashMap<>((Map<String, Object>) gift.get("buffs"));
+        double atkPct = gb.containsKey("ATK_PCT") ? ((Number) gb.remove("ATK_PCT")).doubleValue() : 0;
+        StatBlock in = new StatBlock(b);
+        CompanionDps.applyGift(in, gb);
+        nd.setExternalAtkPct(atkPct);
+        double v = nd.basicHitStatsCtx(in, boss, seconds, simCtx(art, b, enemyDebuff, 1))[idx];
+        nd.setExternalAtkPct(0);
+        return v;
     }
 
     /**
