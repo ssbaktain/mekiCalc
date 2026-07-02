@@ -291,10 +291,11 @@ public final class NightlordDps {
         if (basic == null) return new double[]{0, 0, 0};
         double avg = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);   // fAvg(=평균 데미지범위) 내장
         double mn = bf.stats.get(MIN_DMG_MULT), mx = bf.stats.get(MAX_DMG_MULT);
-        double fAvg = (mn > mx) ? mn / 100.0 : (mn + mx) / 200.0;
+        // 최소>최대면 데미지범위가 최대뎀(천장)으로 고정 → min·max 모두 mx.
+        double fAvg = (mn > mx) ? mx / 100.0 : (mn + mx) / 200.0;
         if (fAvg <= 0) return new double[]{avg, avg, avg};
-        double min = avg * (mn / 100.0) / fAvg;
-        double max = avg * ((mn > mx ? mn : mx) / 100.0) / fAvg;
+        double min = avg * (Math.min(mn, mx) / 100.0) / fAvg;
+        double max = avg * (mx / 100.0) / fAvg;
         return new double[]{min, max, avg};
     }
 
@@ -315,9 +316,11 @@ public final class NightlordDps {
     private double basicAtRoll(Skill basic, Buffed bf, boolean boss, boolean useMax) {
         double base = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);
         double mn = bf.stats.get(MIN_DMG_MULT), mx = bf.stats.get(MAX_DMG_MULT);
-        double fAvg = (mn > mx) ? mn / 100.0 : (mn + mx) / 200.0;
+        // 최소>최대면 데미지범위가 최대뎀(천장)으로 고정 → 최소/최대 롤 모두 mx.
+        double fAvg = (mn > mx) ? mx / 100.0 : (mn + mx) / 200.0;
         if (fAvg <= 0) return base;
-        return base * ((useMax ? (mn > mx ? mn : mx) : mn) / 100.0) / fAvg;
+        double roll = useMax ? mx : Math.min(mn, mx);
+        return base * (roll / 100.0) / fAvg;
     }
 
     /** 버프 반영 평타 DPS. */

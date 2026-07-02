@@ -164,10 +164,10 @@ public final class DamageModel implements DealModel {
         double basicPct = v(b, BASIC_ATK_DMG); // 기본 공격 데미지%만 (스킬 데미지% 제외)
 
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
-        // 데미지범위: 최소·최대의 평균. 단 최소>최대면 데미지가 최소뎀으로 고정.
+        // 데미지범위: 최소·최대의 평균. 단 최소>최대면 데미지가 최대뎀(천장)으로 고정.
         double minMult = v(b, MIN_DMG_MULT);
         double maxMult = v(b, MAX_DMG_MULT);
-        double fRange = (minMult > maxMult) ? minMult / 100.0 : (minMult + maxMult) / 200.0;
+        double fRange = (minMult > maxMult) ? maxMult / 100.0 : (minMult + maxMult) / 200.0;
 
         double fFinal = 1 + v(b, FINAL_DMG) / 100.0;
         // 기본 공격 계수 = base × (1 + 레벨당증가 × 유효 스킬 레벨). 결과를 그대로 직접 곱함.
@@ -344,7 +344,7 @@ public final class DamageModel implements DealModel {
         double fStatProp = 1 + v(b, STAT_PROP_DMG) / 100.0;
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
         double minMult = v(b, MIN_DMG_MULT), maxMult = v(b, MAX_DMG_MULT);
-        double fRange = (minMult > maxMult) ? minMult / 100.0 : (minMult + maxMult) / 200.0;
+        double fRange = (minMult > maxMult) ? maxMult / 100.0 : (minMult + maxMult) / 200.0;
         double fFinal = 1 + v(b, FINAL_DMG) / 100.0;
         double target = 1 + (boss ? v(b, BOSS_DMG) : v(b, NORMAL_DMG)) / 100.0;
         return baseAtk * fDmg * fStatProp * fCrit * fRange * fFinal * target;
