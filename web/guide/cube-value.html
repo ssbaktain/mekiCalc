@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>큐브 잠재능력 기댓값 이해 - 딜 증가량·등장 확률·리롤 가치 | MekiCalc</title>
+  <meta name="description" content="메이플 키우기 큐브 잠재능력의 기댓값을 이해하는 법. 옵션의 딜 증가량과 등장 확률, 큐브 한 개당 기댓값, 리롤 가치, 우선순위를 정하는 기준을 정리했습니다." />
+  <meta property="og:title" content="큐브 잠재능력 기댓값 이해 | MekiCalc" />
+  <meta property="og:description" content="딜 증가량과 등장 확률을 함께 보는 큐브 기댓값의 개념과 우선순위 기준." />
+  <meta property="og:type" content="article" />
+  <link rel="canonical" href="https://mekicalc.com/guide/cube-value.html" />
+  <link rel="icon" href="/icon/mekicalc.ico" />
+  <link rel="apple-touch-icon" href="/icon/mekicalc.png" />
+  <link rel="stylesheet" href="/style.css" />
+  <meta name="google-adsense-account" content="ca-pub-5018626409439701" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5018626409439701" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/" title="홈으로">
+      <img class="brand-logo" src="/icon/mekicalc.png" alt="MekiCalc 로고" width="44" height="44" />
+      <div class="header-text">
+        <h1>MekiCalc</h1>
+        <p class="sub">메이플 키우기 스탯 효율 계산기</p>
+      </div>
+    </a>
+  </header>
+
+  <main>
+    <article class="guide">
+      <nav class="guide-crumb"><a href="/">← 계산기로 돌아가기</a></nav>
+      <h1>큐브 잠재능력 기댓값 이해</h1>
+      <p class="lead">큐브를 돌릴 때 "이 옵션이 좋은 건 알겠는데, 잘 안 뜨면 소용없잖아?"라는 고민을 하게 됩니다. 이 문서는 옵션의 <b>딜 증가량</b>과 <b>등장 확률</b>을 함께 보는 기댓값의 개념, 그리고 무엇부터 노릴지 정하는 기준을 설명합니다.</p>
+
+      <h2>잠재능력의 기본 구조</h2>
+      <p>큐브는 장비 부위의 잠재능력 옵션을 다시 굴리는 도구입니다. 부위와 등급에 따라 붙을 수 있는 옵션의 종류와 수치 범위가 달라지고, 각 줄에는 서로 다른 옵션이 확률적으로 등장합니다. 같은 "데미지%"라도 부위·등급·줄에 따라 뜰 확률과 수치가 다르기 때문에, 단순히 "어떤 옵션이 세다"만으로는 판단이 부족합니다.</p>
+      <p>잠재능력은 보통 윗잠(윗 잠재능력)과 아랫잠(아랫 잠재능력)으로 나뉘고, 각각 여러 줄로 구성됩니다. 줄마다 등장할 수 있는 옵션 풀이 정해져 있어서, 내가 노리는 옵션이 어느 줄에서 얼마의 확률로 나오는지에 따라 "그 세팅을 맞추는 난이도"가 결정됩니다. 그래서 잠재능력을 평가할 때는 옵션 하나가 아니라 <b>줄 전체가 어떤 조합으로 뜰지</b>를 함께 보는 것이 정확합니다.</p>
+
+      <h2>딜 증가량 ≠ 좋은 옵션</h2>
+      <p>어떤 옵션이 내 딜을 많이 올려준다고 해서 항상 "좋은 목표"인 것은 아닙니다. 두 가지를 같이 봐야 합니다.</p>
+      <ul>
+        <li><b>딜 증가량</b> — 그 옵션이 실제로 붙었을 때 내 딜이 몇 % 오르는가. 이 값은 <a href="/guide/stat-efficiency.html">현재 스탯</a>에 따라 달라집니다.</li>
+        <li><b>등장 확률</b> — 그 옵션(또는 그 수치 이상)이 실제로 뜰 가능성이 얼마나 되는가.</li>
+      </ul>
+      <p>딜 증가량이 아무리 커도 등장 확률이 극히 낮으면, 그 옵션 하나만 바라보고 큐브를 붓는 것은 비효율적일 수 있습니다. 반대로 증가량은 중간이지만 잘 뜨는 옵션이 실질적으로 더 이득인 경우도 많습니다.</p>
+
+      <h2>기댓값 — 둘을 하나로 합치기</h2>
+      <p>기댓값은 "큐브 한 개를 굴렸을 때 평균적으로 얻는 딜 증가"를 뜻합니다. 대략 <b>각 결과의 딜 증가량 × 그 결과가 나올 확률</b>을 모두 더한 값입니다. 이렇게 하면 "세지만 안 뜨는 옵션"과 "평범하지만 잘 뜨는 옵션"을 같은 잣대로 비교할 수 있습니다. MekiCalc의 <a href="/cube">큐브 기댓값</a> 화면은 부위·등급·슬롯별로 이 기댓값을 계산해, 어디에 큐브를 쓰는 게 가성비가 좋은지 보여줍니다. 정렬 기준을 딜 증가량 순·등장 확률 순·효율 순으로 바꿔 가며 보면, 같은 부위 안에서도 어떤 옵션을 목표로 삼는 게 합리적인지 감을 잡을 수 있습니다.</p>
+
+      <h2>간단한 예로 이해하기</h2>
+      <p>개념만 놓고 예를 들어 보겠습니다. 어떤 옵션 A는 뜨면 딜을 크게 올려주지만 등장 확률이 아주 낮고, 옵션 B는 상승폭은 A의 절반이지만 몇 배 더 자주 뜬다고 해봅시다. 큐브를 한 번 굴렸을 때 평균적으로 기대할 수 있는 이득은 "상승폭 × 확률"의 합으로 정해지므로, 이 경우 자주 뜨는 B 쪽이 기댓값에서 앞설 수 있습니다. 즉 "가장 센 옵션"이 아니라 "평균적으로 가장 이득인 결과"를 목표로 삼는 것이 큐브를 아끼는 길입니다. 물론 종결 세팅을 노리는 단계에서는 낮은 확률의 최상급 옵션을 감수하고 파는 선택이 맞을 때도 있으므로, 목표 수준에 따라 답이 달라집니다.</p>
+      <p>또 하나 자주 하는 실수는 "지금 딜에 안 좋은 옵션이 붙어 있으니 무조건 다시 굴린다"는 판단입니다. 다시 굴렸을 때 더 나빠질 가능성과 더 좋아질 가능성을 함께 봐야 하며, 이 둘을 합친 <b>기대 변화량</b>이 양(+)일 때만 리롤이 이득입니다. MekiCalc은 이런 비교를 현재 스탯 기준으로 자동으로 처리합니다.</p>
+
+      <h2>리롤 가치와 우선순위</h2>
+      <p>이미 괜찮은 옵션이 붙어 있다면, 큐브를 한 번 더 굴려서 더 나아질 기대 이득은 점점 줄어듭니다. 반대로 지금 옵션이 아쉽다면 한 번의 리롤로 얻을 기대 이득이 큽니다. 이 "1회 리롤의 기대 가치"까지 고려하면, 여러 부위 중 <b>지금 어디를 굴리는 게 가장 이득인지</b> 순위를 매길 수 있습니다.</p>
+      <p>MekiCalc의 <a href="/cube/recommend">우선순위 추천</a>은 딜 증가량, 등장 확률, 1회 리롤 비용을 종합한 "최종 효율" 기준으로 정렬해, 지금 스탯에서 무엇부터 손대는 게 좋은지 알려줍니다. 목표 수준(가성비부터 종결까지)을 슬라이더로 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p>
+
+      <h2>정리</h2>
+      <ul>
+        <li>옵션은 <b>딜 증가량</b>과 <b>등장 확률</b>을 함께 봐야 한다.</li>
+        <li><b>기댓값</b>은 이 둘을 하나로 합쳐 큐브 한 개의 평균 이득을 나타낸다.</li>
+        <li>이미 좋은 옵션이 붙을수록 <b>리롤 가치</b>는 줄어든다.</li>
+        <li>정답은 <b>현재 스탯</b>에 따라 달라지므로, 내 값으로 직접 계산하는 게 가장 정확하다.</li>
+      </ul>
+
+      <p class="guide-more"><a href="/cube">→ 큐브 기댓값 계산하기</a> · <a href="/guide/stat-efficiency.html">스탯 효율 원리 읽기</a></p>
+    </article>
+  </main>
+
+  <footer>
+    <p class="footer-disclaimer">MekiCalc은 비공식 팬 사이트입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
+    <p class="footer-links"><a href="/">계산기</a> · <a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:ssbaktain@gmail.com">문의</a></p>
+    <p class="footer-copy">© 2026 MekiCalc</p>
+  </footer>
+</body>
+</html>

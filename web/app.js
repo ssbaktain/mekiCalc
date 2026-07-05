@@ -127,7 +127,7 @@ const GRADE_COLOR = {
 function gradeColor(code) { return GRADE_COLOR[code] || "var(--text)"; }
 
 // 부위 표시 순서(데스크톱 PART_ORDER와 동일). 모든 부위 드롭다운·카드에 통일 적용.
-const PART_ORDER = ["모자", "망토", "상의", "어깨장식", "하의", "벨트", "장갑", "신발", "반지", "목걸이", "눈장식", "얼굴장식", "귀고리"];
+const PART_ORDER = ["모자", "망토", "상의", "어깨장식", "하의", "벨트", "장갑", "신발", "반지", "반지2", "목걸이", "눈장식", "얼굴장식", "귀고리"];
 function partIdx(p) { const i = PART_ORDER.indexOf(p); return i < 0 ? 999 : i; }
 function sortParts(arr) { return arr.slice().sort((a, b) => partIdx(a) - partIdx(b)); }
 function gradeText(code) { return `<span class="grade-text" style="color:${gradeColor(code)}">${gradeKo(code)}</span>`; }
@@ -303,25 +303,21 @@ async function getSlots(part, grade) {
 // 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
-  { label: "예상 데미지", panel: "home" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입
+  { label: "예상 데미지", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입
   { label: "프리셋", items: [
-    { label: "스탯", panel: "presets", sub: "stat" },
-    { label: "스킬", panel: "presets", sub: "buff" },
-    { label: "동료", panel: "presets", sub: "ally" },
-    { label: "유물", panel: "presets", sub: "relic" },
-    { label: "큐브", panel: "presets", sub: "cube" },
-    { label: "설정", panel: "presets", sub: "settings" },
+    { label: "스탯", panel: "presets", sub: "stat", path: "/presets/stat" },
+    { label: "스킬", panel: "presets", sub: "buff", path: "/presets/skill" },
+    { label: "동료", panel: "presets", sub: "ally", path: "/presets/ally" },
+    { label: "유물", panel: "presets", sub: "relic", path: "/presets/relic" },
+    { label: "큐브", panel: "presets", sub: "cube", path: "/presets/cube" },
+    { label: "설정", panel: "presets", sub: "settings", path: "/presets/settings" },
   ]},
   { label: "큐브", items: [
-    { label: "큐브 기댓값", panel: "cube" },
-    { label: "옵션 비교", panel: "optcompare" },
-    { label: "내 옵션 비교/변경", panel: "compare" },
-    { label: "우선순위 추천", panel: "recommend" },
+    { label: "큐브 기댓값", panel: "cube", path: "/cube" },
+    { label: "옵션 비교", panel: "optcompare", path: "/cube/option-compare" },
+    { label: "내 옵션 비교/변경", panel: "compare", path: "/cube/my-options" },
+    { label: "우선순위 추천", panel: "recommend", path: "/cube/recommend" },
   ]},
-  { label: "유물", items: [{ label: "유물 잠재", panel: "soon", soon: "유물 잠재" }] },
-  { label: "어빌리티", items: [{ label: "어빌리티 효율", panel: "soon", soon: "어빌리티" }] },
-  { label: "용사의 여정", items: [{ label: "용사의 여정", panel: "soon", soon: "용사의 여정" }] },
-  { label: "장비 비교", items: [{ label: "장비 비교", panel: "soon", soon: "장비 비교" }] },
 ];
 const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
 
@@ -334,14 +330,69 @@ function showPanel(name) {
   if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
 }
 
-// 홈(=예상 데미지 탭)으로 이동. 로고 클릭·기본 진입 공용. 첫 메뉴(예상 데미지)를 활성표시.
-function goHome() {
-  if (!canLeaveEditors()) return;
+// ──────────────────── 라우팅(SPA) ────────────────────
+// 각 탭에 진짜 URL 부여: 크롤러가 발견·색인 가능하고, 뒤로가기·북마크·공유도 된다.
+// 메뉴 UX는 그대로 두되(버튼), 클릭을 navigate로 태워 주소를 갱신하고, 직접 URL 진입은 서버 SPA 폴백 + 초기 라우트가 처리.
+let routeItemEls = new Map();   // path → 데스크톱 최상위 .menu-item(활성 표시용)
+
+function allLeaves() {
+  const out = [];
+  for (const m of MENU) { if (m.items) for (const it of m.items) out.push(it); else out.push(m); }
+  return out;
+}
+function leafByPath(path) { return allLeaves().find((l) => l.path === path) || null; }
+
+// 라우트별 문서 제목·설명(크롤러가 렌더 시 반영, 유저 탭 제목도 갱신).
+const ROUTE_META = {
+  "/":                    ["MekiCalc - 메이플 키우기 스탯 효율 계산기", "메이플 키우기 스탯·딜 효율 계산기. 예상 데미지·DPS, 큐브 잠재능력 기댓값, 동료 기여를 현재 스탯 기준으로 계산합니다."],
+  "/cube":                ["큐브 잠재능력 기댓값 - MekiCalc", "메이플 키우기 큐브 잠재능력 옵션별 딜 증가량과 큐브 한 개당 기댓값을 계산합니다."],
+  "/cube/option-compare": ["큐브 옵션 비교 - MekiCalc", "두 큐브 잠재 옵션 조합의 딜 기여를 나란히 비교합니다."],
+  "/cube/my-options":     ["내 큐브 옵션 비교·변경 - MekiCalc", "현재 장착 큐브 옵션과 바꿀 옵션의 딜 차이를 비교하고 반영합니다."],
+  "/cube/recommend":      ["큐브 우선순위 추천 - MekiCalc", "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."],
+};
+function applyRouteMeta(path) {
+  const m = ROUTE_META[path];
+  document.title = m ? m[0] : "MekiCalc - 메이플 키우기 스탯 효율 계산기";
+  const desc = document.querySelector('meta[name="description"]');
+  if (desc && m) desc.setAttribute("content", m[1]);
+  setRobots((path || "").startsWith("/presets"));   // 프리셋(개인 데이터) 화면은 색인 제외
+  const canon = document.querySelector('link[rel="canonical"]');
+  if (canon) canon.setAttribute("href", "https://mekicalc.com" + (path && path !== "/" ? path : "/"));
+}
+function setRobots(noindex) {
+  let tag = document.querySelector('meta[name="robots"]');
+  if (noindex) {
+    if (!tag) { tag = document.createElement("meta"); tag.name = "robots"; document.head.appendChild(tag); }
+    tag.setAttribute("content", "noindex");
+  } else if (tag) { tag.remove(); }
+}
+function syncMobileActive(leaf) {
+  if (typeof mobileMenuEls !== "undefined") mobileMenuEls.forEach((x) => x.btn.classList.toggle("active", x.leaf === leaf));
+}
+
+// 실제 패널 적용(공용). push=true면 주소창 URL도 갱신(pushState).
+function applyLeaf(leaf, item, push) {
+  const staysInPresets = leaf.panel === "presets" && !leaf.sub;
+  if (!staysInPresets && !canLeaveEditors()) return false;
   closeMenus();
-  const first = document.querySelector("#menubar .menu-item");
-  if (first) setActiveMenu(first);
-  if (typeof mobileMenuEls !== "undefined") mobileMenuEls.forEach((x) => x.btn.classList.toggle("active", x.leaf === MENU[0]));
-  showPanel("home");
+  item = item || routeItemEls.get(leaf.path);
+  if (item) setActiveMenu(item);
+  syncMobileActive(leaf);
+  showPanel(leaf.panel);
+  if (leaf.sub) selectSub(leaf.sub);
+  applyRouteMeta(leaf.path);
+  if (push && leaf.path) history.pushState({ p: leaf.path }, "", leaf.path);
+  return true;
+}
+// 주소(path)로 이동. push=false는 초기 진입·뒤로가기(주소 안 바꿈).
+function navigate(path, push) {
+  const leaf = leafByPath(path) || MENU[0];
+  applyLeaf(leaf, null, push);
+}
+
+// 홈(=예상 데미지 탭)으로 이동. 로고 클릭·기본 진입 공용.
+function goHome() {
+  if (!applyLeaf(MENU[0], null, true)) return;
   window.scrollTo({ top: 0 });
 }
 
@@ -370,16 +421,8 @@ function setActiveMenu(item) {
   item.classList.add("active");
 }
 
-function selectLeaf(leaf, item) {
-  // 프리셋 패널(현재 서브탭 유지)로 머무는 이동이 아니면, 미저장 변경 가드.
-  const staysInPresets = leaf.panel === "presets" && !leaf.sub;
-  if (!staysInPresets && !canLeaveEditors()) return;
-  closeMenus();
-  setActiveMenu(item);
-  if (leaf.panel === "soon") { $("soon-title").textContent = (leaf.soon || "기능") + " — 준비 중"; showPanel("soon"); }
-  else showPanel(leaf.panel);
-  if (leaf.sub) selectSub(leaf.sub);
-}
+// 메뉴 클릭 진입점 → 공용 라우터로 위임(주소 갱신 포함).
+function selectLeaf(leaf, item) { applyLeaf(leaf, item, true); }
 
 // 프리셋 패널 안의 스탯/큐브 서브탭 선택.
 function selectSub(name) {
@@ -440,7 +483,12 @@ function buildMenu() {
   const left = document.createElement("div"); left.className = "menu-group";
   const right = document.createElement("div"); right.className = "menu-group";
   const itemEls = [];
-  for (const m of MENU) { const el = makeMenuItem(m); left.appendChild(el); itemEls.push([m, el]); }
+  routeItemEls = new Map();
+  for (const m of MENU) {
+    const el = makeMenuItem(m); left.appendChild(el); itemEls.push([m, el]);
+    if (m.items) for (const it of m.items) routeItemEls.set(it.path, el);
+    else if (m.path) routeItemEls.set(m.path, el);
+  }
   for (const m of MENU_RIGHT) right.appendChild(makeMenuItem(m));
   bar.appendChild(left);
   bar.appendChild(right);
@@ -514,6 +562,19 @@ function buildMobileMenu(itemEls) {
 }
 document.addEventListener("click", closeMenus);
 buildMenu();
+
+// 뒤로/앞으로 가기 → 해당 라우트 패널로(주소는 브라우저가 이미 바꿈).
+window.addEventListener("popstate", () => navigate(location.pathname, false));
+// 크롤러 발견용 내부 링크(푸터 사이트맵 등) — 앱 라우트는 새로고침 없이 이동, 외부/정적 페이지는 기본 동작.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a.route-link");
+  if (!a) return;
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;   // 새 탭 등은 기본 동작 유지
+  const path = a.getAttribute("href");
+  if (!path || !leafByPath(path)) return;   // 라우트가 아니면(정적 guide 등) 기본 이동
+  e.preventDefault();
+  navigate(path, true);
+});
 
 // 브랜드(로고+타이틀) 클릭 → 홈 대시보드로.
 const brandEl = document.querySelector("header .brand");
@@ -2576,4 +2637,5 @@ async function loadMeta(pre) {
     suppressSync = false;        // 이제부터 사용자 편집은 계정에 동기화
   }
   refreshSkillData();   // 스킬 탭 목록 미리 받아 캐시 → 첫 탭 클릭 시 '불러오는 중' 없이 즉시 표시
+  navigate(location.pathname, false);   // 직접 URL 진입(예: /cube)이면 해당 패널로. '/'면 홈 유지(멱등).
 })();

@@ -8,6 +8,7 @@
   <meta property="og:title" content="MekiCalc - 메이플 키우기 스탯 효율 계산기" />
   <meta property="og:description" content="예상 데미지·큐브 기댓값·동료·스테이지별 절대 데미지를 계산하는 메이플 키우기 도구." />
   <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://mekicalc.com/" />
   <link rel="icon" href="/icon/mekicalc.ico" />
   <link rel="apple-touch-icon" href="/icon/mekicalc.png" />
   <link rel="stylesheet" href="/style.css" />
@@ -45,6 +46,19 @@
     <!-- 홈 (로고 클릭으로 진입) — 예상 데미지 대시보드 -->
     <section id="panel-home" class="panel">
       <p id="status" class="status home-status"></p>
+
+      <details class="panel-about">
+        <summary>예상 데미지, 어떻게 보나요?</summary>
+        <div class="about-body">
+          <p>이 화면은 현재 적용된 프리셋(스탯·스킬·동료·유물)을 기준으로 계산한 <b>예상 데미지</b>를 보여줍니다. 1타 평균·최소·최대 데미지와 전투 시뮬레이션 기반 DPS, 플레이어와 동료의 딜 비중을 함께 확인할 수 있습니다. 좌측은 동료 미소환, 우측은 동료 소환 상태이며, 최소딜은 시간제 버프가 모두 꺼진 최소 데미지, 최대딜은 버프가 모두 켜지고 데미지 배율이 최대로 뜬 상황을 뜻합니다. 스킬 프리셋에서 체크한 스킬·버프만 계산에 반영되니 실제 사용하는 구성에 맞춰 두세요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p>
+        </div>
+      </details>
+
+      <!-- 데미지 정확도 경고(인포와 구분·최상단 강조). 절대 수치가 아니라 비율만 참고. -->
+      <div class="deal-warning" role="note">
+        <span class="dw-icon" aria-hidden="true">⚠️</span>
+        <span><b>표시 데미지는 실제 인게임 수치와 일치하지 않습니다.</b> 절대 수치가 아니라 옵션·세팅 간 <b>상대적 비율(효율)</b>을 비교하는 용도로만 참고하세요.</span>
+      </div>
 
       <!-- 대상 선택: 챕터/스테이지. 보스 스테이지=보스몹 계산, 일반 스테이지=일반몹 계산(해당 몹 방어력 반영) -->
       <div id="target-box" class="target-select" hidden>
@@ -87,6 +101,10 @@
 
       <!-- 스탯 -->
       <div id="sub-stat" class="subpanel">
+        <details class="panel-about">
+          <summary>스탯 입력은 어떻게 하나요?</summary>
+          <div class="about-body"><p>게임 내 스탯 창의 값(공격력·데미지%·크리티컬 확률/데미지·최소/최대 데미지 배율·공격 속도·최종 데미지 등)을 그대로 입력하는 화면입니다. 직업을 고르면 스킬 계수와 마스터리가 내부 계산에 자동 반영되고, 입력값은 이 브라우저에 자동 저장됩니다. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p></div>
+        </details>
         <div class="card">
           <div class="card-head">
             <h2>스탯 입력</h2>
@@ -115,6 +133,10 @@
 
       <!-- 큐브 -->
       <div id="sub-cube" class="subpanel" hidden>
+        <details class="panel-about">
+          <summary>큐브 입력은 무엇인가요?</summary>
+          <div class="about-body"><p>부위별로 현재 장착한 큐브 잠재 옵션을 입력하는 화면입니다. 여기 입력한 큐브가 <a class="route-link" href="/cube">큐브 기댓값</a>·<a class="route-link" href="/cube/my-options">내 옵션 비교</a>·<a class="route-link" href="/cube/recommend">우선순위 추천</a> 계산의 기준이 되며, 이 브라우저에 자동 저장됩니다.</p></div>
+        </details>
         <div class="card">
           <div class="card-head">
             <h2>큐브 입력</h2>
@@ -141,6 +163,10 @@
 
       <!-- 버프 -->
       <div id="sub-buff" class="subpanel" hidden>
+        <details class="panel-about">
+          <summary>스킬 선택은 무엇인가요?</summary>
+          <div class="about-body"><p>예상 데미지·추천·평가에 반영할 딜 스킬과 버프 스킬을 고르는 화면입니다. 체크한 스킬만 계산에 들어가므로 실제 사용하는 구성에 맞춰 두세요. 표시 수치는 마스터리 미반영이며, 마스터리(피해·쿨감·대상 수 등)는 레벨에 따라 내부 계산에 자동 적용됩니다.</p></div>
+        </details>
         <div class="card">
           <div class="card-head">
             <h2>스킬 선택</h2>
@@ -172,6 +198,10 @@
 
       <!-- 동료 -->
       <div id="sub-ally" class="subpanel" hidden>
+        <details class="panel-about">
+          <summary>동료 입력은 무엇인가요?</summary>
+          <div class="about-body"><p>메인 동료의 종류·등급·레벨·계승 비율을 입력하는 화면입니다. 서브 동료와 장착 효과는 이미 스탯 입력에 포함되므로 메인 동료만 넣으면 됩니다. 입력값은 예상 데미지의 동료 소환 기여도 계산에 쓰입니다.</p></div>
+        </details>
         <div class="card">
           <div class="card-head"><h2>동료 (메인)</h2></div>
           <div class="preset-bar">
@@ -189,6 +219,10 @@
 
       <!-- 유물 -->
       <div id="sub-relic" class="subpanel" hidden>
+        <details class="panel-about">
+          <summary>유물 입력은 무엇인가요?</summary>
+          <div class="about-body"><p>보유 유물의 각성도를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위쪽 장착에서 고른 유물만 예상 데미지에 반영됩니다. 뱃지로 계산 방식이 구분됩니다 — 딜 반영(조건/트리거 유물), 선반영·컨텐츠 전용·생존(딜 기여 0, 스탯 프리셋에 이미 포함).</p></div>
+        </details>
         <div class="card">
           <div class="card-head"><h2>유물</h2></div>
           <div class="preset-bar">
@@ -216,6 +250,10 @@
 
       <!-- 설정 -->
       <div id="sub-settings" class="subpanel" hidden>
+        <details class="panel-about">
+          <summary>설정에는 무엇이 있나요?</summary>
+          <div class="about-body"><p>프리셋 내보내기/불러오기(다른 기기로 세팅 이동), 계산이 안 되는 스탯(방어 관통력·쿨감 등)의 딜 환산율 직접 지정, 우선순위 추천에서 고려할 옵션과 허용 범위 설정을 모아둔 화면입니다.</p></div>
+        </details>
         <div class="card" id="account-card" hidden>
           <h2>계정</h2>
           <div id="account-body"></div>
@@ -268,6 +306,10 @@
 
     <!-- 큐브 기댓값 -->
     <section id="panel-cube" class="panel" hidden>
+      <details class="panel-about">
+        <summary>큐브 기댓값이란?</summary>
+        <div class="about-body"><p>큐브 잠재능력의 각 옵션이 <b>내 딜을 몇 % 올려주는지</b>, 그리고 옵션의 등장 확률까지 함께 고려한 <b>큐브 한 개당 기댓값</b>을 계산합니다. 딜 증가량은 <b>현재 스탯</b>을 기준으로 하므로, 같은 옵션이라도 사람마다·부위마다 순위가 달라집니다. 예를 들어 크리티컬 배수가 이미 높은 캐릭터는 크리티컬 옵션의 한계 효율이 낮아지고, 대신 데미지%나 최대/최소 데미지% 쪽이 더 이득일 수 있습니다. 자세한 개념은 <a href="/guide/cube-value.html">큐브 잠재능력 기댓값 이해</a>를 참고하세요.</p></div>
+      </details>
       <div class="card">
         <div class="controls">
           <label class="ctl">부위<select id="ev-part"></select></label>
@@ -299,6 +341,10 @@
 
     <!-- 옵션 비교 (좌/우 자유 선택) -->
     <section id="panel-optcompare" class="panel" hidden>
+      <details class="panel-about">
+        <summary>옵션 비교는 어떻게 쓰나요?</summary>
+        <div class="about-body"><p>서로 다른 두 큐브 잠재 옵션 조합을 좌우에 놓고, 어느 쪽이 현재 스탯에서 딜에 더 유리한지 나란히 비교합니다. "데미지% 3줄"과 "크리 데미지% + 최대 데미지% 조합"처럼 성격이 다른 세팅을 직접 견줘보고 싶을 때 사용하세요. 결과는 각 옵션의 딜 기여와 두 조합의 차이를 함께 보여줍니다.</p></div>
+      </details>
       <div class="card">
         <div class="controls">
           <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
@@ -330,6 +376,10 @@
 
     <!-- 우선순위 추천 -->
     <section id="panel-recommend" class="panel" hidden>
+      <details class="panel-about">
+        <summary>우선순위 추천은 어떻게 정해지나요?</summary>
+        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여줍니다. 단순 딜 증가량뿐 아니라 옵션의 등장 확률과 1회 리롤 비용까지 종합한 "최종 효율" 기준으로도 정렬할 수 있어, 실제 큐브를 돌릴 때의 가성비를 판단하는 데 도움이 됩니다. 딜 순위 슬라이더로 목표 수준(가성비 ~ 종결)을 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p></div>
+      </details>
       <div class="card">
         <div class="controls">
           <label class="ctl">정렬
@@ -350,7 +400,7 @@
             <span class="slider-val"><b id="rc-slider-val">0</b> / <span id="rc-slider-max">0</span></span>
           </div>
           <input type="range" id="rc-slider" min="0" max="0" value="0" />
-          <div class="slider-scale"><span>← 쉬움 (낮은 순위)</span><span>종결 (높은 순위) →</span></div>
+          <div class="slider-scale"><span>← 가성비 (낮은 순위)</span><span>종결 (높은 순위) →</span></div>
         </div>
         <p id="rc-status" class="status"></p>
         <div id="rc-list"></div>
@@ -359,6 +409,10 @@
 
     <!-- 내 옵션 비교/변경 -->
     <section id="panel-compare" class="panel" hidden>
+      <details class="panel-about">
+        <summary>내 옵션 비교·변경은 무엇인가요?</summary>
+        <div class="about-body"><p>현재 장착한 큐브 옵션과 바꾸려는 옵션의 <b>딜 차이</b>를 계산해, 실제로 갈아탈 가치가 있는지 판단합니다. 지금 세팅을 왼쪽에 두고 가정할 옵션을 오른쪽에 입력하면 변경 시 딜이 얼마나 오르거나 내리는지 바로 확인할 수 있고, 마음에 들면 그 옵션을 현재 큐브 프리셋에 그대로 반영할 수도 있습니다.</p></div>
+      </details>
       <div class="card">
         <div class="controls">
           <label class="ctl">부위<select id="cmp-part"></select></label>
@@ -376,15 +430,6 @@
       </div>
     </section>
 
-    <!-- 준비 중 (유물 · 어빌리티 등) -->
-    <section id="panel-soon" class="panel" hidden>
-      <div class="card soon-card">
-        <div class="soon-icon">🚧</div>
-        <h2 id="soon-title">준비 중</h2>
-        <p class="status">이 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p>
-      </div>
-    </section>
-
     <!-- 하단 배너 광고 자리. 승인 후: hidden 제거 + 아래 ins의 data-ad-client/slot 채우고 주석 해제. -->
     <div class="ad-slot ad-bottom" hidden>
       <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0000000000" data-ad-format="auto" data-full-width-responsive="true"></ins>
@@ -393,6 +438,22 @@
   </main>
 
   <footer>
+    <nav class="footer-nav" aria-label="사이트 메뉴">
+      <div class="fn-group">
+        <span class="fn-title">계산기</span>
+        <a class="route-link" href="/">예상 데미지</a>
+        <a class="route-link" href="/cube">큐브 기댓값</a>
+        <a class="route-link" href="/cube/option-compare">옵션 비교</a>
+        <a class="route-link" href="/cube/my-options">내 옵션 비교·변경</a>
+        <a class="route-link" href="/cube/recommend">우선순위 추천</a>
+      </div>
+      <div class="fn-group">
+        <span class="fn-title">가이드</span>
+        <a href="/guide/how-to.html">사용법 · FAQ</a>
+        <a href="/guide/stat-efficiency.html">스탯 효율 원리</a>
+        <a href="/guide/cube-value.html">큐브 잠재능력 기댓값 이해</a>
+      </div>
+    </nav>
     <p class="footer-disclaimer">MekiCalc은 비공식 팬 사이트입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
     <p class="footer-links"><a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:ssbaktain@gmail.com">문의</a></p>
     <p class="footer-copy">© 2026 MekiCalc · 프리셋·설정은 이 브라우저(로그인 시 계정)에 저장됩니다.</p>

@@ -440,9 +440,22 @@ public final class WebServer {
             String path = ex.getRequestURI().getPath();
             if (path.equals("/") || path.isEmpty()) path = "/index.html";
             // 경로 탈출 방지: web 디렉터리 밖으로 나가지 못하게 정규화 후 검증.
+            Path root = webDir.normalize();
             Path target = webDir.resolve("." + path).normalize();
-            if (!target.startsWith(webDir.normalize()) || !Files.isRegularFile(target)) {
+            boolean safe = target.startsWith(root);
+            // SPA 라우팅 지원: 실제 파일이 없을 때
+            //   1) "<path>.html" 이 있으면 그걸로(클린 URL: /guide/how-to → guide/how-to.html)
+            //   2) 확장자 없는 경로면 index.html 폴백(클라 라우터가 /cube 등 패널 표시)
+            //   3) 그 외(실제 자산 .png 등 진짜 누락)는 아래에서 404
+            if (safe && !Files.isRegularFile(target)) {
+                Path html = webDir.resolve("." + path + ".html").normalize();
+                String last = path.substring(path.lastIndexOf('/') + 1);
+                if (html.startsWith(root) && Files.isRegularFile(html)) target = html;
+                else if (!last.contains(".")) target = root.resolve("index.html");
+            }
+            if (!safe || !Files.isRegularFile(target)) {
                 byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
+                ex.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
                 ex.sendResponseHeaders(404, nf.length);
                 try (OutputStream os = ex.getResponseBody()) { os.write(nf); }
                 return;
@@ -506,6 +519,7 @@ public final class WebServer {
         if (n.endsWith(".js")) return "text/javascript; charset=utf-8";
         if (n.endsWith(".css")) return "text/css; charset=utf-8";
         if (n.endsWith(".json")) return "application/json; charset=utf-8";
+        if (n.endsWith(".xml")) return "application/xml; charset=utf-8";
         if (n.endsWith(".svg")) return "image/svg+xml";
         if (n.endsWith(".png")) return "image/png";
         if (n.endsWith(".ico")) return "image/x-icon";

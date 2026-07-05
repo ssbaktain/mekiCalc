@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>스탯 효율 원리 - 데미지%·크리·최대/최소 데미지 중 뭘 챙길까 | MekiCalc</title>
+  <meta name="description" content="메이플 키우기에서 데미지%, 크리티컬 데미지, 최대·최소 데미지 배율 중 무엇을 챙기는 게 이득인지 결정하는 스탯 효율의 원리. 한계 효율이 현재 스탯에 따라 달라지는 이유를 곱연산 구조로 설명합니다." />
+  <meta property="og:title" content="스탯 효율 원리 - 뭘 챙기는 게 이득일까 | MekiCalc" />
+  <meta property="og:description" content="곱연산 구조로 보는 스탯 한계 효율. 왜 사람마다 챙길 옵션의 순위가 다른지 설명합니다." />
+  <meta property="og:type" content="article" />
+  <link rel="canonical" href="https://mekicalc.com/guide/stat-efficiency.html" />
+  <link rel="icon" href="/icon/mekicalc.ico" />
+  <link rel="apple-touch-icon" href="/icon/mekicalc.png" />
+  <link rel="stylesheet" href="/style.css" />
+  <meta name="google-adsense-account" content="ca-pub-5018626409439701" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5018626409439701" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/" title="홈으로">
+      <img class="brand-logo" src="/icon/mekicalc.png" alt="MekiCalc 로고" width="44" height="44" />
+      <div class="header-text">
+        <h1>MekiCalc</h1>
+        <p class="sub">메이플 키우기 스탯 효율 계산기</p>
+      </div>
+    </a>
+  </header>
+
+  <main>
+    <article class="guide">
+      <nav class="guide-crumb"><a href="/">← 계산기로 돌아가기</a></nav>
+      <h1>스탯 효율 원리 — 무엇을 챙기는 게 이득일까</h1>
+      <p class="lead">"데미지%를 올릴까, 크리티컬 데미지를 올릴까, 최대·최소 데미지 배율을 올릴까?" 이 질문의 답은 사람마다 다릅니다. 이 문서는 그 답이 왜 <b>현재 스탯</b>에 따라 갈리는지, 그리고 MekiCalc이 그 순위를 어떻게 계산하는지 설명합니다.</p>
+
+      <h2>데미지는 여러 배수의 곱이다</h2>
+      <p>메이플 키우기의 한 방 데미지는 대략 여러 요소의 <b>곱</b>으로 이루어집니다. 공격력, 데미지% 계열, 크리티컬로 인한 기대 배수, 최소·최대 데미지 배율로 정해지는 데미지 범위, 최종 데미지, 그리고 대상(방어력) 보정 등이 서로 곱해집니다. 실제 전투에서는 여기에 스킬 계수와 사용 순서(로테이션), 동료의 타격이 얹혀서 총 딜이 만들어집니다.</p>
+      <p>이걸 아주 단순하게 쓰면 다음과 같습니다.</p>
+      <p style="text-align:center; color:var(--muted);"><b>전체 딜 = G(스탯) × R(로테이션·스킬 구성·동료 타이밍)</b></p>
+      <p>여기서 G는 스탯만으로 정해지는 배수들의 곱이고, R은 "어떤 스킬을 어떤 순서로 쓰고 동료가 언제 때리는가"에 해당하는 부분입니다.</p>
+
+      <h2>왜 글로벌 스탯 효율은 로테이션과 무관할까</h2>
+      <p>어떤 스탯 <i>s</i>가 모든 타격에 똑같이 곱해지는 <b>글로벌 곱연산 스탯</b>(예: 데미지%, 공격력, 최종 데미지)이라고 해봅시다. 이 스탯을 조금 올렸을 때 전체 딜이 몇 % 오르는지는, 곱 구조에서 R 부분이 그대로 <b>약분</b>되어 사라집니다. 즉 "데미지%를 1 올리면 딜이 몇 % 오르는가"라는 물음의 답은 로테이션이나 동료 구성이 어떻든 <b>거의 동일</b>합니다.</p>
+      <p>이게 MekiCalc이 자신 있게 말할 수 있는 부분입니다. 스킬 순서를 완벽히 몰라도, 동료 절대 데미지를 정확히 몰라도, <b>글로벌 스탯끼리의 효율 비교</b>는 안정적으로 맞습니다. 반대로 "동료가 전체 딜의 정확히 몇 %인가" 같은 절대 기여도는 R을 정확히 알아야 해서 근사치가 됩니다. 그래서 이 도구는 절대 숫자보다 <b>효율 비교</b>에 무게를 둡니다.</p>
+
+      <h2>그런데 왜 사람마다 순위가 다를까</h2>
+      <p>모든 스탯이 서로 독립적으로 곱해지기만 한다면 순위는 고정일 것입니다. 하지만 몇몇 스탯은 <b>같은 배수 안에서 서로 경쟁</b>합니다. 대표적으로 크리티컬이 그렇습니다.</p>
+      <ul>
+        <li><b>크리티컬 확률</b>은 100%에 가까워질수록 추가 1%의 가치가 급격히 떨어집니다. 이미 크리가 거의 항상 터지는 캐릭터에게 크리 확률은 거의 무의미해집니다.</li>
+        <li><b>크리티컬 데미지</b>는 크리가 자주 터질수록 값어치가 커집니다. 크리 확률이 낮으면 크리 데미지도 빛을 못 봅니다.</li>
+        <li><b>최대·최소 데미지 배율</b>은 데미지의 범위(폭)를 정합니다. 평균적으로는 이 범위의 중간값이 곱해지는 효과라, 다른 배수들과의 균형에 따라 상대적 가치가 달라집니다.</li>
+      </ul>
+      <p>어떤 배수가 이미 크게 쌓여 있으면, 그 배수를 더 키우는 것보다 <b>아직 작은 다른 배수</b>를 키우는 편이 전체 곱을 더 많이 늘립니다. 이것이 "한계 효율은 현재 상태에 의존한다"는 말의 뜻입니다. 그래서 A 캐릭터에겐 데미지%가 최고였어도, 크리 데미지가 낮은 B 캐릭터에겐 크리 데미지가 더 이득일 수 있습니다.</p>
+
+      <h2>MekiCalc은 이걸 어떻게 계산하나</h2>
+      <p>MekiCalc은 지금 입력된 스탯을 기준으로, 각 옵션을 실제로 조금 더했을 때 전체 딜이 몇 % 오르는지를 직접 계산해 비교합니다. 즉 공식을 외워서 "데미지%가 항상 최고"라고 말하는 대신, <b>당신의 현재 스탯</b>에서의 한계 효율을 그때그때 뽑아냅니다. 큐브·유물·어빌리티처럼 등장하는 옵션의 종류·수치·확률이 서로 다른 소스는 각각 따로 계산해야 정확한 답이 나옵니다. 같은 "데미지%"라도 어느 소스에서 얼마만큼 등장하느냐에 따라 챙기는 우선순위가 달라지기 때문입니다.</p>
+      <p>공격 속도나 쿨타임 감소처럼 로테이션에 영향을 주는 스탯은 앞서 말한 R에 얽혀 있어 약간의 불확실성이 남습니다. MekiCalc은 예외 없이 모든 옵션을 효율로 비교하기 위해, 이런 스탯도 합리적인 가정 아래 함께 계산에 포함합니다.</p>
+
+      <h2>자주 하는 오해</h2>
+      <p><b>"고수가 데미지% 위주로 챙기니 나도 그러면 된다."</b> — 효율은 절대적인 것이 아니라 현재 스탯에 대한 상대적인 값입니다. 남의 세팅에서 최고였던 옵션이 내 세팅에서도 최고라는 보장은 없습니다. 특히 크리티컬 확률·크리티컬 데미지·데미지 범위처럼 서로 맞물리는 스탯은, 내가 지금 어디에 쏠려 있는지에 따라 우선순위가 뒤집히곤 합니다.</p>
+      <p><b>"한 스탯만 끝까지 몰아주면 된다."</b> — 곱연산 구조에서는 한 배수만 계속 키우면 그 배수의 한계 효율이 점점 떨어집니다. 여러 배수를 고르게 키우는 편이 전체 곱을 더 크게 만드는 경우가 많습니다. 결국 "지금 내 세팅에서 가장 덜 자란 배수가 무엇인가"를 찾는 것이 효율의 핵심이고, MekiCalc은 그 판단을 대신 계산해 주는 도구입니다.</p>
+
+      <p class="guide-more"><a href="/cube/recommend">→ 내 스탯으로 우선순위 추천 보기</a> · <a href="/guide/cube-value.html">큐브 기댓값 이해하기</a></p>
+    </article>
+  </main>
+
+  <footer>
+    <p class="footer-disclaimer">MekiCalc은 비공식 팬 사이트입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
+    <p class="footer-links"><a href="/">계산기</a> · <a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:ssbaktain@gmail.com">문의</a></p>
+    <p class="footer-copy">© 2026 MekiCalc</p>
+  </footer>
+</body>
+</html>

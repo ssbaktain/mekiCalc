@@ -47,7 +47,7 @@ public final class MainWindow extends JFrame {
     /** 시안의 부위 배치 순서(좌열 위→아래, 우열 위→아래; 2열 row-major). */
     private static final String[] PART_ORDER = {
             "모자", "망토", "상의", "어깨장식", "하의", "벨트",
-            "장갑", "신발", "반지", "목걸이", "눈장식", "얼굴장식", "귀고리"};
+            "장갑", "신발", "반지", "반지2", "목걸이", "눈장식", "얼굴장식", "귀고리"};
 
     private final AppModel model;
     private final CardLayout cards = new CardLayout();

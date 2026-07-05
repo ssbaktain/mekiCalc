@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /presets/
+
+Sitemap: https://mekicalc.com/sitemap.xml

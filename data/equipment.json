@@ -41,6 +41,7 @@
       "하의":     { "stat": "FINAL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
       "장갑":     { "stat": "CRIT_DMG",               "firstGrade": "EPIC",   "values": { "EPIC": [10],   "UNIQUE": [10, 20],    "LEGENDARY": [20, 30], "MYTHIC": [30, 50] } },
       "반지":     { "stat": "SKILL_LEVELS",           "firstGrade": "EPIC",   "values": { "EPIC": [5],    "UNIQUE": [5, 8],      "LEGENDARY": [8, 12],  "MYTHIC": [12, 16] } },
+      "반지2":    { "stat": "BASIC_ATK_DMG",          "firstGrade": "EPIC",   "values": { "EPIC": [8],    "UNIQUE": [8, 14],     "LEGENDARY": [14, 21], "MYTHIC": [21, 30] } },
       "눈장식":   { "stat": "MAIN_STAT_PER_LEVEL",    "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
       "귀고리":   { "stat": "SKILL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [8],    "UNIQUE": [8, 14],     "LEGENDARY": [14, 21], "MYTHIC": [21, 30] } },
       "망토":     { "stat": "FINAL_DMG",              "firstGrade": "EPIC",   "values": { "EPIC": [3],    "UNIQUE": [3, 5],      "LEGENDARY": [5, 8],   "MYTHIC": [8, 12] } },
