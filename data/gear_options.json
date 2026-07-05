@@ -1,0 +1,30 @@
+{
+  "_comment": "장비 비교 전용 옵션 스펙. 프리셋 저장 안 함(단발 비교/변경). 값은 사용자 직접 입력 또는 이미지 인식(OCR). deal=딜 계산 포함 여부. 비딜 스탯(최대HP/방어력/회피/명중/최대MP)은 입력창만 띄우고 계산 제외. 부옵션(부스탯)=공통 딜 옵션 + 부위별 특옵.",
+
+  "nonDealLabels": {
+    "MAX_HP": "최대 HP",
+    "DEF": "방어력",
+    "EVA": "회피",
+    "ACC": "명중",
+    "MAX_MP": "최대 MP"
+  },
+
+  "commonSub": ["ATK_FLAT", "CRIT_DMG", "CRIT_RATE", "SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "NORMAL_DMG", "BOSS_DMG"],
+
+  "parts": [
+    { "part": "투구",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"DEF","deal":false}], "special": ["SKILL_LEVELS", "DMG", "FINAL_DMG"] },
+    { "part": "상의",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"DEF","deal":false}], "special": [] },
+    { "part": "망토",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"EVA","deal":false}], "special": [] },
+    { "part": "견장",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"EVA","deal":false}], "special": [] },
+    { "part": "하의",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": [] },
+    { "part": "장갑",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": [] },
+    { "part": "벨트",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAX_MP","deal":false}], "special": [] },
+    { "part": "신발",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAX_MP","deal":false}], "special": [] },
+    { "part": "반지",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["MIN_DMG_MULT", "MAX_DMG_MULT"] },
+    { "part": "반지2",    "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["SKILL_DMG"] },
+    { "part": "목걸이",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG"] },
+    { "part": "얼굴장식", "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["MIN_DMG_MULT", "MAX_DMG_MULT"] },
+    { "part": "눈장식",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DEF_PEN"] },
+    { "part": "귀고리",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["BASIC_ATK_DMG", "MAIN_STAT_PCT"] }
+  ]
+}

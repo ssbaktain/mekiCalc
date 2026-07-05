@@ -318,6 +318,7 @@ const MENU = [
     { label: "내 옵션 비교/변경", panel: "compare", path: "/cube/my-options" },
     { label: "우선순위 추천", panel: "recommend", path: "/cube/recommend" },
   ]},
+  { label: "장비 비교", panel: "gear", path: "/gear/compare" },   // 최상위 단독 · 프리셋 없이 단발 비교/변경
 ];
 const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
 
@@ -328,6 +329,7 @@ function showPanel(name) {
   if (name === "optcompare") renderOptCompare();
   if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
   if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
+  if (name === "gear") renderGear();               // 장비 비교 UI 구성
 }
 
 // ──────────────────── 라우팅(SPA) ────────────────────
@@ -349,6 +351,7 @@ const ROUTE_META = {
   "/cube/option-compare": ["큐브 옵션 비교 - MekiCalc", "두 큐브 잠재 옵션 조합의 딜 기여를 나란히 비교합니다."],
   "/cube/my-options":     ["내 큐브 옵션 비교·변경 - MekiCalc", "현재 장착 큐브 옵션과 바꿀 옵션의 딜 차이를 비교하고 반영합니다."],
   "/cube/recommend":      ["큐브 우선순위 추천 - MekiCalc", "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."],
+  "/gear/compare":        ["장비 비교 - MekiCalc", "현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다. 무기 공격력·부옵션(크리 데미지·데미지 등) 차이를 현재 스탯 기준으로 계산합니다."],
 };
 function applyRouteMeta(path) {
   const m = ROUTE_META[path];
@@ -404,6 +407,7 @@ function recalcActivePanel() {
   else if (!$("panel-recommend").hidden) runRecommend(true);
   else if (!$("panel-compare").hidden) refreshCompareOnPresetChange();
   else if (!$("panel-optcompare").hidden) runOptCompare();
+  else if (!$("panel-gear").hidden && $("gc-delta").innerHTML.trim()) runGearCompare();   // 결과가 떠 있을 때만 재계산
 }
 
 // 내 옵션 비교: 프리셋 전환 시 좌측(현재 큐브)·결과를 갱신하되 우측(가정) 선택은 보존.
@@ -1386,6 +1390,177 @@ async function runOptCompare() {
   finally { done(); }
 }
 $("oc-btn").addEventListener("click", runOptCompare);
+
+// ──────────────────── 장비 비교(프리셋 없음, 단발 비교/변경) ────────────────────
+// 장비 = 주옵션(장비별 고정 3종, 일부 비딜) + 부옵션(부스탯, 공통 딜 + 부위별 특옵).
+// 값은 사용자가 직접 입력. 비교 방식 = 현재 총스탯에서 왼쪽(현재) 옵션을 빼고 오른쪽(새 장비)을 얹은 딜과 비교.
+
+let gearCfg = null;      // /api/gear-options 캐시 {nonDealLabels, commonSub, parts[]}
+let gearBuilt = false;
+
+async function loadGearCfg() {
+  if (!gearCfg) gearCfg = await (await fetch("/api/gear-options")).json();
+  return gearCfg;
+}
+
+// 비딜 스탯(최대HP·방어력 등)은 stats.json에 없어 config 라벨을, 딜 스탯은 statDefs 라벨을 쓴다.
+function gearStatLabel(id) {
+  return (gearCfg && gearCfg.nonDealLabels && gearCfg.nonDealLabels[id]) || statLabel(id);
+}
+function gcPartDef() {
+  const p = $("gc-part").value;
+  return gearCfg.parts.find((x) => x.part === p) || gearCfg.parts[0];
+}
+// 이 side의 특옵 목록(투구는 종류 선택에 따라 달라짐).
+function gcSpecials(prefix) {
+  const def = gcPartDef();
+  if (def.variants) {
+    const sel = $(prefix + "-variant-sel");
+    const v = sel ? def.variants.find((x) => x.name === sel.value) : null;
+    return (v || def.variants[0]).special || [];
+  }
+  return def.special || [];
+}
+// 부옵션 후보 스탯 = 공통 + 부위별 특옵.
+function gcSubPool(prefix) { return gearCfg.commonSub.concat(gcSpecials(prefix)); }
+
+async function renderGear() {
+  await loadGearCfg();
+  if (!gearBuilt) {
+    const partSel = $("gc-part");
+    partSel.innerHTML = "";
+    for (const p of gearCfg.parts) partSel.add(new Option(p.part, p.part));
+    partSel.addEventListener("change", gcBuildBoxes);
+    document.querySelectorAll("#panel-gear .gc-add").forEach((b) =>
+      b.addEventListener("click", () => gcAddSubRow(b.dataset.side)));
+    $("gc-btn").addEventListener("click", runGearCompare);
+    $("gc-apply").addEventListener("click", runGearApply);
+    gearBuilt = true;
+  }
+  gcBuildBoxes();
+}
+
+function gcBuildBoxes() {
+  $("gc-delta").innerHTML = "";
+  $("gc-status").textContent = "";
+  gcBuildSide("gc-l");
+  gcBuildSide("gc-r");
+}
+
+function gcBuildSide(prefix) {
+  const def = gcPartDef();
+  // 종류(투구=일반/자쿰의 투구) 선택 — variants 있는 부위만
+  const vbox = $(prefix + "-variant");
+  vbox.innerHTML = "";
+  if (def.variants) {
+    const lab = document.createElement("label");
+    lab.className = "ctl";
+    lab.textContent = "종류";
+    const sel = document.createElement("select");
+    sel.id = prefix + "-variant-sel";
+    for (const v of def.variants) sel.add(new Option(v.name, v.name));
+    sel.addEventListener("change", () => gcRefreshSub(prefix));   // 특옵 풀 변경 → 부옵션 드롭다운 갱신
+    lab.appendChild(sel);
+    vbox.appendChild(lab);
+  }
+  // 주옵션(고정): 비딜은 "딜 미반영" 표시하되 입력창은 띄움
+  const mbox = $(prefix + "-main");
+  mbox.innerHTML = "";
+  for (const m of def.main) {
+    const row = document.createElement("div");
+    row.className = "gc-row";
+    row.innerHTML = `<span class="gc-name">${gearStatLabel(m.stat)}${m.deal ? "" : ' <span class="gc-nodeal">딜 미반영</span>'}</span>`;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.className = "gc-val"; inp.value = "0";
+    inp.dataset.stat = m.stat; inp.dataset.deal = m.deal ? "1" : "0";
+    row.appendChild(inp);
+    mbox.appendChild(row);
+  }
+  $(prefix + "-sub").innerHTML = "";   // 부옵션은 빈 상태로 시작(유저가 추가)
+}
+
+// 부옵션 한 줄(스탯 드롭다운 + 값 + 삭제).
+function gcAddSubRow(prefix, stat, value) {
+  const box = $(prefix + "-sub");
+  const row = document.createElement("div");
+  row.className = "gc-row gc-subrow";
+  const sel = document.createElement("select");
+  sel.className = "gc-substat";
+  for (const s of gcSubPool(prefix)) sel.add(new Option(statLabel(s), s));
+  if (stat) sel.value = stat;
+  const inp = document.createElement("input");
+  inp.type = "number"; inp.className = "gc-val"; inp.value = value != null ? value : "0";
+  const del = document.createElement("button");
+  del.type = "button"; del.className = "gc-del"; del.textContent = "×"; del.title = "삭제";
+  del.addEventListener("click", () => row.remove());
+  row.appendChild(sel); row.appendChild(inp); row.appendChild(del);
+  box.appendChild(row);
+}
+
+// 종류 변경 시 기존 부옵션 줄의 드롭다운 옵션만 갱신(선택 보존).
+function gcRefreshSub(prefix) {
+  const pool = gcSubPool(prefix);
+  for (const sel of $(prefix + "-sub").querySelectorAll(".gc-substat")) {
+    const cur = sel.value;
+    sel.innerHTML = "";
+    for (const s of pool) sel.add(new Option(statLabel(s), s));
+    if (pool.includes(cur)) sel.value = cur;
+  }
+}
+
+// 딜 반영 옵션만 수집({statId,value}[]). 주옵션은 deal=1만, 부옵션은 전부.
+function gcCollect(prefix) {
+  const out = [];
+  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) {
+    if (inp.dataset.deal !== "1") continue;
+    const v = parseFloat(inp.value);
+    if (v) out.push({ statId: inp.dataset.stat, value: v });
+  }
+  for (const row of $(prefix + "-sub").querySelectorAll(".gc-subrow")) {
+    const stat = row.querySelector(".gc-substat").value;
+    const v = parseFloat(row.querySelector(".gc-val").value);
+    if (stat && v) out.push({ statId: stat, value: v });
+  }
+  return out;
+}
+
+async function runGearCompare() {
+  const done = deferLoading("gc-status");
+  try {
+    const data = await postJson("/api/gear-compare", Object.assign(
+      { leftOpts: gcCollect("gc-l"), rightOpts: gcCollect("gc-r"),
+        stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval },
+      targetForApi(), companionParams()));
+    $("gc-delta").innerHTML = gcDeltaHtml(data);
+    $("gc-status").textContent = "";
+  } catch (e) { $("gc-status").textContent = "오류: " + e.message; }
+  finally { done(); }
+}
+
+function gcDeltaHtml(d) {
+  if (d.qual) return '<div class="gc-delta-box"><span class="bad">일부 옵션은 딜 환산이 안 돼 비교가 어렵습니다.</span></div>';
+  const p = d.deltaPct || 0;
+  const cls = p > 0 ? "good" : (p < 0 ? "bad" : "");
+  return `<div class="gc-delta-box"><span class="gc-delta-lead">딜 증가량</span> <b class="${cls} gc-delta-val">${signPct(p)}</b></div>`;
+}
+
+// 오른쪽(새 장비)으로 교체 시 스탯 재계산 → 스탯 프리셋에 반영(큐브와 무관, 스탯만).
+async function runGearApply() {
+  const oldOpts = gcCollect("gc-l"), newOpts = gcCollect("gc-r");
+  if (!oldOpts.length && !newOpts.length) { toast("입력한 옵션이 없습니다."); return; }
+  if (!confirm("현재 장비(왼쪽) 옵션을 새 장비(오른쪽) 옵션으로 바꾸고 스탯 프리셋에 반영할까요?")) return;
+  $("gc-status").textContent = "적용 중…";
+  try {
+    const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
+    fillStats(data.stats);
+    statPresets.presets[statPresets.active] = statPresetPayload();
+    saveJSON(STATP_KEY, statPresets);
+    statDirty = false;
+    calcDamage();
+    $("gc-status").textContent = "";
+    toast("변경 적용 — 스탯 프리셋에 저장됨");
+  } catch (e) { $("gc-status").textContent = "오류: " + e.message; }
+}
 
 // ──────────────────── 내 옵션 비교 ────────────────────
 

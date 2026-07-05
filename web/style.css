@@ -531,6 +531,45 @@ main {
 .opt-result .cmp-grid { grid-template-columns: 1fr 1fr; }
 @media (max-width: 640px) { .opt-sides { grid-template-columns: 1fr; } }
 
+/* 장비 비교 */
+.gc-variant { margin-bottom: 10px; }
+.gc-sec { font-size: 13px; font-weight: 700; color: var(--accent); margin: 12px 0 6px; display: flex; align-items: center; gap: 8px; }
+.gc-add {
+  font-size: 12px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); color: var(--muted); cursor: pointer;
+}
+.gc-add:hover { color: var(--text); border-color: var(--accent); }
+.gc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.gc-name { flex: 1; min-width: 0; font-size: 13px; color: var(--text); }
+.gc-nodeal { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.gc-val {
+  width: 110px; padding: 6px 8px; text-align: right;
+  background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px;
+}
+.gc-substat {
+  flex: 1; min-width: 0; padding: 6px 8px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px;
+}
+.gc-del {
+  width: 26px; height: 30px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--card); color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1;
+}
+.gc-del:hover { color: #ffb3ba; border-color: #e0606c; }
+.gc-delta { margin-bottom: 12px; }
+.gc-delta-box {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px;
+  background: var(--card2); padding: 12px 14px; text-align: center;
+}
+.gc-delta-lead { font-size: 13px; color: var(--muted); }
+.gc-delta-val { font-size: 22px; margin-left: 6px; }
+/* 현재/새 장비 박스 구분(색으로 티나게) */
+.gc-cur { border-top: 3px solid #7c8695; }
+.gc-cur h3 { color: #9aa4b2; }
+.gc-cur h3::before { content: "● "; font-size: 10px; vertical-align: middle; }
+.gc-new { border-top: 3px solid var(--accent); }
+.gc-new h3 { color: var(--accent); }
+.gc-new h3::before { content: "● "; font-size: 10px; vertical-align: middle; }
+
 .cmp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
 .cmp-cell { background: var(--card2); border-radius: 8px; padding: 12px; }
 .cmp-label { font-size: 12px; color: var(--muted); }

@@ -121,6 +121,17 @@ public final class WebServer {
                     strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
+        http.createContext("/api/gear-options", json("GET", ex -> service.gearOptions()));
+
+        http.createContext("/api/gear-compare", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.gearCompare(
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                    mapList(req.get("leftOpts")), mapList(req.get("rightOpts")),
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+        }));
+
         // ──────────────────── 로그인(OAuth) ────────────────────
         http.createContext("/auth/login", ex -> {
             try {

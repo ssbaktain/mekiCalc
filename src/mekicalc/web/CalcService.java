@@ -108,8 +108,10 @@ public final class CalcService {
     @SuppressWarnings("unchecked")
     private Double targetDef(String chapter, String target) {
         Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
-        if (!(cObj instanceof Map) || chapter == null) return null;
-        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
+        if (!(cObj instanceof Map) || chapter == null || chapter.isEmpty()) return null;   // 대상 미선택(빈 챕터)=방어력 미적용
+        Object chObj = ((Map<String, Object>) cObj).get(chapter);
+        if (!(chObj instanceof Map)) return null;
+        Map<String, Object> c = Json.asMap(chObj);
         if (c == null || c.isEmpty()) return null;
         if ("boss".equals(target)) return c.get("boss") instanceof Number ? ((Number) c.get("boss")).doubleValue() : null;
         String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
@@ -944,6 +946,44 @@ public final class CalcService {
         m.put("qual", dm.hasQualitative(delta));
         m.put("prob", safe(CubeRecommender.arrangeSum(draws, content.equip.slots(part, grade))));
         return m;
+    }
+
+    // ──────────────────── 장비 비교(프리셋 없음) ────────────────────
+
+    /** 장비 비교 UI 스펙(부위별 주/부옵션 풀). gear_options.json 원본 맵을 그대로 내려준다. */
+    public Map<String, Object> gearOptions() {
+        return content.gearOptions;
+    }
+
+    /**
+     * 두 장비(왼쪽=현재 장착, 오른쪽=후보)의 딜을 비교한다. 현재 총스탯이 왼쪽 장비를 포함한다고 보고,
+     * 왼쪽 옵션을 빼서 base를 만든 뒤 오른쪽 옵션을 얹어 딜을 다시 계산한다.
+     * 상단 표기용 = "오른쪽이 왼쪽보다 딜 +deltaPct". 딜 무관 옵션은 클라가 애초에 안 보낸다.
+     * @return {leftOut, rightOut, deltaPct, qual, newStats}
+     */
+    public Map<String, Object> gearCompare(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
+                                           List<Map<String, Object>> leftOpts, List<Map<String, Object>> rightOpts,
+                                           Set<String> buffs, double hitInterval,
+                                           String companionId, String companionGrade, int companionLevel, double ratio) {
+        StatBlock current = block(stats);
+        boolean boss = isBossTarget(target);
+        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        StatBlock lDelta = deltaOfReq(leftOpts);
+        StatBlock rDelta = deltaOfReq(rightOpts);
+        StatBlock base = dm.uncombine(current, lDelta);       // 현재 장비(왼쪽) 제거
+        StatBlock rightBlock = dm.combine(base, rDelta);      // 후보(오른쪽) 장착
+        double leftOut = dm.output(current);
+        double rightOut = dm.output(rightBlock);
+        double deltaPct = leftOut > 0 ? rightOut / leftOut - 1.0 : 0.0;
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("leftOut", safe(leftOut));
+        out.put("rightOut", safe(rightOut));
+        out.put("deltaPct", safe(deltaPct));
+        out.put("qual", dm.hasQualitative(lDelta) || dm.hasQualitative(rDelta));
+        Map<String, Object> sm = new LinkedHashMap<>();
+        for (Map.Entry<String, Double> e : rightBlock.asMap().entrySet()) sm.put(e.getKey(), e.getValue());
+        out.put("newStats", sm);
+        return out;
     }
 
     // ──────────────────── 내 옵션 비교 ────────────────────
