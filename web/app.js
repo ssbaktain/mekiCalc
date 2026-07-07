@@ -1435,9 +1435,68 @@ async function renderGear() {
       b.addEventListener("click", () => gcAddSubRow(b.dataset.side)));
     $("gc-btn").addEventListener("click", runGearCompare);
     $("gc-apply").addEventListener("click", runGearApply);
+    // 이미지 인식(OCR): 버튼·파일선택·붙여넣기·드래그드롭
+    $("gc-ocr-btn").addEventListener("click", () => $("gc-file").click());
+    $("gc-file").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) runGearOcr(f); e.target.value = ""; });
+    document.addEventListener("paste", (e) => {
+      if ($("panel-gear").hidden || !meta.ocrEnabled) return;
+      const it = [...(e.clipboardData?.items || [])].find((x) => x.type.startsWith("image/"));
+      if (it) { e.preventDefault(); runGearOcr(it.getAsFile()); }
+    });
+    const panel = $("panel-gear");
+    panel.addEventListener("dragover", (e) => { if (meta.ocrEnabled) e.preventDefault(); });
+    panel.addEventListener("drop", (e) => {
+      const f = [...(e.dataTransfer?.files || [])].find((x) => x.type.startsWith("image/"));
+      if (f) { e.preventDefault(); runGearOcr(f); }
+    });
     gearBuilt = true;
   }
+  $("gc-ocr").hidden = !meta.ocrEnabled;   // OCR 미설정이면 버튼 숨김
   gcBuildBoxes();
+}
+
+// 이미지 → 다운스케일(최대 1600px, JPEG) → base64. 페이로드·비용·속도 절감.
+function gcReadImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1600, scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      resolve({ base64: cv.toDataURL("image/jpeg", 0.85).split(",")[1], mimeType: "image/jpeg" });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("이미지를 열 수 없습니다.")); };
+    img.src = url;
+  });
+}
+
+async function runGearOcr(file) {
+  if (!file || !file.type.startsWith("image/")) { toast("이미지 파일이 아닙니다."); return; }
+  $("gc-status").textContent = "이미지 인식 중…";
+  try {
+    const { base64, mimeType } = await gcReadImage(file);
+    const data = await postJson("/api/gear-ocr", { image: base64, mimeType, part: $("gc-part").value });
+    gcApplyOcrSide("gc-l", data.left);
+    gcApplyOcrSide("gc-r", data.right);
+    $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
+    runGearCompare();
+  } catch (e) { $("gc-status").textContent = "인식 실패: " + e.message; }
+}
+
+// OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성.
+function gcApplyOcrSide(prefix, side) {
+  if (!side) return;
+  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) inp.value = "0";
+  for (const o of (side.main || [])) {
+    const inp = $(prefix + "-main").querySelector('input[data-stat="' + o.statId + '"]');
+    if (inp) inp.value = o.value;
+  }
+  $(prefix + "-sub").innerHTML = "";
+  for (const o of (side.sub || [])) gcAddSubRow(prefix, o.statId, o.value);
 }
 
 function gcBuildBoxes() {

@@ -1,9 +1,12 @@
 package mekicalc.web;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,9 +48,28 @@ public final class CalcService {
     private static final double BOSS_SECONDS = 70;      // 보스(챕터 보스) 기준 전투시간
 
     private final GameContent content;
+    private final VisionOcr ocr;
 
     public CalcService(GameContent content) {
+        this(content, buildOcr(content.dataDir));
+    }
+
+    public CalcService(GameContent content, VisionOcr ocr) {
         this.content = content;
+        this.ocr = ocr;
+    }
+
+    /**
+     * 비전 OCR 제공자 폴백 체인 구성: Mistral(기본·정확) → Groq(2차·가용성 백업) → Gemini(하위호환) 순.
+     * 앞 제공자가 쿼터 초과·오류면 다음으로 넘어간다. 키가 있는 제공자만 체인에 포함(없으면 비활성).
+     * (실측: mistral-medium은 나란한 두 박스 레이아웃·소수점까지 정확, Groq scout는 라벨 오독이 있어 2차로 둠.)
+     */
+    private static VisionOcr buildOcr(java.nio.file.Path dataDir) {
+        OcrConfig oc = OcrConfig.load(dataDir);
+        return FallbackOcr.of(
+                new MistralOcr(oc),
+                new GroqOcr(oc),
+                new GeminiOcr(GeminiConfig.load(dataDir)));
     }
 
     // ──────────────────── 공통 헬퍼 ────────────────────
@@ -191,6 +213,7 @@ public final class CalcService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("parts", new ArrayList<>(content.equip.parts()));
         out.put("grades", new ArrayList<>(content.equip.grades()));
+        out.put("ocrEnabled", ocrEnabled());   // 장비 비교 이미지 인식 사용 가능 여부(클라 버튼 표시용)
         Map<String, Object> ko = new LinkedHashMap<>();
         for (String code : content.equip.grades()) ko.put(code, GRADE_KO.getOrDefault(code, code));
         out.put("gradeKo", ko);
@@ -985,6 +1008,179 @@ public final class CalcService {
         out.put("newStats", sm);
         return out;
     }
+
+    // ──────────────────── 장비 비교 OCR(Gemini 비전) ────────────────────
+
+    public boolean ocrEnabled() { return ocr != null && ocr.enabled(); }
+
+    /**
+     * 장비 스크린샷(base64) → 비전 모델로 좌/우 박스의 옵션을 인식한다.
+     *
+     * <p>모델에는 <b>화면의 한글 라벨과 값만 원문 그대로</b> 추출하게 하고(딜 라벨 enum 강제 X),
+     * statId 매핑·주(main)/부(sub) 분류·비딜 제거는 서버가 결정적으로 처리한다. enum을 강제하면
+     * 실제 옵션이 비딜(명중/방어력)일 때 모델이 딜 옵션으로 환각하는 문제가 있어 이 구조로 바꿈.
+     *
+     * @return {left:{main:[{statId,value}],sub:[...]}, right:{...}} — 이 부위 허용 옵션만 필터링.
+     */
+    public Map<String, Object> gearOcr(String imageBase64, String mimeType, String part) throws Exception {
+        if (ocr == null || !ocr.enabled()) throw new IllegalStateException("OCR이 설정되지 않았습니다.");
+        if (imageBase64 == null || imageBase64.isEmpty()) throw new IllegalArgumentException("이미지가 없습니다.");
+        Map<String, Object> partDef = gearPartDef(part);
+        if (partDef == null) throw new IllegalArgumentException("알 수 없는 부위: " + part);
+
+        LinkedHashSet<String> mainStats = new LinkedHashSet<>();   // 이 부위 주 옵션 statId(비딜 포함, 폼 표시용)
+        for (Object mo : asListOr(partDef.get("main"))) mainStats.add(String.valueOf(Json.asMap(mo).get("stat")));
+        LinkedHashSet<String> subStats = new LinkedHashSet<>();    // 이 부위 부 옵션 statId(딜 풀: 공통 + 특옵)
+        for (Object so : asListOr(content.gearOptions.get("commonSub"))) subStats.add(so.toString());
+        for (Object so : asListOr(partDef.get("special"))) subStats.add(so.toString());
+
+        Map<String, Object> raw = ocr.extract(imageBase64, mimeType, ocrPrompt(), ocrSchema());
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("left", mapOcrSide(raw.get("left"), mainStats, subStats));
+        out.put("right", mapOcrSide(raw.get("right"), mainStats, subStats));
+        return out;
+    }
+
+    private Map<String, Object> gearPartDef(String part) {
+        for (Object o : asListOr(content.gearOptions.get("parts"))) {
+            Map<String, Object> m = Json.asMap(o);
+            if (part != null && part.equals(m.get("part"))) return m;
+        }
+        return null;
+    }
+
+    /** 주 옵션(상단 고정 블록)에 나타나는 스탯의 정규화 라벨(분류용). 이 라벨로 시작하는 앞줄들을 main으로 본다. */
+    private static final Set<String> MAIN_NORM = Set.of("공격력", "최대HP", "방어력", "회피", "명중", "최대MP", "주스탯");
+
+    /** 한글 라벨(정규화) → statId 역매핑. 지연 초기화. '주스탯'은 flat/pct 충돌이라 제외하고 섹션으로 구분. */
+    private volatile Map<String, String> labelToStat;
+
+    private Map<String, String> labelToStat() {
+        Map<String, String> m = labelToStat;
+        if (m != null) return m;
+        m = new HashMap<>();
+        // 비딜 주 옵션(stats.json에 없음) — gear_options의 한글명 사용
+        for (Map.Entry<String, Object> e : asMapOr(content.gearOptions.get("nonDealLabels")).entrySet()) {
+            m.put(normLabel(String.valueOf(e.getValue())), e.getKey());
+        }
+        // 딜 옵션(공통 부옵션 + 모든 부위 특옵 + 주 옵션 딜 스탯) — stats.json 한글명 사용
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (Object so : asListOr(content.gearOptions.get("commonSub"))) ids.add(so.toString());
+        for (Object p : asListOr(content.gearOptions.get("parts"))) {
+            Map<String, Object> pm = Json.asMap(p);
+            for (Object mo : asListOr(pm.get("main"))) ids.add(String.valueOf(Json.asMap(mo).get("stat")));
+            for (Object so : asListOr(pm.get("special"))) ids.add(so.toString());
+        }
+        for (String id : ids) {
+            if ("MAIN_STAT_FLAT".equals(id) || "MAIN_STAT_PCT".equals(id)) continue;   // '주스탯' 충돌 → 섹션으로 구분
+            String norm = normLabel(statName(id));
+            if (!norm.isEmpty()) m.putIfAbsent(norm, id);
+        }
+        labelToStat = m;
+        return m;
+    }
+
+    /** 라벨(정규화) → statId. '주스탯'은 주 옵션이면 flat, 부 옵션이면 %(귀고리 특옵). 미해석은 null. */
+    private String resolveStat(String norm, boolean main) {
+        if ("주스탯".equals(norm)) return main ? "MAIN_STAT_FLAT" : "MAIN_STAT_PCT";
+        return labelToStat().get(norm);
+    }
+
+    /**
+     * 한 박스의 원문 [{label,value}] 목록을 {main:[{statId,value}], sub:[...]}로 매핑한다.
+     * 분류: 앞에서부터 (index<3 && 주 옵션형 라벨)이면 main, 그 지점 이후는 전부 sub. 비딜 주 옵션이
+     * 누락돼도 남은 줄이 sub로 정확히 분류되도록 count가 아닌 라벨 타입으로 경계를 잡는다.
+     * main은 이 부위 주 옵션 statId만, sub는 이 부위 딜 풀 statId만 남긴다(비딜 부옵션=명중/방어력 등은 제거).
+     */
+    private Map<String, Object> mapOcrSide(Object sideObj, Set<String> mainStats, Set<String> subStats) {
+        List<Object> rows = asListOr(sideObj);
+        int split = 0;
+        for (int i = 0; i < rows.size() && i < 3; i++) {
+            if (MAIN_NORM.contains(normLabel(labelOf(rows.get(i))))) split = i + 1; else break;
+        }
+        List<Map<String, Object>> main = new ArrayList<>();
+        for (int i = 0; i < split; i++) {
+            Map<String, Object> o = resolveRow(rows.get(i), true);
+            if (o != null && mainStats.contains(o.get("statId"))) main.add(o);
+        }
+        List<Map<String, Object>> sub = new ArrayList<>();
+        for (int i = split; i < rows.size(); i++) {
+            Map<String, Object> o = resolveRow(rows.get(i), false);
+            if (o != null && subStats.contains(o.get("statId"))) sub.add(o);
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("main", main); out.put("sub", sub);
+        return out;
+    }
+
+    private Map<String, Object> resolveRow(Object rowObj, boolean main) {
+        String label = labelOf(rowObj);
+        Double val = parseNum(valueOf(rowObj));
+        if (label == null || val == null) return null;
+        String statId = resolveStat(normLabel(label), main);
+        if (statId == null) return null;
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("statId", statId); m.put("value", val);
+        return m;
+    }
+
+    private static String labelOf(Object rowObj) {
+        if (!(rowObj instanceof Map)) return null;
+        Object l = ((Map<?, ?>) rowObj).get("label");
+        return l == null ? null : l.toString();
+    }
+
+    private static Object valueOf(Object rowObj) {
+        return (rowObj instanceof Map) ? ((Map<?, ?>) rowObj).get("value") : null;
+    }
+
+    /** 라벨 정규화: 공백·"(+)"·"%"·"+" 제거(HP/MP 등 라틴은 유지). 스탯명 접미사와 화면 라벨을 같은 형태로. */
+    private static String normLabel(String s) {
+        if (s == null) return "";
+        return s.replaceAll("\\s", "").replace("(+)", "").replace("%", "").replace("+", "");
+    }
+
+    /** 값 파싱: 숫자면 그대로, 문자열이면 쉼표·%·기호 제거 후 double. 실패 null. */
+    private static Double parseNum(Object v) {
+        if (v instanceof Number) return ((Number) v).doubleValue();
+        if (v == null) return null;
+        String s = v.toString().replaceAll("[^0-9.\\-]", "");
+        if (s.isEmpty() || s.equals("-") || s.equals(".")) return null;
+        try { return Double.parseDouble(s); } catch (NumberFormatException e) { return null; }
+    }
+
+    private static String ocrPrompt() {
+        return "당신은 모바일 게임 '메이플 키우기'의 장비 상세 화면을 읽는 OCR 도구입니다.\n"
+            + "이미지에 장비 상세 박스가 1~2개 있습니다(보통 왼쪽=현재 장비, 오른쪽=새 장비).\n"
+            + "각 박스의 '장착 효과' 목록에 있는 모든 옵션 행을 위에서부터 순서대로, 하나도 빠짐없이 추출하세요.\n"
+            + "- label: 화면에 보이는 한글 옵션 이름 그대로(예: '공격력', '최대 HP', '주 스탯', '크리티컬 데미지', "
+            + "'3차 스킬 레벨', '최대 데미지 배율', '방어력', '명중').\n"
+            + "- value: 그 옵션의 숫자 값(쉼표·% 포함해도 됨). 예: '15,735', '15.8%', '11'.\n"
+            + "- 상단의 주 옵션(보통 3개: 공격력·최대 HP·부위 고유)과 하단의 부 옵션을 모두 포함하세요. "
+            + "최대 HP·방어력·명중처럼 딜과 무관해 보여도 반드시 포함하세요.\n"
+            + "- 세트 효과·설명문·강화 수치 등 옵션 이름이 아닌 텍스트는 제외하세요.\n"
+            + "- 왼쪽 박스는 left, 오른쪽 박스는 right. 박스가 하나뿐이면 그 박스를 left에 넣고 right는 빈 배열.\n"
+            + "반드시 JSON만 출력: {\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
+    }
+
+    /** 응답 스키마: 각 박스는 {label,value} 배열(원문 라벨/값). 매핑은 서버가 수행. */
+    private static Object ocrSchema() {
+        Map<String, Object> label = new LinkedHashMap<>(); label.put("type", "STRING");
+        Map<String, Object> value = new LinkedHashMap<>(); value.put("type", "STRING");
+        Map<String, Object> optProps = new LinkedHashMap<>(); optProps.put("label", label); optProps.put("value", value);
+        Map<String, Object> optItem = new LinkedHashMap<>();
+        optItem.put("type", "OBJECT"); optItem.put("properties", optProps); optItem.put("required", List.of("label", "value"));
+        Map<String, Object> arr = new LinkedHashMap<>(); arr.put("type", "ARRAY"); arr.put("items", optItem);
+        Map<String, Object> rootProps = new LinkedHashMap<>(); rootProps.put("left", arr); rootProps.put("right", arr);
+        Map<String, Object> root = new LinkedHashMap<>(); root.put("type", "OBJECT"); root.put("properties", rootProps);
+        return root;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMapOr(Object o) { return (o instanceof Map) ? (Map<String, Object>) o : new LinkedHashMap<>(); }
+    @SuppressWarnings("unchecked")
+    private static List<Object> asListOr(Object o) { return (o instanceof List) ? (List<Object>) o : new ArrayList<>(); }
 
     // ──────────────────── 내 옵션 비교 ────────────────────
 

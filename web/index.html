@@ -441,6 +441,11 @@
           <label class="ctl">부위<select id="gc-part"></select></label>
           <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
         </div>
+        <div id="gc-ocr" class="gc-ocr" hidden>
+          <input type="file" id="gc-file" accept="image/*" hidden />
+          <button id="gc-ocr-btn" class="primary-btn alt" type="button">📷 이미지로 자동 입력</button>
+          <span class="gc-ocr-hint">장비 비교 스크린샷을 올리거나 붙여넣기(Ctrl+V)·드래그하면 옵션을 자동 인식합니다. 인식 후 값은 직접 수정할 수 있어요.</span>
+        </div>
         <div id="gc-delta" class="gc-delta"></div>
         <div class="opt-sides gc-sides">
           <div class="opt-side gc-cur">

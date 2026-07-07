@@ -52,6 +52,11 @@ data/oauth.json
 data/sessions.json
 data/users/
 data/db.json
+data/gemini.json
+data/ocr.json
+
+### 장비 비교 예시 스크린샷(설계 참고용, 커밋 제외) ###
+UI/
 
 ### 개발PC 전용 도구(인프라 정보 포함 — 커밋 제외) ###
 db-tunnel.ps1

@@ -132,6 +132,11 @@ public final class WebServer {
                     strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
+        http.createContext("/api/gear-ocr", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.gearOcr(str(req, "image"), strOpt(req, "mimeType"), str(req, "part"));
+        }));
+
         // ──────────────────── 로그인(OAuth) ────────────────────
         http.createContext("/auth/login", ex -> {
             try {
