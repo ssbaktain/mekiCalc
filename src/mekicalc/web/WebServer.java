@@ -453,6 +453,16 @@ public final class WebServer {
 
     private void serveStatic(HttpExchange ex) throws IOException {
         try {
+            // www → 비-www 301 리다이렉트. www가 200으로 같은 내용을 주면 구글이 www를 별도 표준으로 잡아
+            // "중복 페이지" 상태가 됨. Cloudflare 터널이 원래 Host를 오리진까지 보존하므로 여기서 처리.
+            String host = hostOf(ex);
+            if (host != null && host.startsWith("www.")) {
+                String q = ex.getRequestURI().getRawQuery();
+                String dest = "https://" + host.substring(4) + ex.getRequestURI().getRawPath() + (q != null ? "?" + q : "");
+                ex.getResponseHeaders().set("Location", dest);
+                ex.sendResponseHeaders(301, -1);
+                return;
+            }
             String path = ex.getRequestURI().getPath();
             if (path.equals("/") || path.isEmpty()) path = "/index.html";
             // 경로 탈출 방지: web 디렉터리 밖으로 나가지 못하게 정규화 후 검증.
@@ -553,6 +563,15 @@ public final class WebServer {
         } catch (Exception e) {
             return "0";
         }
+    }
+
+    /** 요청 호스트(소문자, 포트 제거). Cloudflare 터널 뒤라 X-Forwarded-Host → Host 순. */
+    private static String hostOf(HttpExchange ex) {
+        String h = ex.getRequestHeaders().getFirst("X-Forwarded-Host");
+        if (h == null || h.isEmpty()) h = ex.getRequestHeaders().getFirst("Host");
+        if (h == null) return null;
+        int c = h.indexOf(':');
+        return (c >= 0 ? h.substring(0, c) : h).toLowerCase();
     }
 
     private static String contentType(Path p) {
