@@ -1474,17 +1474,36 @@ function gcReadImage(file) {
   });
 }
 
+// 업로드 확인용 이미지 미리보기(작게) + 로딩 스피너 오버레이.
+function gcShowPreview(file) {
+  const box = $("gc-preview"), img = $("gc-preview-img");
+  if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+  const url = URL.createObjectURL(file);
+  img.dataset.url = url;
+  img.src = url;
+  box.hidden = false;
+  gcPreviewSpin(true);
+}
+function gcPreviewSpin(on) { const s = $("gc-spin"); if (s) s.hidden = !on; }
+
 async function runGearOcr(file) {
   if (!file || !file.type.startsWith("image/")) { toast("이미지 파일이 아닙니다."); return; }
+  gcShowPreview(file);
   $("gc-status").textContent = "이미지 인식 중…";
   try {
     const { base64, mimeType } = await gcReadImage(file);
     const data = await postJson("/api/gear-ocr", { image: base64, mimeType, part: $("gc-part").value });
+    // 감지된 부위로 드롭다운 전환 후 박스 재구성(부위별 주옵션·부옵션 풀이 달라 안 하면 특옵 입력 불가).
+    if (data.part && $("gc-part").value !== data.part) {
+      $("gc-part").value = data.part;
+      gcBuildBoxes();
+    }
     gcApplyOcrSide("gc-l", data.left);
     gcApplyOcrSide("gc-r", data.right);
     $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
     runGearCompare();
   } catch (e) { $("gc-status").textContent = "인식 실패: " + e.message; }
+  finally { gcPreviewSpin(false); }
 }
 
 // OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성.

@@ -534,6 +534,11 @@ main {
 /* 장비 비교 */
 .gc-ocr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; background: var(--card2); }
 .gc-ocr-hint { font-size: 12px; color: var(--muted); flex: 1; min-width: 180px; }
+.gc-preview { position: relative; display: inline-block; flex-basis: 100%; margin-top: 4px; }
+.gc-preview img { max-width: 240px; max-height: 150px; display: block; border-radius: 8px; border: 1px solid var(--border); }
+.gc-spin { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.4); border-radius: 8px; }
+.gc-spin::after { content: ""; width: 32px; height: 32px; border: 3px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; border-radius: 50%; animation: gc-spin-rot 0.8s linear infinite; }
+@keyframes gc-spin-rot { to { transform: rotate(360deg); } }
 .gc-variant { margin-bottom: 10px; }
 .gc-sec { font-size: 13px; font-weight: 700; color: var(--accent); margin: 12px 0 6px; display: flex; align-items: center; gap: 8px; }
 .gc-add {

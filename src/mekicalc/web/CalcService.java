@@ -1025,21 +1025,51 @@ public final class CalcService {
     public Map<String, Object> gearOcr(String imageBase64, String mimeType, String part) throws Exception {
         if (ocr == null || !ocr.enabled()) throw new IllegalStateException("OCR이 설정되지 않았습니다.");
         if (imageBase64 == null || imageBase64.isEmpty()) throw new IllegalArgumentException("이미지가 없습니다.");
-        Map<String, Object> partDef = gearPartDef(part);
-        if (partDef == null) throw new IllegalArgumentException("알 수 없는 부위: " + part);
 
-        LinkedHashSet<String> mainStats = new LinkedHashSet<>();   // 이 부위 주 옵션 statId(비딜 포함, 폼 표시용)
-        for (Object mo : asListOr(partDef.get("main"))) mainStats.add(String.valueOf(Json.asMap(mo).get("stat")));
-        LinkedHashSet<String> subStats = new LinkedHashSet<>();    // 이 부위 부 옵션 statId(딜 풀: 공통 + 특옵)
-        for (Object so : asListOr(content.gearOptions.get("commonSub"))) subStats.add(so.toString());
-        for (Object so : asListOr(partDef.get("special"))) subStats.add(so.toString());
+        // 비전 모델은 드물게 좌측 박스를 통째로 누락한다. 정상 결과는 항상 좌측이 채워지므로(단일 박스도 left),
+        // 좌측이 비면 재시도한다(대부분 회복). 최대 3회, 실패에서만 발동해 정상 경로 지연은 없음.
+        Map<String, Object> out = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            Map<String, Object> raw = ocr.extract(imageBase64, mimeType, ocrPrompt(), ocrSchema());
 
-        Map<String, Object> raw = ocr.extract(imageBase64, mimeType, ocrPrompt(), ocrSchema());
+            // 감지된 부위(박스 헤더)를 우선 사용해 폼의 부위 드롭다운을 자동 전환한다. 감지 실패 시 유저 선택 부위.
+            String effPart = effectivePart(raw.get("part"), part);
+            Map<String, Object> partDef = gearPartDef(effPart);
+            if (partDef == null) throw new IllegalArgumentException("알 수 없는 부위: " + part);
 
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("left", mapOcrSide(raw.get("left"), mainStats, subStats));
-        out.put("right", mapOcrSide(raw.get("right"), mainStats, subStats));
+            LinkedHashSet<String> mainStats = new LinkedHashSet<>();   // 이 부위 주 옵션 statId(비딜 포함, 폼 표시용)
+            for (Object mo : asListOr(partDef.get("main"))) mainStats.add(String.valueOf(Json.asMap(mo).get("stat")));
+            LinkedHashSet<String> subStats = new LinkedHashSet<>();    // 이 부위 부 옵션 statId(딜 풀: 공통 + 특옵)
+            for (Object so : asListOr(content.gearOptions.get("commonSub"))) subStats.add(so.toString());
+            for (Object so : asListOr(partDef.get("special"))) subStats.add(so.toString());
+
+            Map<String, Object> left = mapOcrSide(raw.get("left"), mainStats, subStats);
+            Map<String, Object> right = mapOcrSide(raw.get("right"), mainStats, subStats);
+            out = new LinkedHashMap<>();
+            out.put("part", effPart);   // 클라가 부위 드롭다운을 여기에 맞춰 전환
+            out.put("left", left);
+            out.put("right", right);
+            if (!sideEmpty(left)) break;   // 좌측이 채워지면 채택
+        }
         return out;
+    }
+
+    /** 한 박스 결과가 완전히 비었는지(주·부 모두 없음). */
+    private static boolean sideEmpty(Map<String, Object> side) {
+        Object m = side.get("main"), s = side.get("sub");
+        return (!(m instanceof List) || ((List<?>) m).isEmpty()) && (!(s instanceof List) || ((List<?>) s).isEmpty());
+    }
+
+    /**
+     * 감지 부위(모델) vs 유저 선택 부위 중 실제로 쓸 부위 결정.
+     * 감지값이 유효 부위면 그걸 쓰되, 반지/반지2는 화면상 동일('반지')이라 유저가 반지2를 골랐으면 반지2 유지.
+     */
+    private String effectivePart(Object detectedObj, String userPart) {
+        String detected = detectedObj == null ? "" : detectedObj.toString().replaceAll("\\s", "");
+        if ("귀걸이".equals(detected)) detected = "귀고리";   // 흔한 표기 차이
+        if (gearPartDef(detected) == null) return userPart;   // 감지 실패 → 유저 선택 유지
+        if ("반지".equals(detected) && "반지2".equals(userPart)) return "반지2";   // 슬롯 구분 불가
+        return detected;
     }
 
     private Map<String, Object> gearPartDef(String part) {
@@ -1150,10 +1180,16 @@ public final class CalcService {
         try { return Double.parseDouble(s); } catch (NumberFormatException e) { return null; }
     }
 
+    /** 부위 감지 후보(박스 헤더의 장비 종류명). 반지2는 화면상 반지와 구분 불가 → 목록에서 제외하고 서버가 처리. */
+    private static final List<String> OCR_PART_ENUM = List.of(
+            "투구", "상의", "하의", "장갑", "망토", "견장", "벨트", "신발", "반지", "목걸이", "얼굴장식", "눈장식", "귀고리");
+
     private static String ocrPrompt() {
         return "당신은 모바일 게임 '메이플 키우기'의 장비 상세 화면을 읽는 OCR 도구입니다.\n"
             + "이미지에 장비 상세 박스가 1~2개 있습니다(보통 왼쪽=현재 장비, 오른쪽=새 장비).\n"
             + "각 박스의 '장착 효과' 목록에 있는 모든 옵션 행을 위에서부터 순서대로, 하나도 빠짐없이 추출하세요.\n"
+            + "- part: 이 장비의 부위. 박스 헤더의 장비 종류명(예: '레전드리 얼굴장식', '레전드리+ 장갑')에서 판단하며 "
+            + "반드시 다음 중 하나: " + String.join(", ", OCR_PART_ENUM) + ".\n"
             + "- label: 화면에 보이는 한글 옵션 이름 그대로(예: '공격력', '최대 HP', '주 스탯', '크리티컬 데미지', "
             + "'3차 스킬 레벨', '최대 데미지 배율', '방어력', '명중').\n"
             + "- value: 그 옵션의 숫자 값(쉼표·% 포함해도 됨). 예: '15,735', '15.8%', '11'.\n"
@@ -1161,10 +1197,10 @@ public final class CalcService {
             + "최대 HP·방어력·명중처럼 딜과 무관해 보여도 반드시 포함하세요.\n"
             + "- 세트 효과·설명문·강화 수치 등 옵션 이름이 아닌 텍스트는 제외하세요.\n"
             + "- 왼쪽 박스는 left, 오른쪽 박스는 right. 박스가 하나뿐이면 그 박스를 left에 넣고 right는 빈 배열.\n"
-            + "반드시 JSON만 출력: {\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
+            + "반드시 JSON만 출력: {\"part\":\"...\",\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
     }
 
-    /** 응답 스키마: 각 박스는 {label,value} 배열(원문 라벨/값). 매핑은 서버가 수행. */
+    /** 응답 스키마: part(부위) + 각 박스 {label,value} 배열(원문 라벨/값). statId 매핑은 서버가 수행. */
     private static Object ocrSchema() {
         Map<String, Object> label = new LinkedHashMap<>(); label.put("type", "STRING");
         Map<String, Object> value = new LinkedHashMap<>(); value.put("type", "STRING");
@@ -1172,7 +1208,9 @@ public final class CalcService {
         Map<String, Object> optItem = new LinkedHashMap<>();
         optItem.put("type", "OBJECT"); optItem.put("properties", optProps); optItem.put("required", List.of("label", "value"));
         Map<String, Object> arr = new LinkedHashMap<>(); arr.put("type", "ARRAY"); arr.put("items", optItem);
-        Map<String, Object> rootProps = new LinkedHashMap<>(); rootProps.put("left", arr); rootProps.put("right", arr);
+        Map<String, Object> partProp = new LinkedHashMap<>(); partProp.put("type", "STRING"); partProp.put("enum", OCR_PART_ENUM);
+        Map<String, Object> rootProps = new LinkedHashMap<>();
+        rootProps.put("part", partProp); rootProps.put("left", arr); rootProps.put("right", arr);
         Map<String, Object> root = new LinkedHashMap<>(); root.put("type", "OBJECT"); root.put("properties", rootProps);
         return root;
     }
