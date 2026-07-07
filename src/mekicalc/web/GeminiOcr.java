@@ -72,7 +72,7 @@ public final class GeminiOcr implements VisionOcr {
                 Thread.sleep(backoffMs[attempt]);
                 continue;
             }
-            if (sc == 429) throw new IOException("무료 사용량(쿼터)을 초과했습니다. 잠시 후(분당 한도는 약 1분, 일일 한도는 리셋 후) 다시 시도해 주세요.");
+            if (sc == 429) throw new IOException("이미지 인식 요청이 잠시 몰렸어요. 약 1분 뒤 다시 시도해 주세요.");
             if (sc == 503) throw new IOException("Gemini 모델이 잠시 혼잡합니다. 잠시 후 다시 시도해 주세요.");
             throw new IOException("Gemini API 오류(" + sc + "): " + clip(resp.body()));
         }

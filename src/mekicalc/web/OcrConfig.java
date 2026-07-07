@@ -10,15 +10,15 @@ import mekicalc.json.Json;
  *
  * <pre>
  * {
- *   "groqApiKey": "gsk_...",                                    // console.groq.com 무료 키(기본 제공자)
+ *   "mistralApiKey": "...",                                     // console.mistral.ai 무료 키(기본 제공자)
+ *   "mistralModel": "mistral-medium-latest",                    // (선택) Mistral 비전 모델
+ *   "groqApiKey": "gsk_...",                                    // console.groq.com 무료 키(2차 폴백)
  *   "groqModel": "meta-llama/llama-4-scout-17b-16e-instruct",   // (선택) Groq 비전 모델
- *   "mistralApiKey": "...",                                     // console.mistral.ai 무료 키(2차 폴백)
- *   "mistralModel": "pixtral-12b-2409",                         // (선택) Mistral 비전 모델
  *   "tesseractCmd": "C:/.../tesseract.exe"                      // (선택, 미사용) 포터블 tesseract 경로
  * }
  * </pre>
  *
- * <p>키가 있는 제공자만 켜진다. Groq→Mistral 순으로 폴백. 둘 다 없으면 OCR 기능 자체가 OFF.
+ * <p>키가 있는 제공자만 켜진다. Mistral→Groq 순으로 폴백. 둘 다 없으면 OCR 기능 자체가 OFF.
  */
 public final class OcrConfig {
 
@@ -52,7 +52,9 @@ public final class OcrConfig {
             return new OcrConfig(false, "", DEFAULT_GROQ_MODEL, false, "", DEFAULT_MISTRAL_MODEL, null);
         }
         try {
-            Map<String, Object> m = Json.asMap(Json.parse(Files.readString(f)));
+            String text = Files.readString(f);
+            if (!text.isEmpty() && text.charAt(0) == 0xFEFF) text = text.substring(1);   // UTF-8 BOM 방어(에디터·PS가 붙일 수 있음)
+            Map<String, Object> m = Json.asMap(Json.parse(text));
             String gKey = s(m, "groqApiKey");
             String gModel = s(m, "groqModel");
             String mKey = s(m, "mistralApiKey");

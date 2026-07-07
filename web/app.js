@@ -1474,21 +1474,21 @@ function gcReadImage(file) {
   });
 }
 
-// 업로드 확인용 이미지 미리보기(작게) + 로딩 스피너 오버레이.
+// 업로드 이미지를 박스 좌우폭에 꽉 차게 미리보기로 표시(풀사이즈). 인식 중 어둡게 + 중앙 스피너.
 function gcShowPreview(file) {
-  const box = $("gc-preview"), img = $("gc-preview-img");
+  const img = $("gc-preview-img");
   if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
   const url = URL.createObjectURL(file);
   img.dataset.url = url;
   img.src = url;
-  box.hidden = false;
-  gcPreviewSpin(true);
+  $("gc-preview").hidden = false;
 }
-function gcPreviewSpin(on) { const s = $("gc-spin"); if (s) s.hidden = !on; }
 
 async function runGearOcr(file) {
   if (!file || !file.type.startsWith("image/")) { toast("이미지 파일이 아닙니다."); return; }
   gcShowPreview(file);
+  const box = $("gc-preview");
+  box.classList.add("loading");   // 어둡게 + 스피너(클래스로만 제어 → 완료 시 확실히 사라짐)
   $("gc-status").textContent = "이미지 인식 중…";
   try {
     const { base64, mimeType } = await gcReadImage(file);
@@ -1503,7 +1503,7 @@ async function runGearOcr(file) {
     $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
     runGearCompare();
   } catch (e) { $("gc-status").textContent = "인식 실패: " + e.message; }
-  finally { gcPreviewSpin(false); }
+  finally { box.classList.remove("loading"); }
 }
 
 // OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성.

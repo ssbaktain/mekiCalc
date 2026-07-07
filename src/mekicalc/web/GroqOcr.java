@@ -67,7 +67,7 @@ public final class GroqOcr implements VisionOcr {
             int sc = resp.statusCode();
             if (sc / 100 == 2) break;
             if ((sc == 503 || sc == 500) && attempt < backoffMs.length) { Thread.sleep(backoffMs[attempt]); continue; }
-            if (sc == 429) throw new IOException("Groq 무료 사용량(쿼터)을 초과했습니다.");   // 호출부가 폴백 판단
+            if (sc == 429) throw new IOException("이미지 인식 요청이 잠시 몰렸어요. 약 1분 뒤 다시 시도해 주세요.");   // 호출부가 폴백 판단
             if (sc == 503) throw new IOException("Groq 모델이 잠시 혼잡합니다.");
             throw new IOException("Groq API 오류(" + sc + "): " + clip(resp.body()));
         }

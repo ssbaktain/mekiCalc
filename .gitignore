@@ -52,7 +52,7 @@ data/oauth.json
 data/sessions.json
 data/users/
 data/db.json
-data/gemini.json
+data/gemini.json*
 data/ocr.json
 
 ### 장비 비교 예시 스크린샷(설계 참고용, 커밋 제외) ###
