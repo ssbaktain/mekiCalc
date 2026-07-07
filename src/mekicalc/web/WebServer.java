@@ -463,11 +463,12 @@ public final class WebServer {
             //   1) "<path>.html" 이 있으면 그걸로(클린 URL: /guide/how-to → guide/how-to.html)
             //   2) 확장자 없는 경로면 index.html 폴백(클라 라우터가 /cube 등 패널 표시)
             //   3) 그 외(실제 자산 .png 등 진짜 누락)는 아래에서 404
+            String spaRoute = null;   // index.html 폴백으로 서빙되는 SPA 라우트 경로(예: /cube) — 라우트별 메타 주입용
             if (safe && !Files.isRegularFile(target)) {
                 Path html = webDir.resolve("." + path + ".html").normalize();
                 String last = path.substring(path.lastIndexOf('/') + 1);
                 if (html.startsWith(root) && Files.isRegularFile(html)) target = html;
-                else if (!last.contains(".")) target = root.resolve("index.html");
+                else if (!last.contains(".")) { target = root.resolve("index.html"); spaRoute = path; }
             }
             if (!safe || !Files.isRegularFile(target)) {
                 byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
@@ -478,7 +479,7 @@ public final class WebServer {
             }
             String name = target.getFileName().toString().toLowerCase();
             // HTML은 자산 참조(app.js·style.css)에 콘텐츠 해시(?v=)를 주입 → 내용이 바뀌면 URL이 바뀜(캐시버스팅).
-            byte[] data = name.endsWith(".html") ? htmlWithVersionedAssets(target) : Files.readAllBytes(target);
+            byte[] data = name.endsWith(".html") ? htmlWithVersionedAssets(target, spaRoute) : Files.readAllBytes(target);
             ex.getResponseHeaders().set("Content-Type", contentType(target));
             ex.getResponseHeaders().set("Cache-Control", cacheControlFor(name));
             ex.sendResponseHeaders(200, data.length);
@@ -503,10 +504,35 @@ public final class WebServer {
     }
 
     /** HTML 내 /style.css·/app.js 참조 뒤에 ?v=<콘텐츠 해시>를 붙여 반환. */
-    private byte[] htmlWithVersionedAssets(Path htmlFile) throws IOException {
+    /**
+     * SPA 라우트별 [타이틀, 설명]. index.html 폴백으로 서빙될 때 서버가 이 메타를 주입해, 구글이 각 탭을
+     * 홈의 중복이 아니라 개별 페이지로 색인하게 한다(클라 JS canonical 갱신은 렌더링 의존이라 불안정). 클라 ROUTE_META와 동기.
+     */
+    private static final Map<String, String[]> ROUTE_META = Map.of(
+        "/cube", new String[]{"큐브 잠재능력 기댓값 - MekiCalc",
+            "메이플 키우기 큐브 잠재능력 옵션별 딜 증가량과 큐브 한 개당 기댓값을 계산합니다."},
+        "/cube/option-compare", new String[]{"큐브 옵션 비교 - MekiCalc",
+            "두 큐브 잠재 옵션 조합의 딜 기여를 나란히 비교합니다."},
+        "/cube/my-options", new String[]{"내 큐브 옵션 비교·변경 - MekiCalc",
+            "현재 장착 큐브 옵션과 바꿀 옵션의 딜 차이를 비교하고 반영합니다."},
+        "/cube/recommend", new String[]{"큐브 우선순위 추천 - MekiCalc",
+            "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."},
+        "/gear/compare", new String[]{"장비 비교 - MekiCalc",
+            "메이플 키우기에서 현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다."});
+
+    private byte[] htmlWithVersionedAssets(Path htmlFile, String spaRoute) throws IOException {
         String html = Files.readString(htmlFile, StandardCharsets.UTF_8);
         html = html.replace("/style.css\"", "/style.css?v=" + assetVer("style.css") + "\"");
         html = html.replace("/app.js\"", "/app.js?v=" + assetVer("app.js") + "\"");
+        String[] meta = spaRoute == null ? null : ROUTE_META.get(spaRoute);
+        if (meta != null) {   // 라우트별 타이틀·설명·canonical 주입(개별 색인)
+            html = html.replaceFirst("(?s)<title>.*?</title>",
+                    java.util.regex.Matcher.quoteReplacement("<title>" + meta[0] + "</title>"));
+            html = html.replaceFirst("(<meta name=\"description\" content=\")[^\"]*",
+                    "$1" + java.util.regex.Matcher.quoteReplacement(meta[1]));
+            html = html.replaceFirst("(<link rel=\"canonical\" href=\")[^\"]*",
+                    "$1" + java.util.regex.Matcher.quoteReplacement("https://mekicalc.com" + spaRoute));
+        }
         return html.getBytes(StandardCharsets.UTF_8);
     }
 
