@@ -1781,10 +1781,15 @@ $("cmp-apply").addEventListener("click", runApply);
 // ──────────────────── 내 값 불러오기(개발 편의) ────────────────────
 
 // 스탯 입력 폼을 주어진 값으로 채운다(없는 스탯은 0).
+// double 덧뺄셈에서 생기는 부동소수점 노이즈(예: 321.90000000000003) 제거.
+function cleanNum(v) {
+  if (v == null || !isFinite(v)) return v;
+  return parseFloat(v.toFixed(6));
+}
 function fillStats(stats) {
   for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
     const v = stats[input.dataset.statId];
-    input.value = (v == null) ? "0" : v;
+    input.value = (v == null) ? "0" : cleanNum(v);
   }
 }
 

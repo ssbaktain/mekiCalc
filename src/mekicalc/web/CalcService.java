@@ -1,15 +1,20 @@
 package mekicalc.web;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.imageio.ImageIO;
 import mekicalc.config.ConversionIO;
 import mekicalc.config.CubeStateIO;
 import mekicalc.config.PresetIO;
@@ -1032,10 +1037,15 @@ public final class CalcService {
         LinkedHashSet<String> unionMain = allMainStats();
         LinkedHashSet<String> unionSub = allSubStats();
 
+        // 대비 강화 전처리: 흐릿한 회색 필터 오버레이는 배경으로 묻히고 흰색 옵션 글씨는 또렷해져 인식률이 오른다.
+        String ocrImage = imageBase64, ocrMime = mimeType;
+        byte[] enhanced = enhanceForOcr(imageBase64);
+        if (enhanced != null) { ocrImage = Base64.getEncoder().encodeToString(enhanced); ocrMime = "image/png"; }
+
         // 비전 모델은 드물게 좌측 박스를 통째로 누락한다. 좌측이 비면 1회 재시도(실패에서만 발동).
         Map<String, Object> left = null, right = null;
         for (int attempt = 0; attempt < 2; attempt++) {
-            Map<String, Object> raw = ocr.extract(imageBase64, mimeType, ocrPrompt(), ocrSchema());
+            Map<String, Object> raw = ocr.extract(ocrImage, ocrMime, ocrPrompt(), ocrSchema());
             left = mapOcrSide(raw.get("left"), unionMain, unionSub);
             right = mapOcrSide(raw.get("right"), unionMain, unionSub);
             if (!sideEmpty(left)) break;
@@ -1250,18 +1260,65 @@ public final class CalcService {
         try { return Double.parseDouble(m.group().replace(",", "")); } catch (NumberFormatException e) { return null; }
     }
 
+    /**
+     * OCR 정확도용 대비 강화. 각 채널에 레벨(입력 lo~hi → 0~255) 보정을 적용해
+     * 어두운/흐릿한 회색(필터 오버레이 등)은 검정으로 밀고 밝은 흰색 글씨는 또렷하게 만든다.
+     * 색(초록 증가분·노랑 등)은 채널별로 처리해 대체로 보존된다. 실패 시 null(원본 사용).
+     */
+    private static final int OCR_LEVEL_LO = 120, OCR_LEVEL_HI = 230;
+    private static byte[] enhanceForOcr(String base64) {
+        try {
+            byte[] data = Base64.getDecoder().decode(base64);
+            BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
+            if (img == null) return null;
+            int w = img.getWidth(), h = img.getHeight();
+            BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            double span = OCR_LEVEL_HI - OCR_LEVEL_LO;
+            int[] row = new int[w];
+            for (int y = 0; y < h; y++) {
+                img.getRGB(0, y, w, 1, row, 0, w);
+                for (int x = 0; x < w; x++) {
+                    int argb = row[x];
+                    int r = level((argb >> 16) & 0xFF, span);
+                    int g = level((argb >> 8) & 0xFF, span);
+                    int b = level(argb & 0xFF, span);
+                    row[x] = (r << 16) | (g << 8) | b;
+                }
+                out.setRGB(0, y, w, 1, row, 0, w);
+            }
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(out, "png", bos);
+            return bos.toByteArray();
+        } catch (Exception e) {
+            return null;   // 전처리 실패 시 원본 이미지로 진행
+        }
+    }
+    private static int level(int c, double span) {
+        double v = (c - OCR_LEVEL_LO) / span;
+        if (v < 0) v = 0; else if (v > 1) v = 1;
+        return (int) Math.round(v * 255);
+    }
+
     private static String ocrPrompt() {
         return "당신은 모바일 게임 '메이플 키우기'의 장비 상세 화면을 읽는 OCR 도구입니다.\n"
             + "이미지에 장비 상세 박스가 1~2개 있습니다(보통 왼쪽=현재 장비, 오른쪽=새 장비).\n"
             + "각 박스의 '장착 효과' 목록에 있는 모든 옵션 행을 위에서부터 순서대로, 하나도 빠짐없이 추출하세요.\n"
             + "- label: 화면에 보이는 한글 옵션 이름 그대로(예: '공격력', '최대 HP', '주 스탯', '크리티컬 데미지', "
-            + "'3차 스킬 레벨', '최대 데미지 배율', '방어력', '명중').\n"
+            + "'최대 데미지 배율', '방어력', '명중').\n"
             + "- value: 그 옵션의 숫자 값(쉼표·% 포함해도 됨). 예: '15,735', '15.8%', '11'.\n"
             + "- 새 장비(오른쪽) 박스에서는 한 옵션에 숫자가 둘(흰색=실제 값, 초록색=현재 장비 대비 증가분) 보일 수 있습니다. "
             + "반드시 흰색(왼쪽·실제 값)만 value에 넣고, 초록색 증가분은 절대 넣지 마세요.\n"
             + "- 상단의 주 옵션(보통 3개: 공격력·최대 HP·부위 고유)과 하단의 부 옵션을 모두 포함하세요. "
             + "최대 HP·방어력·명중처럼 딜과 무관해 보여도 반드시 포함하세요.\n"
             + "- 세트 효과·설명문·강화 수치 등 옵션 이름이 아닌 텍스트는 제외하세요.\n"
+            + "- 화면에 '프리셋 설정' 같은 필터·설정 패널이나, 장비 박스 위에 반투명하게 겹쳐 보이는 회색 스탯 목록이 "
+            + "있을 수 있습니다. 이 필터 목록의 항목은 이름 오른쪽에 '숫자 값이 아니라 동그란 체크박스/토글'이 붙어 있습니다. "
+            + "반면 진짜 장비 옵션은 이름 오른쪽에 반드시 '숫자 값'이 있습니다. "
+            + "이름 오른쪽에 숫자 값이 없는(체크박스만 있는) 항목, 흐릿한 회색 항목은 필터이므로 절대 넣지 마세요. "
+            + "특히 '일반 몬스터 데미지', 'N차 스킬 레벨', 'N차 스킬 데미지' 같은 항목이 회색이거나 값 없이 체크박스만 있으면 "
+            + "그것은 필터 목록이니 반드시 제외하세요.\n"
+            + "- 어떤 옵션의 숫자 값은 보이는데 그 왼쪽의 옵션 이름이 필터에 가려 확실히 안 보이면, 이름을 추측하지 말고 "
+            + "그 행 전체를 건너뛰세요(없는 스탯을 지어내지 마세요).\n"
             + "- 왼쪽 박스는 left, 오른쪽 박스는 right. 박스가 하나뿐이면 그 박스를 left에 넣고 right는 빈 배열.\n"
             + "반드시 JSON만 출력: {\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
     }
