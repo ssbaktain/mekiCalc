@@ -319,17 +319,20 @@ const MENU = [
     { label: "우선순위 추천", panel: "recommend", path: "/cube/recommend" },
   ]},
   { label: "장비 비교", panel: "gear", path: "/gear/compare" },   // 최상위 단독 · 프리셋 없이 단발 비교/변경
+  { label: "공지사항", panel: "notices", path: "/notices" },      // 계산 아닌 첫 기능 · 넥슨 포럼 공지 크롤링·요약
 ];
 const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
 
 function showPanel(name) {
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
+  document.body.classList.toggle("notices-active", name === "notices");   // 공지 탭은 비영리 → 광고 비노출(CSS)
   if (name === "home") renderHome();               // 홈 대시보드(로고로 진입)
   if (name === "compare") renderCompareEditor(true);
   if (name === "optcompare") renderOptCompare();
   if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
   if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
   if (name === "gear") renderGear();               // 장비 비교 UI 구성
+  if (name === "notices") renderNotices();         // 공지 탭(넥슨 포럼 크롤링·요약)
 }
 
 // ──────────────────── 라우팅(SPA) ────────────────────
@@ -352,6 +355,7 @@ const ROUTE_META = {
   "/cube/my-options":     ["내 큐브 옵션 비교·변경 - MekiCalc", "현재 장착 큐브 옵션과 바꿀 옵션의 딜 차이를 비교하고 반영합니다."],
   "/cube/recommend":      ["큐브 우선순위 추천 - MekiCalc", "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."],
   "/gear/compare":        ["장비 비교 - MekiCalc", "현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다. 무기 공격력·부옵션(크리 데미지·데미지 등) 차이를 현재 스탯 기준으로 계산합니다."],
+  "/notices":             ["공지사항 - 메이플 키우기 공지·패치노트·이벤트 | MekiCalc", "메이플 키우기 공식 공지사항·패치노트·이벤트·확인 중인 현상을 요약과 함께 한 곳에서 보고, 현재 사용 가능한 쿠폰을 확인합니다."],
 };
 function applyRouteMeta(path) {
   const m = ROUTE_META[path];
@@ -2832,6 +2836,147 @@ async function loadMeta(pre) {
   applyMeta(pre || await (await fetch("/api/meta")).json());
   await renderCube();
 }
+
+// ──────────────────── 공지사항(넥슨 포럼 크롤링·요약) ────────────────────
+// 서버가 넥슨 포럼을 1분 폴링·요약해 저장한 걸 읽어 탭(전체 + 말머리별)으로 보여준다. 게시 시각 내림차순.
+const noticeState = { cat: null, page: 0, hasMore: false, loading: false, inited: false };
+
+async function renderNotices() {
+  if (!noticeState.inited) {
+    noticeState.inited = true;
+    $("nt-more").addEventListener("click", () => loadNotices(noticeState.cat, noticeState.page + 1, true));
+  }
+  await buildNoticeTabs();                       // 재진입 시 개수 최신화(백필로 늘어남)
+  await loadNotices(noticeState.cat, 0, false);  // 현재 탭 최신 다시 로드
+}
+
+async function buildNoticeTabs() {
+  const tabs = $("nt-tabs");
+  let data = { categories: [], total: 0 };
+  try { data = await (await fetch("/api/notice-categories")).json(); } catch (e) { /* 무시 */ }
+  const defs = [{ key: null, label: "전체", count: data.total }].concat(
+    (data.categories || []).map((c) => ({ key: c.key, label: c.key, count: c.count })));
+  tabs.innerHTML = "";
+  for (const d of defs) {
+    const b = document.createElement("button");
+    b.className = "nt-tab" + (d.key === noticeState.cat ? " active" : "");
+    b.type = "button";
+    b.innerHTML = escNt(d.label) + (d.count ? ' <span class="nt-tab-n">' + d.count + "</span>" : "");
+    b.addEventListener("click", () => {
+      if (noticeState.loading) return;
+      document.querySelectorAll("#nt-tabs .nt-tab").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      loadNotices(d.key, 0, false);
+    });
+    tabs.appendChild(b);
+  }
+}
+
+async function loadNotices(cat, page, append) {
+  const list = $("nt-list"), status = $("nt-status"), more = $("nt-more");
+  noticeState.loading = true;
+  noticeState.cat = cat;
+  if (!append) { list.innerHTML = ""; status.textContent = "불러오는 중…"; more.hidden = true; }
+  try {
+    const q = new URLSearchParams();
+    if (cat) q.set("category", cat);
+    q.set("page", page);
+    const data = await (await fetch("/api/notices?" + q.toString())).json();
+    if (!append && (!data.items || data.items.length === 0)) {
+      list.innerHTML = '<p class="nt-empty">아직 수집된 공지가 없습니다. 잠시 후 다시 확인해 주세요.</p>';
+    } else {
+      for (const it of (data.items || [])) list.appendChild(noticeCard(it));
+    }
+    noticeState.page = data.page || 0;
+    noticeState.hasMore = !!data.hasMore;
+    more.hidden = !noticeState.hasMore;
+    status.textContent = "";
+  } catch (e) {
+    status.textContent = "공지를 불러오지 못했습니다.";
+  } finally {
+    noticeState.loading = false;
+  }
+}
+
+// 목록 카드: 강한 요약 + (쿠폰) + 원문 보기 링크. 원문 본문·이미지·표는 우리가 저장/전시하지 않고 링크로만 연결.
+function noticeCard(it) {
+  const el = document.createElement("article");
+  el.className = "nt-item";
+  const coupons = (it.coupons && it.coupons.length) ? ntCoupons(it.coupons) : "";
+  const src = it.sourceUrl
+    ? '<a class="nt-src" href="' + escAttr(it.sourceUrl) + '" target="_blank" rel="noopener nofollow">원문 보기 ↗</a>' : "";
+  el.innerHTML = ntHead(it)
+    + '<h3 class="nt-title">' + escNt(it.title || "") + "</h3>"
+    + (it.summary
+        ? '<div class="nt-summary">' + ntSummary(it.summary) + "</div>"
+        : '<div class="nt-summary nt-pending">요약을 준비하고 있어요…</div>')
+    + coupons + src;
+  el.querySelectorAll(".nt-coupon-code").forEach((c) => c.addEventListener("click", () => copyCoupon(c)));
+  return el;
+}
+
+function ntHead(it) {
+  return '<div class="nt-head">'
+    + '<span class="nt-cat ' + ntCatClass(it.category) + '">' + escNt(it.category || "") + "</span>"
+    + (it.headline && it.headline !== it.category ? '<span class="nt-headline">' + escNt(it.headline) + "</span>" : "")
+    + '<span class="nt-date">' + ntDate(it.postedAt) + "</span>"
+    + (it.sticky ? '<span class="nt-pin" title="상단 고정">📌</span>' : "")
+    + "</div>";
+}
+
+function ntSummary(s) {
+  const lines = String(s).split("\n").map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return "";
+  return "<ul>" + lines.map((l) => "<li>" + escNt(l.replace(/^[-•*]\s*/, "")) + "</li>").join("") + "</ul>";
+}
+
+function ntCoupons(cs) {
+  let h = '<div class="nt-coupons">';
+  for (const c of cs) {
+    const period = ntPeriod(c.start, c.end);
+    h += '<div class="nt-coupon">'
+      + '<button class="nt-coupon-code" type="button" data-code="' + escAttr(c.code) + '" title="클릭하면 복사">🎟 ' + escNt(c.code) + "</button>"
+      + (period ? '<span class="nt-coupon-period">' + escNt(period) + "</span>" : "")
+      + (c.desc ? '<span class="nt-coupon-desc">' + escNt(c.desc) + "</span>" : "")
+      + "</div>";
+  }
+  return h + "</div>";
+}
+
+function ntPeriod(s, e) {
+  if (!s && !e) return "";
+  if (s && e) return s + " ~ " + e;
+  return e ? "~ " + e : s + " ~";
+}
+
+function copyCoupon(btn) {
+  const code = btn.dataset.code || "";
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText(code).then(() => {
+    const prev = btn.innerHTML;
+    btn.classList.add("copied");
+    btn.innerHTML = "✓ 복사됨";
+    setTimeout(() => { btn.innerHTML = prev; btn.classList.remove("copied"); }, 1200);
+  }).catch(() => { /* 무시 */ });
+}
+
+function ntDate(sec) {
+  if (!sec) return "";
+  const d = new Date(sec * 1000);
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+function ntCatClass(cat) {
+  if (!cat) return "cat-notice";
+  if (cat.indexOf("패치") >= 0) return "cat-patch";
+  if (cat.indexOf("이벤트") >= 0) return "cat-event";
+  if (cat.indexOf("확인") >= 0 || cat.indexOf("현상") >= 0) return "cat-issue";
+  return "cat-notice";
+}
+
+function escNt(s) { const d = document.createElement("div"); d.textContent = (s == null ? "" : String(s)); return d.innerHTML; }
+function escAttr(s) { return escNt(s).replace(/"/g, "&quot;"); }
 
 (async function init() {
   // 초기화 중에는 자동 push 금지: 계정 정본을 pull하기 전에 로컬(스테일) 상태를 계정에 덮어쓰는 것 방지

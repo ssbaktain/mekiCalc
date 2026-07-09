@@ -34,14 +34,16 @@ public final class WebServer {
     private final Path webDir;
     private final AuthService auth;
     private final EventLog log;
+    private final NoticeService notices;
     private HttpServer http;
 
-    public WebServer(int port, CalcService service, Path webDir, AuthService auth, EventLog log) {
+    public WebServer(int port, CalcService service, Path webDir, AuthService auth, EventLog log, NoticeService notices) {
         this.port = port;
         this.service = service;
         this.webDir = webDir;
         this.auth = auth;
         this.log = log;
+        this.notices = notices;
     }
 
     public void start() throws IOException {
@@ -136,6 +138,16 @@ public final class WebServer {
             Map<String, Object> req = readJsonBody(ex);
             return service.gearOcr(str(req, "image"), strOpt(req, "mimeType"), str(req, "part"));
         }));
+
+        // ──────────────────── 공지(넥슨 포럼 크롤링·요약) ────────────────────
+        http.createContext("/api/notice-categories", json("GET", ex -> notices.categories()));
+        http.createContext("/api/notices", json("GET", ex -> {
+            Map<String, String> q = queryParams(ex);
+            int page = 0;
+            try { page = Integer.parseInt(q.getOrDefault("page", "0")); } catch (NumberFormatException ignore) { }
+            return notices.list(q.get("category"), page);
+        }));
+        http.createContext("/api/coupons", json("GET", ex -> notices.coupons(java.time.LocalDate.now().toString())));
 
         // ──────────────────── 로그인(OAuth) ────────────────────
         http.createContext("/auth/login", ex -> {
@@ -528,7 +540,9 @@ public final class WebServer {
         "/cube/recommend", new String[]{"큐브 우선순위 추천 - MekiCalc",
             "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."},
         "/gear/compare", new String[]{"장비 비교 - MekiCalc",
-            "메이플 키우기에서 현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다."});
+            "메이플 키우기에서 현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다."},
+        "/notices", new String[]{"공지사항 - 메이플 키우기 공지·패치노트·이벤트 | MekiCalc",
+            "메이플 키우기 공식 공지사항·패치노트·이벤트·확인 중인 현상을 한 곳에서 요약과 함께 보고, 사용 가능한 쿠폰을 확인합니다."});
 
     private byte[] htmlWithVersionedAssets(Path htmlFile, String spaRoute) throws IOException {
         String html = Files.readString(htmlFile, StandardCharsets.UTF_8);

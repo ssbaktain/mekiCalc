@@ -46,8 +46,16 @@ public final class WebMain {
         }
         AuthService auth = new AuthService(oauth, dataDir, pg);
         EventLog log = new EventLog(dataDir);
-        WebServer server = new WebServer(port, service, webDir, auth, log);
+
+        // 공지 크롤러/요약: 넥슨 포럼 공지를 1분 폴링·요약해 우리 사이트 공지 탭·쿠폰 위젯으로 제공.
+        NoticeStore noticeStore = new NoticeStore(dataDir);
+        NoticeSummarizer summarizer = new NoticeSummarizer(GeminiConfig.load(dataDir), OcrConfig.load(dataDir));
+        NoticeService notices = new NoticeService(noticeStore);
+        NoticeCrawler crawler = new NoticeCrawler(noticeStore, summarizer);
+
+        WebServer server = new WebServer(port, service, webDir, auth, log, notices);
         server.start();
+        crawler.start();   // 서버가 뜬 뒤 백그라운드 폴링 시작(데몬 스레드)
 
         System.out.println("========================================");
         System.out.println(" MekiCalc 웹 서버 시작");

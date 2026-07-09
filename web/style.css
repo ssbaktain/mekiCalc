@@ -1056,3 +1056,112 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
   #relic-slots { flex-direction: column; }
   .relic-slot { flex: 1 1 auto; }
 }
+
+/* ──────────────────── 공지사항(넥슨 포럼 크롤링·요약) ──────────────────── */
+/* 공지 탭은 비영리(약관·저작권 리스크 최소화) → 광고 영역 비노출. */
+body.notices-active .ad-slot { display: none !important; }
+.notices-card { max-width: 820px; margin: 0 auto; }
+.nt-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.nt-tab {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--card2); color: var(--muted); font-size: 14px; cursor: pointer;
+  transition: color .12s, border-color .12s, background .12s;
+}
+.nt-tab:hover { color: var(--text); border-color: var(--accent); }
+.nt-tab.active { background: var(--accent); color: #10131a; border-color: var(--accent); font-weight: 700; }
+.nt-tab-n { opacity: .75; font-size: 12px; margin-left: 2px; }
+
+.nt-list { display: flex; flex-direction: column; gap: 12px; }
+.nt-item {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; text-align: left;
+}
+.nt-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+.nt-cat {
+  font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 6px;
+  background: rgba(124, 156, 255, .18); color: var(--accent);
+}
+.nt-cat.cat-patch  { background: rgba(120, 200, 140, .18); color: #7fd39a; }
+.nt-cat.cat-event  { background: rgba(255, 190, 100, .18); color: #ffc86b; }
+.nt-cat.cat-issue  { background: rgba(255, 130, 130, .16); color: #ff9a9a; }
+.nt-cat.cat-notice { background: rgba(124, 156, 255, .18); color: var(--accent); }
+.nt-headline { font-size: 12px; color: var(--muted); }
+.nt-date { font-size: 12px; color: var(--muted); margin-left: auto; }
+.nt-pin { font-size: 12px; }
+.nt-title { font-size: 16px; margin: 2px 0 8px; color: var(--text); line-height: 1.4; }
+
+.nt-summary { color: var(--text); font-size: 14px; line-height: 1.65; }
+.nt-summary ul { margin: 0; padding-left: 18px; }
+.nt-summary li { margin: 2px 0; }
+.nt-summary.nt-pending { color: var(--muted); font-style: italic; }
+
+.nt-coupons { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.nt-coupon { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nt-coupon-code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px; font-weight: 700;
+  padding: 4px 10px; border-radius: 7px; cursor: pointer;
+  background: rgba(255, 190, 100, .16); color: #ffc86b; border: 1px dashed #ffc86b;
+}
+.nt-coupon-code:hover { filter: brightness(1.12); }
+.nt-coupon-code.copied { background: rgba(120, 200, 140, .2); color: #7fd39a; border-style: solid; border-color: #7fd39a; }
+.nt-coupon-period { font-size: 12px; color: var(--muted); }
+.nt-coupon-desc { font-size: 12px; color: var(--muted); }
+
+.nt-src {
+  display: inline-block; margin-top: 10px; font-size: 13px; color: var(--accent);
+  text-decoration: none; border-bottom: 1px solid transparent;
+}
+.nt-src:hover { border-bottom-color: var(--accent); }
+.nt-empty { color: var(--muted); text-align: center; padding: 30px 0; }
+.nt-more-row { text-align: center; margin-top: 14px; }
+.nt-more-row .primary-btn { min-width: 140px; }
+
+/* 클릭 가능한 목록 카드 */
+.nt-item.nt-click { cursor: pointer; transition: border-color .12s, transform .06s, background .12s; }
+.nt-item.nt-click:hover { border-color: var(--accent); background: #2b3140; }
+.nt-item.nt-click:active { transform: translateY(1px); }
+.nt-more-link { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--accent); }
+
+/* 상세(게시글 진입) 뷰 */
+.nt-back {
+  background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+  border-radius: 8px; padding: 7px 14px; font-size: 14px; margin: 0 0 12px;
+}
+.nt-back:hover { color: var(--accent); border-color: var(--accent); }
+.nt-detail-card { max-width: 820px; margin: 0 auto; text-align: left; }
+.nt-d-title { font-size: 21px; margin: 6px 0 16px; line-height: 1.4; color: var(--text); }
+.nt-d-label {
+  font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em;
+  margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.nt-d-summary { font-size: 15px; line-height: 1.75; }
+/* 상세 본문: 원문 레이아웃(요약 텍스트 + 이미지·표), 원문 문단 구분(빈 줄) 유지 */
+.nt-body { font-size: 15px; line-height: 1.75; color: var(--text); }
+.nt-body p { margin: 8px 0; }
+.nt-body .nt-sub { margin: 20px 0 6px; font-weight: 700; color: var(--text); }   /* 구획 소제목(📌·■ 등으로 시작) */
+.nt-body .nt-txt { color: var(--text); }                                          /* 일반 문단 */
+.nt-body p:first-child { margin-top: 0; }
+.nt-body ul { margin: 6px 0 4px; padding-left: 18px; }
+.nt-body li { margin: 4px 0; }
+.nt-body .nt-media { margin: 16px 0; }
+.nt-d-src {
+  display: inline-block; margin-top: 22px; padding: 9px 16px; border-radius: 9px;
+  background: var(--accent); color: #10131a; font-weight: 700; font-size: 14px; text-decoration: none;
+}
+.nt-d-src:hover { filter: brightness(1.1); border: none; }
+
+/* 원문 이미지·표(정제해 삽입) */
+.nt-media img { max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0; display: block; }
+.nt-media table {
+  border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.nt-media th, .nt-media td { border: 1px solid var(--border); padding: 7px 10px; text-align: center; vertical-align: middle; }
+.nt-media th { background: var(--card2); color: var(--text); font-weight: 700; }
+.nt-media td { color: var(--text); }
+.nt-media { overflow-x: auto; }
+
+@media (max-width: 720px) {
+  .nt-date { margin-left: 0; width: 100%; }
+  .nt-d-title { font-size: 18px; }
+}
