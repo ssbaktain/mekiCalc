@@ -381,6 +381,7 @@ function syncMobileActive(leaf) {
 function applyLeaf(leaf, item, push) {
   const staysInPresets = leaf.panel === "presets" && !leaf.sub;
   if (!staysInPresets && !canLeaveEditors()) return false;
+  closeAllModals();   // 탭 이동 시 열린 팝업(내보내기·불러오기·선택)·잔존 선택 정리
   closeMenus();
   item = item || routeItemEls.get(leaf.path);
   if (item) setActiveMenu(item);
@@ -850,7 +851,7 @@ function renderHome() {
   $("dash-detail-sub").textContent = `${tname} · ${secs}초 기준`;
 
   const shares = (det && det.shares) || [];
-  renderDonut(shares);
+  renderDonut(shares, dps);
   renderPcSplit(shares, dps);
   renderHomeStats(det);
   renderDpsBars(dps);
@@ -865,16 +866,18 @@ function renderCompanionCard(det) {
   box.hidden = false;
   const nm = activeCompanionName();
   const sw = dps.summonSeconds ? Math.round(dps.summonSeconds) : null;   // 소환 유지창(예: 48초)
+  const sumSec = dps.summonSeconds || 0;                                 // 소환 지속(초) — 합산 환산용
   // 기준선(동료 없을 때 플레이어 딜) = det.solo.dps(방어배수 스케일 적용본). dps.playerSolo는 미스케일이라 동료 값과 단위가 안 맞음.
   const solo = (det.solo && det.solo.dps) || 0;
   const cBasic = dps.companionBasic || 0, cSkill = dps.companionSkill || 0, cWin = dps.companionWindow || 0;
   const playerSummon = det.summon && det.summon.dps != null ? det.summon.dps - cWin : solo;   // 소환 중 플레이어 딜(동료 버프 받은)
   const buffBoost = Math.max(0, playerSummon - solo);                     // 동료 버프로 늘어난 플레이어 딜
-  const pctOf = (v) => (solo > 0 ? v / solo * 100 : 0);
+  const pctOf = (v) => (solo > 0 ? v / solo * 100 : 0);                   // 기여도 %는 DPS 비율(시간 무관) — 그대로
+  // dmg는 소환 유지창 동안의 총 딜(합산). 동료 평타+딜스킬 = 딜 비중의 동료 조각과 동일한 숫자가 됨.
   const rows = [
-    { name: "동료 평타", dmg: koreanUnit(cBasic), pct: pctOf(cBasic), c: COMPANION_COLOR },
-    { name: "동료 딜 스킬", dmg: koreanUnit(cSkill), pct: pctOf(cSkill), c: "#c78bff" },
-    { name: "동료 버프", dmg: `플레이어 딜 +${koreanUnit(buffBoost)}`, pct: pctOf(buffBoost), c: "#f5a623" },
+    { name: "동료 평타", dmg: koreanUnit(cBasic * sumSec), pct: pctOf(cBasic), c: COMPANION_COLOR },
+    { name: "동료 딜 스킬", dmg: koreanUnit(cSkill * sumSec), pct: pctOf(cSkill), c: "#c78bff" },
+    { name: "동료 버프", dmg: `플레이어 딜 +${koreanUnit(buffBoost * sumSec)}`, pct: pctOf(buffBoost), c: "#f5a623" },
   ];
   const totalPct = rows.reduce((s, r) => s + r.pct, 0);
   const items = rows.map((r) =>
@@ -891,20 +894,28 @@ function renderCompanionCard(det) {
     `<div class="cc-items">${items}</div>`;
 }
 
-// shares = [{name, dps, companion?}] (내림차순). 작은 조각은 '기타'로 묶고, 동료는 항상 따로.
-function buildSlices(shares) {
-  const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
+// 동료 총 딜(합산): 소환 창 DPS × 소환 지속(초). 동료 기여 카드와 '같은 값'을 쓰기 위한 단일 출처.
+// (딜 비중은 이 합산을, 딜 상세는 DPS를 보여줘 관점을 분리 — 헷갈리던 "동료 딜 두 개"를 하나로.)
+function companionTotal(dps) {
+  if (!dps || dps.companionWindow == null) return 0;
+  return (dps.companionWindow || 0) * (dps.summonSeconds || 0);
+}
+
+// shares = [{name, dps, companion?}] → 총 딜(합산) 단위 파이 조각. 플레이어=dps×전투시간, 동료=소환창 총딜.
+// 작은 조각은 '기타'로 묶고, 동료는 항상 따로. winSec=전투시간(초), compTotal=동료 총딜(companionTotal).
+function buildSlices(shares, winSec, compTotal) {
+  const players = shares.filter((x) => !x.companion).map((x) => ({ name: x.name, dmg: (x.dps || 0) * winSec }));
+  const total = players.reduce((s, x) => s + x.dmg, 0) + (compTotal || 0);
   if (total <= 0) return { slices: [], total: 0 };
-  const comp = shares.find((x) => x.companion);
-  const players = shares.filter((x) => !x.companion).slice().sort((a, b) => b.dps - a.dps);   // 딜 지분 내림차순
+  players.sort((a, b) => b.dmg - a.dmg);   // 딜 지분 내림차순
   const slices = [];
-  let ci = 0, otherDps = 0; const otherItems = [];
+  let ci = 0, otherDmg = 0; const otherItems = [];
   for (const p of players) {
-    if ((p.dps / total) >= 0.04 && slices.length < 8) slices.push({ name: p.name, dps: p.dps, color: PIE_COLORS[ci++ % PIE_COLORS.length] });
-    else { otherDps += p.dps; otherItems.push({ name: p.name, dps: p.dps }); }   // 기타에 묶인 항목들(호버용)
+    if ((p.dmg / total) >= 0.04 && slices.length < 8) slices.push({ name: p.name, dmg: p.dmg, color: PIE_COLORS[ci++ % PIE_COLORS.length] });
+    else { otherDmg += p.dmg; otherItems.push({ name: p.name, dmg: p.dmg }); }   // 기타에 묶인 항목들(호버용)
   }
-  if (otherDps > 0) slices.push({ name: "기타", dps: otherDps, color: OTHER_COLOR, other: true, items: otherItems });
-  if (comp && comp.dps > 0) slices.push({ name: activeCompanionLabel(), dps: comp.dps, color: COMPANION_COLOR, companion: true });
+  if (otherDmg > 0) slices.push({ name: "기타", dmg: otherDmg, color: OTHER_COLOR, other: true, items: otherItems });
+  if (compTotal > 0) slices.push({ name: activeCompanionLabel(), dmg: compTotal, color: COMPANION_COLOR, companion: true });
   return { slices, total };
 }
 
@@ -916,23 +927,24 @@ function ringPath(cx, cy, R, r, a0, a1) {
   return `M${ox0.toFixed(2)} ${oy0.toFixed(2)} A${R} ${R} 0 ${large} 1 ${ox1.toFixed(2)} ${oy1.toFixed(2)} L${ix1.toFixed(2)} ${iy1.toFixed(2)} A${r} ${r} 0 ${large} 0 ${ix0.toFixed(2)} ${iy0.toFixed(2)} Z`;
 }
 
-function renderDonut(shares) {
+function renderDonut(shares, dps) {
   const chart = $("donut-chart"), legend = $("donut-legend");
   if (!chart) return;
-  const { slices, total } = buildSlices(shares);
+  const winSec = (dps && dps.windowSeconds) || 0;
+  const { slices, total } = buildSlices(shares, winSec, companionTotal(dps));   // total·조각 모두 총 딜(합산)
   if (!slices.length) { chart.innerHTML = "<div class='donut-empty'>데이터 없음</div>"; legend.innerHTML = ""; return; }
   // 툴팁: '기타'면 묶인 항목 내역까지 펼쳐 보여줌
   const tip = (s) => {
-    let t = `${s.name} · ${num1s(s.dps / total * 100)}%`;
+    let t = `${s.name} · ${num1s(s.dmg / total * 100)}%`;
     if (s.other && s.items && s.items.length) {
-      t += "\n" + s.items.map((it) => `· ${it.name} ${num1s(it.dps / total * 100)}% (${koreanUnit(it.dps)})`).join("\n");
+      t += "\n" + s.items.map((it) => `· ${it.name} ${num1s(it.dmg / total * 100)}% (${koreanUnit(it.dmg)})`).join("\n");
     }
     return t;
   };
   const S = 180, cx = S / 2, cy = S / 2, R = 84, r = 50;
   let a = 0, paths = "";
   slices.forEach((s, i) => {
-    const frac = s.dps / total, deg = frac * 360;
+    const frac = s.dmg / total, deg = frac * 360;
     const a1 = (i === slices.length - 1) ? 360 : a + deg;   // 마지막은 360까지(부동소수 틈 방지)
     let d;
     if (slices.length === 1) d = ringPath(cx, cy, R, r, 0.01, 359.99);
@@ -940,10 +952,9 @@ function renderDonut(shares) {
     paths += `<path d="${d}" fill="${s.color}" class="pie-seg" data-i="${i}"><title>${escapeHtml(tip(s))}</title></path>`;
     a = a1;
   });
-  const compPct = slices.filter((s) => s.companion).reduce((p, s) => p + s.dps, 0) / total * 100;
   chart.innerHTML =
     `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛"><g class="donut-ring">${paths}</g>` +
-    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 DPS</text>` +
+    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 딜</text>` +
     `<text x="${cx}" y="${cy + 14}" class="donut-center-val">${total > 0 ? koreanUnit(total) : "—"}</text></svg>`;
   const lgRow = (cls, di, dot, name, pct, val, title) =>
     `<div class="${cls}" data-i="${di}"${title ? ` title="${escapeHtml(title)}"` : ""}>` +
@@ -953,14 +964,14 @@ function renderDonut(shares) {
     // 기타: 그래프엔 한 조각, 범례엔 세부 종류를 다 적되 '기타'로 묶어 펼침
     if (s.other && s.items && s.items.length) {
       const head = lgRow("lg-row lg-other-head", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
-        `기타 <span class="lg-cnt">${s.items.length}개</span>`, s.dps / total * 100, s.dps, tip(s));
+        `기타 <span class="lg-cnt">${s.items.length}개</span>`, s.dmg / total * 100, s.dmg, tip(s));
       const subs = s.items.map((it) =>
-        lgRow("lg-row lg-subrow", i, `<span class="lg-subdot"></span>`, escapeHtml(it.name), it.dps / total * 100, it.dps, "")
+        lgRow("lg-row lg-subrow", i, `<span class="lg-subdot"></span>`, escapeHtml(it.name), it.dmg / total * 100, it.dmg, "")
       ).join("");
       return `<div class="lg-group" data-i="${i}">${head}<div class="lg-sublist">${subs}</div></div>`;
     }
     return lgRow("lg-row", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
-      escapeHtml(s.name), s.dps / total * 100, s.dps, tip(s));
+      escapeHtml(s.name), s.dmg / total * 100, s.dmg, tip(s));
   }).join("");
   // 범례 ↔ 조각 하이라이트 연동
   const segs = chart.querySelectorAll(".pie-seg"), rows = legend.querySelectorAll(".lg-row");
@@ -978,9 +989,11 @@ function renderPcSplit(shares, dps) {
   const comp = shares.find((x) => x.companion);
   if (!comp) { box.innerHTML = ""; box.hidden = true; return; }
   box.hidden = false;
-  const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
-  const cDps = comp.dps, pDps = total - cDps;
-  const pPct = total > 0 ? pDps / total * 100 : 0, cPct = 100 - pPct;
+  const winSec = (dps && dps.windowSeconds) || 0;
+  const cDmg = companionTotal(dps);                                                  // 동료 총 딜(합산) — 카드와 동일
+  const pDmg = shares.filter((x) => !x.companion).reduce((s, x) => s + (x.dps || 0) * winSec, 0);
+  const total = pDmg + cDmg;
+  const pPct = total > 0 ? pDmg / total * 100 : 0, cPct = 100 - pPct;
   const cl = activeCompanionLabel();
   box.innerHTML =
     `<div class="pc-head"><span>플레이어 vs ${cl}</span></div>` +
@@ -988,8 +1001,8 @@ function renderPcSplit(shares, dps) {
       `<div class="pc-seg pc-player" style="--seg:${pPct}%"><span>${num1s(pPct)}%</span></div>` +
       `<div class="pc-seg pc-comp" style="--seg:${cPct}%"><span>${num1s(cPct)}%</span></div>` +
     `</div>` +
-    `<div class="pc-legend"><span><i class="pc-i pc-player"></i>플레이어 ${koreanUnit(pDps)}</span>` +
-    `<span><i class="pc-i pc-comp"></i>${cl} ${koreanUnit(cDps)}</span></div>`;
+    `<div class="pc-legend"><span><i class="pc-i pc-player"></i>플레이어 ${koreanUnit(pDmg)}</span>` +
+    `<span><i class="pc-i pc-comp"></i>${cl} ${koreanUnit(cDmg)}</span></div>`;
 }
 
 // 딜 상세: 2열(동료 미소환/소환) × {평균딜·최소딜·최대딜(사이클 중 평타 범위)·DPS}. 동료 없으면 1열.
@@ -1924,7 +1937,7 @@ $("sp-sel").addEventListener("change", () => {
   if (!canLeaveStat()) { $("sp-sel").value = statPresets.active; return; }   // 미저장이면 취소 시 되돌림
   statPresets.active = $("sp-sel").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
 });
-$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = { stats: collectStats() }; saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); toast(`'${statPresets.active}' 스탯 프리셋 저장됨`); });
+$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = statPresetPayload(); saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); toast(`'${statPresets.active}' 스탯 프리셋 저장됨`); });
 $("sp-new").addEventListener("click", () => {
   const name = (prompt("새 스탯 프리셋 이름") || "").trim();
   if (!name || statPresets.presets[name]) return;
@@ -2322,6 +2335,7 @@ function apApply(name) {
   if (!allyPresets.presets[name]) return;
   allyDirty = false;
   if (currentSub === "ally") renderAlly();
+  recalcActivePanel();   // 동료 프리셋 바뀌면 홈 예상 데미지·보이는 계산 즉시 갱신(예전엔 새로고침해야 반영됐음)
 }
 
 // 저장 시 (캐릭터 레벨·동료·등급·동료 레벨·계승 비율)을 서버에 수집 → 추후 비율 공식화. 비율 0이면 생략.
@@ -2672,11 +2686,29 @@ function filterCollection(coll, nameSet) {
   return { active, presets };
 }
 
-// 백업 텍스트를 파싱해 선택 패널을 연다(프리셋 없으면 안내).
-function openImportSelection(text) {
+// ── 모달(팝업) 공용 ──
+function openModal(id) { const m = $(id); if (m) m.hidden = false; }
+function closeModal(id) { const m = $(id); if (m) m.hidden = true; }
+function closeAllModals() {
+  document.querySelectorAll(".modal-overlay").forEach((m) => { m.hidden = true; });
+  pendingBundle = null;   // 선택 상태도 초기화 → 탭 이동 뒤 잔존 선택으로 인한 오작동 방지
+}
+// ✕·취소(data-close) · 배경 클릭 · Esc 로 닫기
+document.querySelectorAll(".modal-overlay").forEach((ov) => {
+  ov.addEventListener("click", (e) => { if (e.target === ov || (e.target.closest && e.target.closest("[data-close]"))) ov.hidden = true; });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll(".modal-overlay:not([hidden])").forEach((m) => { m.hidden = true; });
+});
+async function copyToClipboard(s) { try { await navigator.clipboard.writeText(s); return true; } catch { return false; } }
+
+// 백업 텍스트를 파싱해 '불러올 프리셋 선택' 목록을 채운다. 프리셋이 있으면 true(호출자가 선택 팝업을 연다).
+// 실패·빈 백업이면 statusEl(있으면 그 칸, 없으면 토스트)에 사유 표시 후 false.
+function openImportSelection(text, statusEl) {
+  const setErr = (msg) => { if (statusEl) statusEl.textContent = msg; else toast(msg); };
   let b;
   try { b = parseBundle(text); }
-  catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; return; }
+  catch (err) { setErr("불러오기 실패: " + err.message); return false; }
   const list = $("import-select-list");
   list.innerHTML = "";
   let any = false;
@@ -2704,11 +2736,13 @@ function openImportSelection(text) {
     }
     list.appendChild(group);
   }
-  if (!any) { $("backup-status").textContent = "백업에 불러올 프리셋이 없습니다."; $("import-select").hidden = true; pendingBundle = null; return; }
+  if (!any) { setErr("백업에 불러올 프리셋이 없습니다."); pendingBundle = null; return false; }
   pendingBundle = b;
   $("imp-all").checked = true;
-  $("import-select").hidden = false;
-  $("backup-status").textContent = "";
+  const mergeRadio = document.querySelector('input[name="imp-mode"][value="merge"]');
+  if (mergeRadio) mergeRadio.checked = true;   // 열 때마다 안전한 기본값(추가)으로 초기화
+  $("import-select-status").textContent = "";
+  return true;
 }
 
 // 전체 선택 토글
@@ -2721,47 +2755,63 @@ $("import-select-list").addEventListener("change", () => {
   const all = [...document.querySelectorAll(".imp-cb")];
   $("imp-all").checked = all.length > 0 && all.every((cb) => cb.checked);
 });
-// 선택한 프리셋만 병합 적용
+// 선택한 프리셋 불러오기(추가/교체) → 성공 시 팝업 자동 닫힘
 $("import-apply-btn").addEventListener("click", async () => {
-  if (!pendingBundle) return;
+  const status = $("import-select-status");
+  if (!pendingBundle) { status.textContent = "불러올 백업을 다시 선택하세요."; return; }
   const checked = [...document.querySelectorAll(".imp-cb:checked")];
-  if (!checked.length) { $("backup-status").textContent = "불러올 프리셋을 하나 이상 선택하세요."; return; }
+  if (!checked.length) { status.textContent = "불러올 프리셋을 하나 이상 선택하세요."; return; }
   const sel = {};
   for (const cb of checked) { (sel[cb.dataset.sec] = sel[cb.dataset.sec] || new Set()).add(cb.dataset.name); }
   const filtered = { format: BACKUP_FORMAT, version: 1 };
   for (const sec of IMPORT_SECTIONS) if (sel[sec.key] && pendingBundle[sec.key]) filtered[sec.key] = filterCollection(pendingBundle[sec.key], sel[sec.key]);
+  // 방식: 추가(병합, 기본) vs 교체(불러오는 종류의 기존 프리셋을 지우고 선택분으로 대체 — 안 고른 종류는 유지).
+  const replace = (document.querySelector('input[name="imp-mode"]:checked') || {}).value === "replace";
+  if (replace) {
+    const kinds = IMPORT_SECTIONS.filter((s) => filtered[s.key]).map((s) => s.label).join("·");
+    if (!confirm(`${kinds} 프리셋을 기존 것 삭제 후 선택한 것으로 교체합니다. 계속할까요?`)) return;
+  }
   try {
-    await applyBundleObj(filtered, true);
-    toast(`${checked.length}개 프리셋을 불러왔습니다.`);
-    $("import-select").hidden = true; pendingBundle = null; $("backup-status").textContent = "";
-  } catch (err) { $("backup-status").textContent = "불러오기 실패: " + err.message; }
+    await applyBundleObj(filtered, !replace);   // merge=!replace
+    toast(`${checked.length}개 프리셋을 ${replace ? "교체" : "추가"}했습니다.`);
+    closeModal("modal-select"); pendingBundle = null;
+  } catch (err) { status.textContent = "불러오기 실패: " + err.message; }
 });
-// 취소
-$("import-cancel-btn").addEventListener("click", () => { $("import-select").hidden = true; pendingBundle = null; });
 
-// 파일에서 불러오기 → 선택 패널 열기
+// 파일에서 불러오기 → 선택 팝업 열기
 $("import-btn").addEventListener("click", () => $("import-file").click());
 $("import-file").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onload = () => openImportSelection(reader.result);
+    reader.onload = () => { if (openImportSelection(reader.result)) openModal("modal-select"); };
     reader.readAsText(file);
   }
   e.target.value = "";
 });
-// 텍스트로 내보내기(복사) — 텍스트 칸에 표시 + 클립보드 복사 시도
+// 텍스트로 내보내기 → 팝업 열고 자동 복사(우상단 복사 버튼으로 재복사 가능)
 $("export-text-btn").addEventListener("click", async () => {
   const s = bundleString();
-  $("backup-text").value = s;
-  try { await navigator.clipboard.writeText(s); toast("텍스트를 복사했습니다."); $("backup-status").textContent = ""; }
-  catch { $("backup-status").textContent = "아래 칸의 텍스트를 복사하세요(자동 복사 실패)."; }
+  $("export-text-area").value = s;
+  openModal("modal-export");
+  if (await copyToClipboard(s)) toast("텍스트를 복사했습니다.");
 });
-// 텍스트로 불러오기 — 텍스트 칸 내용 파싱 후 선택 패널 열기
+$("modal-export-copy").addEventListener("click", async () => {
+  const ta = $("export-text-area"); ta.select();
+  toast(await copyToClipboard(ta.value) ? "복사했습니다." : "복사 실패 — 텍스트를 직접 선택해 복사하세요.");
+});
+// 텍스트로 불러오기 → 빈 붙여넣기 팝업
 $("import-text-btn").addEventListener("click", () => {
-  const s = $("backup-text").value.trim();
-  if (!s) { $("backup-status").textContent = "먼저 백업 텍스트를 붙여넣으세요."; return; }
-  openImportSelection(s);
+  $("import-text-area").value = "";
+  $("import-modal-status").textContent = "";
+  openModal("modal-import");
+  $("import-text-area").focus();
+});
+// 붙여넣기 팝업의 '불러오기' → 파싱 성공 시 선택 팝업으로 전환(붙여넣기 팝업은 내려감)
+$("import-text-load").addEventListener("click", () => {
+  const s = $("import-text-area").value.trim();
+  if (!s) { $("import-modal-status").textContent = "백업 텍스트를 붙여넣으세요."; return; }
+  if (openImportSelection(s, $("import-modal-status"))) { closeModal("modal-import"); openModal("modal-select"); }
 });
 
 // ──────────────────── 계정(로그인) ────────────────────

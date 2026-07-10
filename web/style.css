@@ -249,13 +249,6 @@ main {
 .subtab.active { color: #fff; background: var(--accent2); border-color: var(--accent2); }
 .subtab-right { margin-left: auto; }   /* 설정: 스탯·큐브 우측에 붙임 */
 
-/* 백업 텍스트 칸 */
-.backup-text {
-  width: 100%; min-height: 90px; margin-top: 10px; padding: 10px;
-  background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
-  color: var(--text); font-family: monospace; font-size: 12px; resize: vertical;
-}
-
 /* 준비 중 카드 */
 .soon-card { text-align: center; padding: 48px 20px; }
 .soon-icon { font-size: 40px; margin-bottom: 10px; }
@@ -610,21 +603,35 @@ main {
 .backup-col-title { font-size: 15px; font-weight: 700; color: var(--accent); }
 .backup-col .hint { font-size: 12px; color: var(--muted); margin: 0; }
 .backup-col .mini-btn { width: 100%; }
-.backup-text-label { font-size: 13px; color: var(--text); margin: 4px 0 6px; }
-.backup-text-label .hint { color: var(--muted); font-weight: 400; }
 @media (max-width: 560px) { .backup-grid { grid-template-columns: 1fr; } }
 
-/* 프리셋 선택 불러오기 패널 */
-.import-select { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-.import-select-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.import-select-head .imp-all { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
-.import-select-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 320px; overflow-y: auto; }
+/* 프리셋 선택 불러오기(모달 내부) */
+.import-select-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 46vh; overflow-y: auto; }
+.imp-all { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .imp-group { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
 .imp-group-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
 .imp-row { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; word-break: break-all; }
 .imp-row input { flex: none; }
-.import-select-foot { display: flex; gap: 8px; }
-.import-select-foot .mini-btn { width: auto; }
+.import-mode { display: flex; gap: 16px; flex-wrap: wrap; padding: 8px 10px; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; }
+.import-mode .imp-mode { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.import-mode .imp-mode input { flex: none; }
+.import-mode .imp-mode b { color: var(--text); }
+
+/* 모달(팝업) 공용 */
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, 0.55); }
+.modal-overlay[hidden] { display: none; }
+.modal { display: flex; flex-direction: column; width: 100%; max-width: 460px; max-height: 85vh; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5); }
+.modal-wide { max-width: 660px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.modal-head h3 { margin: 0; font-size: 16px; color: var(--text); }
+.modal-head-actions { display: flex; align-items: center; gap: 10px; }
+.modal-head-actions .mini-btn { width: auto; }
+.modal-x { padding: 2px 7px; background: transparent; border: none; border-radius: 6px; color: var(--muted); font-size: 17px; line-height: 1; cursor: pointer; }
+.modal-x:hover { color: var(--text); background: var(--card2); }
+.modal-body { padding: 14px 16px; overflow-y: auto; }
+.modal-foot { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.modal-foot .mini-btn { width: auto; }
+.modal-textarea { box-sizing: border-box; width: 100%; min-height: 200px; resize: vertical; padding: 10px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; }
 
 /* 토스트 알림 */
 .toast {
