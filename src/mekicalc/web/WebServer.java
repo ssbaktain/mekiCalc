@@ -465,12 +465,17 @@ public final class WebServer {
 
     private void serveStatic(HttpExchange ex) throws IOException {
         try {
-            // www → 비-www 301 리다이렉트. www가 200으로 같은 내용을 주면 구글이 www를 별도 표준으로 잡아
-            // "중복 페이지" 상태가 됨. Cloudflare 터널이 원래 Host를 오리진까지 보존하므로 여기서 처리.
+            // 표준 URL 강제: (1) 평문 http → https, (2) www → 비-www. 같은 내용이 여러 URL(http·www)로 200을 주면
+            // 구글이 그중 하나를 별도 표준으로 잡아 "중복 페이지"가 됨. Cloudflare 터널이 원래 Host와
+            // 스킴(X-Forwarded-Proto)을 오리진까지 보존하므로 여기서 처리(엣지 'Always Use HTTPS'와 별개인 오리진 방어선).
             String host = hostOf(ex);
-            if (host != null && host.startsWith("www.")) {
+            String proto = ex.getRequestHeaders().getFirst("X-Forwarded-Proto");
+            boolean insecure = proto != null && proto.equalsIgnoreCase("http");
+            boolean www = host != null && host.startsWith("www.");
+            if (host != null && (insecure || www)) {
+                String canonHost = www ? host.substring(4) : host;
                 String q = ex.getRequestURI().getRawQuery();
-                String dest = "https://" + host.substring(4) + ex.getRequestURI().getRawPath() + (q != null ? "?" + q : "");
+                String dest = "https://" + canonHost + ex.getRequestURI().getRawPath() + (q != null ? "?" + q : "");
                 ex.getResponseHeaders().set("Location", dest);
                 ex.sendResponseHeaders(301, -1);
                 return;
@@ -504,6 +509,8 @@ public final class WebServer {
             byte[] data = name.endsWith(".html") ? htmlWithVersionedAssets(target, spaRoute) : Files.readAllBytes(target);
             ex.getResponseHeaders().set("Content-Type", contentType(target));
             ex.getResponseHeaders().set("Cache-Control", cacheControlFor(name));
+            // HSTS: 브라우저가 이후 이 도메인을 항상 https로만 접속(http 재요청 자체를 생략) → http 색인 방지 강화.
+            ex.getResponseHeaders().set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
             ex.sendResponseHeaders(200, data.length);
             try (OutputStream os = ex.getResponseBody()) { os.write(data); }
         } finally {
