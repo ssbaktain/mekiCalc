@@ -861,7 +861,25 @@ public final class NightlordDps {
      * 각 항목 = {name, dps}. 모든 값에 받피증(recv) 반영.
      */
     public List<Map<String, Object>> dpsBySkill(StatBlock input, boolean boss) {
-        Buffed bf = buffed(input);
+        Map<String, Double> parts = partsWith(buffed(input), boss);
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map.Entry<String, Double> e : parts.entrySet()) {
+            if (e.getValue() <= 0) continue;
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", e.getKey());
+            row.put("dps", e.getValue());
+            out.add(row);
+        }
+        out.sort((a, b2) -> Double.compare((double) b2.get("dps"), (double) a.get("dps")));
+        return out;
+    }
+
+    /**
+     * 주어진 버프 스냅샷 bf의 <b>출처별 순간 DPS 맵</b>(평타·각 딜 스킬·마크·추가타·베놈·페이크 반격, 받피증 반영).
+     * {@link #dpsBreakdownWith}와 동일 로직·동일 총합(합=[전체])이며 합치지 않고 출처별로 나눠 담는다.
+     * 시뮬({@link #dpsSimulateBySkill})이 매 스텝 이걸 적분해 시간제 버프까지 반영한 출처별 지분을 만든다.
+     */
+    public Map<String, Double> partsWith(Buffed bf, boolean boss) {
         StatBlock eff = bf.stats;
         double atkF = bf.skillAtkFactor;
         int cl = charLevel(eff);
@@ -920,17 +938,8 @@ public final class NightlordDps {
         }
 
         double recv = recvDmgFactor(eff);
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Map.Entry<String, Double> e : parts.entrySet()) {
-            double dps = e.getValue() * recv;
-            if (dps <= 0) continue;
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("name", e.getKey());
-            row.put("dps", dps);
-            out.add(row);
-        }
-        out.sort((a, b2) -> Double.compare((double) b2.get("dps"), (double) a.get("dps")));
-        return out;
+        for (Map.Entry<String, Double> e : parts.entrySet()) e.setValue(e.getValue() * recv);
+        return parts;
     }
 
     /**
@@ -1013,6 +1022,51 @@ public final class NightlordDps {
             for (int j = 0; j < 3; j++) sum[j] += d[j];
         }
         for (int j = 0; j < 3; j++) sum[j] /= steps;
+        return sum;
+    }
+
+    /**
+     * <b>시뮬식 출처별 DPS 맵</b>(평타·각 딜 스킬·추가타·베놈…). {@link #dpsSimulateBreakdown}와 <b>동일한 타임라인</b>으로
+     * 매 스텝 {@link #partsWith}(순간 출처별)를 적분한다 → 출처별 합 = dpsSimulateBreakdown[2](전체)와 일치.
+     * 홈 딜 비중(도넛)을 딜 상세(평타/스킬 시뮬)와 같은 기준으로 만들기 위한 분해. ctx=null이면 순수 플레이어.
+     */
+    public Map<String, Double> dpsSimulateBySkill(StatBlock input, boolean boss, double seconds, SimContext ctx) {
+        final double DT = 0.1;
+        int cl = charLevel(input);
+        double atkSpeedBase = input.get(ATK_SPEED);
+        double buffDur = input.get(BUFF_DURATION);
+        List<String> ids = new ArrayList<>();
+        List<double[]> win = new ArrayList<>();   // {dur, period}
+        for (Map<String, Object> m : data.buffs()) {
+            if (Json.bool(m, "always", false) || !wantsBuff(m, cl)) continue;
+            double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", cl))
+                    * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0)
+                    * (1 + (Json.bool(m, "ignoreBuffDuration", false) ? 0 : buffDur) / 100.0);
+            double u = buffUptime(m, atkSpeedBase, buffDur, cl);
+            if (dur <= 0 || u <= 0) continue;
+            ids.add(Json.str(m, "id", ""));
+            win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});
+        }
+        if (ids.isEmpty() && ctx == null) return partsWith(buffed(input), boss);   // 시간제 버프·컨텍스트 없으면 스냅샷 분해
+        double T = seconds > 0 ? seconds : 90;
+        int steps = Math.max(1, (int) Math.round(T / DT));
+        Map<String, Double> sum = new LinkedHashMap<>();
+        Set<String> active = new HashSet<>();
+        for (int k = 0; k < steps; k++) {
+            double t = k * DT;
+            active.clear();
+            for (int i = 0; i < ids.size(); i++) {
+                double dur = win.get(i)[0], period = win.get(i)[1];
+                if (period <= 0 || (t % period) < dur) active.add(ids.get(i));
+            }
+            Buffed bf = withArtifacts(buffedActive(input, active), input, boss, T, t, ctx, false);
+            double rm = 1;
+            if (ctx != null && ctx.artifacts != null) {   // 유물 적 받피증(플레이어 딜에 곱) — dpsSimulateBreakdown과 동일
+                rm = 1 + ctx.artifacts.enemyRecvDmgPct(boss, 1 + bf.stats.get(ATK_SPEED) / 100.0, T, t) / 100.0;
+            }
+            for (Map.Entry<String, Double> e : partsWith(bf, boss).entrySet()) sum.merge(e.getKey(), e.getValue() * rm, Double::sum);
+        }
+        for (Map.Entry<String, Double> e : sum.entrySet()) e.setValue(e.getValue() / steps);
         return sum;
     }
 

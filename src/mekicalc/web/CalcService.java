@@ -376,12 +376,16 @@ public final class CalcService {
             double compWin = comp.dpsBreakdown(inh, boss)[2];
             det.put("summon", stateMap(new double[]{minHit, maxHit, avgHit}, sumPlayer * recvScale + compWin));
         }
-        // 동료 카드·도넛용(기존 유지): 블렌드 DPS + 항목별 지분.
-        double[] pp = blendPlayer(nd, b, boss, comp, uptime, Rp, seconds, art, enemyDebuff);
+        // 동료 카드·도넛용: 출처별(평타·스킬…) 블렌드 지분 하나로 딜 상세(pp)와 딜 비중(shares)을 함께 산출 →
+        // 두 뷰의 평타/스킬 비율이 항상 일치(같은 시뮬 기준).
+        Map<String, Double> parts = blendPlayerBySkill(nd, b, boss, comp, uptime, Rp, seconds, art, enemyDebuff);
+        double basic = parts.getOrDefault("평타", 0.0);
+        double totalP = 0; for (double v : parts.values()) totalP += v;
+        double[] pp = {basic, totalP - basic, totalP};   // [평타만, 스킬만, 전체]
         double solo = comp == null ? pp[2] : nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2];
         if (comp != null) comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
         det.put("dps", dpsMap(pp, comp, inh, boss, seconds, solo));
-        det.put("shares", sharesList(nd, b, boss, pp[2], comp, inh, seconds));
+        det.put("shares", sharesList(parts, comp, inh, boss, seconds));
         return det;
     }
 
@@ -412,12 +416,13 @@ public final class CalcService {
     }
 
     /**
-     * 플레이어 [평타, 스킬, 전체] DPS — 동료가 있으면 소환 가동률만큼 동료 버프/받피증을 블렌딩.
+     * 플레이어 <b>출처별</b>(평타·각 스킬…) DPS 맵 — 동료가 있으면 소환 가동률만큼 동료 버프/받피증을 블렌딩.
      * 소환 중 = 동료 버프(target player/both) 적용 + 동료 받피증 공유, 평상시 = 본인. comp=null이면 본인 그대로.
+     * (기존 blendPlayer의 출처별 버전 — [평타/스킬/전체]는 이 맵에서 도출해 도넛·딜상세가 같은 기준을 쓰게 한다.)
      */
-    private static double[] blendPlayer(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp, double seconds,
-                                        ArtifactEffects art, boolean enemyDebuff) {
-        double[] base = nd.dpsSimulateBreakdown(b, boss, seconds, simCtx(art, b, enemyDebuff, 0));   // 홈=시뮬(동료 없음: 뿔피리 등 0)
+    private static Map<String, Double> blendPlayerBySkill(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp,
+                                                          double seconds, ArtifactEffects art, boolean enemyDebuff) {
+        Map<String, Double> base = nd.dpsSimulateBySkill(b, boss, seconds, simCtx(art, b, enemyDebuff, 0));   // 홈=시뮬(동료 없음)
         if (comp == null) return base;
         Map<String, Object> gift = comp.playerGift(b, boss);
         @SuppressWarnings("unchecked")
@@ -427,12 +432,13 @@ public final class CalcService {
         StatBlock summonInput = new StatBlock(b);
         CompanionDps.applyGift(summonInput, giftBuffs);              // 공퍼 외 버프(최종뎀·크리·최대뎀배율 등) 적용
         nd.setExternalAtkPct(compAtkPct);                           // 동료 공퍼를 플레이어 스킬 공퍼 합에 합산
-        double[] summon = nd.dpsSimulateBreakdown(summonInput, boss, seconds, simCtx(art, b, enemyDebuff, 1));   // 소환 중(뿔피리 등 활성)
+        Map<String, Double> summon = nd.dpsSimulateBySkill(summonInput, boss, seconds, simCtx(art, b, enemyDebuff, 1));   // 소환 중
         nd.setExternalAtkPct(0);                                    // 원복(평상시 계산 오염 방지)
         double recvBonus = ((Number) gift.get("recvBonus")).doubleValue();
         double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;          // 동료 받피증을 플레이어 받피증 위에 합연산
-        double[] out = new double[3];
-        for (int i = 0; i < 3; i++) out[i] = base[i] * (1 - uptime) + summon[i] * recvScale * uptime;
+        Map<String, Double> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Double> e : base.entrySet()) out.merge(e.getKey(), e.getValue() * (1 - uptime), Double::sum);
+        for (Map.Entry<String, Double> e : summon.entrySet()) out.merge(e.getKey(), e.getValue() * recvScale * uptime, Double::sum);
         return out;
     }
 
@@ -484,23 +490,21 @@ public final class CalcService {
     }
 
     /**
-     * 홈 도넛용 지분 목록 = 플레이어 스킬별 DPS(블렌딩 총합에 맞춰 스케일) + 동료 한 조각.
-     * 스킬별 분해는 base(동료 버프 전) 기준이라, 합이 블렌딩된 플레이어 총합(blendedTotal)과 같도록 비례 보정한다.
-     * 각 항목 = {name, dps, companion?}. 내림차순(동료는 값 그대로 끼움).
+     * 홈 도넛용 지분 목록 = 플레이어 출처별(평타·각 스킬…) 블렌드 DPS + 동료 한 조각.
+     * playerParts는 {@link #blendPlayerBySkill} 결과(딜 상세 pp와 동일 출처)라 별도 스케일 없이 그대로 쓴다 →
+     * 딜 비중과 딜 상세의 평타/스킬 비율이 항상 일치. 각 항목 = {name, dps, companion?}, 내림차순.
+     * 동료 조각의 dps는 참고값(사이클 평균)이자 '동료 존재' 플래그 — 클라 도넛은 소환창 총딜로 다시 계산한다.
      */
-    private static List<Map<String, Object>> sharesList(NightlordDps nd, StatBlock b, boolean boss,
-                                                        double blendedTotal, CompanionDps comp, StatBlock inh, double seconds) {
-        List<Map<String, Object>> raw = nd.dpsBySkill(b, boss);
-        double baseTotal = 0;
-        for (Map<String, Object> r : raw) baseTotal += ((Number) r.get("dps")).doubleValue();
-        double scale = baseTotal > 0 ? blendedTotal / baseTotal : 1;
+    private static List<Map<String, Object>> sharesList(Map<String, Double> playerParts, CompanionDps comp, StatBlock inh, boolean boss, double seconds) {
         List<Map<String, Object>> out = new ArrayList<>();
-        for (Map<String, Object> r : raw) {
+        for (Map.Entry<String, Double> e : playerParts.entrySet()) {
+            if (e.getValue() <= 0) continue;
             Map<String, Object> row = new LinkedHashMap<>();
-            row.put("name", r.get("name"));
-            row.put("dps", safe(((Number) r.get("dps")).doubleValue() * scale));
+            row.put("name", e.getKey());
+            row.put("dps", safe(e.getValue()));
             out.add(row);
         }
+        out.sort((a, b2) -> Double.compare(((Number) b2.get("dps")).doubleValue(), ((Number) a.get("dps")).doubleValue()));
         if (comp != null) {
             double companion = comp.dpsOverSeconds(inh, boss, seconds)[2];
             if (companion > 0) {
