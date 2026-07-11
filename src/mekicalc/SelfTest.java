@@ -814,6 +814,11 @@ public final class SelfTest {
         check("eq.mainflat.y", prob(g2, "MAIN_STAT_FLAT", 1000, false), 2.22);
         check("eq.special.w", prob(g2, "CRIT_DMG", 30, true), 0.76);
         check("eq.special.y", prob(g2, "CRIT_DMG", 50, true), 0.24);
+        // 부스탯+/부스탯%는 주스탯+/주스탯%와 확률·수치 완전 동일(모든 부위·등급·슬롯) — 큐브 대칭 불변식
+        check("eq.substat.flat.w", prob(g2, "SUB_STAT_FLAT", 600, false), prob(g2, "MAIN_STAT_FLAT", 600, false));
+        check("eq.substat.flat.y", prob(g2, "SUB_STAT_FLAT", 1000, false), prob(g2, "MAIN_STAT_FLAT", 1000, false));
+        check("eq.substat.pct.w", prob(g2, "SUB_STAT_PCT", 12, false), prob(g2, "MAIN_STAT_PCT", 12, false));
+        check("eq.substat.pct.y", prob(g2, "SUB_STAT_PCT", 15, false), prob(g2, "MAIN_STAT_PCT", 15, false));
 
         // 에픽 하의(첫 특옵 등급 → 노란만) 2슬롯
         List<PotentialDraw> e2 = ep.slots("하의", "EPIC").get(1);

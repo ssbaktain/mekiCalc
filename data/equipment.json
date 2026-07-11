@@ -27,7 +27,9 @@
     { "stat": "MIN_DMG_MULT",  "baseProb": 4.0, "values": { "NORMAL": [3],  "RARE": [3, 6],   "EPIC": [6, 8],   "UNIQUE": [8, 10],  "LEGENDARY": [10, 15], "MYTHIC": [15, 25] } },
     { "stat": "MAX_DMG_MULT",  "baseProb": 4.0, "values": { "NORMAL": [3],  "RARE": [3, 6],   "EPIC": [6, 8],   "UNIQUE": [8, 10],  "LEGENDARY": [10, 15], "MYTHIC": [15, 25] } },
     { "stat": "MAIN_STAT_PCT", "baseProb": 4.5, "values": { "NORMAL": [3],  "RARE": [3, 4.5], "EPIC": [4.5, 6], "UNIQUE": [6, 9],  "LEGENDARY": [9, 12],  "MYTHIC": [12, 15] } },
-    { "stat": "MAIN_STAT_FLAT","baseProb": 9.5, "specialCarve": true, "values": { "NORMAL": [50], "RARE": [50, 100], "EPIC": [100, 200], "UNIQUE": [200, 400], "LEGENDARY": [400, 600], "MYTHIC": [600, 1000] } }
+    { "stat": "SUB_STAT_PCT",  "baseProb": 4.5, "values": { "NORMAL": [3],  "RARE": [3, 4.5], "EPIC": [4.5, 6], "UNIQUE": [6, 9],  "LEGENDARY": [9, 12],  "MYTHIC": [12, 15] } },
+    { "stat": "MAIN_STAT_FLAT","baseProb": 9.5, "specialCarve": true, "values": { "NORMAL": [50], "RARE": [50, 100], "EPIC": [100, 200], "UNIQUE": [200, 400], "LEGENDARY": [400, 600], "MYTHIC": [600, 1000] } },
+    { "stat": "SUB_STAT_FLAT", "baseProb": 9.5, "specialCarve": true, "values": { "NORMAL": [50], "RARE": [50, 100], "EPIC": [100, 200], "UNIQUE": [200, 400], "LEGENDARY": [400, 600], "MYTHIC": [600, 1000] } }
   ],
 
   "_specialComment": "특옵. baseProb 1.0, 같은 슬롯배수. 첫 등급(firstGrade)은 노란만, 그 위부터 흰+노란. carveFromMainStatFlat: 특옵 확률의 이 비율만큼 주스탯+에서 차감.",
