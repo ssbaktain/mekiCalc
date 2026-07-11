@@ -1679,6 +1679,7 @@ async function runGearApply() {
   try {
     const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
     fillStats(data.stats);
+    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생(엔진 증분값은 폼의 버림된 기존값 위에 더해져 소수 유실). 프리셋 저장 전에 갱신.
     statPresets.presets[statPresets.active] = statPresetPayload();
     saveJSON(STATP_KEY, statPresets);
     statDirty = false;
@@ -1798,6 +1799,7 @@ async function runApply() {
     const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
     // 2) 스탯 폼 + 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
     fillStats(data.stats);
+    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생(엔진 증분값은 폼의 버림된 기존값 위에 더해져 소수 유실). 프리셋 저장 전에 갱신.
     statPresets.presets[statPresets.active] = statPresetPayload();
     saveJSON(STATP_KEY, statPresets);
     statDirty = false;
