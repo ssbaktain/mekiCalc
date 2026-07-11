@@ -141,7 +141,18 @@ public final class NoticeCrawler {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> t = (Map<String, Object>) o;
                 NoticeStore.Notice n = toNotice(t, board, category);
-                if (n != null) store.upsertMeta(n);
+                if (n != null) {
+                    // 신규 글(우리가 처음 보는 threadId) & 기준선 이후 게시분만 '신규 공지 감지'로 기록.
+                    // 크롤 시각을 로그에 남겨 두면 notices.json mtime(요약/백필 저장 때마다 갱신되어 부정확)에
+                    // 의존하지 않고 특정 공지를 언제 처음 잡았는지 정확히 알 수 있다. 과거 백필분은 제외.
+                    boolean isNew = !store.contains(n.threadId);
+                    store.upsertMeta(n);
+                    if (isNew && n.postedAt >= liveSince) {
+                        System.out.println("[신규공지 감지] crawledAt=" + java.time.Instant.now()
+                                + " postedAt=" + n.postedAt + " board=" + category
+                                + " id=" + n.threadId + " title=" + n.title);
+                    }
+                }
             }
             return list.size();
         } catch (Exception ex) {
