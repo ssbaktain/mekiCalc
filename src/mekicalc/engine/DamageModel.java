@@ -48,6 +48,8 @@ public final class DamageModel implements DealModel {
     private static final String CRIT_DMG = "CRIT_DMG";
     private static final String MAIN_STAT_FLAT = "MAIN_STAT_FLAT";
     private static final String MAIN_STAT_PCT = "MAIN_STAT_PCT";
+    private static final String SUB_STAT_FLAT = "SUB_STAT_FLAT";   // 부스탯: 주스탯의 1/4 효과(공격력 4당 1, 스탯비례 0.25%/개)
+    private static final String SUB_STAT_PCT = "SUB_STAT_PCT";     // 부스탯%(큐브 전용 — 스탯 프리셋엔 없음). 없으면 0.
     private static final String STAT_PROP_DMG = "STAT_PROP_DMG";
     private static final String DMG = "DMG";
     private static final String DMG_AMP = "DMG_AMP";
@@ -254,6 +256,13 @@ public final class DamageModel implements DealModel {
             // 늘어난 주스탯은 스탯 비례 데미지%도 함께 올린다(주스탯 100당 1%).
             r.set(STAT_PROP_DMG, r.get(STAT_PROP_DMG) + mainDelta / 100.0);
         }
+        // 부스탯: 주스탯의 정확히 1/4(공격력 4당 1 → ×0.25, 스탯 비례 데미지 개당 0.25% → ×0.0025).
+        // 주스탯과 동일하게 '증가분'만 더해 입력 표시값(공격력·스탯비례)의 baseline은 유지한다.
+        double subDelta = subStat(r) - subStat(current);
+        if (subDelta != 0) {
+            r.set(ATK_FLAT, r.get(ATK_FLAT) + subDelta / 4.0);
+            r.set(STAT_PROP_DMG, r.get(STAT_PROP_DMG) + subDelta * 0.0025);
+        }
         return r;
     }
 
@@ -263,6 +272,7 @@ public final class DamageModel implements DealModel {
      */
     public StatBlock uncombine(StatBlock r, StatBlock delta) {
         double mainAfter = mainStat(r);             // r의 주스탯(레벨당 환산 반영 후)
+        double subAfter = subStat(r);               // r의 부스탯(옵션 반영 후)
         double level = r.get(LEVEL);                // 레벨은 combine으로 변하지 않음
         double perLevelDelta = delta.get(MAIN_STAT_PER_LEVEL);
         StatBlock before = new StatBlock(r);
@@ -284,10 +294,11 @@ public final class DamageModel implements DealModel {
         if (perLevelDelta != 0 && !delta.asMap().containsKey(MAIN_STAT_FLAT)) {
             before.set(MAIN_STAT_FLAT, before.get(MAIN_STAT_FLAT) - level * perLevelDelta);
         }
-        // 주스탯 증가분만큼 더해졌던 공격력 가산·스탯비례 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
+        // 주스탯·부스탯 증가분만큼 더해졌던 공격력 가산·스탯비례 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
         double mainDelta = mainAfter - mainStat(before);
-        before.set(ATK_FLAT, r.get(ATK_FLAT) - mainDelta - delta.get(ATK_FLAT));
-        before.set(STAT_PROP_DMG, before.get(STAT_PROP_DMG) - mainDelta / 100.0);
+        double subDelta = subAfter - subStat(before);
+        before.set(ATK_FLAT, r.get(ATK_FLAT) - mainDelta - subDelta / 4.0 - delta.get(ATK_FLAT));
+        before.set(STAT_PROP_DMG, before.get(STAT_PROP_DMG) - mainDelta / 100.0 - subDelta * 0.0025);
         return before;
     }
 
@@ -299,6 +310,11 @@ public final class DamageModel implements DealModel {
     /** 표시 주스탯 = 주스탯깡 × (1 + 주스탯%/100). 스탯비례 데미지·공격력 가산에 쓰인다. */
     private double mainStat(StatBlock b) {
         return v(b, MAIN_STAT_FLAT) * (1 + v(b, MAIN_STAT_PCT) / 100.0);
+    }
+
+    /** 유효 부스탯 = 부스탯(+) × (1 + 부스탯%/100). 스탯 프리셋엔 +만 있고 %는 큐브 계산 시에만 들어온다(없으면 0). */
+    private double subStat(StatBlock b) {
+        return v(b, SUB_STAT_FLAT) * (1 + v(b, SUB_STAT_PCT) / 100.0);
     }
 
     /**

@@ -8,6 +8,7 @@
   { "id": "ATK_SPEED",        "name": "공격 속도%",             "unit": "PCT",   "combine": "DIMINISHING", "max": 150 },
   { "id": "MAIN_STAT_FLAT",   "name": "주스탯(+)",              "unit": "FLAT",  "combine": "SUM" },
   { "id": "MAIN_STAT_PCT",    "name": "주스탯%",                "unit": "PCT",   "combine": "SUM" },
+  { "id": "SUB_STAT_FLAT",    "name": "부스탯(+)",              "unit": "FLAT",  "combine": "SUM" },
   { "id": "STAT_PROP_DMG",    "name": "스탯 비례 데미지%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG",              "name": "데미지%",                "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG_AMP",          "name": "데미지 증폭%",            "unit": "PCT",   "combine": "SUM" },

@@ -652,11 +652,42 @@ function renderForm() {
     box.appendChild(grid);
     form.appendChild(box);
   }
-  // 스탯 값 변경 시 미저장 표시 + 예상 데미지 자동 재계산
+  // 스탯 값 변경 시: (파생 트리거면)스탯 비례 데미지 즉시 반영 + 표기 버림 + 미저장 표시 + 자동 재계산
   for (const input of form.querySelectorAll("input[data-stat-id]")) {
-    input.addEventListener("change", () => { statDirty = true; calcDamage(); });
+    const id = input.dataset.statId;
+    if (STAT_PROP_TRIGGERS.has(id)) input.addEventListener("input", deriveStatProp);   // 입력 즉시 갱신
+    input.addEventListener("change", () => {
+      truncStatInput(input);                              // 게임 표기 규칙(소수 2자리부터 버림)
+      if (STAT_PROP_TRIGGERS.has(id)) deriveStatProp();   // 트리거값 확정 시 재파생
+      statDirty = true; calcDamage();
+    });
   }
   applyQualMarkers();
+}
+
+// 게임 스탯 표기 규칙(전역): +옵션(FLAT·LEVEL)은 자연수, %·초는 소수 1자리까지, 소수 2자리부터는 버림(내림).
+function truncStat(v, unit) {
+  if (v == null || !isFinite(v)) return 0;
+  if (unit === "PCT" || unit === "SEC") return Math.trunc(v * 10) / 10;
+  return Math.trunc(v);
+}
+function statDefById(id) { return (statDefs || []).find((d) => d.id === id); }
+function truncStatInput(input) {
+  const v = parseFloat(input.value);
+  if (isNaN(v)) return;
+  const def = statDefById(input.dataset.statId);
+  input.value = truncStat(v, def ? def.unit : "FLAT");
+}
+
+// 스탯 비례 데미지%를 주스탯·부스탯에서 즉시 파생: 유효주스탯/100 + 부스탯×0.25%.
+// 유저 입력을 막지 않되(직접 수정 가능), 주스탯·부스탯을 건드리면 이 값으로 갱신한다.
+const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT"]);
+function deriveStatProp() {
+  const form = $("stat-form"); if (!form) return;
+  const num = (id) => { const el = form.querySelector(`input[data-stat-id="${id}"]`); const v = el ? parseFloat(el.value) : 0; return isNaN(v) ? 0 : v; };
+  const out = form.querySelector('input[data-stat-id="STAT_PROP_DMG"]'); if (!out) return;
+  const mainStat = num("MAIN_STAT_FLAT") * (1 + num("MAIN_STAT_PCT") / 100);
+  out.value = truncStat(mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025, "PCT");
 }
 
 // 현재 qualSet에 맞춰 각 필드의 '딜 미환산' 배지 표시/숨김.
@@ -1799,14 +1830,11 @@ $("cmp-apply").addEventListener("click", runApply);
 
 // 스탯 입력 폼을 주어진 값으로 채운다(없는 스탯은 0).
 // double 덧뺄셈에서 생기는 부동소수점 노이즈(예: 321.90000000000003) 제거.
-function cleanNum(v) {
-  if (v == null || !isFinite(v)) return v;
-  return parseFloat(v.toFixed(6));
-}
 function fillStats(stats) {
   for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
+    const def = statDefById(input.dataset.statId);
     const v = stats[input.dataset.statId];
-    input.value = (v == null) ? "0" : cleanNum(v);
+    input.value = (v == null) ? "0" : truncStat(v, def ? def.unit : "FLAT");   // 표기 규칙 적용(로드 시엔 파생은 안 함 → 저장값 보존)
   }
 }
 
