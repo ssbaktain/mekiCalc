@@ -35,10 +35,14 @@ public final class WebServer {
     private final AuthService auth;
     private final EventLog log;
     private final NoticeService notices;
+    private final BotOutbox outbox;
+    private final NoticeCrawler crawler;
     private HttpServer http;
 
-    public WebServer(int port, CalcService service, Path webDir, AuthService auth, EventLog log, NoticeService notices) {
+    public WebServer(int port, CalcService service, Path webDir, AuthService auth, EventLog log, NoticeService notices, BotOutbox outbox, NoticeCrawler crawler) {
         this.port = port;
+        this.outbox = outbox;
+        this.crawler = crawler;
         this.service = service;
         this.webDir = webDir;
         this.auth = auth;
@@ -123,6 +127,15 @@ public final class WebServer {
                     strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
         }));
 
+        http.createContext("/api/stat-compare", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return service.statCompare(
+                    toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                    toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
+                    strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                    str(req, "refStatId"), num(req, "refValue", 0));
+        }));
+
         http.createContext("/api/gear-options", json("GET", ex -> service.gearOptions()));
 
         http.createContext("/api/gear-compare", json("POST", ex -> {
@@ -145,9 +158,42 @@ public final class WebServer {
             Map<String, String> q = queryParams(ex);
             int page = 0;
             try { page = Integer.parseInt(q.getOrDefault("page", "0")); } catch (NumberFormatException ignore) { }
-            return notices.list(q.get("category"), page);
+            return notices.list(q.get("category"), page, q.get("q"));
         }));
         http.createContext("/api/coupons", json("GET", ex -> notices.coupons(java.time.LocalDate.now().toString())));
+
+        // 카카오톡 봇(메신저봇R) 웹훅 — 폰의 봇이 방 메시지를 넘기면 명령을 처리해 응답 문자열을 돌려준다.
+        http.createContext("/api/bot", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            return BotService.handle(notices, strOpt(req, "room"), strOpt(req, "sender"), strOpt(req, "msg"));
+        }));
+
+        // 봇 발신 큐(Outbox) — 봇 브릿지가 poll로 가져가 전 방에 선톡하고 ack로 확정(신규공지·리마인더).
+        http.createContext("/api/bot/outbox/poll", json("GET", ex -> {
+            int limit = 10;
+            try { limit = Integer.parseInt(queryParams(ex).getOrDefault("limit", "10")); } catch (NumberFormatException ignore) { }
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("messages", outbox.poll(limit));
+            return out;
+        }));
+        http.createContext("/api/bot/outbox/ack", json("POST", ex -> {
+            Map<String, Object> req = readJsonBody(ex);
+            Object ids = req.get("ids");
+            int n = (ids instanceof List) ? outbox.ack((List<Object>) ids) : 0;
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("acked", (double) n);
+            return out;
+        }));
+        http.createContext("/api/bot/outbox/health", json("GET", ex -> outbox.health()));
+        // 수동 재확인: 지금 이미 22시 게이트를 지난 리마인더를 즉시 큐잉(미래분은 각자 22시에 발화).
+        http.createContext("/api/bot/remind-now", json("GET", ex -> {
+            crawler.checkExpiry();
+            return outbox.health();
+        }));
+        // [테스트] 최신 공지를 크롤러 배달 형식 그대로 큐잉(고유 dedupKey로 항상 전송).
+        http.createContext("/api/bot/simulate-notice", json("GET", ex -> crawler.simulateLatestNotice()));
+        // [테스트] '지금이 22시'라 가정, 가장 임박한 실효 종료일의 이벤트·쿠폰을 묶어 리마인더 큐잉(게이트 무시).
+        http.createContext("/api/bot/simulate-remind", json("GET", ex -> crawler.simulateReminder()));
 
         // ──────────────────── 로그인(OAuth) ────────────────────
         http.createContext("/auth/login", ex -> {

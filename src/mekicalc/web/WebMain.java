@@ -51,9 +51,10 @@ public final class WebMain {
         NoticeStore noticeStore = new NoticeStore(dataDir);
         NoticeSummarizer summarizer = new NoticeSummarizer(GeminiConfig.load(dataDir), OcrConfig.load(dataDir));
         NoticeService notices = new NoticeService(noticeStore);
-        NoticeCrawler crawler = new NoticeCrawler(noticeStore, summarizer);
+        BotOutbox outbox = new BotOutbox(dataDir);   // 봇 발신 큐(신규공지·리마인더)
+        NoticeCrawler crawler = new NoticeCrawler(noticeStore, summarizer, outbox);
 
-        WebServer server = new WebServer(port, service, webDir, auth, log, notices);
+        WebServer server = new WebServer(port, service, webDir, auth, log, notices, outbox, crawler);
         server.start();
         crawler.start();   // 서버가 뜬 뒤 백그라운드 폴링 시작(데몬 스레드)
 

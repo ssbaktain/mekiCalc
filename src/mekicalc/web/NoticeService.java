@@ -14,7 +14,7 @@ public final class NoticeService {
     /** 탭 순서(= 게시판 순서). "전체"는 프론트에서 category 미지정으로 요청. */
     public static final List<String> CATEGORIES = List.of("공지사항", "패치노트", "이벤트", "확인 중인 현상");
 
-    private static final int PAGE_SIZE = 20;
+    private static final int PAGE_SIZE = 10;
 
     private final NoticeStore store;
 
@@ -39,20 +39,32 @@ public final class NoticeService {
      * 공지 목록(게시 시각 내림차순). category=null/빈값이면 전체.
      * @param page 0-based 페이지
      */
-    public Map<String, Object> list(String category, int page) {
+    public Map<String, Object> list(String category, int page) { return list(category, page, null); }
+
+    /** @param query 검색어(제목·원문 본문·요약·구조화 텍스트 대상). null/빈값이면 전체. */
+    public Map<String, Object> list(String category, int page, String query) {
         String cat = (category == null || category.isBlank() || "전체".equals(category)) ? null : category;
-        int total = store.count(cat);
-        int offset = Math.max(0, page) * PAGE_SIZE;
-        List<NoticeStore.Notice> rows = store.list(cat, offset, PAGE_SIZE);
+        String q = (query == null || query.isBlank()) ? null : query;
+        int total = store.count(cat, q);
+        int pages = Math.max(1, (total + PAGE_SIZE - 1) / PAGE_SIZE);
+        int p = Math.min(Math.max(0, page), pages - 1);
+        int offset = p * PAGE_SIZE;
+        List<NoticeStore.Notice> rows = store.list(cat, q, offset, PAGE_SIZE);
         List<Object> items = new ArrayList<>(rows.size());
         for (NoticeStore.Notice n : rows) items.add(toItem(n));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("items", items);
         out.put("total", (double) total);
-        out.put("page", (double) Math.max(0, page));
+        out.put("page", (double) p);
+        out.put("pages", (double) pages);
         out.put("pageSize", (double) PAGE_SIZE);
         out.put("hasMore", offset + rows.size() < total);
         return out;
+    }
+
+    /** 카톡 /공지검색용: 검색어에 걸린 공지 전부 + 각 공지의 검색어 포함 문장(요약/구조화 기준). */
+    public List<Map<String, Object>> searchSnippets(String query) {
+        return store.searchWithSnippets(query);
     }
 
     /** 홈 위젯용 현재 유효 쿠폰. */
@@ -70,9 +82,14 @@ public final class NoticeService {
         m.put("headline", n.headline);
         m.put("title", n.title);
         m.put("postedAt", (double) n.postedAt);          // epoch sec (프론트에서 로컬 표시)
+        m.put("startAt", (double) n.startAt);            // 이벤트 기간 시작(epoch sec, 0=없음)
+        m.put("endAt", (double) n.endAt);                // 이벤트 기간 종료(epoch sec, 0=없음)
         m.put("author", n.author);
         m.put("sticky", n.sticky);
-        m.put("summary", n.summary);                     // null이면 프론트가 '요약 준비 중' 표시
+        m.put("summary", n.summary);                     // 레거시(data 없을 때 폴백)
+        m.put("data", n.data == null ? null : n.data.toMap());   // 구조화 데이터(신규). 웹 렌더러가 스펙대로 소비
+        m.put("status", n.status);                       // "closed"=게시 종료(확인 중인 현상 아카이브)
+        m.put("closeNote", n.closeNote);
         m.put("coupons", n.coupons == null ? new ArrayList<>() : n.coupons);
         m.put("sourceUrl", n.sourceUrl);                 // 원문(넥슨 포럼) 링크
         return m;
