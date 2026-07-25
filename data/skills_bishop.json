@@ -1,0 +1,94 @@
+{
+  "_comment": "비숍 스킬 데이터(DPS 모델용). skills_nightlord.json / skills_darkknight.json과 동일 스키마·규칙. %는 표기 그대로. growth=레벨당 상승비(kind별, 나이트로드와 동일 가정 — 미검증, 세부 성장비 유저 확정 예정). 스킬로 증가하는 '공격력%'만 엔진 적용, 그 외(최종뎀·크확·크뎀·보뎀·최소/최대뎀·기본공격뎀·스킬뎀·일반몹뎀·주스탯·방어력)는 프리셋 스탯에 선반영. 마스터리(피해량/보스/쿨감/타격/지속/발동)는 선반영 아님 → 엔진 적용. 단일전투 가정(대상수 무영향, 미표기=1). 스택/조건부 자버프(인피니티 램프업·아케인에임 스택·홀리블러드 HP비례·엘앰프 MP조건)는 엔진 미지원 → 선반영 근사(유저 프리셋 최종뎀/크뎀에 평균/가정치 포함, 여기선 statPassives 표시만). 바하뮤트는 비홀더/다크플레어처럼 소환 주기딜로 처리.",
+  "_notInHere": "선반영이라 뺀 것: 스펠마스터리 최소뎀15, 하이위즈덤 크확8, 매직크리티컬 크확8/크뎀12, 홀리심볼 일반몹뎀15, 엘앰프 최종뎀15(MP조건), 어드밴스드블레스 최종뎀7(타임드는 buffs로 엔진처리), 인피니티 최종뎀(램프업), 아케인에임 최종뎀(스택), 홀리블러드 최종뎀5+크뎀(HP비례), 인빈서블 방어력→주스탯(DamageModel에서 처리), 디바인프로텍션 방어력. 매직액셀레이션 공속5%는 선반영 가정(공속 스탯표기됨) — 확인되면 이동.",
+  "_todo": "유저 확정 필요(초안값·_note 참조): (1) 엔젤레이 hits/보스추가딜(122렙), (2) 바하뮤트 ticks(30초/4초 가정)·대상, (3) 트라이엄프페더 이중확률(15%강림×35%발동) 유효 proc, (4) 힐 조건부 공격력(HP30%↑ 10%+마스터리8%)·매직가드 재사용-30%(21렙), (5) 성장비 kind별 세부값, (6) 인피니티/아케인에임/홀리블러드 선반영 평균치 산정 방식.",
+
+  "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
+
+  "growth": {
+    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.4, "dealPassiveNoCd": 0.4,
+    "statActive": 0.4, "statPassive": 0.3, "meyong": 5
+  },
+  "meyong": { "tier": 4, "open": 100, "_targets": "트라이엄프 페더 50%(딜). 힐25%·홀리파운틴30%는 회복량이라 딜 무관 제외." },
+
+  "skills": [
+    { "id": "basic1", "name": "에너지 볼트", "kind": "basic", "tier": 1, "open": 1,
+      "base": 26, "hitsBase": 2, "targetsBase": 3,
+      "masteryDmgByLevel": { "12": 15, "19": 20, "26": 20 }, "targetPlus": { "15": 1, "22": 1 } },
+
+    { "id": "basic2", "name": "홀리 애로우", "kind": "basic", "tier": 2, "open": 30,
+      "base": 40, "hitsBase": 3, "targetsBase": 5,
+      "masteryDmgByLevel": { "32": 15, "42": 20, "52": 20 }, "masteryBossByLevel": { "47": 15 },
+      "targetPlus": { "37": 1 }, "hitPlus": { "56": 1 } },
+
+    { "id": "basic3", "name": "샤이닝 레이", "kind": "basic", "tier": 3, "open": 60,
+      "base": 80, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "62": 10, "66": 11, "76": 12, "80": 13, "88": 14, "92": 15 },
+      "masteryBossByLevel": { "71": 10, "84": 10 }, "hitPlus": { "96": 1 } },
+
+    { "id": "basic4", "name": "빅뱅", "kind": "basic", "tier": 4, "open": 100,
+      "base": 290, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "102": 10, "106": 11, "116": 12, "120": 13, "128": 14, "132": 15 },
+      "masteryBossByLevel": { "111": 10, "124": 10 }, "hitPlus": { "136": 1 } },
+
+    { "id": "angelRay", "name": "엔젤레이", "kind": "dealActive", "tier": 4, "open": 103,
+      "base": 680, "hits": 6, "targets": 1, "cd": 17, "masteryDmgByLevel": { "108": 50 },
+      "_note": "성검 3회 발사 × 각 680% 2회 = 6타 가정. 122렙 마스터리 '보스 타격 시 680% 추가피해(스킬레벨 비례)'는 보스한정 추가딜 → 미반영(유저 확정 필요)." },
+
+    { "id": "genesis", "name": "제네시스", "kind": "dealActive", "tier": 4, "open": 105,
+      "base": 700, "hits": 6, "targets": 10, "cd": 23,
+      "masteryDmgByLevel": { "118": 50 }, "cdrMasteryByLevel": { "126": 30 } },
+
+    { "id": "bahamut", "name": "바하뮤트", "kind": "dealActive", "tier": 4, "open": 115,
+      "base": 3500, "hitsPerTick": 1, "ticks": 7, "targets": 3, "cd": 80,
+      "masteryDmgByLevel": { "130": 50 }, "targetPlus": { "130": 3 }, "cdrMasteryByLevel": { "138": 30 },
+      "_note": "30초 소환, 4초마다 3명 3500% → ticks=floor(30/4)=7 가정(다크플레어 설치기 패턴). 130렙: 피해+50%·대상+3, 138렙: 재사용-30%. ticks/대상 유저 확정 필요." },
+
+    { "id": "triumphFeather", "name": "트라이엄프 페더", "kind": "dealPassiveNoCd", "tier": 3, "open": 63,
+      "base": 150, "hits": 2, "proc": 35, "meyong": 50,
+      "masteryDmgByLevel": { "73": 50 }, "hitPlus": { "104": 1 },
+      "_note": "메커니즘: 공격 시 15%로 '천사의 힘' 강림(10초 버프). 천사의 힘 지속 중 공격 시 35%로 깃털 150%×2. 유효 발동확률 = 천사의힘 가동률 × 35%. 현재 proc=35는 천사의힘 가동률 미반영 임시치 → 강림 가동률(15% proc·10초·공속의존) 곱해 정확 산정 추후. 78렙 깃털확률+10%, 94렙 강림 추가효과(임의7명) 미반영." }
+  ],
+
+  "buffs": [
+    { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60 },
+
+    { "id": "magicGuard", "name": "매직 가드", "kind": "statActive", "tier": 1, "open": 15,
+      "atkPct": 12, "dur": 15, "cd": 30, "cdrMasteryByLevel": { "21": 30 },
+      "_note": "21렙 마스터리 '매직가드 재사용-30%' → 실효쿨 21초(엔진 cdrMastery 처리)." },
+
+    { "id": "heal", "name": "힐", "kind": "statActive", "tier": 2, "open": 35,
+      "atkPct": 10, "dur": 10, "cd": 18, "durMasteryPctByLevel": { "39": 50 },
+      "_note": "힐 지속(10초) 동안만 공격력+10%(타임드, HP30%↑ 가정 상시). 54렙 '힐-공격력' 마스터리 +8%는 스킬 무관 패시브 취급 → 프리셋 공격력에 선반영(statPassives.healAtkMastery). 예: HP30%↑ 힐 미사용=+8%(선반영), 힐 사용=깡공×공퍼 기준 10(버프)+8(선반영)=+18%." },
+
+    { "id": "bless", "name": "블레스", "kind": "statActive", "tier": 2, "open": 40,
+      "atkPct": 16, "dur": 15, "cd": 24, "durMasteryPctByLevel": { "44": 30 } },
+
+    { "id": "holyMagicShell", "name": "홀리 매직 쉘", "kind": "statActive", "tier": 3, "open": 69,
+      "atkPct": 15, "dur": 22, "cd": 27 },
+
+    { "id": "advBless", "name": "어드밴스드 블레스", "kind": "statActive", "tier": 4, "open": 107,
+      "finalDmg": 7, "dur": 20, "cd": 26,
+      "_note": "타임드 최종뎀7%(엔진 가동률 처리). 113렙 마스터리 'MP50%↑ 최종뎀+4%'는 MP조건이라 미반영(선반영)." }
+  ],
+
+  "debuffs": [],
+
+  "_statPassivesNote": "비숍 패시브(대부분 선반영). 스킬탭 표시·토글용 — 기본 체크(효과 이미 프리셋 입력 포함). 유틸(방어력·MP·디버프내성)은 표시 전용. 딜 공격력 타임드 버프(매직가드·힐·블레스·홀리매직쉘)는 buffs에 있음. 인빈서블(방어력→주스탯)은 DamageModel.defenseToMainRatio에서 처리.",
+  "statPassives": [
+    { "id": "magicAccel",       "name": "매직 액셀레이션",         "tier": 2, "open": 33,  "atkSpeed": 5 },
+    { "id": "invincible",       "name": "인빈서블",               "tier": 2, "open": 38,  "desc": "방어력의 10%만큼 주스탯 증가(선반영)" },
+    { "id": "spellMastery",     "name": "스펠 마스터리",           "tier": 2, "open": 43,  "minMult": 15 },
+    { "id": "highWisdom",       "name": "하이 위즈덤",             "tier": 3, "open": 50,  "critRate": 8 },
+    { "id": "healAtkMastery",   "name": "힐 - 공격력(마스터리)",    "tier": 2, "open": 54,  "desc": "HP30%↑ 공격력+8%(스킬 무관 패시브 → 프리셋 공격력에 선반영, 엔진 미적용)" },
+    { "id": "divineProtection", "name": "디바인 프로텍션",         "tier": 3, "open": 60,  "def": 25, "debuffResist": 2, "desc": "15초간 방어력+25·디버프면역(20초 주기) — 유틸" },
+    { "id": "triumphFeatherP",  "name": "트라이엄프 페더(발동딜)",  "tier": 3, "open": 63,  "desc": "확률 발동 추가타 — skills.triumphFeather에서 반영" },
+    { "id": "holySymbol",       "name": "홀리 심볼",              "tier": 3, "open": 72,  "normalDmg": 15, "desc": "전투시작 14초 일반몹뎀+15(28초 주기, 조건부 → 선반영)" },
+    { "id": "magicCritical",    "name": "매직 크리티컬",           "tier": 3, "open": 74,  "critRate": 8, "critDmg": 12 },
+    { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "finalDmg": 15, "desc": "MP50%↑ 조건 최종뎀+15(선반영 근사)" },
+    { "id": "meyong",           "name": "메이플 용사",             "tier": 4, "open": 100, "desc": "트라이엄프 페더 최종뎀+50%(딜) — skills.meyong으로 반영" },
+    { "id": "masterMagic",      "name": "마스터 매직",             "tier": 4, "open": 117, "desc": "버프 지속시간+10% — 버프 가동률 영향(반영 방식 유저 확정)" },
+    { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "desc": "공격 시 25% 최종뎀+3% 최대5중첩(스택 → 선반영 근사, 평균치 유저 확정)" },
+    { "id": "holyBlood",        "name": "홀리 블러드",             "tier": 4, "open": 125, "finalDmg": 5, "desc": "최종뎀+5 + 현재HP 10%마다 크뎀+2(HP비례 → 선반영 근사)" }
+  ]
+}

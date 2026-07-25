@@ -33,7 +33,9 @@ public final class GameContent {
     /** 장비 잠재 옵션 표(부위·등급·슬롯별 후보). 큐브 추천·평가·비교에 사용. */
     public final EquipmentPotential equip;
     /** 나이트로드 종합 DPS 데이터(없으면 null → 공용 모델 폴백). */
-    public final SkillData skillData;
+    public final SkillData skillData;      // 나이트로드
+    public final SkillData skillDataDk;    // 다크나이트
+    public final SkillData skillDataBishop; // 비숍
     /** 메인 동료 데이터(companions.json의 companions 배열, 원본 맵). 없으면 빈 목록(동료 탭 "준비 중"). */
     public final List<Map<String, Object>> companions;
     /** companions.json 전체 맵(소환쿨/유지·계승비율·등급평타 등 상수 포함). DPS 계산용. */
@@ -53,7 +55,7 @@ public final class GameContent {
 
     private GameContent(Map<String, StatDef> stats, Profile profile,
                         Map<String, Double> currency, List<StatSource> sources,
-                        EquipmentPotential equip, SkillData skillData,
+                        EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
                         Map<String, Object> monsterDefense, Map<String, Object> monsterHp,
                         Map<String, Object> artifactRoot, List<Map<String, Object>> artifacts,
@@ -64,6 +66,8 @@ public final class GameContent {
         this.sources = sources;
         this.equip = equip;
         this.skillData = skillData;
+        this.skillDataDk = skillDataDk;
+        this.skillDataBishop = skillDataBishop;
         this.companions = companions;
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
@@ -80,9 +84,21 @@ public final class GameContent {
         EquipmentPotential equip = EquipmentPotential.load(dataDir);
         SkillData skillData;
         try {
-            skillData = SkillData.load(dataDir);
+            skillData = SkillData.load(dataDir, "nightlord");
         } catch (Exception e) {
-            skillData = null;   // 스킬 데이터 없거나 손상 → 나이트로드는 공용 모델로 폴백
+            skillData = null;   // 스킬 데이터 없거나 손상 → 공용 모델로 폴백
+        }
+        SkillData skillDataDk;
+        try {
+            skillDataDk = SkillData.load(dataDir, "darkknight");
+        } catch (Exception e) {
+            skillDataDk = null;
+        }
+        SkillData skillDataBishop;
+        try {
+            skillDataBishop = SkillData.load(dataDir, "bishop");
+        } catch (Exception e) {
+            skillDataBishop = null;
         }
         Map<String, Object> compRoot = loadCompanionRoot(dataDir);
         List<Map<String, Object>> comps = new ArrayList<>();
@@ -95,7 +111,7 @@ public final class GameContent {
         Object artArr = artRoot.get("artifacts");
         if (artArr != null) for (Object o : Json.asList(artArr)) arts.add(Json.asMap(o));
         Map<String, Object> gearOpts = loadJsonMap(dataDir, "gear_options.json");
-        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData,
+        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop,
                 comps, compRoot, monDef, monHp, artRoot, arts, gearOpts, dataDir);
     }
 
