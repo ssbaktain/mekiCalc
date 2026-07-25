@@ -24,8 +24,10 @@ public final class CubeRecommender {
     /** 한 슬롯의 현재→추천. current null=빈 슬롯. locked=사용자가 잠근 슬롯. */
     public record SlotPick(PotentialDraw current, PotentialDraw recommended, boolean changed, boolean locked) {}
 
-    /** dedup된 딜증가 옵션 세트. grade=이 구성의 등급(승급 추천이면 상위 등급). */
-    public record OptSet(PotentialDraw[] rep, double deal, double prob, double repProb, String grade) {}
+    /** dedup된 딜증가 옵션 세트. grade=이 구성의 등급(승급 추천이면 상위 등급).
+     *  prob=정확구성 확률(arrangeSum: 나머지 슬롯 빈. 상호배타라 '1회 리롤' 합산에만 사용).
+     *  probAppear=한계 등장확률(appearProb: 나머지 슬롯 무관. 표시 '동일 옵션 등장 확률 총합'·기대큐브·효율·파레토용). */
+    public record OptSet(PotentialDraw[] rep, double deal, double prob, double probAppear, double repProb, String grade) {}
 
     /** 한 장비의 분석 결과(슬라이더 무관, 캐시). curGrade=현재 등급.
      *  all=딜오름 정렬된 전체 후보(같은 등급+승급), gEff=이 큐브 승급확률, nextStep=[딜, 다음등급 한큐브확률]. */
@@ -104,7 +106,7 @@ public final class CubeRecommender {
             // 일반 슬롯 + 잠긴 옵션 슬롯: 풀에 포함. 잠긴 옵션은 '반드시 포함'으로 표시해 어느 슬롯이든 재획득(any-slot 합산).
             pool.add(i); inPool[i] = true;
             if (d != null) {
-                normalCurDelta.set(d.statId(), normalCurDelta.get(d.statId()) + d.value());
+                normalCurDelta.set(d.statId(), model.aggregate(d.statId(), normalCurDelta.get(d.statId()), d.value()));
                 normalCurOpts.add(d);
                 if (lk) { requiredOpts.add(d); keptStats.add(d.statId()); }
             }
@@ -122,7 +124,7 @@ public final class CubeRecommender {
             PotentialDraw d = curDraws[i];
             curProbSingle *= (d != null) ? d.prob() / 100.0 : emptyProb(slots.get(i));
         }
-        double curProbSum = qualProb * arrangeSum(normalCurOpts, poolTables);
+        double curProbSum = qualProb * appearProb(normalCurOpts, poolTables);   // 표시·기대큐브: 한계 등장확률(정확구성 아님)
 
         // 딜증가 세트 생성: 풀 슬롯마다 옵션-or-빈 → 딜 계산 → 비빈 옵션 멀티셋으로 dedup.
         Map<String, Double> setDeal = new LinkedHashMap<>();
@@ -139,10 +141,11 @@ public final class CubeRecommender {
         List<OptSet> all = new ArrayList<>();
         for (Map.Entry<String, Double> e : setDeal.entrySet()) {
             List<PotentialDraw> opts = setOpts.get(e.getKey());
-            double probSum = qualProb * arrangeSum(opts, poolTables);   // 빈 확률 포함 총합(any-slot)
-            Best b = bestArrange(opts, poolTables);                      // 최고 확률 배치(단일 확률용)
+            double probExact = qualProb * arrangeSum(opts, poolTables);   // 정확구성(나머지 빈): 상호배타 '1회 리롤' 합산용
+            double probApp   = qualProb * appearProb(opts, poolTables);   // 한계 등장확률: 표시·기대큐브·효율·파레토용
+            Best b = bestArrange(opts, poolTables);                       // 최고 확률 배치(단일 확률용)
             all.add(new OptSet(buildRep(inPool, locked, opts, curDraws, slots),
-                    e.getValue(), probSum, qualProb * b.prob, curGrade));
+                    e.getValue(), probExact, probApp, qualProb * b.prob, curGrade));
         }
 
         // 등급업 체인: 상위 등급 종결 구성을 후보에 추가.
@@ -154,7 +157,7 @@ public final class CubeRecommender {
         List<double[]> nextStep = new ArrayList<>();
         if (ep != null && grade != null && ep.gradeIndex(grade) >= 0) {
             StatBlock fullDelta = new StatBlock();   // 이 층의 현재 모든 옵션(승급 시 전부 새로 굴림)
-            for (PotentialDraw d : curDraws) if (d != null) fullDelta.set(d.statId(), fullDelta.get(d.statId()) + d.value());
+            for (PotentialDraw d : curDraws) if (d != null) fullDelta.set(d.statId(), model.aggregate(d.statId(), fullDelta.get(d.statId()), d.value()));
             StatBlock baseFull = model.uncombine(current, fullDelta);
             List<String> grs = ep.grades();
             int ci = ep.gradeIndex(grade);
@@ -171,13 +174,15 @@ public final class CubeRecommender {
                         new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, ranges, java.util.List.of(), keptStats);
                 for (Map.Entry<String, Double> e : sd.entrySet()) {
                     List<PotentialDraw> opts = so.get(e.getKey());
-                    double pSum = arrangeSum(opts, tg);              // 목표 등급 동일옵션 등장확률 총합
+                    double pSum = arrangeSum(opts, tg);              // 정확구성(상호배타): nextStep·'1회 리롤'용
+                    double pApp = appearProb(opts, tg);              // 한계 등장확률: 표시·기대큐브용
                     double pBest = bestArrange(opts, tg).prob;       // 목표 등급 단일 최고배치(표시용)
                     // 승급시키는 큐브가 새 등급 첫 굴림도 겸함 → 옵션 뽑기에서 1큐브 공짜(−1, 음수 방지).
-                    double reach = pSum > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pSum - 1.0)) : 0;
+                    double reachExact  = pSum  > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pSum  - 1.0)) : 0;
+                    double reachAppear = pApp  > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pApp  - 1.0)) : 0;
                     double repP = pBest > 0 ? 1.0 / (eReach + Math.max(0.0, 1.0 / pBest - 1.0)) : 0;
                     PotentialDraw[] rep = buildRep(new boolean[]{true, true, true}, null, opts, new PotentialDraw[3], tg);
-                    all.add(new OptSet(rep, e.getValue(), reach, repP, to));
+                    all.add(new OptSet(rep, e.getValue(), reachExact, reachAppear, repP, to));
                     if (gi == ci) nextStep.add(new double[]{e.getValue(), pSum});   // 한 단계 위 한 큐브 확률
                 }
             }
@@ -207,7 +212,7 @@ public final class CubeRecommender {
         List<Double> shownRemainL = new ArrayList<>();
         double maxProb = -1;
         for (int i = n - 1; i >= 0; i--) {
-            if (all.get(i).prob() > maxProb + 1e-15) {
+            if (all.get(i).probAppear() > maxProb + 1e-15) {   // 파레토 축 = 한계 등장확률(표시값과 동일 기준)
                 shown.add(all.get(i));
                 double d = all.get(i).deal();
                 double sameGt = 0, nextGt = 0;
@@ -215,7 +220,7 @@ public final class CubeRecommender {
                     if (java.util.Objects.equals(o.grade(), curGrade) && o.deal() > d + 1e-12) sameGt += o.prob();
                 for (double[] ns : nextStep) if (ns[0] > d + 1e-12) nextGt += ns[1];
                 shownRemainL.add((1 - gEff) * sameGt + gEff * nextGt);
-                maxProb = all.get(i).prob();
+                maxProb = all.get(i).probAppear();
             }
         }
         Collections.reverse(shown);                           // 딜 오름차순으로
@@ -261,7 +266,7 @@ public final class CubeRecommender {
         }
         return new Rec(eo.part(), eo.upper(), eo.cost(), picks,
                 eo.curDeal(), eo.curProbSingle(), eo.curProbSum(),
-                set.deal(), set.repProb(), set.prob(),
+                set.deal(), set.repProb(), set.probAppear(),
                 set.deal() - eo.curDeal(), eo.totalProb(), eo.shownSuffix()[idx],
                 set.grade(), eo.curGrade());
     }
@@ -282,7 +287,7 @@ public final class CubeRecommender {
             String key = setKey(opts);
             if (!seen.add(key)) return;
             StatBlock delta = new StatBlock();
-            for (PotentialDraw d : opts) delta.set(d.statId(), delta.get(d.statId()) + d.value());
+            for (PotentialDraw d : opts) delta.set(d.statId(), model.aggregate(d.statId(), delta.get(d.statId()), d.value()));
             StatBlock combined = model.combine(baseline, delta);
             if (!withinRanges(combined, current, ranges)) return;   // 허용 범위 밖 후보 제외
             // increase()를 타서 곱배수 조합은 닫힌식(빠른 경로)으로 — output() 직접 호출은 닫힌식을 우회해 동료 포함 시 매우 느림.
@@ -470,5 +475,79 @@ public final class CubeRecommender {
         for (PotentialDraw d : table)
             if (d.statId().equals(o.statId()) && d.value() == o.value()) return d.prob() / 100.0;
         return 0;
+    }
+
+    /**
+     * 동일 옵션 '한계' 등장 확률 = 큐브 한 번(각 슬롯 독립 추첨)에서 opts의 모든 옵션이 서로 다른 슬롯에
+     * 등장할 확률. <b>나머지 슬롯엔 무엇이 와도 무관</b>(arrangeSum과 달리 '빈' 조건 없음).
+     *
+     * <p>단일 옵션이면 {@code 1 − Π_slot(1 − p_slot)} 이고 {@link CubeEvaluator}(큐브 기댓값 탭)와 일치한다.
+     * '동일 옵션 등장 확률 총합' 표시·기대 큐브(1/p)·효율·파레토 축에 쓴다. (arrangeSum은 나머지 슬롯이 비어야
+     * 하는 '정확 구성' 확률이라 한 줄만 지정하면 값이 과소하게 나옴 → 표시용으로는 부적합.)
+     *
+     * <p>슬롯별로 각 옵션 key(스탯+수치)의 확률을 DP로 누적한다: 상태=옵션별 수집 개수(멀티셋), 각 슬롯은
+     * 아직 필요한 옵션 하나를 뽑아 진전(prob=p_key)하거나 진전 없음(prob=1−Σp). 완료 상태 확률이 답.
+     */
+    public static double appearProb(List<PotentialDraw> opts, List<List<PotentialDraw>> slotTables) {
+        if (opts == null || opts.isEmpty()) return 1.0;               // 지정 옵션 없음 = 항상 만족
+        if (opts.size() > slotTables.size()) return 0.0;             // 슬롯보다 옵션 많음 = 불가능
+        // 서로 다른 옵션 key -> 필요 개수(멀티셋)
+        List<String> keys = new ArrayList<>();
+        List<Integer> need = new ArrayList<>();
+        for (PotentialDraw o : opts) {
+            String k = o.statId() + "=" + o.value();
+            int idx = keys.indexOf(k);
+            if (idx < 0) { keys.add(k); need.add(1); } else need.set(idx, need.get(idx) + 1);
+        }
+        int m = keys.size();
+        int[] radix = new int[m];
+        for (int j = 0; j < m; j++) radix[j] = need.get(j) + 1;      // 각 옵션 수집수 0..need
+        Map<Integer, Double> dp = new LinkedHashMap<>();
+        dp.put(0, 1.0);
+        for (List<PotentialDraw> table : slotTables) {
+            double[] pk = new double[m];
+            for (int j = 0; j < m; j++) pk[j] = probSumInTable(keys.get(j), table);
+            Map<Integer, Double> ndp = new LinkedHashMap<>();
+            for (Map.Entry<Integer, Double> e : dp.entrySet()) {
+                int[] cnt = decode(e.getKey(), radix);
+                double pr = e.getValue();
+                double advance = 0;                                  // 이 슬롯이 '아직 필요한' 옵션을 뽑을 총확률
+                for (int j = 0; j < m; j++) if (cnt[j] < need.get(j)) advance += pk[j];
+                mergeInto(ndp, e.getKey(), pr * (1.0 - advance));     // 진전 없음(다른 옵션·빈)
+                for (int j = 0; j < m; j++) {                        // 필요한 옵션 j를 뽑아 진전
+                    if (cnt[j] < need.get(j) && pk[j] > 0) {
+                        int[] c2 = cnt.clone(); c2[j]++;
+                        mergeInto(ndp, encode(c2, radix), pr * pk[j]);
+                    }
+                }
+            }
+            dp = ndp;
+        }
+        int[] full = new int[m];
+        for (int j = 0; j < m; j++) full[j] = need.get(j);
+        return dp.getOrDefault(encode(full, radix), 0.0);
+    }
+
+    /** 한 슬롯 테이블에서 key(스탯+수치)와 일치하는 모든 항목 확률의 합(동일 key 중복 방어, CubeEvaluator와 동일). */
+    private static double probSumInTable(String key, List<PotentialDraw> table) {
+        double s = 0;
+        for (PotentialDraw d : table) if ((d.statId() + "=" + d.value()).equals(key)) s += d.prob() / 100.0;
+        return s;
+    }
+
+    private static void mergeInto(Map<Integer, Double> map, int k, double v) {
+        if (v != 0) map.merge(k, v, Double::sum);
+    }
+
+    private static int encode(int[] cnt, int[] radix) {
+        int code = 0, mul = 1;
+        for (int j = 0; j < cnt.length; j++) { code += cnt[j] * mul; mul *= radix[j]; }
+        return code;
+    }
+
+    private static int[] decode(int code, int[] radix) {
+        int[] cnt = new int[radix.length];
+        for (int j = 0; j < radix.length; j++) { cnt[j] = code % radix[j]; code /= radix[j]; }
+        return cnt;
     }
 }

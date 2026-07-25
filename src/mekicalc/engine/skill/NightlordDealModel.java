@@ -95,6 +95,7 @@ public final class NightlordDealModel implements DealModel {
 
     @Override public StatBlock combine(StatBlock current, StatBlock delta) { return base.combine(current, delta); }
     @Override public StatBlock uncombine(StatBlock r, StatBlock delta) { return base.uncombine(r, delta); }
+    @Override public double aggregate(String statId, double a, double b) { return base.aggregate(statId, a, b); }
 
     /**
      * 닫힌식 가능 델타: 곱배수 스탯({@link DamageModel#MULT_STATS}) + (대상 있으면) 방관. 종합 DPS가 (globalMultiplier×f)에 균일 반영.

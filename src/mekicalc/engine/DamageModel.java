@@ -22,7 +22,7 @@ import mekicalc.model.StatDef;
  *   f_스탯비례  = 1 + 주스탯/10000                              // 스탯비례데미지%(=주스탯/100)의 숨은-100% factor
  *   f_기본공격뎀 = 1 + 기본공격데미지/100                        // 기본 공격이므로 스킬데미지%는 제외
  *   f_크리      = 1 + min(크리확률/100, 1) × (크리데미지/100)
- *   f_데미지범위 = (최소 + 최대) / 200   // 평균(숨은 100% 없음). 단 최소>최대면 최소/100 로 고정
+ *   f_데미지범위 = (최소 + 최대) / 200   // 평균(숨은 100% 없음). 단 최소>최대면 최대/100 로 고정
  *   f_최종      = (1 + 최종데미지/100)
  *   f_기본공격계수 = 기본계수(2.9) × (1 + 0.004 × 스킬레벨)   // 0이면 0데미지, 결과를 그대로 곱함
  *   공통배수    = 기본공격력 × f_데미지 × f_스탯비례 × f_기본공격뎀 × f_크리 × f_데미지범위 × f_최종 × f_기본공격계수
@@ -50,6 +50,8 @@ public final class DamageModel implements DealModel {
     private static final String MAIN_STAT_PCT = "MAIN_STAT_PCT";
     private static final String SUB_STAT_FLAT = "SUB_STAT_FLAT";   // 부스탯: 주스탯의 1/4 효과(공격력 4당 1, 스탯비례 0.25%/개)
     private static final String SUB_STAT_PCT = "SUB_STAT_PCT";     // 부스탯%(큐브 전용 — 스탯 프리셋엔 없음). 없으면 0.
+    private static final String DEFENSE = "DEFENSE";               // 방어력: 일부 직업 패시브로 방어력의 일정 %만큼 주스탯 증가(직업별 계수)
+    private static final String JOB = "JOB";
     private static final String STAT_PROP_DMG = "STAT_PROP_DMG";
     private static final String DMG = "DMG";
     private static final String DMG_AMP = "DMG_AMP";
@@ -77,7 +79,8 @@ public final class DamageModel implements DealModel {
      */
     public static final Set<String> MULT_STATS = Set.of(
             ATK_FLAT, ATK_PCT, MAIN_STAT_FLAT, MAIN_STAT_PCT, DMG, DMG_AMP, STAT_PROP_DMG,
-            CRIT_RATE, CRIT_DMG, MIN_DMG_MULT, MAX_DMG_MULT, FINAL_DMG, BOSS_DMG, NORMAL_DMG);
+            CRIT_RATE, CRIT_DMG, MIN_DMG_MULT, MAX_DMG_MULT, FINAL_DMG, BOSS_DMG, NORMAL_DMG,
+            DEFENSE);   // 방어력은 주스탯으로 환산(mainStat) → 곱배수처럼 균일 반영. 닫힌식 경로 허용.
 
     /** delta가 곱배수 스탯({@link #MULT_STATS})으로만 이루어졌는지(닫힌식 빠른 경로 가능). 빈 델타는 false. */
     public boolean isPureMult(StatBlock delta) {
@@ -158,7 +161,8 @@ public final class DamageModel implements DealModel {
     public Map<String, Double> breakdown(StatBlock b) {
         // 공격력(깡)에는 주스탯이 이미 포함(표시값)이라 여기서 또 더하지 않는다.
         // (주스탯 옵션을 더할 때의 깡공 상승분은 combine()에서 ATK_FLAT에 반영된다.)
-        double baseAtk = v(b, ATK_FLAT) * (1 + v(b, ATK_PCT) / 100.0);
+        // 단, 방어력 유래 주스탯(다크나이트 아이언 월 등)은 입력 공격력에 빠져 있으므로 여기서 유효주스탯을 더한다.
+        double baseAtk = (v(b, ATK_FLAT) + defenseMainStat(b)) * (1 + v(b, ATK_PCT) / 100.0);
 
         // 스탯 비례 데미지%는 유저 입력값을 그대로 사용한다(패시브 등으로 주스탯/100과 소폭 다를 수 있음).
         // 숨은 100% 방식 → factor = 1 + 스탯비례%/100. 주스탯이 옵션으로 늘면 combine()에서 함께 보정한다.
@@ -166,7 +170,7 @@ public final class DamageModel implements DealModel {
         double basicPct = v(b, BASIC_ATK_DMG); // 기본 공격 데미지%만 (스킬 데미지% 제외)
 
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
-        // 데미지범위: 최소·최대의 평균. 단 최소>최대면 데미지가 최대뎀(천장)으로 고정.
+        // 데미지범위: 최소·최대의 평균. 단 최소>최대면 데미지가 최댓값(천장)으로 고정.
         double minMult = v(b, MIN_DMG_MULT);
         double maxMult = v(b, MAX_DMG_MULT);
         double fRange = (minMult > maxMult) ? maxMult / 100.0 : (minMult + maxMult) / 200.0;
@@ -231,6 +235,18 @@ public final class DamageModel implements DealModel {
         return aft / before - 1.0;
     }
 
+    /**
+     * 같은 스탯 옵션값 여러 개를 하나의 델타값으로 모을 때의 규칙(큐브 한 부위 내 여러 줄 집계).
+     * 체감(DIMINISHING) 스탯(방관·공속)은 슬롯끼리도 merge(곱연산)로 접어야 인게임과 일치한다
+     * (방관 12+12 → 22.56, 24 아님). SUM·MULT_PCT(최종뎀)는 단순 합산 유지.
+     */
+    @Override
+    public double aggregate(String statId, double a, double b) {
+        StatDef def = stats.get(statId);
+        if (def != null && def.combine == StatDef.Combine.DIMINISHING) return def.merge(a, b);
+        return a + b;
+    }
+
     /** current 에 delta 를 각 스탯의 combine 규칙대로 합친 새 StatBlock. */
     public StatBlock combine(StatBlock current, StatBlock delta) {
         StatBlock r = new StatBlock(current);
@@ -262,6 +278,12 @@ public final class DamageModel implements DealModel {
         if (subDelta != 0) {
             r.set(ATK_FLAT, r.get(ATK_FLAT) + subDelta / 4.0);
             r.set(STAT_PROP_DMG, r.get(STAT_PROP_DMG) + subDelta * 0.0025);
+        }
+        // 방어력 유래 주스탯이 옵션으로 늘면(큐브/장비) 증가분을 스탯비례에 반영한다.
+        // 공격력 기여는 breakdown/globalMultiplier가 DEFENSE로 직접 반영하므로 여기선 ATK_FLAT을 건드리지 않는다.
+        double defMainDelta = defenseMainStat(r) - defenseMainStat(current);
+        if (defMainDelta != 0) {
+            r.set(STAT_PROP_DMG, r.get(STAT_PROP_DMG) + defMainDelta / 100.0);
         }
         return r;
     }
@@ -297,8 +319,10 @@ public final class DamageModel implements DealModel {
         // 주스탯·부스탯 증가분만큼 더해졌던 공격력 가산·스탯비례 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
         double mainDelta = mainAfter - mainStat(before);
         double subDelta = subAfter - subStat(before);
+        // 방어력 옵션 제거분: before의 DEFENSE는 위 for에서 SUM 역연산으로 복원됨 → 스탯비례 가산을 되돌린다.
+        double defMainDelta = defenseMainStat(r) - defenseMainStat(before);
         before.set(ATK_FLAT, r.get(ATK_FLAT) - mainDelta - subDelta / 4.0 - delta.get(ATK_FLAT));
-        before.set(STAT_PROP_DMG, before.get(STAT_PROP_DMG) - mainDelta / 100.0 - subDelta * 0.0025);
+        before.set(STAT_PROP_DMG, before.get(STAT_PROP_DMG) - mainDelta / 100.0 - subDelta * 0.0025 - defMainDelta / 100.0);
         return before;
     }
 
@@ -311,6 +335,46 @@ public final class DamageModel implements DealModel {
     private double mainStat(StatBlock b) {
         return v(b, MAIN_STAT_FLAT) * (1 + v(b, MAIN_STAT_PCT) / 100.0);
     }
+
+    /**
+     * 방어력 유래 유효주스탯 = 방어력 × 직업계수 × (1 + 주스탯%/100).
+     *
+     * <p>일부 직업 패시브(다크나이트 아이언 월)는 '방어력의 n%만큼 주스탯이 증가'한다 → 진짜 깡주스탯이라
+     * 주스탯%까지 받은 뒤 공격력(1:1)·스탯비례(÷100)에 기여한다(부스탯과 달리 주스탯% 적용).
+     * <p>입력 공격력·주스탯엔 이 방어력 효과가 빠져 있다고 보고, 공격력 기여는 {@link #breakdown}/
+     * {@link #globalMultiplier}가 baseAtk에 직접 더한다(baseline·델타 공통). 스탯비례 기여는 baseline은
+     * 프론트가 STAT_PROP에 선반영하고, 델타(방어력 옵션 추가)는 {@link #combine}이 반영한다.
+     */
+    private double defenseMainStat(StatBlock b) {
+        // 아이언 월 주스탯 증가분은 "선반영" — 주스탯% 곱셈의 바깥에 붙는 최종 flat 값이라 주스탯%를 곱하지 않는다.
+        // (인게임 실측: 깡주스탯40303·주스탯%121·방어력34802·계수0.1366 → 스탯비례 방어력분 47.54%p, 주스탯% 미적용 시에만 일치)
+        return v(b, DEFENSE) * defenseToMainRatio(b);
+    }
+
+    /**
+     * 직업별 방어력→주스탯 변환 계수(방어력 1당 주스탯 몇).
+     * <ul>
+     *   <li>다크나이트: 아이언 월(2차 패시브) — 방어력의 10%를 주스탯으로 환산하되, 스킬 레벨당 +0.3%p 비례
+     *       (base 10% × growth 0.3). 총스킬레벨 = 2차 레벨 파생분 + 모스렙 + 2스렙.
+     *       검증(인게임 표시=소수 2째자리 버림): 108렙·2스렙32 → 13.66%(표시 13.6), 2스렙43 → 13.99%(표시 13.9).</li>
+     *   <li>그 외(나이트로드 등): 0 — 해당 패시브 없음 → 방어력이 딜에 영향 없음.</li>
+     * </ul>
+     * TODO: 직업별 패시브 계수는 추후 스킬 데이터 구동으로 일반화(현재 다크나이트만 하드코딩).
+     */
+    private double defenseToMainRatio(StatBlock b) {
+        // 다크나이트 아이언 월 / 비숍 인빈서블 — 둘 다 2차 패시브(open 38), '방어력의 10%만큼 주스탯' 동일 계수.
+        int job = (int) v(b, JOB);
+        if (job != JOB_DARK_KNIGHT && job != JOB_BISHOP) return 0.0;
+        // 2차 스킬 레벨 파생분: 30(2차 전직)~59렙은 레벨당 3, 60렙(3차)부터 90 고정.
+        double baseSkillLevel = Math.max(0.0, (Math.min(v(b, LEVEL), 60) - 30) * 3);
+        double totalSkillLevel = baseSkillLevel + v(b, SKILL_LEVELS) + v(b, SKILL_LEVEL_2);
+        return IRON_WALL_BASE * (1 + IRON_WALL_GROWTH * totalSkillLevel);
+    }
+
+    private static final int JOB_DARK_KNIGHT = 2;
+    private static final int JOB_BISHOP = 3;
+    private static final double IRON_WALL_BASE = 0.10;      // 아이언 월 명목 계수(방어력의 10%)
+    private static final double IRON_WALL_GROWTH = 0.003;   // 스킬 레벨당 상승비(growth.statPassive 0.3 → 0.003)
 
     /** 유효 부스탯 = 부스탯(+) × (1 + 부스탯%/100). 스탯 프리셋엔 +만 있고 %는 큐브 계산 시에만 들어온다(없으면 0). */
     private double subStat(StatBlock b) {
@@ -355,7 +419,8 @@ public final class DamageModel implements DealModel {
      * 각 스킬의 계수·타입별 데미지%는 {@link mekicalc.engine.skill.NightlordDps}가 따로 곱한다. mode A 기준.
      */
     public double globalMultiplier(StatBlock b, boolean boss) {
-        double baseAtk = v(b, ATK_FLAT) * (1 + v(b, ATK_PCT) / 100.0);
+        // 방어력 유래 유효주스탯을 공격력에 더한다(입력 공격력엔 빠져 있음). breakdown과 동일 규칙.
+        double baseAtk = (v(b, ATK_FLAT) + defenseMainStat(b)) * (1 + v(b, ATK_PCT) / 100.0);
         double fDmg = (1 + v(b, DMG) / 100.0) * (1 + v(b, DMG_AMP) / 100.0);
         double fStatProp = 1 + v(b, STAT_PROP_DMG) / 100.0;
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);

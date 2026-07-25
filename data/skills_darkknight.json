@@ -1,0 +1,114 @@
+{
+  "_comment": "다크나이트 스킬 데이터(DPS 모델용). skills_nightlord.json과 동일 스키마·규칙. %는 표기 그대로. growth=레벨당 상승비(kind별, 나이트로드와 동일 가정 — 미검증). 스킬로 증가하는 '공격력%'만 엔진 적용(스탯 미표기), 그 외(최종뎀·크확·크뎀·보뎀·최소/최대뎀·기본공격뎀·스킬뎀·주스탯·방어력)는 프리셋 스탯에 선반영. 마스터리(피해량/보스/쿨감/타격/지속/발동)는 선반영 아님 → 엔진 적용. 단일전투 가정(대상수 무영향, 미표기=1). HP 항상 최대(크로스오버체인 공격력 유지, 리인카네이션 미발동). 비홀더는 특별취급 없이 쿨/지속 가동률로 처리.",
+  "_notInHere": "선반영이라 뺀 것: 아이언바디 주스탯/방어력, 아이언월, 워리어마스터리 HP/이속, 웨폰마스터리 최소뎀, 스탠스 최종뎀15·받피감, 어드밴스드웨폰마스터리 스킬뎀15·최대뎀20, 리인카네이션 최종뎀10, 각종 강화 마스터리(기본공격뎀·크확·최대뎀·스킬뎀·대상수). 웨폰액셀레이션 공속5%는? — 나이트로드 자벨릭액셀은 statPassives(엔진)였으나 여기선 선반영 가정(공속은 스탯표기됨). 확인되면 이동.",
+
+  "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
+
+  "growth": {
+    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.4, "dealPassiveNoCd": 0.4,
+    "statActive": 0.4, "statPassive": 0.3, "meyong": 5
+  },
+  "meyong": { "tier": 4, "open": 100, "_targets": "비홀더 도미넌트 40%, 돌진 30%, 비홀더 쇼크 30%" },
+
+  "skills": [
+    { "id": "basic1", "name": "슬래시 블러스트", "kind": "basic", "tier": 1, "open": 1,
+      "base": 26, "hitsBase": 2, "targetsBase": 3,
+      "masteryDmgByLevel": { "12": 15, "19": 20, "26": 20 }, "targetPlus": { "15": 1, "22": 1 } },
+
+    { "id": "basic2", "name": "스피어 풀링", "kind": "basic", "tier": 2, "open": 30,
+      "base": 40, "hitsBase": 3, "targetsBase": 5,
+      "masteryDmgByLevel": { "32": 15, "42": 20, "52": 20 }, "masteryBossByLevel": { "47": 15 },
+      "targetPlus": { "37": 1 }, "hitPlus": { "56": 1 } },
+
+    { "id": "basic3", "name": "라만차 스피어", "kind": "basic", "tier": 3, "open": 60,
+      "base": 80, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "62": 10, "66": 11, "76": 12, "80": 13, "88": 14, "92": 15 },
+      "masteryBossByLevel": { "71": 10, "84": 10 }, "hitPlus": { "96": 1 } },
+
+    { "id": "basic4", "name": "다크 임페일", "kind": "basic", "tier": 4, "open": 100,
+      "base": 290, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "102": 10, "106": 11, "116": 12, "120": 13, "128": 14, "132": 15 },
+      "masteryBossByLevel": { "111": 10, "124": 10 }, "hitPlus": { "136": 1 } },
+
+    { "id": "charge", "name": "돌진", "kind": "dealActive", "tier": 3, "open": 63,
+      "base": 600, "hits": 1, "targets": 12, "cd": 22,
+      "masteryDmgByLevel": { "68": 80 }, "cdrMasteryByLevel": { "90": 30 }, "meyong": 30 },
+
+    { "id": "gungnir", "name": "궁니르 디센트", "kind": "dealActive", "tier": 4, "open": 103,
+      "base": 1800, "hits": 2, "targets": 1, "cd": 13,
+      "masteryDmgByLevel": { "108": 50 }, "baseMultByLevel": { "134": 0.5 }, "hitPlus": { "134": 4 },
+      "_note": "134렙 마스터리: 기본 피해 ×0.5, 타격 +4(2→6) → 순증 1.5배." },
+
+    { "id": "magicCrash", "name": "매직 크래쉬", "kind": "dealActive", "tier": 4, "open": 117,
+      "base": 4800, "hits": 1, "targets": 5, "cd": 28, "dual": "디버프" },
+
+    { "id": "beholderShock", "name": "비홀더 쇼크", "kind": "dealActive", "tier": 2, "open": 40,
+      "base": 70, "hits": 6, "targets": 6, "cd": 18, "meyong": 30,
+      "masteryDmgByLevel": { "44": 50 }, "targetPlus": { "75": 3 },
+      "finalMasteryByLevel": { "75": 100 }, "finalMasteryTier": 3, "finalMasteryGrowth": 0.3,
+      "requiresSummon": true,
+      "_note": "소환 중에만 발동. 75렙 강화: 대상 6→9, 최종뎀+100%. 138렙 '암흑 투기'는 beholderRevenge 연계(리벤지 레벨 비례 2200%) — 별도." },
+
+    { "id": "finalAttack", "name": "파이널 어택", "kind": "dealPassiveNoCd", "tier": 2, "open": 50,
+      "base": 35, "proc": 25, "masteryDmgByLevel": { "54": 50 },
+      "finalMasteryByLevel": { "105": 500, "113": 50 }, "finalMasteryTier": 4, "finalMasteryGrowth": 0.4,
+      "_note": "공격 시 25% 추가타(쉐도우파트너 유형). 105렙 어드밴스드: 최종뎀+500%(파이널어택 한정), 113렙 강화: +50%p." },
+
+    { "id": "beholderDominant", "name": "비홀더 도미넌트", "kind": "dealPassiveNoCd", "tier": 3, "open": 60,
+      "dot": { "perSec": 60, "targets": 6 }, "meyong": 40, "masteryDmgByLevel": { "78": 50 }, "targetPlus": { "94": 3 },
+      "requiresSummon": true, "_note": "소환 중 1초마다 지속피해. 가동률=소환 가동률." },
+
+    { "id": "beholderRevenge", "name": "비홀더스 리벤지", "kind": "dealPassiveNoCd", "tier": 4, "open": 110,
+      "base": 850, "hits": 2, "period": 5, "coeffGrowth": 0.5, "masteryDmgByLevel": { "122": 50 }, "requiresSummon": true,
+      "_note": "소환 중 플레이어가 직접 공격한 적에 낙인 850%×2(주기 5초 추정). 138렙 '암흑 투기': 비홀더 쇼크 사용 시 리벤지 레벨 비례 2200% — 별도 모델." }
+  ],
+
+  "buffs": [
+    { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60 },
+
+    { "id": "beholder", "name": "비홀더", "kind": "statActive", "tier": 2, "open": 35,
+      "summon": true, "dur": 20, "cd": 30, "cdrMasteryByLevel": { "104": 30 },
+      "_note": "소환 상태 정의(가동률 = min(1, 지속/실효쿨)). requiresSummon 스킬/버프/디버프는 이 가동률을 곱한다. 자체 딜 없음(받피 디버프는 beholderRecv)." },
+
+    { "id": "hyperBody", "name": "하이퍼 바디", "kind": "statActive", "tier": 2, "open": 45,
+      "atkPct": 12, "dur": 15, "cd": 30, "durMasteryPctByLevel": { "49": 50 } },
+
+    { "id": "crossOverChain", "name": "크로스 오버 체인", "kind": "statActive", "tier": 3, "open": 66,
+      "atkPct": 15, "atkPctBoostByLevel": { "73": 100 }, "dur": 15, "cd": 30,
+      "_note": "HP 최대 가정 → 공격력 유지(HP≤50% 받피감 분기 무시). 73렙: 공격력 증가량 +100%(15→30)." },
+
+    { "id": "darkResonance", "name": "다크 레조넌스", "kind": "statActive", "tier": 4, "open": 115,
+      "atkPct": 30, "dur": 20, "cd": 35, "durMasteryPctByLevel": { "130": 40 } },
+
+    { "id": "beholdersBuff", "name": "비홀더스 버프", "kind": "statPassive", "tier": 3, "open": 69,
+      "atkPct": 15, "atkPctBoostByLevel": { "98": 50 }, "bossDmg": 20, "bossDmgOpen": 82, "requiresSummon": true,
+      "_note": "소환 중 공격력+15%(98렙 +50%→22.5). 82렙: 소환 중 보스뎀+20%(소환 가동률 적용)." },
+
+    { "id": "lordOfDarkness", "name": "로드 오브 다크니스", "kind": "statPassive", "tier": 3, "open": 72,
+      "critRate": 8, "critDmg": 30, "proc": 30, "dur": 5, "cd": 2,
+      "_note": "공격 시 30% 확률 5초간 크확+8·크뎀+30(발동형 가동률). 선반영 아님." }
+  ],
+
+  "debuffs": [
+    { "id": "beholderRecv", "name": "비홀더 받는 피해", "recvDmg": 15, "recvDmgPlusByLevel": { "39": 10 },
+      "open": 35, "requiresSummon": true, "source": "beholder",
+      "_note": "소환 시 적 받피+15%(39렙 +10%p→25%). 가동률=소환 가동률." },
+    { "id": "magicCrashWeaken", "name": "매직 크래쉬 약화", "recvDmg": 10, "dur": 15, "cd": 28, "uptime": "byCooldown",
+      "open": 126, "source": "magicCrash", "_note": "매직크래쉬 피해 적 15초간 받피+10%. 가동률=min(1,지속/쿨)." }
+  ],
+
+  "_statPassivesNote": "다크나이트 패시브(선반영). 스킬탭 표시·토글용 — 기본 체크(효과 이미 입력 포함, 중복 없음), 언체크 시 딜 관련 스탯만 차감(adjustPassive). 유틸(HP·방어력·이속·디버프내성·주스탯)은 표시 전용. fixed=true(스케일 없이 표기값). 딜 공격력 패시브(하이퍼바디·크로스오버·다크레조넌스·비홀더스버프)는 타임드/소환이라 buffs에 있음.",
+  "statPassives": [
+    { "id": "ironBody",         "name": "아이언 바디",             "tier": 1, "open": 10,  "mainStatFlat": 30, "def": 15 },
+    { "id": "warriorMastery",   "name": "워리어 마스터리",          "tier": 1, "open": 15,  "hp": 10, "move": 10 },
+    { "id": "weaponAccel",      "name": "웨폰 액셀레이션",          "tier": 2, "open": 33,  "atkSpeed": 5 },
+    { "id": "ironWall",         "name": "아이언 월",               "tier": 2, "open": 38,  "desc": "방어력의 10%만큼 주스탯 증가(선반영)" },
+    { "id": "weaponMastery",    "name": "웨폰 마스터리",            "tier": 2, "open": 43,  "minMult": 15 },
+    { "id": "endure",           "name": "인듀어",                 "tier": 3, "open": 74,  "debuffResist": 15 },
+    { "id": "beholderShockEnhance", "name": "비홀더 쇼크 강화",     "tier": 3, "open": 75,  "desc": "비홀더 쇼크 대상 6→9, 최종 데미지 +100%(스킬레벨 비례) — 비홀더 쇼크에 반영" },
+    { "id": "advFinalAttack",   "name": "어드밴스드 파이널 어택",   "tier": 4, "open": 105, "desc": "파이널 어택 최종 데미지 +500%(113렙 +50%p, 스킬레벨 비례) — 파이널 어택에 반영" },
+    { "id": "reincarnation",    "name": "리인카네이션",            "tier": 4, "open": 107, "finalDmg": 10, "desc": "HP 1% 미만 시 피해 면역(전투 1회)" },
+    { "id": "advWeaponMastery", "name": "어드밴스드 웨폰 마스터리",  "tier": 4, "open": 120, "skillDmg": 15, "maxMult": 20 },
+    { "id": "stance",           "name": "스탠스",                 "tier": 4, "open": 125, "finalDmg": 15, "desc": "받는 피해 5% 감소" }
+  ]
+}

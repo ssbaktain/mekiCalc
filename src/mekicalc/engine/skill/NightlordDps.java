@@ -77,17 +77,59 @@ public final class NightlordDps {
     }
 
     /**
-     * 스킬 1타의 기대 데미지 = G × 계수 × (기본공격뎀%|스킬뎀%) × 마스터리 × 메용.
-     * boss=true면 보스 데미지·기본공격 보스 마스터리 반영.
+     * 타입 피해 배수 = (기본공격뎀%|스킬뎀%)에 그 스킬의 '피해량 마스터리%'를 합산해 곱한다.
+     * <p><b>실측(2026-07):</b> 평타 피해량 증가·각 스킬 피해량 증가 마스터리는 별도 곱이 아니라
+     * 기본 공격 데미지%·스킬 데미지%에 <b>합산</b>되어 한 번에 곱해진다. {@code (1+X/100)+m/100 = 1+(X+m)/100}.
+     * (보스 몬스터 피해량 증가 마스터리는 예외 — 툴팁이 달라 별도 곱으로 둔다.)
+     */
+    private double typeDmgWithMastery(Skill s, StatBlock b) {
+        double typeFactor = s.kind.equals("basic") ? dm.basicAtkDmgFactor(b) : dm.skillDmgFactor(b);
+        return typeFactor + levelSum(s.raw, "masteryDmgByLevel", charLevel(b)) / 100.0;
+    }
+
+    /** 레벨 게이팅 기본 피해 배수 곱(궁니르 134렙 기본피해 ×0.5 등). baseMultByLevel={레벨:배수}. 없으면 1. */
+    private double baseMultFactor(Skill s, int cl) {
+        if (!s.has("baseMultByLevel")) return 1.0;
+        double f = 1.0;
+        for (Map.Entry<String, Object> e : Json.asMap(s.raw.get("baseMultByLevel")).entrySet())
+            if (cl >= Integer.parseInt(e.getKey())) f *= ((Number) e.getValue()).doubleValue();
+        return f;
+    }
+
+    /**
+     * 스킬 한정 최종뎀 마스터리 곱(비홀더쇼크 강화 +100%, 어드밴스드 파이널 어택 +500% 등). finalMasteryByLevel={레벨:%}.
+     * finalMasteryTier 있으면 그 차수 스킬레벨×finalMasteryGrowth로 스케일(비홀더쇼크강화 tier3/0.3, 어드밴스드파이널어택 tier4/0.4).
+     */
+    private double finalMasteryFactor(Skill s, StatBlock b) {
+        if (!s.has("finalMasteryByLevel")) return 1.0;
+        double pct = levelSum(s.raw, "finalMasteryByLevel", charLevel(b));
+        if (pct == 0) return 1.0;
+        if (s.has("finalMasteryTier")) {
+            int t = (int) s.num("finalMasteryTier", s.tier);
+            double g = s.num("finalMasteryGrowth", data.growth("statPassive"));
+            int lv = model.totalSkillLevel(t, charLevel(b), (int) b.get(SKILL_LEVELS), (int) b.get("SKILL_LEVEL_" + t));
+            pct *= 1 + g / 100.0 * lv;
+        }
+        return 1 + pct / 100.0;
+    }
+
+    /**
+     * 스킬 1타의 기대 데미지 = G × 계수 × (기본공격뎀%|스킬뎀% + 피해량 마스터리) × 메용.
+     * 피해량 마스터리는 typeFactor에, 보스 피해량 마스터리는 G의 보스뎀%에 각각 '합산'된다(별도 곱 없음).
      */
     public double perHit(Skill s, StatBlock b, boolean boss) {
-        double coeff = SkillDpsModel.coefficient(s.num("base", 0), data.growth(s.kind), skillLevel(s, b)) / 100.0;
+        double coeff = SkillDpsModel.coefficient(s.num("base", 0) * baseMultFactor(s, charLevel(b)), growthOf(s), skillLevel(s, b)) / 100.0;
         boolean basic = s.kind.equals("basic");
-        double typeFactor = basic ? dm.basicAtkDmgFactor(b) : dm.skillDmgFactor(b);
-
         int cl = charLevel(b);
-        double mastery = 1 + levelSum(s.raw, "masteryDmgByLevel", cl) / 100.0;
-        if (basic && boss) mastery *= 1 + levelSum(s.raw, "masteryBossByLevel", cl) / 100.0;
+        // 피해량 마스터리는 기본공격뎀%/스킬뎀%에 합산되어 typeFactor에 이미 반영(별도 곱 아님).
+        double typeFactor = typeDmgWithMastery(s, b);
+        // 보스 피해량 마스터리(평타+보스)도 별도 곱이 아니라 보스뎀%(BOSS_DMG)에 '합산'된다(실측 2026-07).
+        // → BOSS_DMG에 더한 StatBlock으로 G를 계산해 (1+(BOSS_DMG+마스터리)/100)로 반영.
+        StatBlock gb = b;
+        if (basic && boss) {
+            double mb = levelSum(s.raw, "masteryBossByLevel", cl);
+            if (mb != 0) { gb = new StatBlock(b); gb.set(BOSS_DMG, gb.get(BOSS_DMG) + mb); }
+        }
 
         double meyong = 1.0;
         if (s.has("meyong")) {
@@ -95,7 +137,7 @@ public final class NightlordDps {
                     charLevel(b), allSkillLv(b), tierSkillLv(b, data.meyongTier()));
             meyong = 1 + bonus / 100.0;
         }
-        return dm.globalMultiplier(b, boss) * coeff * typeFactor * mastery * meyong;
+        return dm.globalMultiplier(gb, boss) * coeff * typeFactor * meyong * finalMasteryFactor(s, b);
     }
 
     /** 그 레벨에서 기본 공격 타격 수 = hitsBase + (개방된 타격 마스터리). */
@@ -183,8 +225,15 @@ public final class NightlordDps {
             double scale = fixed ? 1.0 : buffValueScale(m, cl, input);
             double u = active != null ? (active.contains(Json.str(m, "id", "")) ? 1.0 : 0.0)
                     : (fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl));
+            if (Json.bool(m, "summon", false)) continue;   // 소환 상태 마커 자체는 효과 없음(게이팅 전용)
+            // fullBuff(최대딜)는 천장 → 소환·발동 버프도 100%로 켠다. 평균/시뮬(active)만 가동률 게이팅.
+            if (!fullBuff) {
+                if (Json.bool(m, "requiresSummon", false)) u *= summonUptime(input);   // 소환 중에만(비홀더스 버프)
+                else if (m.containsKey("proc") && !m.containsKey("triggerCasts")) u = procBuffUptime(m, atkSpeedBase);   // 발동형(로드오브다크니스)
+            }
 
             double atkPct = Json.num(m, "atkPct", 0);
+            if (m.containsKey("atkPctBoostByLevel")) atkPct *= 1 + levelSum(m, "atkPctBoostByLevel", cl) / 100.0;   // 크로스오버 73·비홀더스버프 98
             if (atkPct != 0) skillAtkSum += atkPct * scale * u;
             double cr = Json.num(m, "critRate", 0);
             if (cr != 0) eff.set(CRIT_RATE, eff.get(CRIT_RATE) + cr * scale * u);
@@ -195,6 +244,8 @@ public final class NightlordDps {
             if (fd != 0) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), fd * u));
             double as = Json.num(m, "atkSpeed", 0);
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
+            double bdmg = Json.num(m, "bossDmg", 0);   // 소환중 보스뎀(비홀더스버프 82렙): 보스뎀%에 합산(u 게이팅)
+            if (bdmg != 0 && cl >= Json.num(m, "bossDmgOpen", 0)) eff.set(BOSS_DMG, eff.get(BOSS_DMG) + bdmg * u);
         }
         // 퍼지 크리 마스터리(113렙): 퍼지 가동 중 적 받는 크리티컬 데미지 +critTaken% → 크리 데미지 ×(1+비율×가동률).
         // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
@@ -314,7 +365,7 @@ public final class NightlordDps {
     }
     /** 평타 1타를 최대(true)/최소(false) 데미지범위 롤로. perHit의 fAvg(범위평균) 내장을 해당 롤로 환산. */
     private double basicAtRoll(Skill basic, Buffed bf, boolean boss, boolean useMax) {
-        double base = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);
+        double base = perHit(basic, bf, boss) * recvDmgFactor(bf.stats, useMax);   // useMax=최대딜 → 디버프 천장
         double mn = bf.stats.get(MIN_DMG_MULT), mx = bf.stats.get(MAX_DMG_MULT);
         // 최소>최대면 데미지범위가 최대뎀(천장)으로 고정 → 최소/최대 롤 모두 mx.
         double fAvg = (mn > mx) ? mx / 100.0 : (mn + mx) / 200.0;
@@ -459,11 +510,21 @@ public final class NightlordDps {
         addEff(p, "최대 데미지", Json.num(m, "maxMult", 0) * sc);
         addEff(p, "보스 데미지", Json.num(m, "bossDmg", 0) * sc);
         addEff(p, "스킬 데미지", Json.num(m, "skillDmg", 0) * sc);
+        // 비딜/유틸 스탯(표시용 — DPS엔 미반영이거나 선반영). 다크나이트 패시브(아이언바디·워리어마스터리 등).
+        addEffFlat(p, "주스탯(+)", Json.num(m, "mainStatFlat", 0) * sc);
+        addEff(p, "방어력", Json.num(m, "def", 0) * sc);
+        addEff(p, "최대 HP", Json.num(m, "hp", 0) * sc);
+        addEff(p, "이동 속도", Json.num(m, "move", 0) * sc);
+        addEffFlat(p, "디버프 내성(+)", Json.num(m, "debuffResist", 0) * sc);
+        if (m.containsKey("desc")) p.add(Json.str(m, "desc", ""));   // 수치화 어려운 패시브(아이언 월 등) 원문 표시
         return p;
     }
 
     private static void addEff(List<String> parts, String label, double v) {
         if (v != 0) parts.add(label + " +" + num1(v) + "%");
+    }
+    private static void addEffFlat(List<String> parts, String label, double v) {
+        if (v != 0) parts.add(label + " +" + num1(v));
     }
 
     /** 버프/패시브 '원함'(적용 대상) 여부. */
@@ -635,7 +696,12 @@ public final class NightlordDps {
 
     /** 스킬 계수(스케일 반영) / 100. */
     private double coeffFrac(Skill s, double base, StatBlock eff) {
-        return SkillDpsModel.coefficient(base, data.growth(s.kind), skillLevel(s, eff)) / 100.0;
+        return SkillDpsModel.coefficient(base * baseMultFactor(s, charLevel(eff)), growthOf(s), skillLevel(s, eff)) / 100.0;
+    }
+
+    /** 스킬 계수 상승비 = coeffGrowth 오버라이드(있으면) 아니면 kind growth. (비홀더스 리벤지 0.5 등 kind와 다른 경우.) */
+    private double growthOf(Skill s) {
+        return s.has("coeffGrowth") ? s.num("coeffGrowth", 0) : data.growth(s.kind);
     }
 
     /** 메용 적용 배수 = 1 + 메용적용계수/100. */
@@ -652,47 +718,74 @@ public final class NightlordDps {
         return SkillDpsModel.venomUptime(Json.num(dot, "dur", 0), p / 100.0, eff.get(ATK_SPEED));
     }
 
-    /** 쉐도우 파트너 타격당 기대 추가(공격력 버킷 제외). 평타 외 딜이라 스킬뎀% 적용. */
-    public double shadowExtraPerHit(StatBlock eff, boolean boss) {
-        Skill s = data.skill("shadowPartner");
+    /**
+     * 소환(비홀더 등) 가동률 = min(1, 지속/실효쿨). summon:true 버프 없으면 1(게이팅 없음, 나이트로드).
+     * requiresSummon 스킬/버프/디버프 기여에 곱한다.
+     */
+    private double summonUptime(StatBlock eff) {
+        int cl = charLevel(eff);
+        for (Map<String, Object> m : data.buffs()) {
+            if (!Json.bool(m, "summon", false)) continue;
+            if (!wantsBuff(m, cl)) return 0;
+            double cdrPct = diminish(eff.get(CDR_PCT), levelSum(m, "cdrMasteryByLevel", cl), 100);
+            double effCd = SkillDpsModel.cooldown(Json.num(m, "cd", 0), cdrPct, eff.get(CDR_FLAT));
+            double dur = Json.num(m, "dur", 0) * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0);
+            return SkillDpsModel.buffUptimeByCooldown(dur, effCd);
+        }
+        return 1.0;
+    }
+
+    /**
+     * 발동 추가타(쉐도우파트너·페이탈베놈·파이널어택 유형: proc+base). 시전당 1회 발동, 타수 무관. 스킬뎀%+마스터리 적용.
+     * meyong·finalMastery·requiresPoison(중독 가동률)·requiresSummon(소환 가동률)은 데이터에 있을 때만 곱한다.
+     */
+    private double procExtraPerHit(Skill s, StatBlock eff, boolean boss) {
         if (s == null || !wants(s.id, s.open, charLevel(eff))) return 0;
-        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
-                * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * meyongFactor(s.num("meyong", 0), eff)
+        double v = dm.globalMultiplier(eff, boss) * typeDmgWithMastery(s, eff) * coeffFrac(s, s.num("base", 0), eff)
                 * (s.num("proc", 0) / 100.0);
+        if (s.has("meyong")) v *= meyongFactor(s.num("meyong", 0), eff);
+        v *= finalMasteryFactor(s, eff);
+        if (Json.bool(s.raw, "requiresPoison", false)) v *= venomUptimeOf(eff);
+        if (Json.bool(s.raw, "requiresSummon", false)) v *= summonUptime(eff);
+        return v;
     }
+    public double shadowExtraPerHit(StatBlock eff, boolean boss) { return procExtraPerHit(data.skill("shadowPartner"), eff, boss); }
+    public double fatalExtraPerHit(StatBlock eff, boolean boss) { return procExtraPerHit(data.skill("fatalVenom"), eff, boss); }
 
-    /** 페이탈 베놈 타격당 기대 추가(중독 가동률 반영, 메용 비대상). 스킬뎀% 적용. */
-    public double fatalExtraPerHit(StatBlock eff, boolean boss) {
-        Skill s = data.skill("fatalVenom");
-        if (s == null || !wants(s.id, s.open, charLevel(eff))) return 0;
-        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
-                * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * (s.num("proc", 0) / 100.0) * venomUptimeOf(eff);
-    }
-
-    /** 베놈 도트 초당 데미지(공격력 버킷 제외). 스킬뎀% 적용. */
-    public double venomDotDps(StatBlock eff, boolean boss) {
-        Skill s = data.skill("venom");
-        if (s == null || !wants(s.id, s.open, charLevel(eff))) return 0;
+    /**
+     * 도트 초당 데미지(베놈·비홀더도미넌트 유형: dot). 스킬뎀%+마스터리·메용 적용.
+     * dot에 proc 있으면 중독식 가동률(venom), 아니고 requiresSummon이면 소환 가동률, 그 외 상시.
+     */
+    private double dotDps(Skill s, StatBlock eff, boolean boss) {
+        if (s == null || !s.has("dot") || !wants(s.id, s.open, charLevel(eff))) return 0;
         Map<String, Object> dot = Json.asMap(s.raw.get("dot"));
         double coeff = SkillDpsModel.coefficient(Json.num(dot, "perSec", 0), data.growth(s.kind), skillLevel(s, eff)) / 100.0;
-        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff * meyongFactor(s.num("meyong", 0), eff) * venomUptimeOf(eff);
+        double v = dm.globalMultiplier(eff, boss) * typeDmgWithMastery(s, eff) * coeff;
+        if (s.has("meyong")) v *= meyongFactor(s.num("meyong", 0), eff);
+        if (dot.containsKey("proc")) v *= venomUptimeOf(eff);
+        else if (Json.bool(s.raw, "requiresSummon", false)) v *= summonUptime(eff);
+        return v;
     }
+    public double venomDotDps(StatBlock eff, boolean boss) { return dotDps(data.skill("venom"), eff, boss); }
 
-    /** 마크 오브 어쌔신 1회 발동 데미지(공격력 버킷 제외). 나이트로드 최종뎀+300%는 107렙 게이팅. */
-    public double markPerHit(StatBlock eff, boolean boss) {
-        Skill s = data.skill("markOfAssassin");
+    /**
+     * 주기형 보너스 타격(마크·비홀더리벤지 유형: period+base). 나이트로드 최종뎀(finalNightlord 0.4%/레벨)·finalMastery·
+     * 소환 게이팅을 데이터가 있을 때만 반영. base×hits 1회 발동값(주기 나눗셈은 조립부에서).
+     */
+    private double periodicPerHit(Skill s, StatBlock eff, boolean boss) {
         if (s == null || !wants(s.id, s.open, charLevel(eff))) return 0;
-        // 나이트로드 최종뎀(+300%)은 4차 패시브라 4차 스킬레벨로 0.4% 스케일.
-        double nightlord = 1.0;
-        if (charLevel(eff) >= s.num("nightlordOpen", Double.MAX_VALUE)) {
+        double v = dm.globalMultiplier(eff, boss) * typeDmgWithMastery(s, eff) * coeffFrac(s, s.num("base", 0), eff)
+                * (int) s.num("hits", 1);
+        if (s.has("finalNightlord") && charLevel(eff) >= s.num("nightlordOpen", Double.MAX_VALUE)) {
             int nlLv = model.totalSkillLevel(data.meyongTier(), charLevel(eff),
                     (int) eff.get(SKILL_LEVELS), (int) eff.get("SKILL_LEVEL_" + data.meyongTier()));
-            double scaledFinal = s.num("finalNightlord", 0) * (1 + 0.004 * nlLv);
-            nightlord = 1 + scaledFinal / 100.0;
+            v *= 1 + (s.num("finalNightlord", 0) * (1 + 0.004 * nlLv)) / 100.0;
         }
-        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeffFrac(s, s.num("base", 0), eff)
-                * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0) * nightlord;
+        v *= finalMasteryFactor(s, eff);
+        if (Json.bool(s.raw, "requiresSummon", false)) v *= summonUptime(eff);
+        return v;
     }
+    public double markPerHit(StatBlock eff, boolean boss) { return periodicPerHit(data.skill("markOfAssassin"), eff, boss); }
 
     /** 써든레이드 지속피해 1시전 데미지(공격력 버킷 제외). 스킬뎀% 적용. */
     public double suddenDotPerCast(StatBlock eff, boolean boss) {
@@ -700,7 +793,7 @@ public final class NightlordDps {
         Map<String, Object> dot = Json.asMap(s.raw.get("dotPerCast"));
         double dotBase = Json.num(dot, "perTick", 0) * Json.num(dot, "ticks", 0);
         double coeff = SkillDpsModel.coefficient(dotBase, data.growth(s.kind), skillLevel(s, eff)) / 100.0;
-        return dm.globalMultiplier(eff, boss) * dm.skillDmgFactor(eff) * coeff * (1 + levelSum(s.raw, "masteryDmgByLevel", charLevel(eff)) / 100.0);
+        return dm.globalMultiplier(eff, boss) * typeDmgWithMastery(s, eff) * coeff;
     }
 
     /**
@@ -708,12 +801,14 @@ public final class NightlordDps {
      * 스케일, 없으면 고정값. 퍼지 받피증=0.4%/레벨(valueGrowth), venom/mark는 미검증이라 고정.
      */
     private double debuffRecvDmg(Map<String, Object> d, int cl, StatBlock input) {
-        double base = Json.num(d, "recvDmg", 0);
+        double base = Json.num(d, "recvDmg", 0) + levelSum(d, "recvDmgPlusByLevel", cl);   // 비홀더 받피 39렙 +10%p 등
         return d.containsKey("tier") ? base * buffValueScale(d, cl, input) : base;
     }
 
     /** 받는 피해 증가 디버프 배수 = 1 + Σ(받는피해% × 가동률). 같은 종류 합연산. */
-    public double recvDmgFactor(StatBlock eff) {
+    public double recvDmgFactor(StatBlock eff) { return recvDmgFactor(eff, false); }
+    /** peak=true(최대딜)면 모든 디버프를 천장(가동률 100%)으로 — 인게임 최대 단타는 디버프가 다 걸린 순간. */
+    public double recvDmgFactor(StatBlock eff, boolean peak) {
         int cl = charLevel(eff);
         double sum = 0;
         for (Map<String, Object> d : data.debuffs()) {
@@ -721,10 +816,17 @@ public final class NightlordDps {
             String src = Json.str(d, "source", "");
             if (!src.isEmpty() && !skillOn(src)) continue;   // 출처 딜/버프 스킬을 끄면 그 디버프도 빠짐(동기화)
             double recv = debuffRecvDmg(d, cl, eff) / 100.0;
-            Object up = d.get("uptime");
-            double u = (up instanceof Double) ? (Double) up
-                    : "venom_u".equals(up) ? venomUptimeOf(eff)
-                    : "purge".equals(up) ? purgeUptime(eff) : 1.0;
+            double u;
+            if (peak) u = 1.0;   // 최대딜: 모든 받피 디버프 동시 적용 가정
+            else {
+                Object up = d.get("uptime");
+                u = (up instanceof Double) ? (Double) up
+                        : "venom_u".equals(up) ? venomUptimeOf(eff)
+                        : "purge".equals(up) ? purgeUptime(eff)
+                        : "byCooldown".equals(up) ? SkillDpsModel.buffUptimeByCooldown(Json.num(d, "dur", 0), Json.num(d, "cd", 0))
+                        : 1.0;
+                if (Json.bool(d, "requiresSummon", false)) u *= summonUptime(eff);   // 비홀더 받피는 소환 중에만
+            }
             sum += recv * u;
         }
         return 1 + sum;
@@ -757,7 +859,7 @@ public final class NightlordDps {
 
     /** 한 시전당 액티브 타격수(다크플레어 틱·타격 마스터리 레벨 게이팅 포함). */
     private int hitsPerCast(Skill s, StatBlock eff) {
-        if (s.id.equals("darkFlare")) {
+        if (s.has("ticks")) {
             int cl = charLevel(eff);
             int ticks = (int) (s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl));
             int perTick = (int) (s.num("hitsPerTick", 1) + levelSum(s.raw, "hitsPerTickPlus", cl));
@@ -802,15 +904,16 @@ public final class NightlordDps {
             if (!wants(s.id, s.open, cl)) continue;          // 미사용(체크 해제) 딜 스킬 제외. 미습득 체크 시 적용=과대
             double cd = cooldown(s, eff);
             if (cd <= 0) continue;
-            skillActionsPerSec += 1.0 / cd;   // 시전 1회 = 평타 1슬롯
+            double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;   // 소환 게이팅(비홀더 쇼크 등)
+            skillActionsPerSec += gate / cd;   // 시전 1회 = 평타 1슬롯
             int hits = hitsPerCast(s, eff);
-            baseDps += perHit(s, bf, boss) * hits / cd;
+            baseDps += perHit(s, bf, boss) * hits / cd * gate;
             // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
-            double procAttempts = s.id.equals("darkFlare")
+            double procAttempts = s.has("ticks")
                     ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
-            procActionsPerSec += procAttempts / cd;
-            if (s.id.equals("suddenRaid")) {
-                baseDps += suddenDotPerCast(eff, boss) * atkF / cd;   // 도트는 타수 아님
+            procActionsPerSec += procAttempts / cd * gate;
+            if (s.has("dotPerCast")) {
+                baseDps += suddenDotPerCast(eff, boss) * atkF / cd * gate;   // 도트는 타수 아님
             }
         }
 
@@ -824,19 +927,28 @@ public final class NightlordDps {
             procActionsPerSec += basicActionsPerSec;   // 발동은 시전당(타수 무관)
         }
 
-        // 마크: 기존 타격에 얹히는 보너스(새 타수 아님). 주기 = period − 주기 마스터리(레벨 게이팅).
-        Skill mark = data.skill("markOfAssassin");
-        if (mark != null && wants("markOfAssassin", mark.open, cl)) {
-            double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
-            if (period > 0) baseDps += markPerHit(eff, boss) * atkF / period;
+        // 주기형 보너스(마크·비홀더리벤지): period+base. 기존 타격에 얹힘(새 타수 아님). 주기 = period − 주기 마스터리.
+        for (Skill s : data.skills()) {
+            if (!s.has("period") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
+            double period = s.num("period", 5) - levelSum(s.raw, "periodMasteryByLevel", cl);
+            if (period > 0) baseDps += periodicPerHit(s, eff, boss) * atkF / period;
         }
 
-        // 추가타(쉐파+페이탈): 시전(공격)당 발동 — 1차든 4차든 발동 확률 동일(타수 무관).
-        double procPerProc = (shadowExtraPerHit(eff, boss) + fatalExtraPerHit(eff, boss)) * atkF;
-        double procDps = procActionsPerSec * procPerProc;
+        // 발동 추가타(쉐파·페이탈·파이널어택): proc+base(dealPassiveNoCd). 시전당 발동(타수 무관).
+        double procPerProc = 0;
+        for (Skill s : data.skills()) {
+            if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
+            procPerProc += procExtraPerHit(s, eff, boss);
+        }
+        double procDps = procActionsPerSec * procPerProc * atkF;
 
-        // 베놈 도트(연속): 타수 아님.
-        double venomDps = venomDotDps(eff, boss) * atkF;
+        // 도트(베놈·비홀더도미넌트): dot.
+        double venomDps = 0;
+        for (Skill s : data.skills()) {
+            if (!s.has("dot") || !wants(s.id, s.open, cl)) continue;
+            venomDps += dotDps(s, eff, boss);
+        }
+        venomDps *= atkF;
 
         // 페이크 반격(피격 시 발동): 발동률 = proc/피격주기(초당). 피격주기=0이면 0.
         double counterDps = 0;
@@ -894,13 +1006,14 @@ public final class NightlordDps {
             if (!wants(s.id, s.open, cl)) continue;
             double cd = cooldown(s, eff);
             if (cd <= 0) continue;
-            skillActionsPerSec += 1.0 / cd;
+            double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;
+            skillActionsPerSec += gate / cd;
             int hits = hitsPerCast(s, eff);
-            double contrib = perHit(s, bf, boss) * hits / cd;
-            double procAttempts = s.id.equals("darkFlare")
+            double contrib = perHit(s, bf, boss) * hits / cd * gate;
+            double procAttempts = s.has("ticks")
                     ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;
-            procActionsPerSec += procAttempts / cd;
-            if (s.id.equals("suddenRaid")) contrib += suddenDotPerCast(eff, boss) * atkF / cd;
+            procActionsPerSec += procAttempts / cd * gate;
+            if (s.has("dotPerCast")) contrib += suddenDotPerCast(eff, boss) * atkF / cd * gate;
             parts.merge(s.name, contrib, Double::sum);
         }
 
@@ -912,20 +1025,26 @@ public final class NightlordDps {
             procActionsPerSec += basicActionsPerSec;
         }
 
-        Skill mark = data.skill("markOfAssassin");
-        if (mark != null && wants("markOfAssassin", mark.open, cl)) {
-            double period = mark.num("period", 5) - levelSum(mark.raw, "periodMasteryByLevel", cl);
-            if (period > 0) parts.merge(mark.name, markPerHit(eff, boss) * atkF / period, Double::sum);
+        // 주기형 보너스(마크·비홀더리벤지): period+base.
+        for (Skill s : data.skills()) {
+            if (!s.has("period") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
+            double period = s.num("period", 5) - levelSum(s.raw, "periodMasteryByLevel", cl);
+            if (period > 0) parts.merge(s.name, periodicPerHit(s, eff, boss) * atkF / period, Double::sum);
         }
 
-        // 추가타(발동 딜)는 스킬별로 따로 표기 — 미습득/미선택은 0이라 항목 자체가 빠진다.
-        double shadowDps = procActionsPerSec * shadowExtraPerHit(eff, boss) * atkF;
-        if (shadowDps > 0) parts.merge(data.skill("shadowPartner").name, shadowDps, Double::sum);
-        double fatalDps = procActionsPerSec * fatalExtraPerHit(eff, boss) * atkF;
-        if (fatalDps > 0) parts.merge(data.skill("fatalVenom").name, fatalDps, Double::sum);
+        // 발동 추가타(쉐파·페이탈·파이널어택): 스킬별로 따로 표기. 미습득/미선택은 0이라 빠짐.
+        for (Skill s : data.skills()) {
+            if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
+            double d = procActionsPerSec * procExtraPerHit(s, eff, boss) * atkF;
+            if (d > 0) parts.merge(s.name, d, Double::sum);
+        }
 
-        double venomDps = venomDotDps(eff, boss) * atkF;
-        if (venomDps > 0) parts.merge("베놈", venomDps, Double::sum);
+        // 도트(베놈·비홀더도미넌트): dot.
+        for (Skill s : data.skills()) {
+            if (!s.has("dot") || !wants(s.id, s.open, cl)) continue;
+            double d = dotDps(s, eff, boss) * atkF;
+            if (d > 0) parts.merge(s.name, d, Double::sum);
+        }
 
         if (hitInterval > 0) {
             Map<String, Object> fk = buffById("fake");
@@ -1105,6 +1224,20 @@ public final class NightlordDps {
             return SkillDpsModel.buffUptimeByTrigger(dur, (int) Json.num(m, "triggerCasts", 0), atkSpeedBase);
         }
         return SkillDpsModel.buffUptimeByCooldown(dur, Json.num(m, "cd", 0));
+    }
+
+    /**
+     * 발동형 버프 가동률(로드오브다크니스: 공격 시 proc% 확률로 dur초 버프, 재발동 내부쿨 cd초).
+     * 갱신율 λ = min(초당공격수×proc, 1/cd). 평균 지속시간 내 재발동되면 상시(→1). 가동률 = min(1, dur×λ).
+     * 공속이 빠른 다크나이트는 크리 버프가 사실상 상시(≈1).
+     */
+    private double procBuffUptime(Map<String, Object> m, double atkSpeedBase) {
+        double dur = Json.num(m, "dur", 0);
+        double proc = Json.num(m, "proc", 0) / 100.0;
+        double icd = Json.num(m, "cd", 0);
+        double lambda = (1 + atkSpeedBase / 100.0) * proc;   // 초당 발동 시도 × 확률
+        if (icd > 0) lambda = Math.min(lambda, 1.0 / icd);   // 내부쿨 상한
+        return Math.min(1.0, dur * lambda);
     }
 
     /** MULT_PCT 합성: (1+a/100)(1+b/100)−1, %단위. (최종 데미지끼리 곱.) */

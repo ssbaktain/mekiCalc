@@ -128,10 +128,10 @@
         { "stat": "FINAL_DMG", "target": "player", "values": [1,1.2,1.4,1.6,1.8,2], "perEnemy": true, "maxEnemies": 10, "used": true, "note": "선형. 일반=×10, 보스=×1" }
       ]},
 
-    { "id": "soul_contract", "name": "영혼의 계약서", "grade": "LEGENDARY", "category": "compute",
+    { "id": "soul_contract", "name": "영혼의 계약서", "grade": "LEGENDARY", "category": "content",
       "raw": "[챕터 사냥] 스킬 재사용 대기시간 20%(5각 40%)↓",
       "effects": [
-        { "stat": "COOLDOWN_REDUCTION_PCT", "target": "player", "values": [20,24,28,32,36,40], "content": "챕터사냥", "normalOnly": true, "used": true, "note": "챕터사냥(일반스테이지)만. 프리셋 스킬쿨 필드로 바로 적용 가능" }
+        { "stat": "COOLDOWN_REDUCTION_PCT", "target": "player", "values": [20,24,28,32,36,40], "content": "챕터사냥", "used": false, "note": "챕터사냥 전용 컨텐츠 유물. 쿨감은 단순 스탯 → 챕터사냥 프리셋 스탯(COOLDOWN_REDUCTION_PCT)에 선반영되므로 계산 미적용(이중계산 방지)." }
       ]},
 
     { "id": "lit_lamp", "name": "불이 켜진 램프", "grade": "LEGENDARY", "category": "content",

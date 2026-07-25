@@ -86,9 +86,14 @@ public final class SkillData {
     public int meyongTier() { return meyongTier; }
     public int meyongOpen() { return meyongOpen; }
 
-    /** data/skills_nightlord.json 로드. */
+    /** 나이트로드 스킬 데이터(하위호환). */
     public static SkillData load(Path dir) throws IOException {
-        Map<String, Object> root = Json.asMap(Json.parse(Files.readString(dir.resolve("skills_nightlord.json"))));
+        return load(dir, "nightlord");
+    }
+
+    /** data/skills_<job>.json 로드(직업별). job="nightlord"|"darkknight" 등. */
+    public static SkillData load(Path dir, String job) throws IOException {
+        Map<String, Object> root = Json.asMap(Json.parse(Files.readString(dir.resolve("skills_" + job + ".json"))));
 
         Map<Integer, Integer> adv = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : Json.asMap(root.get("advanceLevels")).entrySet()) {

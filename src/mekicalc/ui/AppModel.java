@@ -419,16 +419,16 @@ public final class AppModel {
      * null은 무시(빈 슬롯). 같은 스탯이 여러 줄이면 최종뎀은 곱연산, 일반은 합연산으로 누적된다.
      */
     public double increaseForDraws(List<PotentialDraw> draws) {
-        // 한 장비 내 큐브 줄들은 같은 스탯끼리 먼저 '합연산'으로 모은다.
-        // (예: 최종뎀 12% + 12% → 24%) 그 뒤 합산 델타를 현재 스탯에
-        // 스탯별 combine 규칙으로 한 번에 적용한다(최종뎀이면 24%가 곱연산으로 들어감).
+        // 한 장비 내 큐브 줄들을 같은 스탯끼리 모델 규칙대로 모은다(방관 등 체감은 슬롯끼리도 곱연산,
+        // 최종뎀 12%+12%→24%처럼 그 외는 합산). 그 뒤 델타를 현재 스탯에 combine 규칙으로 적용한다.
+        DealModel dm = dealModel();
         StatBlock delta = new StatBlock();
         for (PotentialDraw d : draws) {
             if (d == null) continue;
-            delta.set(d.statId(), delta.get(d.statId()) + d.value());
+            delta.set(d.statId(), dm.aggregate(d.statId(), delta.get(d.statId()), d.value()));
         }
         // 직업별 딜 모델로 증가율(공용=1타×공속 비율, 나이트로드=종합 DPS 비율).
-        return dealModel().increase(current, delta);
+        return dm.increase(current, delta);
     }
 
     /** 선택한 옵션 중 그 직업 모델로 데미지 환산이 안 되는 스탯이 하나라도 있는지. */
@@ -634,7 +634,7 @@ public final class AppModel {
 
         // 좌/우 딜: 현재 줄을 뺀 baseline 기준(추천 엔진과 동일).
         StatBlock leftDelta = new StatBlock();
-        for (PotentialDraw d : curDraws) if (d != null) leftDelta.set(d.statId(), leftDelta.get(d.statId()) + d.value());
+        for (PotentialDraw d : curDraws) if (d != null) leftDelta.set(d.statId(), dm.aggregate(d.statId(), leftDelta.get(d.statId()), d.value()));
         StatBlock baseline = dm.uncombine(current, leftDelta);
         double curBase = dm.output(baseline);
         double leftDeal = curBase > 0 ? dm.output(current) / curBase - 1.0 : 0;
@@ -642,7 +642,7 @@ public final class AppModel {
         List<PotentialDraw> rOpts = new ArrayList<>();
         for (PotentialDraw d : rightOpts) if (d != null) rOpts.add(d);
         StatBlock rightDelta = new StatBlock();
-        for (PotentialDraw d : rOpts) rightDelta.set(d.statId(), rightDelta.get(d.statId()) + d.value());
+        for (PotentialDraw d : rOpts) rightDelta.set(d.statId(), dm.aggregate(d.statId(), rightDelta.get(d.statId()), d.value()));
         double rightDeal = curBase > 0 ? dm.output(dm.combine(baseline, rightDelta)) / curBase - 1.0 : 0;
         double dealDiff = rightDeal - leftDeal;
 

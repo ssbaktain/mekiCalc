@@ -57,6 +57,7 @@ public final class SelfTest {
         testCeilingEdgeForcesGradeUp();
         testSkillDpsModelCore();
         testNightlordDps();
+        testDarkKnight();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -263,12 +264,14 @@ public final class SelfTest {
 
     /**
      * (1) 동일 옵션 중복 보정: 같은 옵션이 여러 슬롯에 있어도 arrangeSum이 순열만큼 부풀지 않음(∏ mi!로 나눔).
-     * (2) 파레토 선정이 단일이 아니라 '동일 옵션 등장 확률 총합'을 씀.
-     * (3) 확률 총합이 100%를 넘지 않음(사용자 보고 버그).
+     * (1b) 한계 등장확률(appearProb): 나머지 슬롯 무관 → 단일이 arrangeSum(정확구성, 나머지 빈)보다 큼.
+     * (2) 파레토 선정 축이 '단일 최고배치'가 아니라 '한계 등장확률'.
+     * (3) 확률 총합(totalProb, 상호배타 arrangeSum)이 100%를 넘지 않음(사용자 보고 버그).
      * 슬롯 [P],[P],[]에 P(60%) → 후보 {P}(딜100), {P,P}(딜200) 둘뿐.
-     *   총합: {P}=2·0.6·0.4=0.48, {P,P}=0.6²=0.36 (순열 0.72 아님)
-     *   단일: {P}=0.24, {P,P}=0.36
-     *   총합 기준이면 낮은딜 {P}(0.48>0.36)도 표시(size 2). 단일 기준이면 {P}(0.24<0.36) 숨김(size 1).
+     *   한계(appearProb): {P}=1−0.4²=0.84, {P,P}=0.6²=0.36
+     *   정확구성(arrangeSum): {P}=2·0.6·0.4=0.48, {P,P}=0.6²=0.36
+     *   단일 최고배치: {P}=0.24, {P,P}=0.36
+     *   한계 축이면 낮은딜 {P}(0.84>0.36)도 표시(size 2). 단일 축이면 {P}(0.24<0.36) 숨김(size 1).
      */
     private static void testParetoAxisVerify() {
         Map<String, StatDef> stats = makeStats(
@@ -286,6 +289,10 @@ public final class SelfTest {
         // (1) 동일 옵션 중복 보정
         check("arrangeSum.identicalCorrected", CubeRecommender.arrangeSum(List.of(P, P), slots), 0.6 * 0.6);
         check("arrangeSum.singleTwoSlots", CubeRecommender.arrangeSum(List.of(P), slots), 2 * 0.6 * 0.4);
+
+        // (1b) 한계 등장확률(appearProb): 단일 = 1−Π(1−p) (arrangeSum의 정확구성 0.48보다 큰 0.84)
+        check("appearProb.single", CubeRecommender.appearProb(List.of(P), slots), 1 - 0.4 * 0.4);
+        check("appearProb.identical", CubeRecommender.appearProb(List.of(P, P), slots), 0.6 * 0.6);   // 2슬롯 모두 P
 
         // (2) 총합 기준이면 낮은딜 단일 {P}도 표시
         boolean singlePShown = false;
@@ -391,6 +398,18 @@ public final class SelfTest {
         check("nl.perHit.basic4.lv150", nd.perHit(basic4, b150, true), 974.4);
         check("nl.basicHits.basic4", nd.basicHits(basic4, b), 5);
 
+        // [실측 2026-07] 평타/스킬 피해량 마스터리는 기본공격뎀%/스킬뎀%에 '합산'(별도 곱 아님).
+        //   lv150 평타 피해량 마스터리 75%. 기본공격뎀 0 → typeFactor 1.75, 기본공격뎀 50 → 1.5+0.75=2.25(합산).
+        //   비율 2.25/1.75 (곱 모델이면 1.5). 보스 마스터리 배제 위해 boss=false.
+        double mNoAtk = nd.perHit(basic4, b150, false);
+        double mWithAtk = nd.perHit(basic4, new StatBlock(b150).set("BASIC_ATK_DMG", 50), false);
+        check("nl.mastery.summedIntoType", mWithAtk / mNoAtk, 2.25 / 1.75);
+        // 보스 피해량 마스터리도 보스뎀%에 '합산'(곱 아님). lv150 보스 마스터리 20%.
+        //   보스뎀 0 → 보스팩터 1.2, 보스뎀 50 → 1+(50+20)/100 = 1.7. 비율 1.7/1.2 (곱 모델이면 1.5).
+        double bossNo = nd.perHit(basic4, b150, true);
+        double bossWith = nd.perHit(basic4, new StatBlock(b150).set("BOSS_DMG", 50), true);
+        check("nl.mastery.bossSummed", bossWith / bossNo, 1.7 / 1.2);
+
         SkillData.Skill wind = sd.skill("windTalisman");
         // 2차 base스킬레벨90 → 계수 5.8, 메용 130%(×2.3), G100 = 1334
         check("nl.perHit.wind", nd.perHit(wind, b, true), 1334);
@@ -446,7 +465,14 @@ public final class SelfTest {
         checkTrue("nl.real.cdrValued", ndm.increase(g.current, new StatBlock().set("COOLDOWN_REDUCTION", 2)) > 0);
         checkTrue("nl.real.skillLvValued", ndm.increase(g.current, new StatBlock().set("SKILL_LEVELS", 1)) > 0);
         checkTrue("nl.real.cdrNotQual", !ndm.hasQualitative(new StatBlock().set("COOLDOWN_REDUCTION", 2)));
-        checkTrue("nl.real.defPenQual", ndm.hasQualitative(new StatBlock().set("DEF_PEN", 5)));
+        // 방관: 몬스터 방어력을 알게 되어 더 이상 정성적 스탯이 아니다(방어배수로 수치 환산).
+        checkTrue("nl.real.defPenNotQual", !ndm.hasQualitative(new StatBlock().set("DEF_PEN", 5)));
+        // 공용 딜 모델(비나이트로드)도 방관을 수치 환산: 대상 방어력이 있으면 정성 아니고 딜 증가가 양수.
+        mekicalc.engine.CommonDealModel cdm = new mekicalc.engine.CommonDealModel(g.model, true, 6000.0);
+        checkTrue("common.defPenNotQual", !cdm.hasQualitative(new StatBlock().set("DEF_PEN", 5)));
+        // 합성 스탯(데이터 무관)으로 방관 수치 환산 확인: 대상 방어력 있으면 방관에 딜 증가.
+        StatBlock synth = new StatBlock().set("ATK_FLAT", 1000).set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        checkTrue("common.defPenValued", cdm.increase(synth, new StatBlock().set("DEF_PEN", 20)) > 0);
         // 공용 딜 모델 보스/일반몹 전환: 보스뎀>일반몹뎀이면 보스 모드 출력이 더 큼.
         StatBlock cb = new StatBlock().set("ATK_FLAT", 100).set("MIN_DMG_MULT", 100)
                 .set("MAX_DMG_MULT", 100).set("BOSS_DMG", 50);
@@ -461,6 +487,23 @@ public final class SelfTest {
         NightlordDealModel ndmMob = new NightlordDealModel(nd, g.model, false);
         checkTrue("nl.targets.mobQual", ndmMob.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
         checkTrue("nl.targets.bossQual", ndmBig.hasQualitative(new StatBlock().set("BASIC_ATK_TARGETS", 1)));
+    }
+
+    /** 다크나이트: DK 데이터 로드 + 일반화 엔진 검증(기본공격=공용 동일, 궁니르 baseMult, 총합 양수). */
+    private static void testDarkKnight() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        SkillData sd = SkillData.load(Path.of("data"), "darkknight");
+        NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(sd));
+        StatBlock b = new StatBlock().set("LEVEL", 150).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        // 기본공격(다크 임페일)=공용 4차와 동일 계수·마스터리 → 나이트로드와 같은 974.4(보스).
+        check("dk.perHit.basic4", nd.perHit(sd.skill("basic4"), b, true), 974.4);
+        // 궁니르 baseMultByLevel(134렙 기본피해 ×0.5): 133→134에서 base 반토막 → 1타 데미지 급감.
+        double p133 = nd.perHit(sd.skill("gungnir"), new StatBlock(b).set("LEVEL", 133), false);
+        double p134 = nd.perHit(sd.skill("gungnir"), new StatBlock(b).set("LEVEL", 134), false);
+        checkTrue("dk.gungnir.baseMult", p134 > 0 && p134 < p133 * 0.6);
+        // 총합 DPS 양수(엔진 일반화 파이프라인 동작).
+        checkTrue("dk.total.pos", nd.totalDps(b, true) > 0);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {
@@ -693,9 +736,9 @@ public final class SelfTest {
         // 최소80 최대160 → (80+160)/200 = 1.2 → 120
         check("range.avg", m.finalDamage(
                 new StatBlock().with("ATK_FLAT", 100).with("MIN_DMG_MULT", 80).with("MAX_DMG_MULT", 160)), 120.0);
-        // 최소150 > 최대120 → 최소뎀으로 고정 = 150/100 = 1.5 → 150
+        // 최소150 > 최대120 → 최댓값(천장)으로 고정 = 120/100 = 1.2 → 120
         check("range.fixed", m.finalDamage(
-                new StatBlock().with("ATK_FLAT", 100).with("MIN_DMG_MULT", 150).with("MAX_DMG_MULT", 120)), 150.0);
+                new StatBlock().with("ATK_FLAT", 100).with("MIN_DMG_MULT", 150).with("MAX_DMG_MULT", 120)), 120.0);
     }
 
     // ---- combine 규칙 ----
@@ -727,6 +770,18 @@ public final class SelfTest {
         check("combine.mult",
                 m.combine(new StatBlock().with("FINAL_DMG", 80), new StatBlock().with("FINAL_DMG", 10)).get("FINAL_DMG"),
                 98.0);
+
+        // 큐브 슬롯 집계(aggregate): 한 부위 안의 여러 줄을 하나의 델타값으로 모을 때의 규칙.
+        // 방관(DIMINISHING)은 슬롯끼리도 곱연산(12%+12% → 22.56%, 24% 아님) — 인게임과 일치.
+        check("aggregate.pen", m.aggregate("DEF_PEN", m.aggregate("DEF_PEN", 0, 12), 12), 22.56);
+        // 최종뎀(MULT_PCT)·공%(SUM)은 종전처럼 슬롯끼리 단순 합산.
+        check("aggregate.final", m.aggregate("FINAL_DMG", m.aggregate("FINAL_DMG", 0, 10), 10), 20.0);
+        check("aggregate.sum", m.aggregate("ATK_PCT", m.aggregate("ATK_PCT", 0, 100), 50), 150.0);
+        // 방관 25.3% 기존 + 큐브 방관 12%·12% → 25.3 ⊕ (12⊕12) = 42.15%(인게임 실측과 일치).
+        check("aggregate.penWithBase",
+                m.combine(new StatBlock().with("DEF_PEN", 25.3),
+                        new StatBlock().with("DEF_PEN", m.aggregate("DEF_PEN", m.aggregate("DEF_PEN", 0, 12), 12))).get("DEF_PEN"),
+                42.15232);
     }
 
     /** uncombine = combine 역연산: combine(cur,delta)에서 delta를 제거하면 cur 복원(공격력 가산 포함). */
@@ -854,6 +909,19 @@ public final class SelfTest {
         check("cube.p", dmg.pPerCube(), p);
         check("cube.expected", dmg.expectedCubes(), 1.0 / p);
         checkTrue("cube.dmg.numeric", !dmg.qualitative());
+
+        // appearProb(한계 등장확률)가 CubeEvaluator.pPerCube와 일치 — 전 경로(기댓값·옵션비교·추천) 일관성.
+        check("appearProb.matchesEvaluator",
+                CubeRecommender.appearProb(List.of(new PotentialDraw("DMG", 5, 0, false, false)),
+                        ep.slots("장갑", "NORMAL")), p);
+
+        // 사용자 보고 버그: 특옵 노란 한 줄(상의 MYTHIC, 슬롯 1.0/0.24/0.08%).
+        //   한계확률(정답) = 1−(0.99)(0.9976)(0.9992) ≈ 1.317%.  arrangeSum(정확구성)은 ≈0.39%로 과소.
+        List<List<PotentialDraw>> topM = ep.slots("상의", "MYTHIC");
+        List<PotentialDraw> sp = List.of(new PotentialDraw("BASIC_ATK_TARGETS", 3, 0, false, false));
+        double spAppear = CubeRecommender.appearProb(sp, topM);
+        check("appearProb.special", spAppear, 1 - (1 - 0.01) * (1 - 0.0024) * (1 - 0.0008));
+        checkTrue("appearProb.special.gtArrange", spAppear > CubeRecommender.arrangeSum(sp, topM) * 2);
 
         // 공속은 이제 정성적 아님 → DPS로 딜 환산됨(양수)
         CubeEvaluator.Result spd = findRes(res, "ATK_SPEED", 3);
