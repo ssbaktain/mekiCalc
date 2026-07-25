@@ -410,6 +410,25 @@ main {
 .qual-tag { color: #c2902a; font-size: 12px; }
 .table tbody tr:hover { background: var(--card2); }
 
+/* 스탯 비교(등가 환산) — 입력창은 프리셋 스탯 탭과 동일한 .field 컴포넌트 사용 */
+.sc-head { margin: 14px 0 10px; text-align: center; }
+/* 기준 스탯 → 딜 상승량 환산 카드 */
+.sc-conv {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 16px; background: var(--card2);
+  border: 1px solid var(--border); border-radius: 999px;
+}
+.sc-conv-stat { color: var(--text); font-weight: 700; font-size: 14px; }
+.sc-conv-arrow { color: var(--muted); font-size: 15px; }
+.sc-conv-dmg { color: #6fcf97; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+.sc-conv-note { color: var(--muted); font-weight: 500; font-size: 13px; }
+.sc-form .field.sc-src label { color: #6fcf97; }
+.sc-form .field.sc-src input { border-color: rgba(111,207,151,0.7); font-weight: 700; background: rgba(111,207,151,0.10); }
+/* '달성 불가'는 경고(금색)가 아닌 중립 회색으로 구분 */
+.sc-badge.sc-unreach { color: var(--muted); background: rgba(255,255,255,0.05); border-color: var(--border); }
+/* 교차 기준 안내(보뎀=보스 / 일뎀=직전 스테이지) */
+.sc-note { color: var(--accent); font-size: 11px; font-weight: 600; }
+
 /* 작은 버튼 */
 .mini-btn {
   padding: 8px 14px;
@@ -486,6 +505,9 @@ main {
   background: var(--accent2); color: #fff; font-size: 13px; font-weight: 700;
 }
 .cross { font-size: 12px; color: #e7c14a; }
+/* 평균 큐브 수: 부위명 라인 우측에 크게 강조(추천의 핵심 지표). */
+.rec-avg { margin-left: auto; font-size: 13px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+.rec-avg b { font-size: 22px; color: #6fcf97; margin: 0 3px; letter-spacing: -0.3px; }
 .rec-metrics { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
 .rec-metrics b { color: var(--text); }
 .rec-metrics b.good { color: #6fcf97; }
@@ -713,6 +735,9 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 .deal-warning b { color: #ffb3ba; font-weight: 700; }
 
 /* 패널 설명(접이식). 모든 탭 상단에 방해 없이. 접혀 있어도 DOM에 있어 크롤러가 읽음. */
+/* 딥링크 진입 시 홈(예상 데미지)이 첫 페인트에 잠깐 보이는 깜빡임 제거 — app.js 로드 전까지 head 스크립트가 이 클래스를 걺 */
+html.deep-route #panel-home { display: none !important; }
+
 .panel-about { max-width: 760px; margin: 0 auto 12px; }
 .panel-about > summary {
   cursor: pointer; color: var(--muted); font-size: 13px; padding: 7px 2px;
@@ -1068,6 +1093,24 @@ footer .footer-copy { color: var(--muted); opacity: 0.8; }
 /* 공지 탭은 비영리(약관·저작권 리스크 최소화) → 광고 영역 비노출. */
 body.notices-active .ad-slot { display: none !important; }
 .notices-card { max-width: 820px; margin: 0 auto; }
+.nt-search { position: relative; margin-bottom: 12px; }
+.nt-q {
+  width: 100%; box-sizing: border-box; padding: 10px 34px 10px 14px;
+  background: var(--card2); border: 1px solid var(--border); border-radius: 999px;
+  color: var(--text); font-size: 14px;
+}
+.nt-q::placeholder { color: var(--muted); }
+.nt-q:focus { outline: none; border-color: var(--accent); }
+/* 브라우저 기본 검색 지우기(X) 숨김 — 커스텀 .nt-q-clear만 노출(X 중복 방지) */
+.nt-q::-webkit-search-cancel-button, .nt-q::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.nt-q::-ms-clear, .nt-q::-ms-reveal { display: none; width: 0; height: 0; }
+.nt-q-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; border: none; border-radius: 50%; cursor: pointer;
+  background: transparent; color: var(--muted); font-size: 13px; line-height: 1;
+}
+.nt-q-clear:hover { color: var(--text); background: var(--border); }
+
 .nt-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .nt-tab {
   padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
@@ -1120,8 +1163,101 @@ body.notices-active .ad-slot { display: none !important; }
 }
 .nt-src:hover { border-bottom-color: var(--accent); }
 .nt-empty { color: var(--muted); text-align: center; padding: 30px 0; }
-.nt-more-row { text-align: center; margin-top: 14px; }
-.nt-more-row .primary-btn { min-width: 140px; }
+.nt-pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-top: 16px; }
+.nt-page {
+  min-width: 34px; height: 34px; padding: 0 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--card2); color: var(--muted);
+  font-size: 14px; cursor: pointer; transition: color .12s, border-color .12s, background .12s;
+}
+.nt-page:hover:not(:disabled):not(.cur) { color: var(--text); border-color: var(--accent); }
+.nt-page.cur { background: var(--accent); color: #10131a; border-color: var(--accent); font-weight: 700; cursor: default; }
+.nt-page.nav { font-weight: 700; }
+.nt-page:disabled { opacity: .35; cursor: default; }
+
+/* 페이지 이동 중 목록만 살짝 흐리게(깜빡임 없이 스왑) */
+.nt-list.nt-loading { opacity: .5; transition: opacity .1s ease; pointer-events: none; }
+
+/* 검색어 하이라이트 */
+.nt-hl { background: #ffd76a; color: #3a2b00; border-radius: 3px; padding: 0 1px; font-weight: 600; }
+
+/* ── 공지 아코디언 카드(Phase 4 재설계) ── */
+.nt-card { border: 1px solid var(--border); border-radius: 12px; background: var(--card2, #232936); overflow: hidden; }
+.nt-card.nt-open { border-color: var(--accent); }
+.nt-card.nt-closed { opacity: .6; }
+.nt-head2 {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  background: none; border: 0; cursor: pointer; text-align: left; color: var(--text); font: inherit;
+}
+.nt-head2:hover { background: rgba(255,255,255,.03); }
+.nt-t { font-size: 15px; font-weight: 600; line-height: 1.35; flex: 1; min-width: 0; }
+.nt-dt { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.nt-pin { font-size: 12px; }
+.nt-chev { font-size: 12px; color: var(--muted); transition: transform .15s; }
+.nt-card.nt-open .nt-chev { transform: rotate(180deg); }
+.nt-line { padding: 0 14px 12px 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.nt-line em { font-style: normal; color: var(--text); font-weight: 600; }
+.nt-line .nt-quote { font-style: italic; color: var(--text); }
+.nt-pending { font-style: italic; color: var(--muted); }
+.nt-body2 { padding: 4px 14px 14px 14px; font-size: 14px; line-height: 1.6; border-top: 1px dashed var(--border); }
+.nt-sec { font-size: 13.5px; font-weight: 700; margin: 14px 0 4px; color: var(--text); }
+.nt-sec.nt-o { color: #ff9a9a; } .nt-sec.nt-f { color: #7fd39a; }
+.nt-body2 .nt-items { margin: 2px 0 6px; padding-left: 18px; }
+.nt-body2 .nt-items > li { margin: 3px 0; }
+.nt-body2 .nt-sub { margin: 2px 0 4px; padding-left: 16px; list-style: circle; color: var(--muted); font-size: 13px; }
+.nt-body2 .nt-rw { list-style: none; padding-left: 4px; }
+.nt-body2 .nt-rw li::before { content: "· "; color: var(--muted); }
+.nt-work { color: var(--muted); font-size: 12.5px; margin: 2px 0 0 2px; }
+.nt-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; }
+.nt-meta dt { color: var(--muted); font-size: 13px; } .nt-meta dd { margin: 0; }
+.nt-cpblock, .nt-mail { margin-top: 12px; padding: 10px 12px; background: rgba(255,190,100,.06); border-radius: 8px; }
+.nt-mail { background: rgba(124,156,255,.07); }
+.nt-cp { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.nt-cp-exp { font-size: 12px; color: var(--muted); }
+.nt-mail-t { color: var(--muted); font-size: 13px; margin: 2px 0 4px; }
+.nt-closenote { color: var(--muted); font-size: 13px; margin-top: 10px; }
+.nt-foot { margin-top: 12px; }
+.nt-copy {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; cursor: pointer;
+  background: rgba(255,190,100,.14); border: 1px dashed #ffc86b; border-radius: 8px; color: #ffc86b; font: inherit;
+}
+.nt-copy code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; letter-spacing: .3px; }
+.nt-copy:hover { filter: brightness(1.12); }
+.nt-copy.copied { background: rgba(120,200,140,.2); color: #7fd39a; border-color: #7fd39a; border-style: solid; }
+
+/* 유형 배지 팔레트(스펙 §B-1, 다크 토큰) */
+.nt-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.b-preview { background: rgba(124,156,255,.18); color: #9db4ff; }
+.b-patch   { background: rgba(180,150,255,.18); color: #c3b0ff; }
+.b-event   { background: rgba(120,200,140,.18); color: #7fd39a; }
+.b-issue   { background: rgba(255,130,130,.16); color: #ff9a9a; }
+.b-devnote { background: rgba(200,196,180,.15); color: #cfccbf; }
+.b-coupon  { background: rgba(255,190,100,.18); color: #ffc86b; }
+.b-etc     { background: rgba(160,168,184,.16); color: #aab2c4; }
+/* 말머리(headline) 시그니처 색: 안내=파랑·점검=주황·업데이트=보라·진행중=초록·당첨안내=금·확인중=빨강 */
+.h-notice  { background: rgba(90,160,255,.16);  color: #8fb8ff; }
+.h-maint   { background: rgba(255,165,80,.16);  color: #ffb266; }
+.h-update  { background: rgba(180,150,255,.18); color: #c3b0ff; }
+.h-event   { background: rgba(120,205,140,.18); color: #7fd39a; }
+.h-winner  { background: rgba(255,205,90,.20);  color: #ffd166; }
+.h-issue   { background: rgba(255,120,120,.16); color: #ff9a9a; }
+.h-etc     { background: rgba(160,168,184,.16); color: #aab2c4; }
+.b-closed  { background: rgba(160,168,184,.16); color: #9aa2b4; }
+.b-dday    { background: rgba(160,168,184,.16); color: #aab2c4; }
+.b-dday-hot{ background: rgba(255,130,130,.2); color: #ff8a8a; }
+
+/* 종료 아카이브 토글 */
+.nt-archtog { display: block; width: 100%; margin-top: 6px; padding: 8px; background: none; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; font: inherit; }
+.nt-archtog:hover { color: var(--text); border-color: var(--accent); }
+.nt-arch { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+
+/* 쿠폰 고정 배너 */
+.nt-coupon-banner { max-width: 820px; margin: 0 auto 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,190,100,.09); border: 1px solid rgba(255,190,100,.3); }
+.nt-coupon-banner h3 { margin: 0 0 8px; font-size: 15px; color: #ffc86b; }
+.nt-cpcount { font-size: 12px; opacity: .8; }
+.nt-cpchip { display: flex; align-items: center; gap: 10px; margin: 6px 0 2px; }
+.nt-cp-src { font-size: 12px; color: var(--accent); text-decoration: none; }
+.nt-coupon-banner .nt-rw { margin: 0 0 8px; padding-left: 6px; list-style: none; color: var(--text); font-size: 13px; }
+.nt-coupon-banner .nt-rw li::before { content: "· "; color: var(--muted); }
 
 /* 클릭 가능한 목록 카드 */
 .nt-item.nt-click { cursor: pointer; transition: border-color .12s, transform .06s, background .12s; }

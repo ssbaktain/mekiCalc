@@ -1,8 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    /* 딥링크(예: /notices)로 들어오면 홈(예상 데미지) 패널이 첫 페인트에 잠깐 보이던 깜빡임 제거.
+       app.js 로드 전에 홈을 CSS로 숨겨두고, app.js가 대상 패널을 띄운 뒤 이 클래스를 뗀다. */
+    try { if (location.pathname !== "/" && location.pathname !== "") document.documentElement.classList.add("deep-route"); } catch (e) {}
+  </script>
   <title>메키칼크 MekiCalc · 메이플 키우기 스탯·딜 효율 계산기</title>
   <meta name="description" content="메키칼크(MekiCalc)는 메이플 키우기 스탯·딜 효율 계산기입니다. 예상 데미지·DPS, 큐브 잠재능력 기댓값, 동료 기여, 장비 비교, 스테이지·보스별 절대 데미지까지 한 번에 계산합니다." />
   <meta name="keywords" content="메키칼크, 메키계산기, 메키 계산기, 메키 효율 계산기, 메키 스탯 계산기, 메이플 키우기 계산기, 메이플키우기 계산기, 키우기 계산기, 메이플 키우기 딜 계산기, 메이플 키우기 스탯 계산기, 큐브 기댓값, 장비 비교" />
@@ -127,7 +132,7 @@
             <h2>스탯 입력</h2>
             <div class="head-right">
               <label class="ctl inline">직업
-                <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option></select>
+                <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option></select>
               </label>
               <label class="ctl inline">대상
                 <select id="spt-chapter" title="챕터"></select>
@@ -189,7 +194,7 @@
             <h2>스킬 선택</h2>
             <div class="head-right">
               <label class="ctl inline">직업
-                <select id="bp-job"><option value="0">공용</option><option value="1">나이트로드</option></select>
+                <select id="bp-job"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option></select>
               </label>
             </div>
           </div>
@@ -381,14 +386,14 @@
     <section id="panel-recommend" class="panel" hidden>
       <details class="panel-about">
         <summary>우선순위 추천은 어떻게 정해지나요?</summary>
-        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여줍니다. 단순 딜 증가량뿐 아니라 옵션의 등장 확률과 1회 리롤 비용까지 종합한 "최종 효율" 기준으로도 정렬할 수 있어, 실제 큐브를 돌릴 때의 가성비를 판단하는 데 도움이 됩니다. 딜 순위 슬라이더로 목표 수준(가성비 ~ 종결)을 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p></div>
+        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여줍니다. 각 추천에는 그 옵션을 얻기까지 <b>평균 몇 개의 큐브</b>가 드는지를 함께 표시하며(승급 추천은 승급에 드는 큐브까지 포함), 딜 증가량·평균 큐브 수·1회 리롤 비용을 종합한 "최종 효율" 기준으로도 정렬할 수 있어 실제 큐브를 돌릴 때의 가성비를 판단하는 데 도움이 됩니다. 딜 순위 슬라이더로 목표 수준(가성비 ~ 종결)을 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
           <label class="ctl">정렬
             <select id="rc-sort">
               <option value="0">딜 증가량</option>
-              <option value="1">등장 확률</option>
+              <option value="1">평균 큐브</option>
               <option value="2">1회 리롤</option>
               <option value="3">최종 효율</option>
             </select>
@@ -430,6 +435,22 @@
         </div>
         <p id="cmp-status" class="status"></p>
         <div id="cmp-result"></div>
+      </div>
+    </section>
+
+    <!-- 스탯 비교(등가 환산: 한 스탯 ↔ 다른 스탯 필요량) -->
+    <section id="panel-statcompare" class="panel" hidden>
+      <details class="panel-about">
+        <summary>스탯 비교는 어떻게 쓰나요?</summary>
+        <div class="about-body"><p>데미지에 영향을 주는 스탯 중 <b>하나에 값을 입력</b>하면, 그 스탯이 올려주는 딜과 <b>똑같은 만큼</b> 딜을 올리려면 다른 스탯이 각각 얼마나 필요한지(등가 증가량)를 보여줍니다. 예를 들어 주스탯%에 12를 넣으면, 그 12%가 올려주는 딜과 같은 딜을 내는 크리티컬 데미지%·데미지%·공격력% 등의 필요량이 한눈에 나옵니다. 계산은 <b>현재 스탯·대상 기준</b>이라 캐릭터마다 결과가 다릅니다. 방어 관통력처럼 <b>대상이 있어야 딜로 환산되는 스탯</b>이나, 현재 설정에서 딜로 환산되지 않는 스탯은 <b>딜 미환산</b>으로 표시됩니다.</p></div>
+      </details>
+      <div class="card">
+        <div class="controls">
+          <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
+        </div>
+        <p class="status">비교하고 싶은 스탯 한 곳에 값을 입력하세요. 그 스탯과 같은 딜을 내는 다른 스탯의 필요량이 채워집니다.</p>
+        <p id="sc-head" class="sc-head" hidden></p>
+        <div id="sc-form" class="sc-form"></div>
       </div>
     </section>
 
@@ -487,10 +508,16 @@
         <summary>공지사항은 무엇인가요?</summary>
         <div class="about-body"><p>「메이플 키우기」 공식 포럼의 <b>공지사항·패치노트·이벤트·확인 중인 현상</b>을 자동으로 모아 <b>핵심 요약</b>과 함께 보여줍니다. 자세한 내용과 이미지·표는 각 글의 <b>‘원문 보기’</b>에서 확인하세요. 이벤트의 <b>쿠폰</b>은 코드와 사용 기한을 함께 표시합니다. 새 글은 빠르게 반영되며, 지난 글은 순차적으로 채워집니다.</p></div>
       </details>
+      <aside id="nt-coupon-banner" class="nt-coupon-banner" hidden></aside>
       <div class="card notices-card">
+        <div class="nt-search">
+          <input id="nt-q" class="nt-q" type="search" inputmode="search" autocomplete="off"
+                 placeholder="공지 제목·내용 검색" aria-label="공지 검색">
+          <button id="nt-q-clear" class="nt-q-clear" type="button" aria-label="검색어 지우기" hidden>✕</button>
+        </div>
         <div id="nt-tabs" class="nt-tabs"></div>
         <div id="nt-list" class="nt-list"></div>
-        <div class="nt-more-row"><button id="nt-more" class="primary-btn alt" type="button" hidden>더 보기</button></div>
+        <nav id="nt-pager" class="nt-pager" hidden></nav>
         <p id="nt-status" class="status"></p>
       </div>
     </section>

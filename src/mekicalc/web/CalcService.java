@@ -30,6 +30,7 @@ import mekicalc.engine.skill.ArtifactEffects;
 import mekicalc.engine.skill.CompanionDps;
 import mekicalc.engine.skill.NightlordDealModel;
 import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.model.StatBlock;
 import mekicalc.model.StatDef;
@@ -49,6 +50,8 @@ public final class CalcService {
             "UNIQUE", "유니크", "LEGENDARY", "레전드리", "MYTHIC", "미스틱");
 
     private static final int JOB_NIGHTLORD = 1;
+    private static final int JOB_DARK_KNIGHT = 2;
+    private static final int JOB_BISHOP = 3;
     private static final double NORMAL_SECONDS = 90;   // 일반몹(챕터 스테이지) 기준 전투시간
     private static final double BOSS_SECONDS = 70;      // 보스(챕터 보스) 기준 전투시간
 
@@ -101,6 +104,14 @@ public final class CalcService {
      * 직업별 딜 모델. JOB=나이트로드면 종합 DPS, 아니면 공용(1타×공속). 둘 다 보스/일반몹 모드 반영.
      * 데스크톱 {@code AppModel.dealModel()}을 무상태로 옮긴 것.
      */
+    /** 직업 id에 맞는 스킬 데이터(없으면 null → 공용 모델 폴백). */
+    private SkillData skillDataFor(int job) {
+        if (job == JOB_NIGHTLORD) return content.skillData;
+        if (job == JOB_DARK_KNIGHT) return content.skillDataDk;
+        if (job == JOB_BISHOP) return content.skillDataBishop;
+        return null;
+    }
+
     private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval) {
         return dealModel(current, conv, boss, buffs, hitInterval, null);
     }
@@ -115,9 +126,10 @@ public final class CalcService {
     private DealModel dealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval, Double targetDef,
                                String companionId, String grade, int companionLevel, double ratio) {
         DamageModel dm = content.damageModel(conv);
-        if ((int) current.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+        SkillData sd = skillDataFor((int) current.get("JOB"));
+        if (sd != null) {
             try {
-                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs, hitInterval);
+                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(sd), buffs, hitInterval);
                 CompanionDps comp = null;
                 if (companionId != null && !companionId.isEmpty()) {
                     comp = new CompanionDps(dm, content.companionRoot, companionId, grade, companionLevel, ratio);
@@ -128,7 +140,7 @@ public final class CalcService {
                 // 안전 폴백: 공용 모델
             }
         }
-        return new CommonDealModel(dm, boss);
+        return new CommonDealModel(dm, boss, targetDef);
     }
 
     /** 대상(챕터/스테이지)의 몹 방어력(서버 전용). target="boss"=챕터 보스, 아니면 스테이지. 데이터 없으면 null(방관 미환산). */
@@ -295,9 +307,10 @@ public final class CalcService {
         Map<String, Object> detail = new LinkedHashMap<>();
         // DPS 모델 직업(나이트로드)은 평타가 버프·상시 패시브 공퍼의 영향을 받으므로,
         // 옛 공용 1타 대신 버프(체크된 것만) 평균 반영 평타 1타(타수 중 한 타) 기대딜을 보여준다.
-        if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+        SkillData sdPrev = skillDataFor((int) b.get("JOB"));
+        if (sdPrev != null) {
             try {
-                NightlordDps nd = new NightlordDps(m, new SkillDpsModel(content.skillData), buffs, hitInterval);
+                NightlordDps nd = new NightlordDps(m, new SkillDpsModel(sdPrev), buffs, hitInterval);
                 // 불타는용암 debuffCase 판정: 내 직업(받피 디버프 보유) 또는 동료가 적에 디버프를 주는가.
                 boolean enemyDebuff = art != null && (nd.playerRecvBonus(b) > 1e-9
                         || (comp != null && (comp.enemyDefReducePct(b, false) > 0 || comp.enemyDefReducePct(b, true) > 0)));
@@ -535,9 +548,10 @@ public final class CalcService {
         out.put("job", (int) b.get("JOB"));
         List<Map<String, Object>> buffs = new ArrayList<>();
         List<Map<String, Object>> dealSkills = new ArrayList<>();
-        if ((int) b.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+        SkillData sdBuff = skillDataFor((int) b.get("JOB"));
+        if (sdBuff != null) {
             try {
-                NightlordDps nd = new NightlordDps(content.damageModel(Map.of()), new SkillDpsModel(content.skillData));
+                NightlordDps nd = new NightlordDps(content.damageModel(Map.of()), new SkillDpsModel(sdBuff));
                 buffs = nd.buffInfos(b);
                 dealSkills = nd.dealSkillInfos(b);
             } catch (RuntimeException ex) {
@@ -703,9 +717,10 @@ public final class CalcService {
         // 동료 계승 기준 = 풀버프 스냅샷 + 플레이어 받피증(나이트로드 모델 있을 때). 그 외 직업은 원본 스탯·받피증 0.
         StatBlock b = raw;
         double recvBonus = 0;
-        if ((int) raw.get("JOB") == JOB_NIGHTLORD && content.skillData != null) {
+        SkillData sdComp = skillDataFor((int) raw.get("JOB"));
+        if (sdComp != null) {
             try {
-                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(content.skillData), buffs, 0);
+                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(sdComp), buffs, 0);
                 b = nd.fullBuffStats(raw);
                 recvBonus = nd.playerRecvBonus(nd.buffed(raw).stats);
             } catch (RuntimeException ex) { b = raw; recvBonus = 0; }
@@ -921,8 +936,8 @@ public final class CalcService {
                                           List<Map<String, Object>> oldOpts, List<Map<String, Object>> newOpts) {
         StatBlock current = block(stats);
         DamageModel dm = content.damageModel(conv);
-        StatBlock base = dm.uncombine(current, deltaOfReq(oldOpts));   // 기존 옵션 제거
-        StatBlock result = dm.combine(base, deltaOfReq(newOpts));      // 새 옵션 적용
+        StatBlock base = dm.uncombine(current, deltaOfReq(dm, oldOpts));   // 기존 옵션 제거
+        StatBlock result = dm.combine(base, deltaOfReq(dm, newOpts));      // 새 옵션 적용
         Map<String, Object> sm = new LinkedHashMap<>();
         for (Map.Entry<String, Double> e : result.asMap().entrySet()) sm.put(e.getKey(), e.getValue());
         Map<String, Object> out = new LinkedHashMap<>();
@@ -930,13 +945,13 @@ public final class CalcService {
         return out;
     }
 
-    /** [{statId,value},…] → 같은 스탯끼리 합산한 StatBlock. */
-    private static StatBlock deltaOfReq(List<Map<String, Object>> opts) {
+    /** [{statId,value},…] → 같은 스탯끼리 모델 규칙대로 모은 StatBlock(방관 등 체감은 곱연산, 그 외 합산). */
+    private static StatBlock deltaOfReq(DealModel dm, List<Map<String, Object>> opts) {
         StatBlock b = new StatBlock();
         for (Map<String, Object> o : opts) {
             String sid = String.valueOf(o.get("statId"));
             double val = o.get("value") instanceof Double ? (Double) o.get("value") : 0;
-            b.set(sid, b.get(sid) + val);
+            b.set(sid, dm.aggregate(sid, b.get(sid), val));
         }
         return b;
     }
@@ -969,14 +984,14 @@ public final class CalcService {
             String sid = String.valueOf(o.get("statId"));
             double val = o.get("value") instanceof Double ? (Double) o.get("value") : 0;
             draws.add(new PotentialDraw(sid, val, 0, false, false));
-            delta.set(sid, delta.get(sid) + val);
+            delta.set(sid, dm.aggregate(sid, delta.get(sid), val));
         }
         Map<String, Object> m = new LinkedHashMap<>();
         if (draws.isEmpty()) { m.put("empty", true); m.put("inc", 0.0); m.put("prob", 0.0); m.put("qual", false); return m; }
         m.put("empty", false);
         m.put("inc", safe(dm.increase(current, delta)));
         m.put("qual", dm.hasQualitative(delta));
-        m.put("prob", safe(CubeRecommender.arrangeSum(draws, content.equip.slots(part, grade))));
+        m.put("prob", safe(CubeRecommender.appearProb(draws, content.equip.slots(part, grade))));
         return m;
     }
 
@@ -1000,8 +1015,8 @@ public final class CalcService {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
         DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
-        StatBlock lDelta = deltaOfReq(leftOpts);
-        StatBlock rDelta = deltaOfReq(rightOpts);
+        StatBlock lDelta = deltaOfReq(dm, leftOpts);
+        StatBlock rDelta = deltaOfReq(dm, rightOpts);
         StatBlock base = dm.uncombine(current, lDelta);       // 현재 장비(왼쪽) 제거
         StatBlock rightBlock = dm.combine(base, rDelta);      // 후보(오른쪽) 장착
         double leftOut = dm.output(current);
@@ -1016,6 +1031,151 @@ public final class CalcService {
         for (Map.Entry<String, Double> e : rightBlock.asMap().entrySet()) sm.put(e.getKey(), e.getValue());
         out.put("newStats", sm);
         return out;
+    }
+
+    // ──────────────────── 스탯 비교(등가 환산) ────────────────────
+
+    /** 스탯 비교에서 제외할 스탯: 레벨(딜 모델 밖)·기본 공격 대상 수(상황 의존). 나머지 입력 가능한 스탯 전부 비교. */
+    private static final Set<String> STAT_COMPARE_SKIP = Set.of("LEVEL", "BASIC_ATK_TARGETS");
+
+    /**
+     * 기준 스탯 한 줄(refStatId=refValue)이 올려주는 딜 증가량 D와 <b>동일한 딜</b>을 내려면
+     * 다른 각 스탯이 얼마나 필요한지(등가 증가량)를 계산한다. 각 스탯 y에 대해 f(w)=increase(현재,{y:w})가
+     * 0에서 단조증가하므로 f(w)=D를 푼다(대다수 스탯은 선형이라 1회 외삽으로 해, 방관·크리포화 등은 이분탐색).
+     *
+     * @return {inc:D, refStatId, refQual, rows:[{statId, value, self, qual, reachable}]}
+     *         value=등가 증가량(NaN이면 reachable=false), qual=그 스탯이 현재 설정에서 딜 미환산이면 true.
+     */
+    public Map<String, Object> statCompare(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
+                                           Set<String> buffs, double hitInterval,
+                                           String companionId, String companionGrade, int companionLevel, double ratio,
+                                           String refStatId, double refValue) {
+        StatBlock current = block(stats);
+        boolean curBoss = isBossTarget(target);
+        // 동료 포함(정확): 소환 가동률로 플레이어 버프가 블렌딩되므로 동소지도 플레이어 평균 DPS를 올린다.
+        DealModel dm = dealModel(current, conv, curBoss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+
+        // 보뎀/일뎀은 현재 스테이지 유형과 반대라 그대로면 딜 0 → 사용자 지정 교차 기준으로 평가한다.
+        //  · 현재 일반몹 스테이지 → 보뎀은 그 챕터 '보스' 기준으로 계산
+        //  · 현재 보스 스테이지 → 일뎀은 '바로 직전 스테이지'(그 챕터 최고 일반 스테이지) 기준으로 계산
+        DealModel dmBossDmg = curBoss ? dm
+                : dealModel(current, conv, true, buffs, hitInterval, targetDef(chapter, "boss"), companionId, companionGrade, companionLevel, ratio);
+        DealModel dmNormalDmg = !curBoss ? dm
+                : dealModel(current, conv, false, buffs, hitInterval, targetDef(chapter, prevStageTarget(chapter)), companionId, companionGrade, companionLevel, ratio);
+
+        // 기준 스탯도 자기 컨텍스트에서 D를 측정(보뎀/일뎀을 기준으로 잡아도 딜 0이 되지 않게).
+        DealModel refDm = effDm(refStatId, dm, dmBossDmg, dmNormalDmg);
+        boolean refQual = refStatId != null && !refStatId.isEmpty()
+                && refDm.hasQualitative(new StatBlock().with(refStatId, refValue == 0 ? 1 : refValue));
+        double D = (refStatId != null && !refStatId.isEmpty() && refValue != 0)
+                ? refDm.increase(current, new StatBlock().with(refStatId, refValue)) : 0.0;
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (StatDef d : content.stats.values()) {
+            if (d.hidden || d.derived || STAT_COMPARE_SKIP.contains(d.id)) continue;
+            DealModel useDm = effDm(d.id, dm, dmBossDmg, dmNormalDmg);
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("statId", d.id);
+            // 교차 기준 안내(현재 스테이지와 반대 유형이라 다른 대상으로 환산했음을 표시)
+            if ("BOSS_DMG".equals(d.id) && !curBoss) row.put("note", "보스 기준");
+            else if ("NORMAL_DMG".equals(d.id) && curBoss) row.put("note", "직전 스테이지 기준");
+            boolean qual = useDm.hasQualitative(new StatBlock().with(d.id, 1));
+            row.put("qual", qual);
+            if (d.id.equals(refStatId)) {
+                row.put("self", true);
+                row.put("value", safe(refValue));
+                row.put("reachable", true);
+            } else {
+                row.put("self", false);
+                double w = (D > 1e-12 && !qual) ? solveEquivalent(useDm, current, d.id, D) : Double.NaN;
+                row.put("value", safe(w));
+                row.put("reachable", Double.isFinite(w));
+            }
+            rows.add(row);
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("inc", safe(D));
+        out.put("refStatId", refStatId);
+        out.put("refQual", refQual);
+        out.put("rows", rows);
+        return out;
+    }
+
+    /** 보뎀은 보스 컨텍스트 모델로, 일뎀은 일반 컨텍스트 모델로, 그 외는 현재 모델로 평가(스테이지 교차 기준). */
+    private static DealModel effDm(String statId, DealModel cur, DealModel bossDmg, DealModel normalDmg) {
+        if ("BOSS_DMG".equals(statId)) return bossDmg;
+        if ("NORMAL_DMG".equals(statId)) return normalDmg;
+        return cur;
+    }
+
+    /** 챕터의 '바로 직전 스테이지'(최고 일반 스테이지) 대상 문자열("stage:N"). 스테이지 데이터 없으면 null. */
+    @SuppressWarnings("unchecked")
+    private String prevStageTarget(String chapter) {
+        Object cObj = content.monsterDefense == null ? null : content.monsterDefense.get("chapters");
+        if (!(cObj instanceof Map) || chapter == null || chapter.isEmpty()) return null;
+        Object chObj = ((Map<String, Object>) cObj).get(chapter);
+        if (!(chObj instanceof Map)) return null;
+        Object sObj = ((Map<String, Object>) chObj).get("stages");
+        if (!(sObj instanceof Map)) return null;
+        int max = -1;
+        for (Object k : ((Map<String, Object>) sObj).keySet()) {
+            try { max = Math.max(max, Integer.parseInt(String.valueOf(k))); } catch (NumberFormatException ignored) { /* 비정수 키 무시 */ }
+        }
+        return max < 0 ? null : ("stage:" + max);
+    }
+
+    /**
+     * f(w)=increase(현재,{sid:w})=target 을 만족하는 w(≥0)를 찾는다. f는 0에서 단조증가.
+     * 선형 스탯은 1회 외삽으로 즉시 끝나고(2회 호출), 비선형(방관·공속 체감·벞지/동소지 포화·스킬레벨)은
+     * 좁은 이분탐색으로 좁히되 <b>상대오차 0.01%면 조기 종료</b>한다(표시 2자리에 충분).
+     *
+     * <p>성능: {@code increase}는 동료가 있으면 한 번에 ~16ms라, 호출 수를 최소화한다. 선형 외삽으로 상한을
+     * 근접시켜 이분 반복을 크게 줄이고(옛 최대 140회 → 보통 10여 회), 큰 값에도 딜이 0이면 2회 만에 도달불가 판정.
+     */
+    /**
+     * 탐색 상한. 이보다 큰 값이 필요하면 사실상 '도달 불가'로 본다. 동시에 딜 계산에 <b>말도 안 되는 수치</b>가
+     * 들어가는 걸 막는다(예: 동소지가 포화라 못 미치면 옛 코드는 1e15까지 키웠는데, 소환창 W=지속×(1+동소지/100)이
+     * 그만큼 폭증해 시뮬 스텝 수(W/DT)가 사실상 무한 → 요청 자체가 멈춤). 상한을 두어 근본 차단.
+     */
+    private static final double SOLVE_MAX_W = 1e7;
+
+    private double solveEquivalent(DealModel dm, StatBlock current, String sid, double target) {
+        double f1 = incOne(dm, current, sid, 1.0);
+        double hi, fhi;
+        if (f1 > 0) {
+            hi = Math.min(SOLVE_MAX_W, Math.max(1.0, target / f1));   // 선형 외삽으로 상한을 해 근처에(상한 클램프)
+            fhi = incOne(dm, current, sid, hi);
+            if (nearTarget(fhi, target)) return hi;       // 선형 스탯: 여기서 끝(2회 호출)
+        } else {
+            hi = 1e6; fhi = incOne(dm, current, sid, 1e6);
+            if (!(fhi > 0)) return Double.NaN;            // 큰 값에도 딜 0(크리 포화·대상없는 방관 등) → 도달 불가
+        }
+        int guard = 0;
+        while (fhi < target) {                            // 상한이 부족하면 ×8로 빠르게 확장(상한 SOLVE_MAX_W에서 멈춤)
+            if (hi >= SOLVE_MAX_W) return Double.NaN;      // 상한에서도 target 미달 → 포화로 도달 불가
+            hi = Math.min(SOLVE_MAX_W, hi * 8);
+            if (++guard > 40) return Double.NaN;
+            fhi = incOne(dm, current, sid, hi);
+        }
+        double lo = 0;
+        for (int i = 0; i < 40; i++) {
+            double mid = 0.5 * (lo + hi);
+            double fm = incOne(dm, current, sid, mid);
+            if (nearTarget(fm, target)) return mid;                       // 딜 상대오차 0.01% → 조기 종료
+            if (fm < target) lo = mid; else hi = mid;
+            if (hi - lo <= 1e-6 * Math.max(1.0, hi)) break;              // w 수렴 → 종료
+        }
+        return 0.5 * (lo + hi);
+    }
+
+    /** 목표 딜 증가율에 상대오차 0.01% 이내면 적중으로 본다(스탯 비교 표시 정밀도에 충분). */
+    private static boolean nearTarget(double f, double target) {
+        return Math.abs(f - target) <= 1e-4 * Math.max(1e-9, target);
+    }
+
+    private double incOne(DealModel dm, StatBlock current, String sid, double w) {
+        return dm.increase(current, new StatBlock().with(sid, w));
     }
 
     // ──────────────────── 장비 비교 OCR(Gemini 비전) ────────────────────
@@ -1048,15 +1208,19 @@ public final class CalcService {
 
         // 비전 모델은 드물게 좌측 박스를 통째로 누락한다. 좌측이 비면 1회 재시도(실패에서만 발동).
         Map<String, Object> left = null, right = null;
+        String ocrPartName = "";
         for (int attempt = 0; attempt < 2; attempt++) {
             Map<String, Object> raw = ocr.extract(ocrImage, ocrMime, ocrPrompt(), ocrSchema());
             left = mapOcrSide(raw.get("left"), unionMain, unionSub);
             right = mapOcrSide(raw.get("right"), unionMain, unionSub);
+            // 좌 박스 부위명 우선(현재 장비), 없으면 우 박스 부위명.
+            ocrPartName = firstNonBlank(String.valueOf(raw.get("leftPart")), String.valueOf(raw.get("rightPart")));
             if (!sideEmpty(left)) break;
         }
 
-        // 좌측(현재 장비)의 옵션을 모두 담는 부위 선택. 현재 선택이 이미 맞으면 유지.
-        String effPart = inferPart(left, part);
+        // 화면의 '등급 부위명'에서 읽은 부위를 우선 사용. 못 읽었으면 좌 옵션으로 역추론(폴백).
+        String canon = canonicalPart(ocrPartName);
+        String effPart = (canon != null) ? canon : inferPart(left, part);
         Map<String, Object> partDef = gearPartDef(effPart);
         if (partDef == null) throw new IllegalArgumentException("알 수 없는 부위: " + part);
         LinkedHashSet<String> pMain = partMainStats(partDef), pSub = partSubStats(partDef);
@@ -1108,6 +1272,27 @@ public final class CalcService {
      * 인식된 좌측 옵션(주+부)을 모두 담을 수 있는 부위를 고른다. 계산은 부위와 무관하므로 어떤 것을 골라도
      * 결과는 같다(풀이 같은 부위끼리는 구분 불가하나 무방). 현재 선택 부위가 이미 커버하면 그대로 유지(불필요한 전환 방지).
      */
+    // OCR이 읽은 '등급 부위명' 텍스트에서 우리 부위명으로 정규화. 등급 접두어·공백은 무시하고 부위명 포함 여부로 매칭.
+    // "반지2"를 "반지"보다 먼저 검사해야 반지2가 반지로 오분류되지 않는다(반지2 ⊃ 반지). 얼굴/눈 장식은 전체명 매칭이라 겹치지 않음.
+    private static final List<String> OCR_PART_NAMES = List.of(
+        "반지2", "투구", "상의", "망토", "견장", "하의", "장갑", "벨트", "신발", "반지", "목걸이", "얼굴장식", "눈장식", "귀고리");
+
+    private String canonicalPart(String ocrName) {
+        if (ocrName == null) return null;
+        String t = ocrName.replaceAll("\\s+", "");
+        if (t.isEmpty() || t.equals("null")) return null;
+        for (String p : OCR_PART_NAMES) {
+            if (t.contains(p) && gearPartDef(p) != null) return p;   // 실제 존재하는 부위만
+        }
+        return null;
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.trim().isEmpty() && !a.equals("null")) return a;
+        if (b != null && !b.trim().isEmpty() && !b.equals("null")) return b;
+        return "";
+    }
+
     private String inferPart(Map<String, Object> left, String userPart) {
         Set<String> mains = sideStatIds(left == null ? null : left.get("main"));
         Set<String> subs = sideStatIds(left == null ? null : left.get("sub"));
@@ -1323,8 +1508,13 @@ public final class CalcService {
             + "그것은 필터 목록이니 반드시 제외하세요.\n"
             + "- 어떤 옵션의 숫자 값은 보이는데 그 왼쪽의 옵션 이름이 필터에 가려 확실히 안 보이면, 이름을 추측하지 말고 "
             + "그 행 전체를 건너뛰세요(없는 스탯을 지어내지 마세요).\n"
+            + "- 각 박스에서 장비 이름(흰 글씨) 바로 아래, 아이콘 오른쪽의 '등급 부위명' 텍스트"
+            + "(예: '레전드리 하의', '유니크 반지2', '에픽 얼굴장식')에서 부위명만 읽으세요. "
+            + "왼쪽 박스 부위명은 leftPart, 오른쪽 박스 부위명은 rightPart에 넣습니다. "
+            + "부위명은 반드시 다음 중 하나: 투구, 상의, 망토, 견장, 하의, 장갑, 벨트, 신발, 반지, 반지2, 목걸이, 얼굴장식, 눈장식, 귀고리. "
+            + "등급 접두어(레전드리·유니크·에픽·중급·최상급 등)는 빼고 부위명만. 확실히 못 읽으면 빈 문자열.\n"
             + "- 왼쪽 박스는 left, 오른쪽 박스는 right. 박스가 하나뿐이면 그 박스를 left에 넣고 right는 빈 배열.\n"
-            + "반드시 JSON만 출력: {\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
+            + "반드시 JSON만 출력: {\"leftPart\":\"...\",\"rightPart\":\"...\",\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";
     }
 
     /** 응답 스키마: 각 박스 {label,value} 배열(원문 라벨/값). statId 매핑은 서버가 수행. */
@@ -1335,7 +1525,9 @@ public final class CalcService {
         Map<String, Object> optItem = new LinkedHashMap<>();
         optItem.put("type", "OBJECT"); optItem.put("properties", optProps); optItem.put("required", List.of("label", "value"));
         Map<String, Object> arr = new LinkedHashMap<>(); arr.put("type", "ARRAY"); arr.put("items", optItem);
+        Map<String, Object> partStr = new LinkedHashMap<>(); partStr.put("type", "STRING");
         Map<String, Object> rootProps = new LinkedHashMap<>();
+        rootProps.put("leftPart", partStr); rootProps.put("rightPart", partStr);
         rootProps.put("left", arr); rootProps.put("right", arr);
         Map<String, Object> root = new LinkedHashMap<>(); root.put("type", "OBJECT"); root.put("properties", rootProps);
         return root;
@@ -1381,7 +1573,7 @@ public final class CalcService {
 
         // 좌/우 딜: 현재 줄을 뺀 baseline 기준(추천 엔진과 동일).
         StatBlock leftDelta = new StatBlock();
-        for (PotentialDraw d : curDraws) if (d != null) leftDelta.set(d.statId(), leftDelta.get(d.statId()) + d.value());
+        for (PotentialDraw d : curDraws) if (d != null) leftDelta.set(d.statId(), dm.aggregate(d.statId(), leftDelta.get(d.statId()), d.value()));
         StatBlock baseline = dm.uncombine(current, leftDelta);
         double curBase = dm.output(baseline);
         double leftDeal = curBase > 0 ? dm.output(current) / curBase - 1.0 : 0;
@@ -1393,16 +1585,16 @@ public final class CalcService {
             rOpts.add(new PotentialDraw(sid, val, 0, false, false));
         }
         StatBlock rightDelta = new StatBlock();
-        for (PotentialDraw d : rOpts) rightDelta.set(d.statId(), rightDelta.get(d.statId()) + d.value());
+        for (PotentialDraw d : rOpts) rightDelta.set(d.statId(), dm.aggregate(d.statId(), rightDelta.get(d.statId()), d.value()));
         double rightDeal = curBase > 0 ? dm.output(dm.combine(baseline, rightDelta)) / curBase - 1.0 : 0;
         double dealDiff = rightDeal - leftDeal;
 
         List<PotentialDraw> lOpts = new ArrayList<>();
         for (PotentialDraw d : curDraws) if (d != null) lOpts.add(d);
-        double leftProbSum = CubeRecommender.arrangeSum(lOpts, leftSlots);
+        double leftProbSum = CubeRecommender.appearProb(lOpts, leftSlots);
 
         List<List<PotentialDraw>> rightTables = content.equip.slots(part, rightGrade);
-        double arrange = CubeRecommender.arrangeSum(rOpts, rightTables);
+        double arrange = CubeRecommender.appearProb(rOpts, rightTables);
         double rightProbSum = arrange;
         int li = content.equip.gradeIndex(leftGrade), ri = content.equip.gradeIndex(rightGrade);
         if (ri > li && li >= 0) {

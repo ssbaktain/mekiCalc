@@ -318,6 +318,7 @@ const MENU = [
     { label: "내 옵션 비교/변경", panel: "compare", path: "/cube/my-options" },
     { label: "우선순위 추천", panel: "recommend", path: "/cube/recommend" },
   ]},
+  { label: "스탯 비교", panel: "statcompare", path: "/stat-compare" },   // 최상위 단독 · 스탯 등가 환산(한 스탯↔다른 스탯 필요량)
   { label: "장비 비교", panel: "gear", path: "/gear/compare" },   // 최상위 단독 · 프리셋 없이 단발 비교/변경
   { label: "공지사항", panel: "notices", path: "/notices" },      // 계산 아닌 첫 기능 · 넥슨 포럼 공지 크롤링·요약
 ];
@@ -331,6 +332,7 @@ function showPanel(name) {
   if (name === "optcompare") renderOptCompare();
   if (name === "recommend") runRecommend(true);   // 진입 시 자동 계산 → 슬라이더 활성화
   if (name === "cube") calcEvaluate();             // 진입 시 자동 계산(계산 버튼 제거)
+  if (name === "statcompare") renderStatCompare();  // 스탯 비교(등가 환산) UI 구성
   if (name === "gear") renderGear();               // 장비 비교 UI 구성
   if (name === "notices") renderNotices();         // 공지 탭(넥슨 포럼 크롤링·요약)
 }
@@ -354,6 +356,7 @@ const ROUTE_META = {
   "/cube/option-compare": ["큐브 옵션 비교 - MekiCalc", "두 큐브 잠재 옵션 조합의 딜 기여를 나란히 비교합니다."],
   "/cube/my-options":     ["내 큐브 옵션 비교·변경 - MekiCalc", "현재 장착 큐브 옵션과 바꿀 옵션의 딜 차이를 비교하고 반영합니다."],
   "/cube/recommend":      ["큐브 우선순위 추천 - MekiCalc", "현재 스탯 기준으로 어떤 큐브 옵션부터 챙기는 게 효율적인지 순위로 추천합니다."],
+  "/stat-compare":        ["스탯 비교 - MekiCalc", "한 스탯에 값을 입력하면 그만큼의 딜을 내려면 다른 스탯이 얼마나 필요한지 등가 증가량을 현재 스탯 기준으로 계산합니다."],
   "/gear/compare":        ["장비 비교 - MekiCalc", "현재 장착 장비와 새 장비의 옵션을 입력해 어느 쪽이 딜에 더 유리한지 바로 비교합니다. 무기 공격력·부옵션(크리 데미지·데미지 등) 차이를 현재 스탯 기준으로 계산합니다."],
   "/notices":             ["공지사항 - 메이플 키우기 공지·패치노트·이벤트 | MekiCalc", "메이플 키우기 공식 공지사항·패치노트·이벤트·확인 중인 현상을 요약과 함께 한 곳에서 보고, 현재 사용 가능한 쿠폰을 확인합니다."],
 };
@@ -413,6 +416,7 @@ function recalcActivePanel() {
   else if (!$("panel-compare").hidden) refreshCompareOnPresetChange();
   else if (!$("panel-optcompare").hidden) runOptCompare();
   else if (!$("panel-gear").hidden && $("gc-delta").innerHTML.trim()) runGearCompare();   // 결과가 떠 있을 때만 재계산
+  else if (!$("panel-statcompare").hidden && scSource) runStatCompare();   // 기준 스탯이 있으면 새 스탯으로 재환산
 }
 
 // 내 옵션 비교: 프리셋 전환 시 좌측(현재 큐브)·결과를 갱신하되 우측(가정) 선택은 보존.
@@ -503,11 +507,16 @@ function buildMenu() {
   bar.appendChild(right);
   bar.addEventListener("mouseleave", closeMenus);   // 메뉴바 벗어나면 드롭다운 닫기
   buildMobileMenu(itemEls);   // 모바일 햄버거 메뉴(좁은 화면용)
-  // 기본 진입 = 예상 데미지(홈). 첫 메뉴 활성 + 프리셋 서브탭은 미리 스탯으로 세팅.
+  // 프리셋 서브탭은 미리 스탯으로 세팅.
   selectSub("stat");
-  const firstItem = left.querySelector(".menu-item");
-  if (firstItem) setActiveMenu(firstItem);
-  showPanel("home");
+  // 활성 메뉴는 '현재 경로' 기준으로 처음부터 설정. 무조건 첫 항목(예상 데미지)을 활성화하면
+  // 이후 라우팅이 공지사항 등으로 바꿔 '예상 데미지 → 공지사항' 메뉴 깜빡임이 생김(딥링크 진입).
+  const menuLeaf = leafByPath(location.pathname) || (location.pathname.startsWith("/notices") ? leafByPath("/notices") : null);
+  const activeItem = (menuLeaf && routeItemEls.get(menuLeaf.path)) || left.querySelector(".menu-item");
+  if (activeItem) setActiveMenu(activeItem);
+  syncMobileActive(menuLeaf || MENU[0]);   // 모바일 메뉴 활성도 현재 경로 기준(깜빡임 방지)
+  // 홈 패널은 현재 경로가 홈일 때만 노출(딥링크면 여기서 홈으로 덮지 않음 → 패널 깜빡임 방지).
+  if (location.pathname === "/" || location.pathname === "") showPanel("home");
 }
 
 // 모바일(좁은 화면) 햄버거 메뉴. 모든 항목을 펼친 세로 목록으로 → 한 번 터치로 이동(호버 불필요).
@@ -613,13 +622,16 @@ if (brandEl) brandEl.addEventListener("click", goHome);
 })();
 
 // 직업 변경: '딜 미환산' 표시 갱신 + 예상 데미지 재계산 + 미저장 표시.
-$("job-sel").addEventListener("change", () => { statDirty = true; refreshQual(); calcDamage(); });
+$("job-sel").addEventListener("change", () => { statDirty = true; deriveStatProp(); refreshQual(); calcDamage(); });   // 직업 바뀌면 방어력→주스탯 계수도 바뀌어 스탯 비례 재파생
 
 
 // ──────────────────── 스탯 입력 폼 ────────────────────
 
 async function loadStats(pre) {
-  try { statDefs = pre || await (await fetch("/api/stats")).json(); saveJSON(CACHE_STATS, statDefs); renderForm(); }
+  try {
+    statDefs = pre || await (await fetch("/api/stats")).json(); saveJSON(CACHE_STATS, statDefs); renderForm();
+    if (!$("panel-statcompare").hidden) renderStatCompare();   // 딥링크로 먼저 들어온 경우 스탯 로드 후 채워줌
+  }
   catch (e) { $("stat-form").textContent = "스탯 목록을 불러오지 못했습니다: " + e; }
 }
 
@@ -681,13 +693,26 @@ function truncStatInput(input) {
 
 // 스탯 비례 데미지%를 주스탯·부스탯에서 즉시 파생: 유효주스탯/100 + 부스탯×0.25%.
 // 유저 입력을 막지 않되(직접 수정 가능), 주스탯·부스탯을 건드리면 이 값으로 갱신한다.
-const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT"]);
+const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT", "DEFENSE"]);
+
+// 방어력→주스탯 변환 계수(방어력 1당 주스탯). DamageModel.defenseToMainRatio와 동일 공식 — 백엔드와 함께 수정할 것.
+// 다크나이트 아이언 월(2차 패시브): base 10% × (1 + 0.3%/레벨 × 총스킬레벨). 총스킬레벨 = 2차 레벨 파생분 + 모스렙 + 2스렙.
+function defenseToMainRatio(num) {
+  const job = parseInt(($("job-sel") && $("job-sel").value) || "0", 10) || 0;
+  if (job !== 2 && job !== 3) return 0;   // 다크나이트(아이언 월)·비숍(인빈서블) — 동일 계수
+  const lv = num("LEVEL");
+  const baseSkillLevel = Math.max(0, (Math.min(lv, 60) - 30) * 3);   // 2차 스킬: 30~59렙 레벨당 3, 60렙~ 고정 90
+  const totalSkillLevel = baseSkillLevel + num("SKILL_LEVELS") + num("SKILL_LEVEL_2");
+  return 0.10 * (1 + 0.003 * totalSkillLevel);
+}
+
 function deriveStatProp() {
   const form = $("stat-form"); if (!form) return;
   const num = (id) => { const el = form.querySelector(`input[data-stat-id="${id}"]`); const v = el ? parseFloat(el.value) : 0; return isNaN(v) ? 0 : v; };
   const out = form.querySelector('input[data-stat-id="STAT_PROP_DMG"]'); if (!out) return;
   const mainStat = num("MAIN_STAT_FLAT") * (1 + num("MAIN_STAT_PCT") / 100);
-  out.value = truncStat(mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025, "PCT");
+  const defEffMain = num("DEFENSE") * defenseToMainRatio(num);   // 아이언 월 주스탯 증가분: 선반영이라 주스탯% 곱셈 바깥의 최종 flat 값(주스탯% 미적용)
+  out.value = truncStat(mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025 + defEffMain / 100, "PCT");
 }
 
 // 현재 qualSet에 맞춰 각 필드의 '딜 미환산' 배지 표시/숨김.
@@ -1215,6 +1240,25 @@ function parseSlotKey(key) {
   return { stat: key.slice(0, i), value: parseFloat(key.slice(i + 1)) };
 }
 
+// 부스탯은 큐브에서만 나온다(깡부스탯·부스탯%는 큐브 옵션으로만 존재, 스탯 프리셋엔 최종값만 노출).
+// myCube 전체 슬롯에서 깡부스탯 합·부스탯% 합을 모아 최종 부스탯 = 깡합 × (1+%합/100)로 파생한다.
+// (곱셈이라 줄 단위가 아니라 전체 합으로 계산해야 정확)
+function cubeSubStatFinal(cube) {
+  let raw = 0, pct = 0;
+  for (const part in cube) {
+    for (const ln of ["윗잠", "아랫잠"]) {
+      const line = cube[part] && cube[part][ln];
+      if (!line || !line.slots) continue;
+      for (const s of line.slots) {
+        if (!s) continue;
+        if (s.stat === "SUB_STAT_FLAT") raw += (+s.value || 0);
+        else if (s.stat === "SUB_STAT_PCT") pct += (+s.value || 0);
+      }
+    }
+  }
+  return raw * (1 + pct / 100);
+}
+
 async function renderCube() {
   const list = $("mc-list");
   const parts = sortParts(Object.keys(myCube));
@@ -1345,12 +1389,12 @@ function renderRecs(recs) {
       else if (p.changed) { lc = "before"; rc = "after"; }
       rows += `<div class="sc-row">${scBox(p.cur, lc, i + 1, p.locked)}${scBox(p.rec, rc, i + 1, p.locked)}</div>`;
     });
+    const avgTxt = r.recCubes == null ? "∞" : fmt(r.recCubes);
     card.innerHTML =
-      `<div class="rec-head"><span class="rank">${idx + 1}</span><b>${r.part} ${r.upper ? "윗잠" : "아랫잠"}</b>${cross}</div>` +
+      `<div class="rec-head"><span class="rank">${idx + 1}</span><b>${r.part} ${r.upper ? "윗잠" : "아랫잠"}</b>${cross}` +
+      `<span class="rec-avg" title="이 추천 옵션을 얻기까지 평균 큐브 수(승급 추천은 승급 비용까지 포함)">평균 <b>${avgTxt}</b>개</span></div>` +
       `<div class="rec-metrics">` +
       `<span>딜 증가량 <b class="good">${signPct(r.dealDiff)}</b></span>` +
-      `<span title="이 추천 옵션 구성이 한 큐브에 그대로 나올 확률(동일 옵션 등장 확률 총합)">등장 확률 <b>${pct(r.recProbSum)}</b></span>` +
-      `<span>평균 <b>${r.recCubes == null ? "∞" : fmt(r.recCubes)}</b>개</span>` +
       `<span title="한 큐브 리롤로 지금 끼고 있는 옵션보다 딜이 높은 구성이 나올 확률">1회 리롤·현재보다↑ <b>${pct(r.totalProb)}</b></span>` +
       `<span title="한 큐브 리롤로 이 추천 옵션보다도 딜이 높은 구성이 나올 확률">1회 리롤·추천보다↑ <b>${pct(r.remainProb)}</b></span>` +
       `<span>효율 <b>${fmtScore(r.gainEff * 1e6)}</b></span>` +
@@ -1471,6 +1515,141 @@ function gcSpecials(prefix) {
 }
 // 부옵션 후보 스탯 = 공통 + 부위별 특옵.
 function gcSubPool(prefix) { return gearCfg.commonSub.concat(gcSpecials(prefix)); }
+
+// ──────────────────── 스탯 비교(등가 환산) ────────────────────
+// 한 스탯에 값을 넣으면 그 스탯이 올려주는 딜과 같은 딜을 내는 다른 스탯의 필요량을 서버가 계산해 채운다.
+// 어느 입력이든 값을 넣으면 그게 '기준'이 되고, 다른 입력에 값을 넣으면 기준이 바뀐다(계산은 프리셋·대상 기준).
+let scSource = null;   // {statId, value} 현재 기준
+let scTimer = null;
+
+function scStatDefs() {
+  return (statDefs || []).filter((d) => d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+}
+
+function renderStatCompare() {
+  const form = $("sc-form");
+  if (!form) return;
+  // statDefs가 준비됐고 아직 안 그렸으면(또는 직전 로드 전 빈 상태면) 구성. statDefs 갱신 시 loadStats가 다시 부른다.
+  if (form.querySelectorAll(".field").length === 0 && statDefs && statDefs.length) {
+    // 프리셋 스탯 탭과 동일한 그룹·필드 컴포넌트로 구성(입력창 UI 통일).
+    const groups = new Map();
+    for (const d of scStatDefs()) {
+      if (!groups.has(d.group)) groups.set(d.group, []);
+      groups.get(d.group).push(d);
+    }
+    form.innerHTML = "";
+    for (const [group, defs] of groups) {
+      const box = document.createElement("div");
+      box.className = "group";
+      box.innerHTML = `<div class="group-title">${group}</div>`;
+      const grid = document.createElement("div");
+      grid.className = "field-grid";
+      for (const d of defs) {
+        const field = document.createElement("div");
+        field.className = "field";
+        field.dataset.statId = d.id;
+        field.innerHTML =
+          `<label for="sc_${d.id}">${d.name}</label>` +
+          `<div class="input-wrap"><input type="number" id="sc_${d.id}" data-stat-id="${d.id}" step="any" placeholder="0" />` +
+          `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>` +
+          `<span class="dmgx-badge sc-badge" hidden></span>`;
+        grid.appendChild(field);
+      }
+      box.appendChild(grid);
+      form.appendChild(box);
+    }
+    form.querySelectorAll("input[data-stat-id]").forEach((inp) => {
+      inp.addEventListener("input", () => onScInput(inp));   // input 하나로 타이핑·스피너·붙여넣기 모두 커버(change는 blur 중복이라 제거)
+    });
+  }
+  updateCubeTargetHint();   // 대상 힌트를 실제 프리셋 스테이지로(직업·스테이지 반영을 명시)
+  if (scSource) runStatCompare(); else scClear();
+}
+
+function scClear() {
+  $("sc-head").hidden = true;
+  document.querySelectorAll("#sc-form .field").forEach((f) => f.classList.remove("sc-src"));
+  document.querySelectorAll("#sc-form .sc-badge").forEach((b) => { b.hidden = true; b.textContent = ""; });
+}
+
+// 기준 외 계산된 입력·뱃지 비우기(exceptId는 유지).
+function scClearComputed(exceptId) {
+  document.querySelectorAll("#sc-form .field").forEach((f) => {
+    if (f.dataset.statId === exceptId) return;
+    const inp = f.querySelector("input"); if (inp) inp.value = "";
+    const b = f.querySelector(".sc-badge"); if (b) { b.hidden = true; b.textContent = ""; }
+  });
+}
+
+function onScInput(inp) {
+  const id = inp.dataset.statId;
+  const v = parseFloat(inp.value);
+  if (isNaN(v) || v === 0) {
+    if (scSource && scSource.statId === id) { scSource = null; scClear(); scClearComputed(id); }
+    return;
+  }
+  if (scSource && scSource.statId === id && scSource.value === v) return;   // 값 변화 없으면 재계산 안 함(blur 등 중복 트리거 방지)
+  scSource = { statId: id, value: v };
+  document.querySelectorAll("#sc-form .field").forEach((f) => f.classList.toggle("sc-src", f.dataset.statId === id));
+  clearTimeout(scTimer);
+  scTimer = setTimeout(runStatCompare, 250);   // 타이핑 디바운스
+}
+
+async function runStatCompare() {
+  if (!scSource) return;
+  const src = scSource;
+  const h = $("sc-head"); h.hidden = false; h.textContent = "계산 중…";   // 동료 포함 시 몇 초 걸릴 수 있어 진행 표시
+  let data;
+  try {
+    data = await postJson("/api/stat-compare", {
+      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
+      buffs: activeBuffs(), hitInterval: myHitInterval,
+      refStatId: src.statId, refValue: src.value,
+    });
+  } catch (e) {
+    const h = $("sc-head"); h.hidden = false;
+    h.innerHTML = `<span style="color:#e07a7a">계산 실패: ${String(e)}</span>`;   // 조용한 실패 대신 화면에 표시
+    return;
+  }
+  if (!scSource || scSource.statId !== src.statId || scSource.value !== src.value) return;   // 그새 기준이 바뀜
+
+  const head = $("sc-head");
+  head.hidden = false;
+  const refLabel = `${statLabel(src.statId)} ${scFmtVal(src.value, src.statId)}`;
+  if (data.refQual || !(data.inc > 0)) {
+    head.innerHTML = `<span class="sc-conv"><b class="sc-conv-stat">${refLabel}</b>` +
+      `<span class="sc-conv-note">현재 설정에서는 딜로 환산되지 않아요</span></span>`;
+  } else {
+    head.innerHTML = `<span class="sc-conv"><b class="sc-conv-stat">${refLabel}</b>` +
+      `<span class="sc-conv-arrow">→</span>` +
+      `<span class="sc-conv-dmg">딜 +${(data.inc * 100).toFixed(2)}%</span></span>`;
+  }
+
+  for (const row of data.rows || []) {
+    const field = document.querySelector(`#sc-form .field[data-stat-id="${row.statId}"]`);
+    if (!field) continue;
+    const inp = field.querySelector("input");
+    const badge = field.querySelector(".sc-badge");
+    field.classList.toggle("sc-src", !!row.self);
+    // 교차 기준(보뎀=보스 / 일뎀=직전 스테이지) 안내 라벨을 라벨 옆에 표시
+    const label = field.querySelector("label");
+    const existing = label.querySelector(".sc-note");
+    if (existing) existing.remove();
+    if (row.note) label.insertAdjacentHTML("beforeend", ` <span class="sc-note">(${row.note})</span>`);
+    if (row.self) { badge.hidden = true; badge.textContent = ""; continue; }   // 기준 스탯은 유저 입력 유지
+    if (row.qual) { inp.value = ""; badge.hidden = false; badge.textContent = "딜 미환산"; badge.className = "dmgx-badge sc-badge"; }
+    else if (!row.reachable || row.value == null) { inp.value = ""; badge.hidden = false; badge.textContent = "달성 불가"; badge.className = "dmgx-badge sc-badge sc-unreach"; }
+    else { inp.value = scFmtNum(row.value, statUnit(row.statId)); badge.hidden = true; badge.textContent = ""; badge.className = "dmgx-badge sc-badge"; }
+  }
+}
+
+function scFmtVal(v, statId) { return scFmtNum(v, statUnit(statId)) + (UNIT_SUFFIX[statUnit(statId)] || ""); }
+function scFmtNum(v, unit) {
+  if (v == null || !isFinite(v)) return "";
+  if (unit === "PCT" || unit === "SEC") return String(Math.round(v * 100) / 100);   // 소수 2자리
+  if (Math.abs(v) >= 100) return String(Math.round(v));                              // 큰 +옵션: 정수(콤마 X — number input 호환)
+  return String(Math.round(v * 10) / 10);                                             // 작은 +옵션: 소수 1자리
+}
 
 async function renderGear() {
   await loadGearCfg();
@@ -1795,14 +1974,15 @@ async function runApply() {
 
   $("cmp-status").textContent = "적용 중…";
   try {
-    // 1) 옵션 교체에 따른 새 스탯 총합 계산(엔진: 기존 빼고 새 옵션 더함)
-    const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts, newOpts });
-    // 2) 스탯 폼 + 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
+    // 부스탯(깡부스탯·부스탯%)은 프리셋 부스탯(+)이 이미 '최종값'이라 서버 SUM에 raw로 더하면 오염된다.
+    // → 서버엔 부스탯 외 옵션만 보내고, 부스탯은 아래 myCube 파생으로 클라가 전담한다.
+    const isSub = (id) => id === "SUB_STAT_FLAT" || id === "SUB_STAT_PCT";
+    const oldOptsSrv = oldOpts.filter((o) => !isSub(o.statId));
+    const newOptsSrv = newOpts.filter((o) => !isSub(o.statId));
+    // 1) 옵션 교체에 따른 새 스탯 총합 계산(엔진: 기존 빼고 새 옵션 더함 — 부스탯 제외)
+    const data = await postJson("/api/applystats", { stats: collectStats(), conversions: myConv, oldOpts: oldOptsSrv, newOpts: newOptsSrv });
+    // 2) 스탯 폼에 반영(부스탯은 서버가 안 건드림 → 기존값 유지, 아래 3-b에서 재파생)
     fillStats(data.stats);
-    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생(엔진 증분값은 폼의 버림된 기존값 위에 더해져 소수 유실). 프리셋 저장 전에 갱신.
-    statPresets.presets[statPresets.active] = statPresetPayload();
-    saveJSON(STATP_KEY, statPresets);
-    statDirty = false;
     // 3) 큐브 줄 + 활성 큐브 프리셋에 반영
     if (!myCube[part]) myCube[part] = { 윗잠: emptyLine(), 아랫잠: emptyLine() };
     const locked = (line && line.locked) ? line.locked.slice() : [false, false, false];
@@ -1811,6 +1991,14 @@ async function runApply() {
       slots: rightSlots.map((s) => (s ? { stat: s.stat, value: s.value } : null)),
       locked, stack: newStack,
     };
+    // 3-b) 부스탯 = 갱신된 myCube 전체에서 깡부스탯합 × (1+부스탯%합/100)로 파생해 프리셋 부스탯(+)에 반영
+    const subInput = $("stat-form").querySelector('input[data-stat-id="SUB_STAT_FLAT"]');
+    if (subInput) subInput.value = truncStat(cubeSubStatFinal(myCube), "FLAT");
+    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생(엔진 증분값은 폼의 버림된 기존값 위에 더해져 소수 유실). 프리셋 저장 전에 갱신.
+    // 4) 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
+    statPresets.presets[statPresets.active] = statPresetPayload();
+    saveJSON(STATP_KEY, statPresets);
+    statDirty = false;
     saveCube();
     cubePresets.presets[cubePresets.active] = clone(myCube);
     saveJSON(CUBEP_KEY, cubePresets);
@@ -2075,13 +2263,16 @@ function initBuffPresets() {
 let skillData = loadJSON(CACHE_SKILLS, null);
 let skillView = "deal";   // "deal"(딜 스킬) | "buff"(버프 스킬)
 
+// DPS 모델(스킬 데이터)이 있는 직업 = 나이트로드(1)·다크나이트(2)·비숍(3). 직업 추가 시 여기만 늘리면 됨.
+function jobHasSkills(job) { return job === 1 || job === 2 || job === 3; }
+
 // 현재 스탯 기준 스킬/버프 목록을 그린다. 캐시/메모리에 있으면 즉시 렌더(불러오는 중 안 띄움), 항상 백그라운드로 최신화.
 async function renderBuffs() {
   if (!buffPresets) initBuffPresets();
   $("bp-job").value = String(myBuffJob);
   if ($("hit-interval")) $("hit-interval").value = myHitInterval;
   syncSkillViewButtons();
-  if (myBuffJob !== 1) {   // DPS 환산 모델 있는 직업만(현재 나이트로드). 공용 등은 준비 중.
+  if (!jobHasSkills(myBuffJob)) {   // DPS 모델 있는 직업만(나이트로드·다크나이트). 공용 등은 준비 중.
     const soon = '<div class="buff-soon"><div class="soon-icon">🚧</div>'
       + '<p>타 직업 스킬 선택 기능은 아직 준비 중이에요. 곧 추가될 예정입니다.</p></div>';
     $("deal-list").innerHTML = soon; $("buff-list").innerHTML = soon;
@@ -2094,7 +2285,7 @@ async function renderBuffs() {
 
 // /api/buffs 백그라운드 호출 → 최신 목록으로 갱신·캐시. 캐시가 이미 있으면 실패해도 조용히.
 async function refreshSkillData() {
-  if (myBuffJob !== 1) return;
+  if (!jobHasSkills(myBuffJob)) return;
   try {
     const stats = collectStats(); stats.JOB = myBuffJob;
     const fresh = await postJson("/api/buffs", { stats });
@@ -2490,7 +2681,7 @@ function relicCellHtml(a) {
 function renderRelicEquip() {
   const box = $("relic-slots"); if (!box) return;
   const slots = relicSlots(), owned = relicOwned();
-  const eq = (myRelic.equipped || []).filter((id) => relicAwaken(id) > 0);
+  const eq = (myRelic.equipped || []).filter((id) => relicHas(id));   // 보유면 장착(0각 포함 — 0각도 기본효과값 있음)
   let html = "";
   for (let i = 0; i < slots; i++) {
     const cur = eq[i] || "";
@@ -2505,7 +2696,7 @@ function renderRelicEquip() {
   box.querySelectorAll("select[data-slot]").forEach((sel) => {
     sel.addEventListener("change", () => {
       const i = parseInt(sel.dataset.slot, 10);
-      const arr = (myRelic.equipped || []).filter((id) => relicAwaken(id) > 0).slice(0, slots);
+      const arr = (myRelic.equipped || []).filter((id) => relicHas(id)).slice(0, slots);
       while (arr.length < slots) arr.push("");
       arr[i] = sel.value;
       myRelic.equipped = arr.filter(Boolean);
@@ -2919,15 +3110,36 @@ async function loadMeta(pre) {
 
 // ──────────────────── 공지사항(넥슨 포럼 크롤링·요약) ────────────────────
 // 서버가 넥슨 포럼을 1분 폴링·요약해 저장한 걸 읽어 탭(전체 + 말머리별)으로 보여준다. 게시 시각 내림차순.
-const noticeState = { cat: null, page: 0, hasMore: false, loading: false, inited: false };
+const noticeState = { cat: null, page: 0, pages: 1, q: "", loading: false, inited: false };
+let ntQTimer = null;
 
 async function renderNotices() {
   if (!noticeState.inited) {
     noticeState.inited = true;
-    $("nt-more").addEventListener("click", () => loadNotices(noticeState.cat, noticeState.page + 1, true));
+    const q = $("nt-q"), clr = $("nt-q-clear");
+    q.addEventListener("input", () => {
+      clr.hidden = !q.value;
+      clearTimeout(ntQTimer);
+      ntQTimer = setTimeout(() => { noticeState.q = q.value.trim(); ntSyncUrl(); loadNotices(noticeState.cat, 0); }, 300);
+    });
+    clr.addEventListener("click", () => {
+      q.value = ""; clr.hidden = true; noticeState.q = "";
+      clearTimeout(ntQTimer); ntSyncUrl(); loadNotices(noticeState.cat, 0); q.focus();
+    });
+    // 카톡 검색 링크 등 ?q=로 진입 시: 검색어 미리 채우고 검색 실행(로드 시 loadNotices가 noticeState.q 사용)
+    const urlQ = new URLSearchParams(location.search).get("q");
+    if (urlQ && urlQ.trim()) { noticeState.q = urlQ.trim(); q.value = urlQ.trim(); clr.hidden = false; }
   }
-  await buildNoticeTabs();                       // 재진입 시 개수 최신화(백필로 늘어남)
-  await loadNotices(noticeState.cat, 0, false);  // 현재 탭 최신 다시 로드
+  await buildNoticeTabs();                    // 재진입 시 개수 최신화(백필로 늘어남)
+  ntCouponBanner();                           // 쿠폰 고정 배너(병렬)
+  await loadNotices(noticeState.cat, 0);      // 현재 탭 최신 다시 로드
+}
+
+// 검색어를 주소창 ?q=에 반영(공유·복사 가능). replaceState라 히스토리는 안 쌓임.
+function ntSyncUrl() {
+  const u = new URL(location.href);
+  if (noticeState.q) u.searchParams.set("q", noticeState.q); else u.searchParams.delete("q");
+  history.replaceState(history.state, "", u.pathname + u.search + u.hash);
 }
 
 async function buildNoticeTabs() {
@@ -2946,87 +3158,290 @@ async function buildNoticeTabs() {
       if (noticeState.loading) return;
       document.querySelectorAll("#nt-tabs .nt-tab").forEach((x) => x.classList.remove("active"));
       b.classList.add("active");
-      loadNotices(d.key, 0, false);
+      loadNotices(d.key, 0);
     });
     tabs.appendChild(b);
   }
 }
 
-async function loadNotices(cat, page, append) {
-  const list = $("nt-list"), status = $("nt-status"), more = $("nt-more");
+// 목록만 비동기 교체(주변 UI·스크롤 건드리지 않음). 기존 목록은 새 데이터 도착 시 한 번에 스왑.
+async function loadNotices(cat, page) {
+  const list = $("nt-list"), status = $("nt-status");
   noticeState.loading = true;
   noticeState.cat = cat;
-  if (!append) { list.innerHTML = ""; status.textContent = "불러오는 중…"; more.hidden = true; }
+  list.classList.add("nt-loading");   // 살짝 흐리게(기존 내용 유지, 깜빡임 없음)
+  status.textContent = "";
   try {
     const q = new URLSearchParams();
     if (cat) q.set("category", cat);
     q.set("page", page);
+    if (noticeState.q) q.set("q", noticeState.q);
     const data = await (await fetch("/api/notices?" + q.toString())).json();
-    if (!append && (!data.items || data.items.length === 0)) {
-      list.innerHTML = '<p class="nt-empty">아직 수집된 공지가 없습니다. 잠시 후 다시 확인해 주세요.</p>';
+    const frag = document.createDocumentFragment();
+    if (!data.items || data.items.length === 0) {
+      const p = document.createElement("p");
+      p.className = "nt-empty";
+      p.textContent = noticeState.q
+        ? "‘" + noticeState.q + "’에 대한 공지를 찾지 못했습니다."
+        : "아직 수집된 공지가 없습니다. 잠시 후 다시 확인해 주세요.";
+      frag.appendChild(p);
     } else {
-      for (const it of (data.items || [])) list.appendChild(noticeCard(it));
+      const closed = [];
+      for (const it of data.items) {
+        const card = noticeCard(it);
+        if (it.status === "closed") closed.push(card); else frag.appendChild(card);
+      }
+      // 게시 종료(확인 중인 현상)는 아카이브 토글 뒤로 (스펙 §6-5)
+      if (closed.length) {
+        const tog = document.createElement("button");
+        tog.type = "button"; tog.className = "nt-archtog";
+        const arch = document.createElement("div"); arch.className = "nt-arch"; arch.hidden = true;
+        closed.forEach((c) => arch.appendChild(c));
+        const label = (hidden) => (hidden ? "종료된 현상 보기" : "종료된 현상 숨기기") + " (" + closed.length + ")";
+        tog.textContent = label(true);
+        tog.addEventListener("click", () => { arch.hidden = !arch.hidden; tog.textContent = label(arch.hidden); });
+        frag.appendChild(tog); frag.appendChild(arch);
+      }
     }
+    list.replaceChildren(frag);   // 한 번에 교체
     noticeState.page = data.page || 0;
-    noticeState.hasMore = !!data.hasMore;
-    more.hidden = !noticeState.hasMore;
-    status.textContent = "";
+    noticeState.pages = data.pages || 1;
+    renderPager(noticeState.page, noticeState.pages);
+    ntOpenFromUrl();   // 개별 URL/해시로 들어왔으면 해당 카드 펼침+스크롤
   } catch (e) {
     status.textContent = "공지를 불러오지 못했습니다.";
   } finally {
     noticeState.loading = false;
+    list.classList.remove("nt-loading");
   }
 }
 
-// 목록 카드: 강한 요약 + (쿠폰) + 원문 보기 링크. 원문 본문·이미지·표는 우리가 저장/전시하지 않고 링크로만 연결.
+// 페이지네이션: 5단위 블록(1~5, 6~10…) + «(첫)/‹(이전)/번호/›(다음)/»(끝). 목록만 교체.
+const NT_PAGE_BLOCK = 5;
+function renderPager(page, pages) {
+  const pager = $("nt-pager");
+  pager.innerHTML = "";
+  if (pages <= 1) { pager.hidden = true; return; }
+  pager.hidden = false;
+  const go = (p) => {
+    if (p < 0 || p >= pages || p === noticeState.page || noticeState.loading) return;
+    loadNotices(noticeState.cat, p);
+    document.querySelector(".notices-card").scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const btn = (label, p, opts) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "nt-page" + (opts && opts.cur ? " cur" : "") + (opts && opts.nav ? " nav" : "");
+    b.textContent = label;
+    if (opts && opts.disabled) b.disabled = true;
+    else b.addEventListener("click", () => go(p));
+    pager.appendChild(b);
+  };
+  const blockStart = Math.floor(page / NT_PAGE_BLOCK) * NT_PAGE_BLOCK;
+  const blockEnd = Math.min(blockStart + NT_PAGE_BLOCK - 1, pages - 1);
+  btn("«", 0, { nav: true, disabled: page <= 0 });               // 첫 페이지
+  btn("‹", page - 1, { nav: true, disabled: page <= 0 });        // 이전 페이지(블록 경계 넘으면 번호창 자동 이동)
+  for (let p = blockStart; p <= blockEnd; p++) btn(String(p + 1), p, { cur: p === page });
+  btn("›", page + 1, { nav: true, disabled: page >= pages - 1 }); // 다음 페이지
+  btn("»", pages - 1, { nav: true, disabled: page >= pages - 1 }); // 마지막 페이지
+}
+
+// ── 공지 아코디언 카드: 배지 + 제목 + one_liner(접힘) / 구조화 전체(펼침). data 없으면 레거시 summary 폴백.
+const NT_BADGE = {
+  preview: ["미리보기", "b-preview"], patchnote: ["패치노트", "b-patch"], event: ["이벤트", "b-event"],
+  issue: ["확인 중인 현상", "b-issue"], devnote: ["개발자 노트", "b-devnote"], coupon: ["쿠폰", "b-coupon"], etc: ["공지", "b-etc"],
+};
+// 태그 = 넥슨 원문 말머리(headline). 말머리별 시그니처 색상 클래스. 없으면 기존 타입 배지로 폴백.
+const NT_HEAD = { "안내": "h-notice", "점검": "h-maint", "업데이트": "h-update", "진행중": "h-event", "당첨안내": "h-winner", "확인중": "h-issue" };
+function ntHeadBadge(it) {
+  const h = (it.headline || "").trim();
+  if (h) return [h, NT_HEAD[h] || "h-etc"];
+  return NT_BADGE[ntType(it)] || NT_BADGE.etc;
+}
+const NT_SEC_EMOJI = { new: "🆕", improve: "⚙️", bugfix: "🐛", event: "🎉", promise: "🤝", info: "📋" };
+
+function ntType(it) {
+  if (it.data && it.data.notice_type) return it.data.notice_type;
+  const c = it.category || "";
+  if (c.indexOf("패치") >= 0) return "patchnote";
+  if (c.indexOf("이벤트") >= 0) return "event";
+  if (c.indexOf("확인") >= 0 || c.indexOf("현상") >= 0) return "issue";
+  return "preview";
+}
+
 function noticeCard(it) {
+  const type = ntType(it), d = it.data, closed = it.status === "closed";
   const el = document.createElement("article");
-  el.className = "nt-item";
-  const coupons = (it.coupons && it.coupons.length) ? ntCoupons(it.coupons) : "";
-  const src = it.sourceUrl
-    ? '<a class="nt-src" href="' + escAttr(it.sourceUrl) + '" target="_blank" rel="noopener nofollow">원문 보기 ↗</a>' : "";
-  el.innerHTML = ntHead(it)
-    + '<h3 class="nt-title">' + escNt(it.title || "") + "</h3>"
-    + (it.summary
-        ? '<div class="nt-summary">' + ntSummary(it.summary) + "</div>"
-        : '<div class="nt-summary nt-pending">요약을 준비하고 있어요…</div>')
-    + coupons + src;
-  el.querySelectorAll(".nt-coupon-code").forEach((c) => c.addEventListener("click", () => copyCoupon(c)));
+  el.className = "nt-card" + (closed ? " nt-closed" : "");
+  el.id = "notice-" + it.id;
+  const badge = closed ? ["게시 종료", "b-closed"] : ntHeadBadge(it);
+  const dd = ntDday(it, type, closed);
+  const dateTxt = ntDate(it.postedAt);   // 넥슨 게시 일시(고정) — date_label(예정/적용/종료)은 펼침 본문에서 확인
+  el.innerHTML =
+    '<button class="nt-head2" type="button" aria-expanded="false">'
+    + '<span class="nt-badge ' + badge[1] + '">' + escNt(badge[0]) + "</span>"
+    + '<span class="nt-t">' + ntHl(it.title || "") + "</span>"
+    + (dd ? '<span class="nt-badge ' + dd[1] + '">' + escNt(dd[0]) + "</span>" : "")
+    + (it.sticky ? '<span class="nt-pin" title="상단 고정">📌</span>' : "")
+    + '<span class="nt-dt">' + escNt(dateTxt) + "</span>"
+    + '<span class="nt-chev">▾</span>'
+    + "</button>"
+    + '<div class="nt-line">' + ntCollapsedLine(it, type) + "</div>"
+    + '<div class="nt-body2" hidden>' + ntExpandedBody(it, type) + "</div>";
+  const btn = el.querySelector(".nt-head2");
+  btn.addEventListener("click", () => ntToggle(el));
+  el.querySelectorAll(".nt-copy").forEach((c) => c.addEventListener("click", (e) => { e.stopPropagation(); copyCoupon(c); }));
   return el;
 }
 
-function ntHead(it) {
-  return '<div class="nt-head">'
-    + '<span class="nt-cat ' + ntCatClass(it.category) + '">' + escNt(it.category || "") + "</span>"
-    + (it.headline && it.headline !== it.category ? '<span class="nt-headline">' + escNt(it.headline) + "</span>" : "")
-    + '<span class="nt-date">' + ntDate(it.postedAt) + "</span>"
-    + (it.sticky ? '<span class="nt-pin" title="상단 고정">📌</span>' : "")
-    + "</div>";
+function ntToggle(el, force) {
+  const body = el.querySelector(".nt-body2"), btn = el.querySelector(".nt-head2");
+  const open = force != null ? force : body.hidden;
+  body.hidden = !open;
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  el.classList.toggle("nt-open", open);
 }
 
-function ntSummary(s) {
-  const lines = String(s).split("\n").map((l) => l.trim()).filter(Boolean);
-  if (!lines.length) return "";
-  return "<ul>" + lines.map((l) => "<li>" + escNt(l.replace(/^[-•*]\s*/, "")) + "</li>").join("") + "</ul>";
+// 접힘 요약 줄(유형별). 검색 중 제목·기본줄에 매치가 없으면 매치된 요약 스니펫으로 대체(하이라이트 항상 노출).
+function ntCollapsedLine(it, type) {
+  const d = it.data;
+  let plain = "", html = null;
+  if (type === "issue" && d && d.issues) {
+    const o = d.issues.open.length, f = d.issues.fixed.length;
+    const rep = (d.issues.open[0] && d.issues.open[0].text) || (d.issues.fixed[0] && d.issues.fixed[0].text) || "";
+    plain = rep;
+    html = '<em>확인 중 ' + o + "건</em> · <em>수정 완료 " + f + "건</em>" + (rep ? " — " + ntHl(rep) : "");
+  } else if (d && d.one_liner) {
+    plain = d.one_liner;
+    html = (type === "devnote" ? '<span class="nt-quote">' + ntHl(d.one_liner) + "</span>" : ntHl(d.one_liner));
+  } else if (it.summary) {
+    plain = String(it.summary).split("\n")[0].replace(/^[-•*]\s*/, "");
+    html = ntHl(plain);
+  } else {
+    return '<span class="nt-pending">요약을 준비하고 있어요…</span>';
+  }
+  if (noticeState.q && !ntHasTok(it.title) && !ntHasTok(plain)) {
+    const snip = ntMatchSnippet(it);
+    if (snip) return ntHl(snip);
+  }
+  return html;
 }
 
-function ntCoupons(cs) {
-  let h = '<div class="nt-coupons">';
+// 검색 토큰/매치 유틸 — 접힘줄 스니펫·하이라이트 판단용
+function ntQTokens() { const q = noticeState.q; return q ? q.trim().toLowerCase().split(/\s+/).filter(Boolean) : []; }
+function ntHasTok(s) { if (!s) return false; const l = String(s).toLowerCase(); return ntQTokens().some((x) => l.indexOf(x) >= 0); }
+function ntDataTexts(d) {
+  const out = [];
+  if (!d) return out;
+  if (d.one_liner) out.push(d.one_liner);
+  (d.sections || []).forEach((s) => { if (s.heading) out.push(s.heading); (s.items || []).forEach((it) => { if (it.text) out.push(it.text); (it.sub || []).forEach((x) => out.push(x)); }); });
+  if (d.event_meta) ["benefit", "how_to", "caution", "period"].forEach((k) => { if (d.event_meta[k]) out.push(d.event_meta[k]); });
+  if (d.issues) { (d.issues.open || []).forEach((o) => { if (o.text) out.push(o.text); if (o.workaround) out.push(o.workaround); }); (d.issues.fixed || []).forEach((f) => { if (f.text) out.push(f.text); }); }
+  (d.coupons || []).forEach((c) => { if (c.code) out.push(c.code); (c.rewards || []).forEach((r) => out.push(r)); });
+  if (d.mail_rewards) { if (d.mail_rewards.target) out.push(d.mail_rewards.target); (d.mail_rewards.items || []).forEach((x) => out.push(x)); }
+  return out;
+}
+function ntMatchSnippet(it) {
+  const toks = ntQTokens(); if (!toks.length) return null;
+  for (const s of ntDataTexts(it.data)) if (toks.some((x) => s.toLowerCase().indexOf(x) >= 0)) return s;
+  if (it.summary) for (const ln of String(it.summary).split("\n")) { const t = ln.replace(/^[-•*]\s*/, ""); if (toks.some((x) => t.toLowerCase().indexOf(x) >= 0)) return t; }
+  return null;
+}
+
+// 펼침 본문(생략 없이 전체)
+function ntExpandedBody(it, type) {
+  const d = it.data;
+  let h = "";
+  if (d) {
+    if (type === "event" && d.event_meta) h += ntEventMeta(d.event_meta);
+    else if (type === "issue" && d.issues) h += ntIssues(d.issues);
+    else h += ntSections(d.sections);
+    if (d.coupons && d.coupons.length) h += ntCouponsHtml(d.coupons);
+    if (d.mail_rewards) h += ntMailHtml(d.mail_rewards);
+    if (it.closeNote) h += '<p class="nt-closenote">' + escNt(it.closeNote) + "</p>";
+  } else if (it.summary) {
+    h += ntSummaryLegacy(it.summary);
+  } else {
+    h += '<p class="nt-pending">요약을 준비하고 있어요…</p>';
+  }
+  if (it.sourceUrl) h += '<div class="nt-foot"><a class="nt-src" href="' + escAttr(it.sourceUrl) + '" target="_blank" rel="noopener nofollow">원문 보기 ↗</a></div>';
+  return h;
+}
+
+function ntSections(sections) {
+  if (!sections || !sections.length) return "";
+  let h = "";
+  for (const s of sections) {
+    if (!s.items || !s.items.length) continue;
+    h += '<h4 class="nt-sec">' + (NT_SEC_EMOJI[s.key] || "📋") + " " + ntHl(s.heading || "") + "</h4><ul class=\"nt-items\">";
+    for (const it of s.items) {
+      h += "<li>" + ntHl(it.text || "");
+      if (it.sub && it.sub.length) h += '<ul class="nt-sub">' + it.sub.map((x) => "<li>" + ntHl(x) + "</li>").join("") + "</ul>";
+      h += "</li>";
+    }
+    h += "</ul>";
+  }
+  return h;
+}
+
+function ntEventMeta(e) {
+  let r = "";
+  if (e.benefit) r += ntRow("혜택", e.benefit);
+  if (e.period) r += ntRow("기간", e.period);
+  if (e.how_to) r += ntRow("방법", e.how_to);
+  if (e.caution) r += ntRow("주의", e.caution);
+  return '<dl class="nt-meta">' + r + "</dl>";
+}
+function ntRow(k, v) { return "<dt>" + escNt(k) + "</dt><dd>" + ntHl(v) + "</dd>"; }
+
+function ntIssues(iss) {
+  let h = "";
+  if (iss.open && iss.open.length) {
+    h += '<h4 class="nt-sec nt-o">🔴 확인 중 ' + iss.open.length + "건</h4><ul class=\"nt-items\">";
+    for (const o of iss.open) {
+      h += "<li>" + ntHl(o.text || "");
+      if (o.workaround) h += '<div class="nt-work">ㄴ 임시 해결: ' + ntHl(o.workaround) + "</div>";
+      h += "</li>";
+    }
+    h += "</ul>";
+  }
+  if (iss.fixed && iss.fixed.length) {
+    h += '<h4 class="nt-sec nt-f">✅ 수정 완료 ' + iss.fixed.length + "건</h4><ul class=\"nt-items\">";
+    for (const f of iss.fixed) h += "<li>" + ntHl(f.text || "") + (f.fixed_date ? " <small>(" + escNt(f.fixed_date) + ")</small>" : "") + "</li>";
+    h += "</ul>";
+  }
+  return h;
+}
+
+function ntCouponsHtml(cs) {
+  let h = '<div class="nt-cpblock"><h4 class="nt-sec">🎟️ 쿠폰</h4>';
   for (const c of cs) {
-    const period = ntPeriod(c.start, c.end);
-    h += '<div class="nt-coupon">'
-      + '<button class="nt-coupon-code" type="button" data-code="' + escAttr(c.code) + '" title="클릭하면 복사">🎟 ' + escNt(c.code) + "</button>"
-      + (period ? '<span class="nt-coupon-period">' + escNt(period) + "</span>" : "")
-      + (c.desc ? '<span class="nt-coupon-desc">' + escNt(c.desc) + "</span>" : "")
-      + "</div>";
+    h += '<div class="nt-cp"><button class="nt-copy" type="button" data-code="' + escAttr(c.code) + '" title="복사"><code>' + ntHl(c.code) + "</code> ⧉</button>"
+      + (c.expires ? '<span class="nt-cp-exp">~' + escNt(c.expires) + "</span>" : "") + "</div>";
+    if (c.rewards && c.rewards.length) h += '<ul class="nt-items nt-rw">' + c.rewards.map((r) => "<li>" + ntHl(r) + "</li>").join("") + "</ul>";
   }
   return h + "</div>";
 }
 
-function ntPeriod(s, e) {
-  if (!s && !e) return "";
-  if (s && e) return s + " ~ " + e;
-  return e ? "~ " + e : s + " ~";
+function ntMailHtml(m) {
+  let h = '<div class="nt-mail"><h4 class="nt-sec">📬 우편 보상</h4>';
+  if (m.target) h += '<p class="nt-mail-t">대상: ' + ntHl(m.target) + (m.claim_deadline ? " · 수령 기한: " + escNt(m.claim_deadline) : "") + "</p>";
+  if (m.items && m.items.length) h += '<ul class="nt-items">' + m.items.map((x) => "<li>" + ntHl(x) + "</li>").join("") + "</ul>";
+  return h + "</div>";
+}
+
+function ntSummaryLegacy(s) {
+  const lines = String(s).split("\n").map((l) => l.trim()).filter(Boolean);
+  return '<ul class="nt-items">' + lines.map((l) => "<li>" + ntHl(l.replace(/^[-•*]\s*/, "")) + "</li>").join("") + "</ul>";
+}
+
+// event D-day 배지: [텍스트, class]. 이벤트·미종료·endAt 있을 때만.
+function ntDday(it, type, closed) {
+  if (type !== "event" || closed || !it.endAt) return null;
+  const now = Date.now() / 1000;
+  if (it.endAt < now) return ["종료", "b-closed"];
+  const days = Math.max(0, Math.ceil((it.endAt - now) / 86400));
+  return ["D-" + days, days <= 3 ? "b-dday-hot" : "b-dday"];
 }
 
 function copyCoupon(btn) {
@@ -3047,21 +3462,76 @@ function ntDate(sec) {
   return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
 
-function ntCatClass(cat) {
-  if (!cat) return "cat-notice";
-  if (cat.indexOf("패치") >= 0) return "cat-patch";
-  if (cat.indexOf("이벤트") >= 0) return "cat-event";
-  if (cat.indexOf("확인") >= 0 || cat.indexOf("현상") >= 0) return "cat-issue";
-  return "cat-notice";
+// 쿠폰 고정 배너(목록 최상단): 유효 쿠폰만. 코드칩+복사+만료+보상 전체. 각 코드에 출처 공지 링크.
+async function ntCouponBanner() {
+  const box = $("nt-coupon-banner");
+  if (!box) return;
+  let cs = [];
+  try { cs = (await (await fetch("/api/coupons")).json()).coupons || []; } catch (e) { /* 무시 */ }
+  if (!cs.length) { box.hidden = true; box.innerHTML = ""; return; }
+  let h = '<h3>🎟️ 사용 가능한 쿠폰 <span class="nt-cpcount">' + cs.length + "</span></h3>";
+  for (const c of cs) {
+    h += '<div class="nt-cpchip"><button class="nt-copy" type="button" data-code="' + escAttr(c.code) + '" title="복사"><code>' + escNt(c.code) + "</code> ⧉</button>"
+      + (c.end ? '<span class="nt-cp-exp">~' + escNt(ntMd(c.end)) + "</span>" : "")
+      + (c.sourceUrl ? '<a class="nt-cp-src" href="' + escAttr(c.sourceUrl) + '" target="_blank" rel="noopener nofollow">출처 공지 ↗</a>' : "")
+      + "</div>";
+    if (c.rewards && c.rewards.length) h += '<ul class="nt-items nt-rw">' + c.rewards.map((r) => "<li>" + escNt(r) + "</li>").join("") + "</ul>";
+  }
+  box.innerHTML = h;
+  box.hidden = false;
+  box.querySelectorAll(".nt-copy").forEach((b) => b.addEventListener("click", () => copyCoupon(b)));
+}
+
+// "yyyy-MM-dd" → "M/D" (배너 만료 표기)
+function ntMd(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ""));
+  return m ? Number(m[2]) + "/" + Number(m[3]) : s;
+}
+
+// 개별 URL(/notices/{id} 또는 #notice-{id}) → 해당 카드 펼침 + 스크롤. 로드 후 호출.
+function ntOpenFromUrl() {
+  let id = null;
+  const m = /\/notices\/(\d+)/.exec(location.pathname);
+  if (m) id = m[1];
+  else if (location.hash.startsWith("#notice-")) id = location.hash.slice(8);
+  if (!id) return;
+  const el = document.getElementById("notice-" + id);
+  if (el) { ntToggle(el, true); el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 }
 
 function escNt(s) { const d = document.createElement("div"); d.textContent = (s == null ? "" : String(s)); return d.innerHTML; }
 function escAttr(s) { return escNt(s).replace(/"/g, "&quot;"); }
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+// 검색어 하이라이트: 이스케이프 후 현재 검색 토큰을 <mark>로 감싼다. 검색 없으면 escNt와 동일.
+function ntHl(s) {
+  const esc = escNt(s);
+  const q = noticeState.q;
+  if (!q) return esc;
+  const toks = q.trim().toLowerCase().split(/\s+/).filter(Boolean).map(escapeRe);
+  if (!toks.length) return esc;
+  return esc.replace(new RegExp("(" + toks.join("|") + ")", "gi"), '<mark class="nt-hl">$1</mark>');
+}
 
 (async function init() {
   // 초기화 중에는 자동 push 금지: 계정 정본을 pull하기 전에 로컬(스테일) 상태를 계정에 덮어쓰는 것 방지
   // (멀티 기기에서 나중에 연 기기가 옛 값으로 계정을 덮어써 예상 데미지가 흔들리던 문제). 사용자 편집은 init 후부터 동기화.
   suppressSync = true;
+
+  // ── 딥링크 즉시 라우팅(홈 깜빡임 제거) ──
+  // 기존엔 홈(예상 데미지)을 먼저 그린 뒤 init 끝에서야 이동 → /notices 링크로 들어오면 홈이 한참 보이다 점프했음.
+  // 대상 패널을 첫 페인트부터 노출한다. notices는 자족적(독립 fetch)이라 즉시 렌더, 계산 패널은 컨테이너만 노출하고
+  // 정식 렌더는 데이터 로드 후 하단 navigate가 맡는다(초기화 중 계산 렌더 호출 방지). '/notices/{id}'도 notices로.
+  const bootPath = location.pathname;
+  const bootLeaf = leafByPath(bootPath) || (bootPath.startsWith("/notices") ? leafByPath("/notices") : null);
+  const bootDeep = !!(bootLeaf && bootLeaf !== MENU[0]);
+  if (bootDeep) {
+    for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + bootLeaf.panel);
+    document.body.classList.toggle("notices-active", bootLeaf.panel === "notices");
+    if (bootLeaf.panel === "notices") renderNotices();
+  }
+  // head 인라인 스크립트가 첫 페인트 전 홈을 CSS로 숨겨둠(deep-route). 이제 JS가 패널 가시성을 잡았으니 해제.
+  document.documentElement.classList.remove("deep-route");
+
   try {
     // ── 즉시 페인트: 캐시(localStorage)로 화면을 서버 대기 없이 먼저 그림 → 재방문 시 "클릭하자마자" 느낌 ──
     // 정적 데이터(stats·meta)와 직전 데미지·계정 표시를 즉시 복원. 데이터는 곧 서버 응답으로 갱신됨.
@@ -3120,5 +3590,13 @@ function escAttr(s) { return escNt(s).replace(/"/g, "&quot;"); }
     suppressSync = false;        // 이제부터 사용자 편집은 계정에 동기화
   }
   refreshSkillData();   // 스킬 탭 목록 미리 받아 캐시 → 첫 탭 클릭 시 '불러오는 중' 없이 즉시 표시
-  navigate(location.pathname, false);   // 직접 URL 진입(예: /cube)이면 해당 패널로. '/'면 홈 유지(멱등).
+  // 딥링크 처리: notices는 위에서 이미 렌더됨 → 메뉴 활성/메타만 맞춤(재fetch 방지). 그 외(홈·계산 패널)는 정식 navigate.
+  if (bootDeep && bootLeaf.panel === "notices") {
+    const it = routeItemEls.get(bootLeaf.path);
+    if (it) setActiveMenu(it);
+    syncMobileActive(bootLeaf);
+    applyRouteMeta(bootLeaf.path);
+  } else {
+    navigate(bootPath, false);   // 직접 URL 진입(예: /cube)이면 해당 패널로. '/'면 홈 유지(멱등).
+  }
 })();
