@@ -32,22 +32,22 @@
       "masteryBossByLevel": { "111": 10, "124": 10 }, "hitPlus": { "136": 1 } },
 
     { "id": "angelRay", "name": "엔젤레이", "kind": "dealActive", "tier": 4, "open": 103,
-      "base": 680, "hits": 6, "targets": 1, "cd": 17, "masteryDmgByLevel": { "108": 50 },
-      "_note": "성검 3회 발사 × 각 680% 2회 = 6타 가정. 122렙 마스터리 '보스 타격 시 680% 추가피해(스킬레벨 비례)'는 보스한정 추가딜 → 미반영(유저 확정 필요)." },
+      "base": 680, "hits": 2, "targets": 1, "cd": 17, "masteryDmgByLevel": { "108": 50 }, "bossHitsByLevel": { "122": 1 },
+      "_note": "클뜯 SkillTable 64020 확정: 680% 2타(GetDamageR Values 680/None/2, 성장 F12=0.5). 122렙 마스터리(60255)는 ModSkillEnabled로 보스한정 Dot 680% 1타를 활성화 → bossHitsByLevel 122:1(보스전에서만 +1타). 108렙: 피해+50%. (구 가정 hits6은 오류였음, 클뜯 2타 확정 2026-07-26.)" },
 
     { "id": "genesis", "name": "제네시스", "kind": "dealActive", "tier": 4, "open": 105,
       "base": 700, "hits": 6, "targets": 10, "cd": 23,
       "masteryDmgByLevel": { "118": 50 }, "cdrMasteryByLevel": { "126": 30 } },
 
     { "id": "bahamut", "name": "바하뮤트", "kind": "dealActive", "tier": 4, "open": 115,
-      "base": 3500, "hitsPerTick": 1, "ticks": 7, "targets": 3, "cd": 80,
-      "masteryDmgByLevel": { "130": 50 }, "targetPlus": { "130": 3 }, "cdrMasteryByLevel": { "138": 30 },
-      "_note": "30초 소환, 4초마다 3명 3500% → ticks=floor(30/4)=7 가정(다크플레어 설치기 패턴). 130렙: 피해+50%·대상+3, 138렙: 재사용-30%. ticks/대상 유저 확정 필요." },
+      "base": 3500, "hitsPerTick": 1, "ticks": 7, "targets": 1, "cd": 80,
+      "masteryDmgByLevel": { "130": 50 }, "cdrMasteryByLevel": { "138": 30 },
+      "_note": "클뜯 확정: 발사체 64060 지속30초·틱4초 → 7틱, 각 3500%(64061 GetDamageR 35000/None/1, 성장 F12). 130렙(60275): 피해+50%·MaxTargetCount=3(단일전투 가정이라 대상수 딜 무영향 → targetPlus 제거), 138렙(60295): 재사용-30%." },
 
     { "id": "triumphFeather", "name": "트라이엄프 페더", "kind": "dealPassiveNoCd", "tier": 3, "open": 63,
       "base": 150, "hits": 2, "proc": 35, "meyong": 50,
-      "masteryDmgByLevel": { "73": 50 }, "hitPlus": { "104": 1 },
-      "_note": "메커니즘: 공격 시 15%로 '천사의 힘' 강림(10초 버프). 천사의 힘 지속 중 공격 시 35%로 깃털 150%×2. 유효 발동확률 = 천사의힘 가동률 × 35%. 현재 proc=35는 천사의힘 가동률 미반영 임시치 → 강림 가동률(15% proc·10초·공속의존) 곱해 정확 산정 추후. 78렙 깃털확률+10%, 94렙 강림 추가효과(임의7명) 미반영." }
+      "masteryDmgByLevel": { "73": 50 }, "hitPlus": { "104": 1 }, "procMasteryByLevel": { "78": 10 },
+      "_note": "클뜯 확정(63050/63051): 공격 시 15%로 천사의힘 강림(10초), 지속 중 공격 시 35%로 깃털 150%×2타(성장 F21=0.4). proc=35는 천사의힘 중 발동확률(공속 빈번 → 천사의힘 가동률 ≈1 근사). 73렙 피해+50%(masteryDmg), 78렙 발동확률+10%(procMasteryByLevel → 실효 45%), 104렙 타격+1(hitPlus). 94렙 강림 대상확대(단일전투 무관)." }
   ],
 
   "buffs": [
@@ -69,7 +69,11 @@
 
     { "id": "advBless", "name": "어드밴스드 블레스", "kind": "statActive", "tier": 4, "open": 107,
       "finalDmg": 7, "dur": 20, "cd": 26,
-      "_note": "타임드 최종뎀7%(엔진 가동률 처리). 113렙 마스터리 'MP50%↑ 최종뎀+4%'는 MP조건이라 미반영(선반영)." }
+      "_note": "타임드 최종뎀7%(엔진 가동률 처리). 113렙 마스터리 'MP50%↑ 최종뎀+4%'는 MP조건이라 미반영(선반영)." },
+
+    { "id": "holySymbolSolo", "name": "홀리 심볼(솔로 데미지)", "kind": "statActive", "tier": 3, "open": 72,
+      "fixed": true, "dmgAdd": 25, "dur": 14, "cd": 28,
+      "_note": "클뜯 63060: 동료 4명 미만(솔로/효율 기준 항상 충족) 시 자신 데미지 가산 25%(AttackPower 250, ValueLevelFactor 없어 고정). DMG_ADD로 반영: 식 (1+(데미지%+홀심)/100)×(1+증폭%/100). 육각수정목걸이 유물(hexcrystal_necklace)이 DMG를 dmgMult로 곱하지만 홀심은 DMG_ADD라 육각과 안 곱해지고((데미지×육각)+홀심), 일반 데미지증폭과는 곱해짐. 14초 지속/28초 주기 → 가동률 자동. 일반몹뎀15(AttackPowerExcludeBoss, 보스무관)는 statPassives.holySymbol에 별도." }
   ],
 
   "debuffs": [],
@@ -80,12 +84,12 @@
     { "id": "invincible",       "name": "인빈서블",               "tier": 2, "open": 38,  "desc": "방어력의 10%만큼 주스탯 증가(선반영)" },
     { "id": "spellMastery",     "name": "스펠 마스터리",           "tier": 2, "open": 43,  "minMult": 15 },
     { "id": "highWisdom",       "name": "하이 위즈덤",             "tier": 3, "open": 50,  "critRate": 8 },
-    { "id": "healAtkMastery",   "name": "힐 - 공격력(마스터리)",    "tier": 2, "open": 54,  "desc": "HP30%↑ 공격력+8%(스킬 무관 패시브 → 프리셋 공격력에 선반영, 엔진 미적용)" },
+    { "id": "healAtkMastery",   "name": "힐 - 공격력(마스터리)",    "tier": 2, "open": 54,  "atkPct": 8, "noGrowth": true, "desc": "HP30%↑ 공격력+8%(마스터리 → 성장X 고정). 게임 총합 공격력엔 선적용이나 우리 입력(깡공/공퍼)엔 미포함 → 엔진이 skillAtkSum에 반영(noGrowth 고정)" },
     { "id": "divineProtection", "name": "디바인 프로텍션",         "tier": 3, "open": 60,  "def": 25, "debuffResist": 2, "desc": "15초간 방어력+25·디버프면역(20초 주기) — 유틸" },
     { "id": "triumphFeatherP",  "name": "트라이엄프 페더(발동딜)",  "tier": 3, "open": 63,  "desc": "확률 발동 추가타 — skills.triumphFeather에서 반영" },
     { "id": "holySymbol",       "name": "홀리 심볼",              "tier": 3, "open": 72,  "normalDmg": 15, "desc": "전투시작 14초 일반몹뎀+15(28초 주기, 조건부 → 선반영)" },
     { "id": "magicCritical",    "name": "매직 크리티컬",           "tier": 3, "open": 74,  "critRate": 8, "critDmg": 12 },
-    { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "finalDmg": 15, "desc": "MP50%↑ 조건 최종뎀+15(선반영 근사)" },
+    { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "finalDmg": 15, "applyFinalDmg": true, "desc": "MP50%↑ 조건 최종뎀+15. 선반영 아님 → 엔진이 딜계산에 반영(applyFinalDmg). MP조건은 상시 가정." },
     { "id": "meyong",           "name": "메이플 용사",             "tier": 4, "open": 100, "desc": "트라이엄프 페더 최종뎀+50%(딜) — skills.meyong으로 반영" },
     { "id": "masterMagic",      "name": "마스터 매직",             "tier": 4, "open": 117, "desc": "버프 지속시간+10% — 버프 가동률 영향(반영 방식 유저 확정)" },
     { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "desc": "공격 시 25% 최종뎀+3% 최대5중첩(스택 → 선반영 근사, 평균치 유저 확정)" },

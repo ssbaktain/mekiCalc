@@ -26,6 +26,7 @@ public final class NightlordDps {
     private static final String CRIT_RATE = "CRIT_RATE";
     private static final String CRIT_DMG = "CRIT_DMG";
     private static final String FINAL_DMG = "FINAL_DMG";
+    private static final String DMG_ADD = "DMG_ADD";
     private static final String CDR_PCT = "COOLDOWN_REDUCTION_PCT";
     private static final String CDR_FLAT = "COOLDOWN_REDUCTION";
     private static final String BUFF_DURATION = "BUFF_DURATION";
@@ -208,7 +209,10 @@ public final class NightlordDps {
             boolean learned = cl >= Json.num(m, "open", 0);
             double sc = passiveScale(m, cl, input);
             double atkPct = Json.num(m, "atkPct", 0);
-            if (atkPct != 0) { if (wanted) skillAtkSum += atkPct * sc; }   // 공퍼: 원하면 적용(미습득이어도=과대)
+            if (Json.bool(m, "applyFinalDmg", false)) {   // 조건부 상시 최종뎀(엘리먼트앰플 MP조건): 선반영 아님 → 엔진이 딜계산에 반영. 버프 스킬 효과값이므로 kind 성장(sc) 적용
+                if (wanted) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), Json.num(m, "finalDmg", 0) * sc));
+            }
+            else if (atkPct != 0) { if (wanted) skillAtkSum += atkPct * (Json.bool(m, "noGrowth", false) ? 1.0 : sc); }   // 공퍼: 원하면 적용. 마스터리(noGrowth)는 고정, 스킬 버프는 성장(sc)
             else adjustPassive(eff, m, sc, cl, wanted, learned);           // 입력 포함: 원함/보유 차이만큼 가감
         }
         // 상시 버프(페이크·다크세레니티)도 입력 포함.
@@ -246,6 +250,8 @@ public final class NightlordDps {
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
             double bdmg = Json.num(m, "bossDmg", 0);   // 소환중 보스뎀(비홀더스버프 82렙): 보스뎀%에 합산(u 게이팅)
             if (bdmg != 0 && cl >= Json.num(m, "bossDmgOpen", 0)) eff.set(BOSS_DMG, eff.get(BOSS_DMG) + bdmg * u);
+            double da = Json.num(m, "dmgAdd", 0) * scale;   // 데미지 가산%(홀리심볼 동료<4 자버프): 육각목걸이 증폭 뒤 가산, 일반 데미지증폭과는 곱, u 게이팅
+            if (da != 0) eff.set(DMG_ADD, eff.get(DMG_ADD) + da * u);
         }
         // 퍼지 크리 마스터리(113렙): 퍼지 가동 중 적 받는 크리티컬 데미지 +critTaken% → 크리 데미지 ×(1+비율×가동률).
         // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
@@ -742,7 +748,7 @@ public final class NightlordDps {
     private double procExtraPerHit(Skill s, StatBlock eff, boolean boss) {
         if (s == null || !wants(s.id, s.open, charLevel(eff))) return 0;
         double v = dm.globalMultiplier(eff, boss) * typeDmgWithMastery(s, eff) * coeffFrac(s, s.num("base", 0), eff)
-                * (s.num("proc", 0) / 100.0);
+                * ((s.num("proc", 0) + levelSum(s.raw, "procMasteryByLevel", charLevel(eff))) / 100.0);
         if (s.has("meyong")) v *= meyongFactor(s.num("meyong", 0), eff);
         v *= finalMasteryFactor(s, eff);
         if (Json.bool(s.raw, "requiresPoison", false)) v *= venomUptimeOf(eff);
@@ -857,15 +863,24 @@ public final class NightlordDps {
         return best;
     }
 
-    /** 한 시전당 액티브 타격수(다크플레어 틱·타격 마스터리 레벨 게이팅 포함). */
-    private int hitsPerCast(Skill s, StatBlock eff) {
+    private int hitsPerCast(Skill s, StatBlock eff) { return hitsPerCast(s, eff, false); }
+
+    /**
+     * 한 시전당 액티브 타격수(다크플레어 틱·타격 마스터리 레벨 게이팅 포함).
+     * boss=true면 보스한정 추가타(bossHitsByLevel: 엔젤레이 122렙 보스 Dot 등)를 레벨 게이팅으로 합산.
+     */
+    private int hitsPerCast(Skill s, StatBlock eff, boolean boss) {
+        int cl = charLevel(eff);
+        int base;
         if (s.has("ticks")) {
-            int cl = charLevel(eff);
             int ticks = (int) (s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl));
             int perTick = (int) (s.num("hitsPerTick", 1) + levelSum(s.raw, "hitsPerTickPlus", cl));
-            return ticks * perTick;
+            base = ticks * perTick;
+        } else {
+            base = (int) s.num("hits", 1);
         }
-        return (int) s.num("hits", 1);
+        if (boss) base += (int) levelSum(s.raw, "bossHitsByLevel", cl);
+        return base;
     }
 
     /**
@@ -906,7 +921,7 @@ public final class NightlordDps {
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;   // 소환 게이팅(비홀더 쇼크 등)
             skillActionsPerSec += gate / cd;   // 시전 1회 = 평타 1슬롯
-            int hits = hitsPerCast(s, eff);
+            int hits = hitsPerCast(s, eff, boss);
             baseDps += perHit(s, bf, boss) * hits / cd * gate;
             // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
             double procAttempts = s.has("ticks")
@@ -1008,7 +1023,7 @@ public final class NightlordDps {
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;
             skillActionsPerSec += gate / cd;
-            int hits = hitsPerCast(s, eff);
+            int hits = hitsPerCast(s, eff, boss);
             double contrib = perHit(s, bf, boss) * hits / cd * gate;
             double procAttempts = s.has("ticks")
                     ? s.num("ticks", 1) + levelSum(s.raw, "ticksPlus", cl) : 1;

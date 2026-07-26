@@ -14,6 +14,7 @@
   { "id": "STAT_PROP_DMG",    "name": "스탯 비례 데미지%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG",              "name": "데미지%",                "unit": "PCT",   "combine": "SUM" },
   { "id": "DMG_AMP",          "name": "데미지 증폭%",            "unit": "PCT",   "combine": "SUM" },
+  { "id": "DMG_ADD",          "name": "데미지 가산%",            "unit": "PCT",   "combine": "SUM", "hidden": true },
   { "id": "BASIC_ATK_DMG",    "name": "기본 공격 데미지%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "SKILL_DMG",        "name": "스킬 데미지%",            "unit": "PCT",   "combine": "SUM" },
   { "id": "DEF_PEN",          "name": "방어 관통력%",            "unit": "PCT",   "combine": "DIMINISHING", "max": 100, "qualitative": true },

@@ -55,6 +55,9 @@ public final class DamageModel implements DealModel {
     private static final String STAT_PROP_DMG = "STAT_PROP_DMG";
     private static final String DMG = "DMG";
     private static final String DMG_AMP = "DMG_AMP";
+    /** 데미지 가산%: 데미지(DMG, 육각목걸이 dmgMult가 곱하는 대상)에 더해지되 육각 증폭과는 안 곱해지고,
+     *  일반 데미지증폭(DMG_AMP)과는 곱해지는 데미지(홀리심볼 자버프 등). 식: (1+(DMG+DMG_ADD)/100)×(1+DMG_AMP/100). */
+    private static final String DMG_ADD = "DMG_ADD";
     private static final String BASIC_ATK_DMG = "BASIC_ATK_DMG";
     private static final String SKILL_DMG = "SKILL_DMG";
     private static final String BOSS_DMG = "BOSS_DMG";
@@ -184,12 +187,12 @@ public final class DamageModel implements DealModel {
 
         if (profile.additiveDamage) {
             // mode B: 데미지 옵션 카테고리를 모두 합연산(대상은 별도)
-            double sumFrac = v(b, DMG) / 100.0 * (1 + v(b, DMG_AMP) / 100.0)
+            double sumFrac = (v(b, DMG) + v(b, DMG_ADD)) / 100.0 * (1 + v(b, DMG_AMP) / 100.0)
                     + statPropFrac + basicPct / 100.0;
             out.put("데미지블록(합연산)", 1 + sumFrac);
         } else {
             // mode A: 카테고리끼리 곱연산
-            out.put("데미지", (1 + v(b, DMG) / 100.0) * (1 + v(b, DMG_AMP) / 100.0));
+            out.put("데미지", (1 + (v(b, DMG) + v(b, DMG_ADD)) / 100.0) * (1 + v(b, DMG_AMP) / 100.0));
             out.put("스탯비례", 1 + statPropFrac);
             out.put("기본공격뎀", 1 + basicPct / 100.0);
         }
@@ -421,7 +424,7 @@ public final class DamageModel implements DealModel {
     public double globalMultiplier(StatBlock b, boolean boss) {
         // 방어력 유래 유효주스탯을 공격력에 더한다(입력 공격력엔 빠져 있음). breakdown과 동일 규칙.
         double baseAtk = (v(b, ATK_FLAT) + defenseMainStat(b)) * (1 + v(b, ATK_PCT) / 100.0);
-        double fDmg = (1 + v(b, DMG) / 100.0) * (1 + v(b, DMG_AMP) / 100.0);
+        double fDmg = (1 + (v(b, DMG) + v(b, DMG_ADD)) / 100.0) * (1 + v(b, DMG_AMP) / 100.0);
         double fStatProp = 1 + v(b, STAT_PROP_DMG) / 100.0;
         double fCrit = 1 + Math.min(v(b, CRIT_RATE) / 100.0, 1.0) * (v(b, CRIT_DMG) / 100.0);
         double minMult = v(b, MIN_DMG_MULT), maxMult = v(b, MAX_DMG_MULT);
