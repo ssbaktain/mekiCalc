@@ -73,7 +73,11 @@
 
     { "id": "holySymbolSolo", "name": "홀리 심볼(솔로 데미지)", "kind": "statActive", "tier": 3, "open": 72,
       "fixed": true, "dmgAdd": 25, "dur": 14, "cd": 28,
-      "_note": "클뜯 63060: 동료 4명 미만(솔로/효율 기준 항상 충족) 시 자신 데미지 가산 25%(AttackPower 250, ValueLevelFactor 없어 고정). DMG_ADD로 반영: 식 (1+(데미지%+홀심)/100)×(1+증폭%/100). 육각수정목걸이 유물(hexcrystal_necklace)이 DMG를 dmgMult로 곱하지만 홀심은 DMG_ADD라 육각과 안 곱해지고((데미지×육각)+홀심), 일반 데미지증폭과는 곱해짐. 14초 지속/28초 주기 → 가동률 자동. 일반몹뎀15(AttackPowerExcludeBoss, 보스무관)는 statPassives.holySymbol에 별도." }
+      "_note": "클뜯 63060: 동료 4명 미만(솔로/효율 기준 항상 충족) 시 자신 데미지 가산 25%(AttackPower 250, ValueLevelFactor 없어 고정). DMG_ADD로 반영: 식 (1+(데미지%+홀심)/100)×(1+증폭%/100). 육각수정목걸이 유물(hexcrystal_necklace)이 DMG를 dmgMult로 곱하지만 홀심은 DMG_ADD라 육각과 안 곱해지고((데미지×육각)+홀심), 일반 데미지증폭과는 곱해짐. 14초 지속/28초 주기 → 가동률 자동. 일반몹뎀15(AttackPowerExcludeBoss, 보스무관)는 statPassives.holySymbol에 별도." },
+
+    { "id": "infinity", "name": "인피니티", "kind": "statActive", "tier": 4, "open": 110,
+      "finalDmg": 15, "dur": 15, "cd": 30, "rampFinalDmgMax": 10, "rampPerSec": 1,
+      "_note": "클뜯 64050: 최종뎀+15%(15초/cd30, 성장F21=0.4). 램프업 ModStatOnTick: 1초마다 최종뎀+1% 최대+10%(10스택, 성장). 해석식=지속내 시간평균(버프지속% 늘면 최대유지 길어져 효율↑), max(천장)=최대+10%. 인피니티 총 15→25%." }
   ],
 
   "debuffs": [],
@@ -92,7 +96,7 @@
     { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "finalDmg": 15, "applyFinalDmg": true, "desc": "MP50%↑ 조건 최종뎀+15. 선반영 아님 → 엔진이 딜계산에 반영(applyFinalDmg). MP조건은 상시 가정." },
     { "id": "meyong",           "name": "메이플 용사",             "tier": 4, "open": 100, "desc": "트라이엄프 페더 최종뎀+50%(딜) — skills.meyong으로 반영" },
     { "id": "masterMagic",      "name": "마스터 매직",             "tier": 4, "open": 117, "desc": "버프 지속시간+10% — 버프 가동률 영향(반영 방식 유저 확정)" },
-    { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "desc": "공격 시 25% 최종뎀+3% 최대5중첩(스택 → 선반영 근사, 평균치 유저 확정)" },
+    { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "arcaneStack": true, "proc": 25, "dur": 10, "maxStack": 5, "perStackFinalDmg": 3, "desc": "클뜯 64080: 공격시25% 최종뎀+3% 10초 최대5중첩(성장F22=0.3). 공속기반 평균중첩 min(5, (1+공속/100)×0.25×10)×3%, max(천장)=5중첩+15%" },
     { "id": "holyBlood",        "name": "홀리 블러드",             "tier": 4, "open": 125, "finalDmg": 5, "desc": "최종뎀+5 + 현재HP 10%마다 크뎀+2(HP비례 → 선반영 근사)" }
   ]
 }

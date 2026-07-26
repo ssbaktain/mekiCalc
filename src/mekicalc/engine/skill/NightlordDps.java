@@ -209,7 +209,12 @@ public final class NightlordDps {
             boolean learned = cl >= Json.num(m, "open", 0);
             double sc = passiveScale(m, cl, input);
             double atkPct = Json.num(m, "atkPct", 0);
-            if (Json.bool(m, "applyFinalDmg", false)) {   // 조건부 상시 최종뎀(엘리먼트앰플 MP조건): 선반영 아님 → 엔진이 딜계산에 반영. 버프 스킬 효과값이므로 kind 성장(sc) 적용
+            if (Json.bool(m, "arcaneStack", false)) {   // 아케인에임: 공속기반 평균중첩 최종뎀. fullBuff(천장)=maxStack, 아니면 min(max, 초당공격×proc×지속)
+                double stk = fullBuff ? Json.num(m, "maxStack", 1)
+                        : Math.min(Json.num(m, "maxStack", 1), (1 + input.get(ATK_SPEED) / 100.0) * Json.num(m, "proc", 0) / 100.0 * Json.num(m, "dur", 0));
+                if (wanted) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), Json.num(m, "perStackFinalDmg", 0) * stk * sc));
+            }
+            else if (Json.bool(m, "applyFinalDmg", false)) {   // 조건부 상시 최종뎀(엘리먼트앰플 MP조건): 선반영 아님 → 엔진이 딜계산에 반영. 버프 스킬 효과값이므로 kind 성장(sc) 적용
                 if (wanted) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), Json.num(m, "finalDmg", 0) * sc));
             }
             else if (atkPct != 0) { if (wanted) skillAtkSum += atkPct * (Json.bool(m, "noGrowth", false) ? 1.0 : sc); }   // 공퍼: 원하면 적용. 마스터리(noGrowth)는 고정, 스킬 버프는 성장(sc)
@@ -245,6 +250,15 @@ public final class NightlordDps {
             if (cd != 0) eff.set(CRIT_DMG, eff.get(CRIT_DMG) + cd * scale * u);
             // 레벨계수는 base에만, 마스터리는 스케일 없이 나중에 더함(인게임 툴팁이 마스터리 미표기 → 마지막 계산).
             double fd = Json.num(m, "finalDmg", 0) * scale + levelSum(m, "finalDmgMasteryByLevel", cl);
+            if (m.containsKey("rampFinalDmgMax")) {   // 인피니티 램프업: 지속 내 시간평균(해석식, 버프지속%↑→최대유지↑→효율↑) / fullBuff는 최대(천장)
+                double rampMax = Json.num(m, "rampFinalDmgMax", 0) * scale;
+                double perSec = Json.num(m, "rampPerSec", 0) * scale;
+                double durEff = Json.num(m, "dur", 0) * (1 + buffDur / 100.0);
+                double tR = perSec > 0 ? rampMax / perSec : 0;   // 최대 도달 시간
+                double rampAvg = durEff <= tR ? perSec * durEff / 2
+                        : (perSec * tR * tR / 2 + rampMax * (durEff - tR)) / durEff;
+                fd += fullBuff ? rampMax : rampAvg;
+            }
             if (fd != 0) eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), fd * u));
             double as = Json.num(m, "atkSpeed", 0);
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
