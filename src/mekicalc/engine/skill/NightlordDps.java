@@ -27,6 +27,7 @@ public final class NightlordDps {
     private static final String CRIT_DMG = "CRIT_DMG";
     private static final String FINAL_DMG = "FINAL_DMG";
     private static final String DMG_ADD = "DMG_ADD";
+    private static final String NORMAL_DMG = "NORMAL_DMG";
     private static final String CDR_PCT = "COOLDOWN_REDUCTION_PCT";
     private static final String CDR_FLAT = "COOLDOWN_REDUCTION";
     private static final String BUFF_DURATION = "BUFF_DURATION";
@@ -264,8 +265,10 @@ public final class NightlordDps {
             if (as != 0) eff.set(ATK_SPEED, diminish(eff.get(ATK_SPEED), as * scale * u, 150));
             double bdmg = Json.num(m, "bossDmg", 0);   // 소환중 보스뎀(비홀더스버프 82렙): 보스뎀%에 합산(u 게이팅)
             if (bdmg != 0 && cl >= Json.num(m, "bossDmgOpen", 0)) eff.set(BOSS_DMG, eff.get(BOSS_DMG) + bdmg * u);
-            double da = Json.num(m, "dmgAdd", 0) * scale;   // 데미지 가산%(홀리심볼 동료<4 자버프): 육각목걸이 증폭 뒤 가산, 일반 데미지증폭과는 곱, u 게이팅
+            double da = Json.num(m, "dmgAdd", 0);   // 홀리심볼 데미지 가산=마스터리 → 고정(성장X). 계산 반영, 표시는 buffEffects에서 생략
             if (da != 0) eff.set(DMG_ADD, eff.get(DMG_ADD) + da * u);
+            double nmd = Json.num(m, "normalDmg", 0) * scale;   // 홀리심볼 일반 몬스터 데미지(스킬 효과 → 성장, 일반몹 대상만, u 게이팅)
+            if (nmd != 0) eff.set(NORMAL_DMG, eff.get(NORMAL_DMG) + nmd * u);
         }
         // 퍼지 크리 마스터리(113렙): 퍼지 가동 중 적 받는 크리티컬 데미지 +critTaken% → 크리 데미지 ×(1+비율×가동률).
         // 크리분(min(크확,1)×크뎀)에만 적용되도록 CRIT_DMG에 가산. 마스터리라 툴팁 미표기, 내부 계산만.
@@ -422,7 +425,7 @@ public final class NightlordDps {
             out.add(buffInfo(m, input, cl, group));
         }
         for (Map<String, Object> m : data.statPassives()) {
-            out.add(buffInfo(m, input, cl, "always"));   // 상시 패시브(숙련된 표창술 등)
+            out.add(buffInfo(m, input, cl, Json.bool(m, "always", false) ? "always" : "passive"));   // always=상시 패시브 / 그 외=일반 패시브(디바인·아케인 등 조건부·주기)
         }
         out.add(meyongInfo(input, cl));                  // 메이플 용사(표시 전용, 계산엔 이미 반영)
         Map<String, Object> mn = markNightlordInfo(input, cl);
@@ -520,16 +523,35 @@ public final class NightlordDps {
     /** 효과(스케일·마스터리 반영) 항목 리스트 — 2개 이상이면 프론트에서 열로 나열. */
     private List<String> buffEffects(Map<String, Object> m, double sc, int cl) {
         List<String> p = new ArrayList<>();
-        addEff(p, "공격력", Json.num(m, "atkPct", 0) * sc);
+        addEff(p, "공격력", Json.num(m, "atkPct", 0) * (Json.bool(m, "noGrowth", false) ? 1.0 : sc));   // noGrowth(힐-공격력 마스터리)는 고정
         addEff(p, "크리티컬 확률", Json.num(m, "critRate", 0) * sc);
         addEff(p, "크리티컬 데미지", Json.num(m, "critDmg", 0) * sc);
-        addEff(p, "최종 데미지", Json.num(m, "finalDmg", 0) * sc);   // 마스터리(레벨별)는 표기 안 함 — 내부 계산엔 적용
+        double fdEff = Json.num(m, "finalDmg", 0) * sc;   // 마스터리(레벨별)는 표기 안 함 — 내부 계산엔 적용
+        if (fdEff != 0) { String cnd = Json.str(m, "condDesc", ""); p.add((cnd.isEmpty() ? "" : cnd + " ") + "최종 데미지 +" + num1(fdEff) + "%"); }   // condDesc(엘앰프 MP조건 등)는 앞에 표기
         addEff(p, "공격 속도", Json.num(m, "atkSpeed", 0) * sc);
         addEff(p, "기본 공격 데미지", Json.num(m, "basicAtkDmg", 0) * sc);
         addEff(p, "최소 데미지", Json.num(m, "minMult", 0) * sc);
         addEff(p, "최대 데미지", Json.num(m, "maxMult", 0) * sc);
         addEff(p, "보스 데미지", Json.num(m, "bossDmg", 0) * sc);
         addEff(p, "스킬 데미지", Json.num(m, "skillDmg", 0) * sc);
+        // 홀리심볼 데미지 가산(dmgAdd)은 마스터리 → 계산엔 반영하되 스킬탭 표시는 생략
+        addEff(p, "일반 몬스터 데미지", Json.num(m, "normalDmg", 0) * sc);      // 홀리심볼 일반몹 데미지(스킬 효과, 성장)
+        addEff(p, "버프 지속시간", Json.num(m, "buffDurBonus", 0) * sc);        // 마스터 매직
+        // 인피니티 램프업: 1초마다 최종뎀 +N%(성장), 최대 M회 중첩
+        if (m.containsKey("rampFinalDmgMax")) {
+            double rps = Json.num(m, "rampPerSec", 0);
+            int rmx = rps > 0 ? (int) Math.round(Json.num(m, "rampFinalDmgMax", 0) / rps) : 0;
+            p.add("1초마다 최종 데미지 +" + num1(rps * sc) + "%, 최대 " + rmx + "회 중첩");
+        }
+        // 아케인 에임: 공격 시 proc%로 최종뎀 +N%(성장), 최대 maxStack중첩 (내부 계산값이 아닌 스킬 원문 표시)
+        if (Json.bool(m, "arcaneStack", false))
+            p.add("공격 시 " + num1(Json.num(m, "proc", 0)) + "%로 최종 데미지 +" + num1(Json.num(m, "perStackFinalDmg", 0) * sc) + "%, 최대 " + (int) Json.num(m, "maxStack", 0) + "중첩");
+        // 홀리 블러드: 현재 HP 10%마다 크리티컬 데미지 +N%(성장)
+        double critHp = Json.num(m, "critPerHp10", 0) * sc;
+        if (critHp != 0) p.add("현재 HP 10%마다 크리티컬 데미지 +" + num1(critHp) + "%");
+        // 인빈서블: 방어력의 X%만큼 주스탯(성장 반영)
+        double defMainR = Json.num(m, "mainStatDefPct", 0) * sc;
+        if (defMainR != 0) p.add("방어력의 " + num1(defMainR) + "%만큼 주스탯 증가");
         // 비딜/유틸 스탯(표시용 — DPS엔 미반영이거나 선반영). 다크나이트 패시브(아이언바디·워리어마스터리 등).
         addEffFlat(p, "주스탯(+)", Json.num(m, "mainStatFlat", 0) * sc);
         addEff(p, "방어력", Json.num(m, "def", 0) * sc);
@@ -591,7 +613,9 @@ public final class NightlordDps {
     private String buffCooldownText(Map<String, Object> m, StatBlock b) {
         if (m.containsKey("triggerCasts")) return "발동형 (" + (int) Json.num(m, "triggerCasts", 0) + "타마다)";
         double rawCd = Json.num(m, "cd", 0);
-        return rawCd <= 0 ? "상시" : cdText(rawCd, b);
+        if (rawCd <= 0) return m.containsKey("proc") ? "확률형 (" + num1(Json.num(m, "proc", 0)) + "%)" : "상시";   // 쿨 없이 확률 발동(아케인 에임 등)
+        if (Json.str(m, "kind", "").equals("statPassive")) return num1(rawCd) + "초 주기";   // 패시브(홀리심볼·로드오브다크니스 등)는 쿨감 미적용 — 발동 주기
+        return cdText(rawCd, b);
     }
 
     /** 실제 계산값 그대로 표기(인위적 반올림 없음). 부동소수 잡음만 소수 3자리에서 정리, 후행 0 제거. */
@@ -690,7 +714,10 @@ public final class NightlordDps {
         if (s.has("base")) {
             double c = SkillDpsModel.coefficient(s.num("base", 0), data.growth(s.kind), sl);
             int hits = hitsPerCast(s, input);   // 다크 플레어=틱×타격 등 실제 타수
-            p.add(num1(c) + "%" + (hits > 1 ? " × " + hits + "타" : ""));
+            if (s.has("tickIntervalSec"))       // 바하뮤트 등 소환 주기딜: "N초마다 1타"로 표기(타수 고정 아님)
+                p.add(num1(c) + "% × " + num1(s.num("tickIntervalSec", 0)) + "초마다 1타");
+            else
+                p.add(num1(c) + "%" + (hits > 1 ? " × " + hits + "타" : ""));
         }
         if (s.has("dot")) {   // 베놈 등 연속 도트
             Map<String, Object> dot = Json.asMap(s.raw.get("dot"));

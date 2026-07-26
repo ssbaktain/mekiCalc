@@ -40,9 +40,9 @@
       "masteryDmgByLevel": { "118": 50 }, "cdrMasteryByLevel": { "126": 30 } },
 
     { "id": "bahamut", "name": "바하뮤트", "kind": "dealActive", "tier": 4, "open": 115,
-      "base": 3500, "hitsPerTick": 1, "ticks": 7, "targets": 1, "cd": 80,
-      "masteryDmgByLevel": { "130": 50 }, "cdrMasteryByLevel": { "138": 30 },
-      "_note": "클뜯 확정: 발사체 64060 지속30초·틱4초 → 7틱, 각 3500%(64061 GetDamageR 35000/None/1, 성장 F12). 130렙(60275): 피해+50%·MaxTargetCount=3(단일전투 가정이라 대상수 딜 무영향 → targetPlus 제거), 138렙(60295): 재사용-30%." },
+      "base": 3500, "hitsPerTick": 1, "ticks": 7, "tickIntervalSec": 4, "targets": 3, "cd": 80,
+      "masteryDmgByLevel": { "130": 50 }, "targetPlus": { "130": 3 }, "cdrMasteryByLevel": { "138": 30 },
+      "_note": "클뜯 확정: 발사체 64060 지속30초·4초마다 1타 → 7틱, 각 3500%(64061, 성장 F12). 기본 대상 3명, 130렙(60275): 피해+50%·대상+3(타수 불변), 138렙(60295): 재사용-30%. 단일전투 가정이라 대상수는 딜 무영향(표시용)." },
 
     { "id": "triumphFeather", "name": "트라이엄프 페더", "kind": "dealPassiveNoCd", "tier": 3, "open": 63,
       "base": 150, "hits": 2, "proc": 35, "meyong": 50,
@@ -54,8 +54,8 @@
     { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60 },
 
     { "id": "magicGuard", "name": "매직 가드", "kind": "statActive", "tier": 1, "open": 15,
-      "atkPct": 12, "dur": 15, "cd": 30, "cdrMasteryByLevel": { "21": 30 },
-      "_note": "21렙 마스터리 '매직가드 재사용-30%' → 실효쿨 21초(엔진 cdrMastery 처리)." },
+      "atkPct": 12, "def": 12, "dur": 15, "cd": 30, "cdrMasteryByLevel": { "21": 30 },
+      "_note": "클뜯 61030: 공격력+12%·방어력+12%(15초). 21렙 마스터리 '매직가드 재사용-30%' → 실효쿨 21초(엔진 cdrMastery 처리)." },
 
     { "id": "heal", "name": "힐", "kind": "statActive", "tier": 2, "open": 35,
       "atkPct": 10, "dur": 10, "cd": 18, "durMasteryPctByLevel": { "39": 50 },
@@ -71,32 +71,31 @@
       "finalDmg": 7, "dur": 20, "cd": 26,
       "_note": "타임드 최종뎀7%(엔진 가동률 처리). 113렙 마스터리 'MP50%↑ 최종뎀+4%'는 MP조건이라 미반영(선반영)." },
 
-    { "id": "holySymbolSolo", "name": "홀리 심볼(솔로 데미지)", "kind": "statActive", "tier": 3, "open": 72,
-      "fixed": true, "dmgAdd": 25, "dur": 14, "cd": 28,
-      "_note": "클뜯 63060: 동료 4명 미만(솔로/효율 기준 항상 충족) 시 자신 데미지 가산 25%(AttackPower 250, ValueLevelFactor 없어 고정). DMG_ADD로 반영: 식 (1+(데미지%+홀심)/100)×(1+증폭%/100). 육각수정목걸이 유물(hexcrystal_necklace)이 DMG를 dmgMult로 곱하지만 홀심은 DMG_ADD라 육각과 안 곱해지고((데미지×육각)+홀심), 일반 데미지증폭과는 곱해짐. 14초 지속/28초 주기 → 가동률 자동. 일반몹뎀15(AttackPowerExcludeBoss, 보스무관)는 statPassives.holySymbol에 별도." },
+    { "id": "holySymbol", "name": "홀리 심볼", "kind": "statPassive", "tier": 3, "open": 72,
+      "dmgAdd": 25, "normalDmg": 15, "dur": 14, "cd": 28,
+      "_note": "클뜯 63060: 일반 몬스터 데미지 +15%(normalDmg, 스킬 효과 → 성장) + 아군 3명 이하 시 데미지 +25%(dmgAdd, 마스터리 → 계산 반영·표시 생략·성장X 고정). 14초 지속/28초 주기 → 가동률 자동. kind statPassive라 쿨감 미적용. dmgAdd는 육각목걸이 뒤 가산(DMG_ADD, 일반증폭과 곱)." },
 
     { "id": "infinity", "name": "인피니티", "kind": "statActive", "tier": 4, "open": 110,
       "finalDmg": 15, "dur": 15, "cd": 30, "rampFinalDmgMax": 10, "rampPerSec": 1,
-      "_note": "클뜯 64050: 최종뎀+15%(15초/cd30, 성장F21=0.4). 램프업 ModStatOnTick: 1초마다 최종뎀+1% 최대+10%(10스택, 성장). 해석식=지속내 시간평균(버프지속% 늘면 최대유지 길어져 효율↑), max(천장)=최대+10%. 인피니티 총 15→25%." }
+      "_note": "클뜯 64050: 최종뎀+15%(15초/cd30, 성장F21=0.4). 램프업 ModStatOnTick: 1초마다 최종뎀+1% 최대+10%(10스택, 성장). 해석식=지속내 시간평균(버프지속% 늘면 최대유지 길어져 효율↑), max(천장)=최대+10%. 인피니티 총 15→25%." },
+
+    { "id": "divineProtection", "name": "디바인 프로텍션", "kind": "statPassive", "tier": 3, "open": 60,
+      "def": 25, "dur": 15, "cd": 20 }
   ],
 
   "debuffs": [],
 
   "_statPassivesNote": "비숍 패시브(대부분 선반영). 스킬탭 표시·토글용 — 기본 체크(효과 이미 프리셋 입력 포함). 유틸(방어력·MP·디버프내성)은 표시 전용. 딜 공격력 타임드 버프(매직가드·힐·블레스·홀리매직쉘)는 buffs에 있음. 인빈서블(방어력→주스탯)은 DamageModel.defenseToMainRatio에서 처리.",
   "statPassives": [
-    { "id": "magicAccel",       "name": "매직 액셀레이션",         "tier": 2, "open": 33,  "atkSpeed": 5 },
-    { "id": "invincible",       "name": "인빈서블",               "tier": 2, "open": 38,  "desc": "방어력의 10%만큼 주스탯 증가(선반영)" },
-    { "id": "spellMastery",     "name": "스펠 마스터리",           "tier": 2, "open": 43,  "minMult": 15 },
-    { "id": "highWisdom",       "name": "하이 위즈덤",             "tier": 3, "open": 50,  "critRate": 8 },
-    { "id": "healAtkMastery",   "name": "힐 - 공격력(마스터리)",    "tier": 2, "open": 54,  "atkPct": 8, "noGrowth": true, "desc": "HP30%↑ 공격력+8%(마스터리 → 성장X 고정). 게임 총합 공격력엔 선적용이나 우리 입력(깡공/공퍼)엔 미포함 → 엔진이 skillAtkSum에 반영(noGrowth 고정)" },
-    { "id": "divineProtection", "name": "디바인 프로텍션",         "tier": 3, "open": 60,  "def": 25, "debuffResist": 2, "desc": "15초간 방어력+25·디버프면역(20초 주기) — 유틸" },
-    { "id": "triumphFeatherP",  "name": "트라이엄프 페더(발동딜)",  "tier": 3, "open": 63,  "desc": "확률 발동 추가타 — skills.triumphFeather에서 반영" },
-    { "id": "holySymbol",       "name": "홀리 심볼",              "tier": 3, "open": 72,  "normalDmg": 15, "desc": "전투시작 14초 일반몹뎀+15(28초 주기, 조건부 → 선반영)" },
-    { "id": "magicCritical",    "name": "매직 크리티컬",           "tier": 3, "open": 74,  "critRate": 8, "critDmg": 12 },
-    { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "finalDmg": 15, "applyFinalDmg": true, "desc": "MP50%↑ 조건 최종뎀+15. 선반영 아님 → 엔진이 딜계산에 반영(applyFinalDmg). MP조건은 상시 가정." },
-    { "id": "meyong",           "name": "메이플 용사",             "tier": 4, "open": 100, "desc": "트라이엄프 페더 최종뎀+50%(딜) — skills.meyong으로 반영" },
-    { "id": "masterMagic",      "name": "마스터 매직",             "tier": 4, "open": 117, "desc": "버프 지속시간+10% — 버프 가동률 영향(반영 방식 유저 확정)" },
-    { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "arcaneStack": true, "proc": 25, "dur": 10, "maxStack": 5, "perStackFinalDmg": 3, "desc": "클뜯 64080: 공격시25% 최종뎀+3% 10초 최대5중첩(성장F22=0.3). 공속기반 평균중첩 min(5, (1+공속/100)×0.25×10)×3%, max(천장)=5중첩+15%" },
-    { "id": "holyBlood",        "name": "홀리 블러드",             "tier": 4, "open": 125, "finalDmg": 5, "desc": "최종뎀+5 + 현재HP 10%마다 크뎀+2(HP비례 → 선반영 근사)" }
+    { "id": "magicAccel",       "name": "매직 액셀레이션",         "tier": 2, "open": 33,  "always": true, "atkSpeed": 5 },
+    { "id": "invincible",       "name": "인빈서블",               "tier": 2, "open": 38,  "always": true, "mainStatDefPct": 10 },
+    { "id": "spellMastery",     "name": "스펠 마스터리",           "tier": 2, "open": 43,  "always": true, "minMult": 15 },
+    { "id": "highWisdom",       "name": "하이 위즈덤",             "tier": 2, "open": 50,  "always": true, "critRate": 8 },
+    { "id": "healAtkMastery",   "name": "힐 - 공격력(마스터리)",    "tier": 2, "open": 54,  "always": true, "atkPct": 8, "noGrowth": true },
+    { "id": "magicCritical",    "name": "매직 크리티컬",           "tier": 3, "open": 74,  "always": true, "critRate": 8, "critDmg": 12 },
+    { "id": "elementAmp",       "name": "엘리먼트 앰플리피케이션",  "tier": 3, "open": 75,  "always": true, "finalDmg": 15, "applyFinalDmg": true, "condDesc": "MP 50% 이상 시" },
+    { "id": "masterMagic",      "name": "마스터 매직",             "tier": 4, "open": 117, "always": true, "buffDurBonus": 10 },
+    { "id": "arcaneAim",        "name": "아케인 에임",             "tier": 4, "open": 120, "arcaneStack": true, "proc": 25, "dur": 10, "maxStack": 5, "perStackFinalDmg": 3 },
+    { "id": "holyBlood",        "name": "홀리 블러드",             "tier": 4, "open": 125, "always": true, "finalDmg": 5, "critPerHp10": 2 }
   ]
 }
