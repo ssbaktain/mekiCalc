@@ -23,7 +23,7 @@ import mekicalc.engine.equip.CubeRecommender;
 import mekicalc.engine.equip.EquipmentPotential;
 import mekicalc.engine.equip.PotentialDraw;
 import mekicalc.engine.skill.NightlordDealModel;
-import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillDps;
 import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.model.StatBlock;
@@ -495,7 +495,7 @@ public final class AppModel {
     private DealModel dealModel() {
         if ((int) current.get("JOB") == JOB_NIGHTLORD && skillData != null) {
             try {
-                NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(skillData));
+                SkillDps nd = new SkillDps(g.model, new SkillDpsModel(skillData));
                 return new NightlordDealModel(nd, g.model, bossMode);
             } catch (RuntimeException ex) {
                 // 안전 폴백: 공용 모델

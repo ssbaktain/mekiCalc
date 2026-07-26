@@ -19,7 +19,7 @@ import mekicalc.engine.equip.CubeEvaluator;
 import mekicalc.engine.equip.EquipmentPotential;
 import mekicalc.engine.equip.PotentialDraw;
 import mekicalc.engine.skill.NightlordDealModel;
-import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillDps;
 import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.json.Json;
@@ -56,7 +56,7 @@ public final class SelfTest {
         testCrossGradeProbBounded();
         testCeilingEdgeForcesGradeUp();
         testSkillDpsModelCore();
-        testNightlordDps();
+        testSkillDps();
         testDarkKnight();
         testRangeBestEffort();
         testSlotLock();
@@ -377,10 +377,10 @@ public final class SelfTest {
     }
 
     /** 나이트로드 DPS: 통제된 StatBlock(공격력100·배율100, 나머지 0)으로 1타 데미지·DPS 손계산 대조. */
-    private static void testNightlordDps() throws Exception {
+    private static void testSkillDps() throws Exception {
         GameData g = GameData.load(Path.of("data"));
         SkillData sd = SkillData.load(Path.of("data"));
-        NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(sd));
+        SkillDps nd = new SkillDps(g.model, new SkillDpsModel(sd));
         // G_boss = 공격력100 × 1 × ... × 데미지범위((100+100)/200=1) × ... × (1+보스뎀0) = 100
         StatBlock b = new StatBlock()
                 .set("LEVEL", 100).set("ATK_FLAT", 100)
@@ -420,7 +420,7 @@ public final class SelfTest {
         check("nl.cd.quad", nd.cooldown(sd.skill("quadThrow"), b150), 7);
 
         // 버프 주입: 레벨100 → 다크사이트(15렙)·아드레날린(66렙)·민첩 활성, 퍼지(110렙)·페이크/세레니티(상시)는 제외.
-        NightlordDps.Buffed bf = nd.buffed(b);
+        SkillDps.Buffed bf = nd.buffed(b);
         check("nl.buff.crit", bf.stats.get("CRIT_RATE"), 3.5712);     // 다크사이트 크확 6 × 1.24 × 0.48 (statActive kind growth 0.4: 1+0.004×60)
         check("nl.buff.atkFactor", bf.skillAtkFactor, 1.30432);       // 숙련된표창술 24.48(0.3) + 다크사이트 5.952(0.4)
         check("nl.buff.finalDmg", bf.stats.get("FINAL_DMG"), (10 * 1.36 + 6) * (15.0 / 22.0)); // 아드레날린: base10×scale1.36 + 마스터리6(나중), ×가동률
@@ -493,7 +493,7 @@ public final class SelfTest {
     private static void testDarkKnight() throws Exception {
         GameData g = GameData.load(Path.of("data"));
         SkillData sd = SkillData.load(Path.of("data"), "darkknight");
-        NightlordDps nd = new NightlordDps(g.model, new SkillDpsModel(sd));
+        SkillDps nd = new SkillDps(g.model, new SkillDpsModel(sd));
         StatBlock b = new StatBlock().set("LEVEL", 150).set("ATK_FLAT", 100)
                 .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
         // 기본공격(다크 임페일)=공용 4차와 동일 계수·마스터리 → 나이트로드와 같은 974.4(보스).

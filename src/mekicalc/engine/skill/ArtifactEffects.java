@@ -12,7 +12,7 @@ import mekicalc.model.StatBlock;
  * category=preReflected(선반영)/survival(비딜)/content(컨텐츠한정)는 딜 기여 0(슬롯만 차지).
  *
  * <p>이 클래스는 우선 <b>해석</b>(장착 유물 → 각성별 구체 효과)과 <b>슬롯 산출</b>을 담당한다.
- * 스탯 주입(플레이어 버프/적 디버프)은 후속 단계에서 {@code NightlordDps.buffed}·recvDmgFactor·방어배수에 연결한다.
+ * 스탯 주입(플레이어 버프/적 디버프)은 후속 단계에서 {@code SkillDps.buffed}·recvDmgFactor·방어배수에 연결한다.
  * 규칙: [[mekicalc-artifact-spec]] — perEnemy 선형/dmgMult(DMG×(1+Σ))/derived(라이브 스탯×비율)/debuffCase(불타는용암)/
  * refresh(재발동 지속리셋)/assumeMax/bossOnly·bossZero/window[시작,끝]/content.
  */

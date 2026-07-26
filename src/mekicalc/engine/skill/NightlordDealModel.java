@@ -6,7 +6,7 @@ import mekicalc.engine.DealModel;
 import mekicalc.model.StatBlock;
 
 /**
- * 나이트로드 딜 모델(종합 DPS 기반). 큐브 추천·평가의 출력값을 1타가 아닌 {@link NightlordDps#totalDps}로 준다.
+ * 나이트로드 딜 모델(종합 DPS 기반). 큐브 추천·평가의 출력값을 1타가 아닌 {@link SkillDps#totalDps}로 준다.
  * 스탯 합성(combine/uncombine)은 기존 {@link DamageModel} 규칙을 그대로 위임한다.
  *
  * <p>대상(챕터/스테이지)이 주어지면 그 몹 방어배수 f를 곱해 <b>방관</b>까지 환산한다(전역 일관).
@@ -21,18 +21,18 @@ public final class NightlordDealModel implements DealModel {
     private static final String DEF_PEN = "DEF_PEN";
     private static final String SUMMON_DURATION = "SUMMON_DURATION";
 
-    private final NightlordDps nd;
+    private final SkillDps nd;
     private final DamageModel base;   // 스탯 합성 위임용
     private final boolean boss;
     private final Double targetDef;   // 대상 몹 방어력(서버 전용). null이면 방관 미적용(f=1, 커스텀 환산 폴백).
     private final CompanionDps comp;  // 선택 동료(해석식). null이면 동료 미합산(동소지=커스텀 환산 폴백).
     private final double seconds;      // 전투시간(보스 70 / 일반 90). 동료 dpsOverSecondsAnalytic 정규화 기준.
 
-    public NightlordDealModel(NightlordDps nd, DamageModel base, boolean boss) { this(nd, base, boss, null); }
-    public NightlordDealModel(NightlordDps nd, DamageModel base, boolean boss, Double targetDef) {
+    public NightlordDealModel(SkillDps nd, DamageModel base, boolean boss) { this(nd, base, boss, null); }
+    public NightlordDealModel(SkillDps nd, DamageModel base, boolean boss, Double targetDef) {
         this(nd, base, boss, targetDef, null, 0);
     }
-    public NightlordDealModel(NightlordDps nd, DamageModel base, boolean boss, Double targetDef, CompanionDps comp, double seconds) {
+    public NightlordDealModel(SkillDps nd, DamageModel base, boolean boss, Double targetDef, CompanionDps comp, double seconds) {
         this.nd = nd;
         this.base = base;
         this.boss = boss;
@@ -64,7 +64,7 @@ public final class NightlordDealModel implements DealModel {
 
     /** 플레이어(동료 버프 블렌딩) + 동료 해석식 DPS. 동소지·동료버프·동료딜이 모두 스탯에 따라 반응. */
     private double combinedDps(StatBlock b) {
-        NightlordDps.Buffed buf = nd.buffed(b);                         // 한 번만 계산(받피증·base DPS 공용)
+        SkillDps.Buffed buf = nd.buffed(b);                         // 한 번만 계산(받피증·base DPS 공용)
         double pRecv = nd.playerRecvBonus(buf.stats);
         comp.playerRecvBonus(pRecv);                                    // 동료가 플레이어 받피증 공유받아 타격
         double player = playerBlendedTotal(b, buf, pRecv);
@@ -75,7 +75,7 @@ public final class NightlordDealModel implements DealModel {
 
     /** 소환 가동률만큼 동료 버프/받피증을 블렌딩한 플레이어 전체 DPS. {@code CalcService.blendPlayer}의 엔진 버전. */
     @SuppressWarnings("unchecked")
-    private double playerBlendedTotal(StatBlock b, NightlordDps.Buffed buf, double pRecv) {
+    private double playerBlendedTotal(StatBlock b, SkillDps.Buffed buf, double pRecv) {
         double base0 = nd.dpsBreakdownWith(buf, boss)[2];        // buf 재사용(buffed 재계산 없음)
         Map<String, Object> gift = comp.playerGiftAnalytic(b, boss);   // 해석식(시뮬 480스텝 제거) — 큐브 핫패스 성능
 

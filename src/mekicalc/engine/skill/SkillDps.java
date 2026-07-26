@@ -18,7 +18,7 @@ import mekicalc.model.StatBlock;
  * <p>이번 단위 범위: 스킬 1타 데미지(G×계수×타입데미지×마스터리×메용)와 평타/단순 액티브 DPS.
  * 버프 가동률 주입·DoT/발동·종합 합산·일반몹 대상수는 다음 단위에서 추가한다(메모리 스펙 참조).
  */
-public final class NightlordDps {
+public final class SkillDps {
 
     private static final String LEVEL = "LEVEL";
     private static final String SKILL_LEVELS = "SKILL_LEVELS";
@@ -47,15 +47,15 @@ public final class NightlordDps {
     /** 외부(동료) 스킬 공퍼% — 플레이어 스킬 공퍼 버킷(skillAtkSum)에 합산되어 한 번만 곱연산된다. 0이면 미적용. */
     private double externalAtkPct = 0;
 
-    public NightlordDps(DamageModel dm, SkillDpsModel model) {
+    public SkillDps(DamageModel dm, SkillDpsModel model) {
         this(dm, model, null, 0);
     }
 
-    public NightlordDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs) {
+    public SkillDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs) {
         this(dm, model, activeBuffs, 0);
     }
 
-    public NightlordDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs, double hitInterval) {
+    public SkillDps(DamageModel dm, SkillDpsModel model, Set<String> activeBuffs, double hitInterval) {
         this.dm = dm;
         this.model = model;
         this.data = model.data();

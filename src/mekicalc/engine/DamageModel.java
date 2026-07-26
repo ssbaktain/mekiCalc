@@ -419,7 +419,7 @@ public final class DamageModel implements DealModel {
     /**
      * 스킬 무관 공통 배수 G = 공격력 × 데미지 × 스탯비례 × 크리 × 데미지범위 × 최종데미지 × 대상(보스/일반몹).
      * <p>스킬별로 다른 항(기본 공격 계수, 기본공격뎀%, 스킬뎀%)과 커스텀환산은 제외한다.
-     * 각 스킬의 계수·타입별 데미지%는 {@link mekicalc.engine.skill.NightlordDps}가 따로 곱한다. mode A 기준.
+     * 각 스킬의 계수·타입별 데미지%는 {@link mekicalc.engine.skill.SkillDps}가 따로 곱한다. mode A 기준.
      */
     public double globalMultiplier(StatBlock b, boolean boss) {
         // 방어력 유래 유효주스탯을 공격력에 더한다(입력 공격력엔 빠져 있음). breakdown과 동일 규칙.

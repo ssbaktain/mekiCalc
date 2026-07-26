@@ -29,7 +29,7 @@ import mekicalc.engine.equip.PotentialDraw;
 import mekicalc.engine.skill.ArtifactEffects;
 import mekicalc.engine.skill.CompanionDps;
 import mekicalc.engine.skill.NightlordDealModel;
-import mekicalc.engine.skill.NightlordDps;
+import mekicalc.engine.skill.SkillDps;
 import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.model.StatBlock;
@@ -129,7 +129,7 @@ public final class CalcService {
         SkillData sd = skillDataFor((int) current.get("JOB"));
         if (sd != null) {
             try {
-                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(sd), buffs, hitInterval);
+                SkillDps nd = new SkillDps(dm, new SkillDpsModel(sd), buffs, hitInterval);
                 CompanionDps comp = null;
                 if (companionId != null && !companionId.isEmpty()) {
                     comp = new CompanionDps(dm, content.companionRoot, companionId, grade, companionLevel, ratio);
@@ -310,7 +310,7 @@ public final class CalcService {
         SkillData sdPrev = skillDataFor((int) b.get("JOB"));
         if (sdPrev != null) {
             try {
-                NightlordDps nd = new NightlordDps(m, new SkillDpsModel(sdPrev), buffs, hitInterval);
+                SkillDps nd = new SkillDps(m, new SkillDpsModel(sdPrev), buffs, hitInterval);
                 // 불타는용암 debuffCase 판정: 내 직업(받피 디버프 보유) 또는 동료가 적에 디버프를 주는가.
                 boolean enemyDebuff = art != null && (nd.playerRecvBonus(b) > 1e-9
                         || (comp != null && (comp.enemyDefReducePct(b, false) > 0 || comp.enemyDefReducePct(b, true) > 0)));
@@ -362,11 +362,11 @@ public final class CalcService {
      * 한 대상(boss)의 딜 상세: solo(동료 미소환)·summon(동료 소환) 상태별 {평균/최소/최대 평타딜, DPS} + 동료카드/도넛용 dps·shares.
      * summon DPS = 플레이어(동료 버프)×받피 + 동료 소환 중 딜. 동료 없으면 summon 생략.
      */
-    private Map<String, Object> detailFor(NightlordDps nd, StatBlock b, boolean boss, double seconds, CompanionDps comp,
+    private Map<String, Object> detailFor(SkillDps nd, StatBlock b, boolean boss, double seconds, CompanionDps comp,
                                           StatBlock inh, double uptime, double Rp, double playerRecv,
                                           ArtifactEffects art, boolean enemyDebuff) {
         Map<String, Object> det = new LinkedHashMap<>();
-        NightlordDps.SimContext ctxSolo = simCtx(art, b, enemyDebuff, 0);
+        SkillDps.SimContext ctxSolo = simCtx(art, b, enemyDebuff, 0);
         det.put("solo", stateMap(nd.basicHitStatsCtx(b, boss, seconds, ctxSolo), nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2]));
         if (comp != null) {
             Map<String, Object> gift = comp.playerGift(b, boss);        // 가동률 평균 — 평균딜·DPS용
@@ -376,7 +376,7 @@ public final class CalcService {
             StatBlock summonInput = new StatBlock(b);
             CompanionDps.applyGift(summonInput, giftBuffs);
             nd.setExternalAtkPct(compAtkPct);
-            NightlordDps.SimContext ctxSummon = simCtx(art, b, enemyDebuff, 1);
+            SkillDps.SimContext ctxSummon = simCtx(art, b, enemyDebuff, 1);
             double avgHit = nd.basicHitStatsCtx(summonInput, boss, seconds, ctxSummon)[2];   // 평균 = 동료·플레이어 버프 가동률평균
             double sumPlayer = nd.dpsSimulateBreakdown(summonInput, boss, seconds, ctxSummon)[2];
             nd.setExternalAtkPct(0);
@@ -415,7 +415,7 @@ public final class CalcService {
      * 동료 선물(피크/바닥)을 적용한 상태의 평타 1타를 계산해 원하는 롤만 반환.
      * idx: 0=최소딜(플레이어 무버프×최소롤), 1=최대딜(플레이어 풀버프×최대롤), 2=평균.
      */
-    private double giftState(NightlordDps nd, StatBlock b, boolean boss, double seconds,
+    private double giftState(SkillDps nd, StatBlock b, boolean boss, double seconds,
                              Map<String, Object> gift, ArtifactEffects art, boolean enemyDebuff, int idx) {
         @SuppressWarnings("unchecked")
         Map<String, Object> gb = new LinkedHashMap<>((Map<String, Object>) gift.get("buffs"));
@@ -433,7 +433,7 @@ public final class CalcService {
      * 소환 중 = 동료 버프(target player/both) 적용 + 동료 받피증 공유, 평상시 = 본인. comp=null이면 본인 그대로.
      * (기존 blendPlayer의 출처별 버전 — [평타/스킬/전체]는 이 맵에서 도출해 도넛·딜상세가 같은 기준을 쓰게 한다.)
      */
-    private static Map<String, Double> blendPlayerBySkill(NightlordDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp,
+    private static Map<String, Double> blendPlayerBySkill(SkillDps nd, StatBlock b, boolean boss, CompanionDps comp, double uptime, double Rp,
                                                           double seconds, ArtifactEffects art, boolean enemyDebuff) {
         Map<String, Double> base = nd.dpsSimulateBySkill(b, boss, seconds, simCtx(art, b, enemyDebuff, 0));   // 홈=시뮬(동료 없음)
         if (comp == null) return base;
@@ -461,9 +461,9 @@ public final class CalcService {
     }
 
     /** 유물 시뮬 컨텍스트. art=null이면 null(순수 플레이어). base=파생 델타 기준(프리셋 원본), compUptime=동료 소환 가동률. */
-    private static NightlordDps.SimContext simCtx(ArtifactEffects art, StatBlock base, boolean enemyDebuff, double compUptime) {
+    private static SkillDps.SimContext simCtx(ArtifactEffects art, StatBlock base, boolean enemyDebuff, double compUptime) {
         if (art == null) return null;
-        NightlordDps.SimContext cx = new NightlordDps.SimContext();
+        SkillDps.SimContext cx = new SkillDps.SimContext();
         cx.artifacts = art;
         cx.base = base;
         cx.enemyDebuff = enemyDebuff;
@@ -551,7 +551,7 @@ public final class CalcService {
         SkillData sdBuff = skillDataFor((int) b.get("JOB"));
         if (sdBuff != null) {
             try {
-                NightlordDps nd = new NightlordDps(content.damageModel(Map.of()), new SkillDpsModel(sdBuff));
+                SkillDps nd = new SkillDps(content.damageModel(Map.of()), new SkillDpsModel(sdBuff));
                 buffs = nd.buffInfos(b);
                 dealSkills = nd.dealSkillInfos(b);
             } catch (RuntimeException ex) {
@@ -720,7 +720,7 @@ public final class CalcService {
         SkillData sdComp = skillDataFor((int) raw.get("JOB"));
         if (sdComp != null) {
             try {
-                NightlordDps nd = new NightlordDps(dm, new SkillDpsModel(sdComp), buffs, 0);
+                SkillDps nd = new SkillDps(dm, new SkillDpsModel(sdComp), buffs, 0);
                 b = nd.fullBuffStats(raw);
                 recvBonus = nd.playerRecvBonus(nd.buffed(raw).stats);
             } catch (RuntimeException ex) { b = raw; recvBonus = 0; }
