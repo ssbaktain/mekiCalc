@@ -288,7 +288,7 @@ public final class NoticeCrawler {
         // 22시 게이트를 이미 지난 '실효 종료일' 수집(= 지금 알려야 할 날짜)
         java.util.Set<java.time.LocalDate> due = new java.util.LinkedHashSet<>();
         for (NoticeStore.Notice n : store.all()) {
-            if ("이벤트".equals(n.category) && n.endAt > now) {
+            if (remindable(n) && n.endAt > now) {
                 java.time.LocalDate e = effectiveEndDate(n.endAt);
                 if (now >= reminderEpoch(e)) due.add(e);
             }
@@ -303,7 +303,7 @@ public final class NoticeCrawler {
         for (java.time.LocalDate e : due) {
             List<NoticeStore.Notice> evs = new java.util.ArrayList<>();
             for (NoticeStore.Notice n : store.all()) {
-                if ("이벤트".equals(n.category) && n.endAt > now && e.equals(effectiveEndDate(n.endAt))) evs.add(n);
+                if (remindable(n) && n.endAt > now && e.equals(effectiveEndDate(n.endAt))) evs.add(n);
             }
             evs.sort(java.util.Comparator.comparingLong(x -> x.endAt));   // 종료 빠른 순
             List<Map<String, Object>> cps = new java.util.ArrayList<>();
@@ -315,6 +315,14 @@ public final class NoticeCrawler {
             long id = outbox.enqueue(buildReminder(e, evs, cps), "remind:" + e);
             if (id > 0) System.out.println("[리마인더 큐잉] 실효종료일=" + e + " 이벤트=" + evs.size() + " 쿠폰=" + cps.size());
         }
+    }
+
+    /**
+     * 종료 임박 리마인더 대상 여부. 마감(endAt)이 '사용자 기한'인 카테고리만 알린다: 이벤트 + 공지사항(프로모션 등).
+     * 패치노트·확인 중인 현상은 endAt이 붙어도 종료 임박 알림 대상이 아니라 제외. (요약기는 점검 시각엔 endAt을 안 매김.)
+     */
+    private static boolean remindable(NoticeStore.Notice n) {
+        return "이벤트".equals(n.category) || "공지사항".equals(n.category);
     }
 
     /** 실효 종료일: 종료시각이 정각 00:00:00이면 '전날'(자정=전날 마감), 그 외엔 그 날짜. */
@@ -333,7 +341,7 @@ public final class NoticeCrawler {
     private static String buildReminder(java.time.LocalDate endDate, List<NoticeStore.Notice> events, List<Map<String, Object>> coupons) {
         StringBuilder sb = new StringBuilder("⏰ 종료 임박 안내 (").append(fmtDate(endDate)).append(" 종료)");
         if (!events.isEmpty()) {
-            sb.append("\n\n📌 이벤트");
+            sb.append("\n\n📌 이벤트/프로모션");
             for (NoticeStore.Notice n : events) {
                 sb.append("\n· ").append(cleanTitle(n.title));
                 if (n.endAt > 0) sb.append(" (~").append(fmtTime(n.endAt)).append(")");
