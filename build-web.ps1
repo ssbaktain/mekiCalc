@@ -1,4 +1,4 @@
-# 컴파일 후 웹 서버 실행. 사용법:
+# 컴파일 후 웹 서버 실행(Gradle 기반). 사용법:
 #   .\build-web.ps1            # 빌드 + http://localhost:8080 실행
 #   .\build-web.ps1 -Port 9000 # 다른 포트
 param([int]$Port = 8080)
@@ -8,13 +8,10 @@ $ErrorActionPreference = "Stop"
 try { chcp 65001 > $null } catch {}
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = $PSScriptRoot
-$sources = (Get-ChildItem -Recurse "$root\src" -Filter *.java).FullName
 
-if (Test-Path "$root\out") { Remove-Item -Recurse -Force "$root\out" }
-New-Item -ItemType Directory -Path "$root\out" | Out-Null
-
-& javac -encoding UTF-8 -d "$root\out" $sources
-if ($LASTEXITCODE -ne 0) { Write-Error "컴파일 실패"; exit 1 }
+# web 모듈 빌드 → web\build\install\web\lib\*.jar (core.jar + web.jar + postgresql.jar)
+& "$root\gradlew.bat" :web:installDist --console=plain
+if ($LASTEXITCODE -ne 0) { Write-Error "빌드 실패"; exit 1 }
 
 # 이전에 종료되지 않고 남아 포트를 잡고 있는 웹 서버 java가 있으면 정리 → 재시작 시 포트 충돌 방지(새 코드로 확실히 교체).
 Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -26,15 +23,15 @@ $logDir = Join-Path $root "logs"
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
 $logFile = Join-Path $logDir ("server-{0}.log" -f (Get-Date -Format "yyyyMMdd"))
 
+$libGlob = Join-Path $root "web\build\install\web\lib\*"
 Push-Location $root
 try {
-    # lib\*  = JDBC 드라이버 등 런타임 의존 jar(컴파일은 java.sql=JDK라 불필요, 실행 시 org.postgresql.Driver 로드)
     # 2>&1 | Tee = 콘솔+파일 동시 기록. PS 5.1은 네이티브 stderr 병합 시 NativeCommandError로 파이프라인을
     # 끊을 수 있어, 서버가 죽지 않도록 이 구간만 ErrorActionPreference를 Continue로 둔다.
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp "$root\out;$root\lib\*" `
-        mekicalc.web.WebMain $Port "$root\data" "$root\web" 2>&1 |
+    & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp $libGlob `
+        mekicalc.web.WebMain $Port "$root\data" "$root\public" 2>&1 |
         Tee-Object -FilePath $logFile -Append
     $ErrorActionPreference = $prevEAP
 } finally {

@@ -1,73 +1,22 @@
-// MekiCalc Gradle 빌드 — 1단계: 기존 src/ 레이아웃을 그대로 컴파일(파일 이동·Spring 없음).
-// 빌드툴 전환을 프레임워크 도입과 분리해 각각 검증하기 위한 과도기 구성.
-// 표준 멀티모듈(core/desktop/web) 재구성은 이후 단계에서 수행한다.
-plugins {
-    id 'java'
-    id 'application'
-}
+// MekiCalc 멀티모듈 빌드 — 표준 3모듈(MVC 지향).
+//   core    : 계산 도메인(Model) — engine/model/json/config, 의존성 없음
+//   desktop : Swing .exe(View) — ui/Main/SelfTest, core 의존
+//   web     : Spring MVC(Controller+Service) — web/, core 의존 (Spring은 이 모듈에만)
+// 정적 프론트는 public/ 폴더(런타임 외부 서빙), 게임 데이터는 data/ 폴더.
+subprojects {
+    apply plugin: 'java'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-// 기존 비표준 레이아웃 유지: 소스는 src/, data/ 와 web/ 는 런타임 외부 폴더(리소스 아님).
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src']
-        }
-        resources {
-            srcDirs = []
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
-}
 
-dependencies {
-    // 기존 런타임 JDBC 드라이버를 그대로 사용(버전 드리프트 방지).
-    implementation files('lib/postgresql.jar')
-}
+    repositories {
+        mavenCentral()
+    }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-application {
-    mainClass = 'mekicalc.web.WebMain'
-}
-
-// 웹 서버 로컬 실행: gradle runWeb  (포트 8899, data/, web/)
-tasks.register('runWeb', JavaExec) {
-    group = 'application'
-    description = '웹 서버를 로컬 8899로 실행'
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'mekicalc.web.WebMain'
-    args = ['8899', 'data', 'web']
-    systemProperty 'file.encoding', 'UTF-8'
-    systemProperty 'stdout.encoding', 'UTF-8'
-}
-
-// 엔진 자체검증(회귀 안전망): gradle selfTest
-tasks.register('selfTest', JavaExec) {
-    group = 'verification'
-    description = 'SelfTest 회귀 검증 실행'
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'mekicalc.Main'
-    args = ['--selftest']
-    systemProperty 'file.encoding', 'UTF-8'
-    systemProperty 'stdout.encoding', 'UTF-8'
-}
-
-// 데스크톱 GUI 실행: gradle runDesktop
-tasks.register('runDesktop', JavaExec) {
-    group = 'application'
-    description = '데스크톱 Swing UI 실행'
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'mekicalc.ui.App'
-    systemProperty 'file.encoding', 'UTF-8'
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
 }

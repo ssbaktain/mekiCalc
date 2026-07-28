@@ -1,0 +1,1 @@
+// core — 순수 계산 도메인(Model). 외부 의존성 없음. desktop/web이 공유.

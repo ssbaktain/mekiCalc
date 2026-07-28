@@ -11,7 +11,7 @@ import mekicalc.json.Json;
  *
  * 실행:
  *   java -cp out mekicalc.web.WebMain [port] [dataDir] [webDir]
- *   기본값: port=8080, dataDir=data, webDir=web
+ *   기본값: port=8080, dataDir=data, webDir=public
  */
 public final class WebMain {
 
@@ -30,7 +30,7 @@ public final class WebMain {
 
         int port = args.length > 0 ? Integer.parseInt(args[0]) : 8080;
         Path dataDir = Path.of(args.length > 1 ? args[1] : "data");
-        Path webDir = Path.of(args.length > 2 ? args[2] : "web");
+        Path webDir = Path.of(args.length > 2 ? args[2] : "public");
 
         GameContent content = GameContent.load(dataDir);
         CalcService service = new CalcService(content);

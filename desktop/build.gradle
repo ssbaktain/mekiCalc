@@ -1,0 +1,22 @@
+// desktop — Swing GUI + CLI(.exe로 패키징). core 의존.
+apply plugin: 'application'
+
+dependencies {
+    implementation project(':core')
+}
+
+application {
+    mainClass = 'mekicalc.ui.App'
+}
+
+// 엔진 회귀 검증(안전망): gradlew :desktop:selfTest
+tasks.register('selfTest', JavaExec) {
+    group = 'verification'
+    description = 'SelfTest 회귀 검증 실행'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.Main'
+    args = ['--selftest']
+    workingDir = rootProject.projectDir   // data/ 실데이터 로드용
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+}
