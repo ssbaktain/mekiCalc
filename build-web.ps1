@@ -9,7 +9,7 @@ try { chcp 65001 > $null } catch {}
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = $PSScriptRoot
 
-# web 모듈 빌드 → web\build\install\web\lib\*.jar (core.jar + web.jar + postgresql.jar)
+# web 모듈 빌드 → web\build\install\web\lib\*.jar (Spring + core.jar + web.jar + postgresql.jar)
 & "$root\gradlew.bat" :web:installDist --console=plain
 if ($LASTEXITCODE -ne 0) { Write-Error "빌드 실패"; exit 1 }
 
@@ -30,8 +30,10 @@ try {
     # 끊을 수 있어, 서버가 죽지 않도록 이 구간만 ErrorActionPreference를 Continue로 둔다.
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
+    # Spring Boot(WebApplication) 실행. 데이터/정적 폴더·포트는 프로퍼티로 전달.
     & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp $libGlob `
-        mekicalc.web.WebMain $Port "$root\data" "$root\public" 2>&1 |
+        mekicalc.web.boot.WebApplication `
+        "--server.port=$Port" "--mekicalc.data-dir=$root\data" "--mekicalc.web-dir=$root\public" 2>&1 |
         Tee-Object -FilePath $logFile -Append
     $ErrorActionPreference = $prevEAP
 } finally {
