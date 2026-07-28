@@ -596,50 +596,6 @@ public final class CalcService {
         return v instanceof Number ? ((Number) v).doubleValue() : null;
     }
 
-    /** monster_hp.json에서 챕터 c의 스테이지 일반몹 체력(없으면 null). 서버 전용(클라 미노출). */
-    @SuppressWarnings("unchecked")
-    private Double stageHp(String chapter, String stage) {
-        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
-        if (!(cObj instanceof Map)) return null;
-        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
-        if (c == null) return null;
-        Object st = c.get("stages");
-        if (!(st instanceof Map)) return null;
-        Object v = ((Map<?, ?>) st).get(stage);
-        return v instanceof Number ? ((Number) v).doubleValue() : null;
-    }
-
-    /** monster_hp.json에서 챕터 c의 보스 체력(없으면 null). 서버 전용. */
-    @SuppressWarnings("unchecked")
-    private Double bossHp(String chapter) {
-        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
-        if (!(cObj instanceof Map)) return null;
-        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
-        if (c == null) return null;
-        Object v = c.get("boss");
-        return v instanceof Number ? ((Number) v).doubleValue() : null;
-    }
-
-    /** 체력이 추정값(기본 k 사용 챕터)인지. 실측 보정된 챕터는 false. 클라에 "추정" 표시용. */
-    @SuppressWarnings("unchecked")
-    private boolean hpEstimated(String chapter) {
-        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
-        if (!(cObj instanceof Map)) return true;
-        Map<String, Object> c = Json.asMap(((Map<String, Object>) cObj).get(chapter));
-        if (c == null) return true;
-        Object v = c.get("estimated");
-        return !(v instanceof Boolean) || (Boolean) v;
-    }
-
-    /** 평타컷 = ⌈체력 ÷ (방어반영 평타딜)⌉. 체력·평타딜이 유효하지 않으면 null, 1 미만이면 1로 보정. */
-    private Long cutCount(Double hp, double hitWithDef) {
-        if (hp == null || hp <= 0 || hitWithDef <= 0) return null;
-        double n = Math.ceil(hp / hitWithDef);
-        if (n < 1) n = 1;
-        if (n > Long.MAX_VALUE) return Long.MAX_VALUE;
-        return (long) n;
-    }
-
     /** 방어배수 f = 5000/(6000 + 방어력 × max(0, 1 − 총방관%/100)). def==null이면 1. 전 경로(홈·동료·큐브) 공용 공식. */
     private static double defenseFactor(Double def, double totalPenPct) {
         if (def == null) return 1.0;
