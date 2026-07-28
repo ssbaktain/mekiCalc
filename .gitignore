@@ -89,3 +89,10 @@ out_check/
 ally.txt
 artifact.txt
 il2cpp_dump/
+
+# 골든 마스터 캡처(개인 스탯 포함 — 커밋 금지)
+dev/golden/
+
+# Gradle
+.gradle/
+build/
