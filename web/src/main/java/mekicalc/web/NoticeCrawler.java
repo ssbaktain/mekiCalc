@@ -280,7 +280,7 @@ public final class NoticeCrawler {
      * 그 날(E) 종료되는 이벤트·쿠폰 전부를 종료 빠른 순으로 '한 메시지'에 묶어 큐잉. Outbox dedup("remind:E")으로 날짜당 1회.
      * 예: 14일 22시 발화 → 실효종료일 15일(15일까지 종료)인 것들만. 미래(16일+)는 각자 자기 22시에.
      */
-    void checkExpiry() {
+    public void checkExpiry() {
         long now = System.currentTimeMillis() / 1000;
         String today = java.time.LocalDate.now(KST).toString();
         List<Map<String, Object>> coupons = store.activeCoupons(today);
