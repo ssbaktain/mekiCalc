@@ -32,7 +32,7 @@ import mekicalc.json.Json;
  * 상태: {@code logs/snapshots/.state.json} (sub → 마지막 번들 해시).
  * 보관: 365일 지난 {@code *.jsonl.gz} 자동 삭제.
  *
- * 실행: {@code java -cp out;lib\* mekicalc.web.WebMain --snapshot [dataDir]}
+ * 실행: {@code java -cp <web install lib> mekicalc.web.AdminCli --snapshot [dataDir]}
  */
 public final class StatsSnapshot {
 

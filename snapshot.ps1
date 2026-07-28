@@ -17,5 +17,5 @@ if (-not (Test-Path (Join-Path $root "web\build\install\web\lib"))) {
 }
 
 & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp $libGlob `
-    mekicalc.web.WebMain --snapshot "$root\data" 2>&1 |
+    mekicalc.web.AdminCli --snapshot "$root\data" 2>&1 |
     Tee-Object -FilePath $log -Append

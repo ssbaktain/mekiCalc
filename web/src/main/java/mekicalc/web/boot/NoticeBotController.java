@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import mekicalc.web.BotOutbox;
 import mekicalc.web.BotService;
-import mekicalc.web.NoticeCrawler;
 import mekicalc.web.NoticeService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,12 +24,10 @@ public class NoticeBotController {
 
     private final NoticeService notices;
     private final BotOutbox outbox;
-    private final NoticeCrawler crawler;
 
-    public NoticeBotController(NoticeService notices, BotOutbox outbox, NoticeCrawler crawler) {
+    public NoticeBotController(NoticeService notices, BotOutbox outbox) {
         this.notices = notices;
         this.outbox = outbox;
-        this.crawler = crawler;
     }
 
     // ──────────────── 공지 ────────────────
@@ -88,22 +85,5 @@ public class NoticeBotController {
         return outbox.health();
     }
 
-    /** 수동 재확인: 지금 이미 22시 게이트를 지난 리마인더를 즉시 큐잉. */
-    @GetMapping("/api/bot/remind-now")
-    public Object remindNow() {
-        crawler.checkExpiry();
-        return outbox.health();
-    }
-
-    /** [테스트] 최신 공지를 크롤러 배달 형식 그대로 큐잉. */
-    @GetMapping("/api/bot/simulate-notice")
-    public Object simulateNotice() {
-        return crawler.simulateLatestNotice();
-    }
-
-    /** [테스트] '지금이 22시'라 가정, 가장 임박한 실효 종료일의 이벤트·쿠폰을 묶어 리마인더 큐잉. */
-    @GetMapping("/api/bot/simulate-remind")
-    public Object simulateRemind() {
-        return crawler.simulateReminder();
-    }
+    // 수동 트리거·시뮬레이션(remind-now, simulate-*)은 dev 전용으로 분리 → BotDevController(@Profile("dev")).
 }

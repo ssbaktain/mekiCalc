@@ -46,6 +46,14 @@ public class StaticController {
         }
 
         String path = req.getRequestURI();
+        // /api·/auth 미매칭 경로는 정적/SPA 폴백 대상이 아님 → 404(HTML 반환·dev전용 엔드포인트 노출 방지).
+        if (path.startsWith("/api/") || path.startsWith("/auth/")) {
+            byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
+            res.setStatus(404);
+            res.setHeader("Content-Type", "text/plain; charset=utf-8");
+            try (OutputStream os = res.getOutputStream()) { os.write(nf); }
+            return;
+        }
         if (path.equals("/") || path.isEmpty()) path = "/index.html";
         // 경로 탈출 방지: web 디렉터리 밖으로 나가지 못하게 정규화 후 검증.
         Path root = webDir.normalize();
