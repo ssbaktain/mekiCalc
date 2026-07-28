@@ -8,6 +8,9 @@ $ErrorActionPreference = "Stop"
 try { chcp 65001 > $null } catch {}
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = $PSScriptRoot
+# ★스케줄드태스크는 작업디렉토리 미지정(CWD=System32)이라, gradlew가 현재 폴더에서 settings.gradle을
+#   못 찾아 "Run gradlew init" 오류로 빌드 실패한다. 프로젝트 루트로 이동해야 함(수동 실행은 원래 루트라 무해).
+Set-Location $root
 
 $logDir = Join-Path $root "logs"
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
