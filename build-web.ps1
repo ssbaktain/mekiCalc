@@ -10,8 +10,15 @@ try { chcp 65001 > $null } catch {}
 $root = $PSScriptRoot
 
 # web 모듈 빌드 → web\build\install\web\lib\*.jar (Spring + core.jar + web.jar + postgresql.jar)
-& "$root\gradlew.bat" :web:installDist --console=plain
-if ($LASTEXITCODE -ne 0) { Write-Error "빌드 실패"; exit 1 }
+# gradlew는 데몬 시작 안내 등을 stderr로 낼 수 있는데, PS 5.1은 $ErrorActionPreference=Stop에서 그걸
+# NativeCommandError로 종료 처리해 스크립트가 빌드 뒤 java 실행 전에 죽는다(스케줄드태스크의 새 세션에서
+# 데몬이 처음 뜰 때 특히). → 이 구간만 Continue로 두고 $LASTEXITCODE로만 성공 판정. --no-daemon으로 잔여 데몬도 방지.
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+& "$root\gradlew.bat" :web:installDist --console=plain --no-daemon
+$buildCode = $LASTEXITCODE
+$ErrorActionPreference = $prevEAP
+if ($buildCode -ne 0) { Write-Error "빌드 실패"; exit 1 }
 
 # 이전에 종료되지 않고 남아 포트를 잡고 있는 웹 서버 java가 있으면 정리 → 재시작 시 포트 충돌 방지(새 코드로 확실히 교체).
 Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
