@@ -1,21 +1,32 @@
-// web — 웹 서버. core 의존. (Spring MVC는 다음 단계에서 이 모듈에 추가)
-// 현재는 기존 JDK 내장 HttpServer(WebMain) 그대로 — 재구성 검증용.
-apply plugin: 'application'
+// web — 웹 서버. core 의존. Spring MVC(Controller+Service).
+// 과도기: 구 JDK HttpServer(WebMain)와 신 Spring(WebApplication)이 병존.
+// 정적 프론트는 public/, 게임 데이터는 data/ (런타임 외부 폴더).
+plugins {
+    id 'application'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
 
 dependencies {
     implementation project(':core')
     // 런타임 JDBC 드라이버(기존 lib jar 유지, 버전 드리프트 방지)
     implementation files(rootProject.file('lib/postgresql.jar'))
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
+// Spring 진입점(bootJar/bootRun). 구 HttpServer WebMain은 아래 runWeb 태스크가 명시 실행.
 application {
-    mainClass = 'mekicalc.web.WebMain'
+    mainClass = 'mekicalc.web.boot.WebApplication'
 }
 
-// 웹 서버 로컬 실행: gradlew :web:runWeb  (포트 8899, data/, public/)
+springBoot {
+    mainClass = 'mekicalc.web.boot.WebApplication'
+}
+
+// 구 HttpServer 로컬 실행(골든마스터 기준선 재현용): gradlew :web:runWeb
 tasks.register('runWeb', JavaExec) {
     group = 'application'
-    description = '웹 서버를 로컬 8899로 실행'
+    description = '구 HttpServer 웹 서버를 로컬 8899로 실행(비교용)'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'mekicalc.web.WebMain'
     args = ['8899', rootProject.file('data').toString(), rootProject.file('public').toString()]
