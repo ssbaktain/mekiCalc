@@ -49,7 +49,7 @@ public class AuthController {
     public void callback(HttpServletRequest req, HttpServletResponse res) throws IOException {
         try {
             if (!auth.enabled()) { redirect(res, "/"); return; }
-            String code = req.getParameter("code"), state = req.getParameter("state"), saved = getCookie(req, "oauth_state");
+            String code = req.getParameter("code"), state = req.getParameter("state"), saved = Req.cookie(req, "oauth_state");
             addCookie(res, clearCookieStr("oauth_state"));
             if (code == null || state == null || saved == null || !state.equals(saved)) {
                 redirect(res, "/?login=error"); return;
@@ -66,7 +66,7 @@ public class AuthController {
             org.springframework.web.bind.annotation.RequestMethod.POST})
     public void logout(HttpServletRequest req, HttpServletResponse res) throws IOException {
         try {
-            auth.logout(getCookie(req, "sid"));
+            auth.logout(Req.cookie(req, "sid"));
             addCookie(res, clearCookieStr("sid"));
             if ("GET".equalsIgnoreCase(req.getMethod())) redirect(res, "/");
             else writeJson(res, 200, Map.of("ok", true));
@@ -100,13 +100,18 @@ public class AuthController {
 
     @GetMapping("/api/presets")
     public void presetsGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        AuthService.Session s = sessionFrom(req);
-        if (s == null) { writeJson(res, 401, Map.of("error", "로그인 필요")); return; }
-        String bundle = auth.loadPresets(s.sub());
-        byte[] out = (bundle != null ? bundle : "{}").getBytes(StandardCharsets.UTF_8);
-        res.setStatus(200);
-        res.setHeader("Content-Type", "application/json; charset=utf-8");
-        try (OutputStream os = res.getOutputStream()) { os.write(out); }
+        try {
+            AuthService.Session s = sessionFrom(req);
+            if (s == null) { writeJson(res, 401, Map.of("error", "로그인 필요")); return; }
+            String bundle = auth.loadPresets(s.sub());
+            byte[] out = (bundle != null ? bundle : "{}").getBytes(StandardCharsets.UTF_8);
+            res.setStatus(200);
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.setContentLength(out.length);
+            try (OutputStream os = res.getOutputStream()) { os.write(out); }
+        } catch (Exception e) {   // 구 서버는 presets 전 경로를 하나의 try로 감싸 예외를 400으로 응답.
+            writeJson(res, 400, Map.of("error", String.valueOf(e.getMessage())));
+        }
     }
 
     @PutMapping("/api/presets")
@@ -135,7 +140,7 @@ public class AuthController {
     // ──────────────── 헬퍼(구 WebServer와 동일) ────────────────
 
     private AuthService.Session sessionFrom(HttpServletRequest req) {
-        return auth.session(getCookie(req, "sid"));
+        return auth.session(Req.cookie(req, "sid"));
     }
 
     private Map<String, Object> meInfo(AuthService.Session s) {
@@ -158,17 +163,6 @@ public class AuthController {
 
     private static void addCookie(HttpServletResponse res, String cookie) {
         res.addHeader("Set-Cookie", cookie);
-    }
-
-    private static String getCookie(HttpServletRequest req, String name) {
-        String header = req.getHeader("Cookie");
-        if (header == null) return null;
-        for (String c : header.split(";")) {
-            String t = c.trim();
-            int i = t.indexOf('=');
-            if (i > 0 && t.substring(0, i).equals(name)) return t.substring(i + 1);
-        }
-        return null;
     }
 
     private static void redirect(HttpServletResponse res, String location) {

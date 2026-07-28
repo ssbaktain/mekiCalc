@@ -38,7 +38,7 @@ public class AccessLogInterceptor implements HandlerInterceptor {
 
     /** 로그인 상태면 유저 이메일, 아니면 null. */
     static String userOf(HttpServletRequest req, AuthService auth) {
-        AuthService.Session s = auth.session(cookie(req, "sid"));
+        AuthService.Session s = auth.session(Req.cookie(req, "sid"));
         return s != null ? s.email() : null;
     }
 
@@ -49,16 +49,5 @@ public class AccessLogInterceptor implements HandlerInterceptor {
         String xff = req.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
         return req.getRemoteAddr();
-    }
-
-    private static String cookie(HttpServletRequest req, String name) {
-        String header = req.getHeader("Cookie");
-        if (header == null) return null;
-        for (String c : header.split(";")) {
-            String t = c.trim();
-            int i = t.indexOf('=');
-            if (i > 0 && t.substring(0, i).equals(name)) return t.substring(i + 1);
-        }
-        return null;
     }
 }

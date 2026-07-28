@@ -1,6 +1,6 @@
-// web — 웹 서버. core 의존. Spring MVC(Controller+Service).
-// 과도기: 구 JDK HttpServer(WebMain)와 신 Spring(WebApplication)이 병존.
+// web — 웹 서버(Spring MVC: Controller + Service). core 의존.
 // 정적 프론트는 public/, 게임 데이터는 data/ (런타임 외부 폴더).
+// 실행: build-web.ps1(:web:installDist → java -cp lib/* mekicalc.web.boot.WebApplication).
 plugins {
     id 'application'
     id 'org.springframework.boot' version '3.3.5'
@@ -14,23 +14,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
-// Spring 진입점(bootJar/bootRun). 구 HttpServer WebMain은 아래 runWeb 태스크가 명시 실행.
+// Spring 진입점(bootJar/bootRun/installDist 공용). CLI 유틸은 mekicalc.web.AdminCli.
 application {
     mainClass = 'mekicalc.web.boot.WebApplication'
-}
-
-springBoot {
-    mainClass = 'mekicalc.web.boot.WebApplication'
-}
-
-// 구 HttpServer 로컬 실행(골든마스터 기준선 재현용): gradlew :web:runWeb
-tasks.register('runWeb', JavaExec) {
-    group = 'application'
-    description = '구 HttpServer 웹 서버를 로컬 8899로 실행(비교용)'
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'mekicalc.web.WebMain'
-    args = ['8899', rootProject.file('data').toString(), rootProject.file('public').toString()]
-    workingDir = rootProject.projectDir
-    systemProperty 'file.encoding', 'UTF-8'
-    systemProperty 'stdout.encoding', 'UTF-8'
 }

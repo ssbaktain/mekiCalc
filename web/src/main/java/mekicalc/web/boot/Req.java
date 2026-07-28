@@ -1,5 +1,6 @@
 package mekicalc.web.boot;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -10,12 +11,24 @@ import mekicalc.engine.skill.ArtifactEffects;
 import mekicalc.json.Json;
 
 /**
- * 요청 본문(Json.parse 결과 Map) 파싱 헬퍼. 구 {@code WebServer}의 static 파서를 그대로 옮겨
- * 컨트롤러가 서비스에 넘길 인자를 동일하게 만든다. 숫자는 전부 Double(파서 규약).
+ * 요청 파싱 헬퍼. 본문(Json.parse 결과 Map)에서 값을 꺼내는 static 유틸 모음(숫자는 전부 Double 규약).
+ * 쿠키 읽기 등 요청 공통 파싱도 여기 모은다.
  */
 final class Req {
 
     private Req() {}
+
+    /** 요청 Cookie 헤더에서 name 쿠키 값(없으면 null). */
+    static String cookie(HttpServletRequest req, String name) {
+        String header = req.getHeader("Cookie");
+        if (header == null) return null;
+        for (String c : header.split(";")) {
+            String t = c.trim();
+            int i = t.indexOf('=');
+            if (i > 0 && t.substring(0, i).equals(name)) return t.substring(i + 1);
+        }
+        return null;
+    }
 
     /** {key: number, …} → statId→Double 맵. null/비객체면 빈 맵. */
     @SuppressWarnings("unchecked")

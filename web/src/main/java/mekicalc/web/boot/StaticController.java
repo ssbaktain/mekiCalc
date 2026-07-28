@@ -45,7 +45,8 @@ public class StaticController {
             return;
         }
 
-        String path = req.getRequestURI();
+        // 파일 매칭엔 디코딩된 경로 사용(구 serveStatic의 getRequestURI().getPath() 동등). 리다이렉트 목적지는 위에서 원문 URI 사용.
+        String path = java.net.URLDecoder.decode(req.getRequestURI(), StandardCharsets.UTF_8);
         // /api·/auth 미매칭 경로는 정적/SPA 폴백 대상이 아님 → 404(HTML 반환·dev전용 엔드포인트 노출 방지).
         if (path.startsWith("/api/") || path.startsWith("/auth/")) {
             byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
