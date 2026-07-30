@@ -57,9 +57,18 @@ public class NoticeBotController {
 
     // ──────────────── 카카오봇 ────────────────
 
-    /** 봇 명령 웹훅(폰 → 서버). */
+    /**
+     * 봇 명령 웹훅(폰 → 서버). 방 {@code reply} 권한이 없으면 무응답({@code reply:null}).
+     * 하위호환: chatId를 안 보내는 구 브릿지는 권한 체크를 건너뛴다(단계 4 브릿지 교체 후 chatId 필수화).
+     */
     @PostMapping("/api/bot")
     public Object bot(@RequestBody Map<String, Object> req) {
+        String chatId = strOpt(req, "chatId");
+        if (chatId != null && !chatId.isBlank() && !rooms.canReply(chatId)) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("reply", null);   // 권한 없는 방 → 무응답
+            return out;
+        }
         return BotService.handle(notices, strOpt(req, "room"), strOpt(req, "sender"), strOpt(req, "msg"));
     }
 
