@@ -79,6 +79,8 @@ public final class NoticeCrawler {
     private int backfillRemaining = DAILY_BACKFILL_BUDGET;
     private final Map<String, Integer> backfillPage = new LinkedHashMap<>();   // boardId → 다음에 훑을 과거 페이지
     private final Map<String, Boolean> backfillDone = new LinkedHashMap<>();
+    private final Map<String, Long> issueRefreshAt = new java.util.HashMap<>();   // 확인 중인 현상 threadId → 마지막 강제 재크롤 epoch
+    private static final long ISSUE_REFRESH_SEC = 3600;   // 확인 중인 현상 재크롤 주기(1시간). 제목 무변경 수정 반영용
 
     public NoticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox) {
         this.store = store;
@@ -134,6 +136,8 @@ public final class NoticeCrawler {
                 }
             }
             // 4b) 갱신 글 재추출 → 발송 매트릭스(§3-3: issue 새 항목/우편 추가만 델타 발송).
+            //     + 확인 중인 현상은 제목이 안 바뀌어도 주기적으로 재크롤해 수정(open→fixed)을 웹에 반영(무알림).
+            enqueueIssueRefresh();
             processReextract();
             // 4c) 과거 글 백필 추출(하루 15건).
             refreshBudget();
@@ -149,6 +153,29 @@ public final class NoticeCrawler {
     }
 
     private static final String ISSUE_BOARD = "6745";   // 확인 중인 현상
+
+    /**
+     * 확인 중인 현상 중 아직 미해결(open) 항목이 남은 글을 주기적으로 재추출 대상에 넣는다. 제목이 안 바뀌어도
+     * 내용 수정(open→fixed)을 웹에 반영하기 위함. 발송 여부는 {@link #processReextract}의 {@link #issueDelta}가
+     * 판단한다(새 open/우편만 알림, 수정 완료는 웹만 갱신·무알림). 비용 보호를 위해 틱당 1개(가장 오래 안 본 글)만.
+     */
+    private void enqueueIssueRefresh() {
+        long now = System.currentTimeMillis() / 1000;
+        NoticeStore.Notice oldest = null;
+        long oldestAt = Long.MAX_VALUE;
+        for (NoticeStore.Notice n : store.all()) {
+            if (!"확인 중인 현상".equals(n.category) || "closed".equals(n.status)) continue;
+            if (n.data == null || n.data.issues == null || n.data.issues.open.isEmpty()) continue;  // 미해결 없으면 볼 필요 없음
+            if (pendingReextract.contains(n.threadId)) continue;   // 이미 재추출 대기 중
+            long at = issueRefreshAt.getOrDefault(n.threadId, 0L);
+            if (now - at < ISSUE_REFRESH_SEC) continue;            // 주기 미도래
+            if (at < oldestAt) { oldest = n; oldestAt = at; }
+        }
+        if (oldest != null) {
+            pendingReextract.add(oldest.threadId);
+            issueRefreshAt.put(oldest.threadId, now);
+        }
+    }
 
     /** 갱신(제목변경) 감지된 글 재추출 + 발송 매트릭스. 이전 data와 새 data를 비교(§3-3). 틱당 소수. */
     private void processReextract() {
