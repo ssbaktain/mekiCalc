@@ -3,6 +3,7 @@ package mekicalc.web.boot;
 import static mekicalc.web.boot.Req.strOpt;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,13 +73,28 @@ public class NoticeBotController {
         return BotService.handle(notices, strOpt(req, "room"), strOpt(req, "sender"), strOpt(req, "msg"));
     }
 
-    /** 봇 발신 큐 폴링(서버 → 봇 브릿지). */
+    /**
+     * 봇 발신 큐 폴링(서버 → 봇 브릿지). 각 메시지에 발송 대상 방 목록({@code rooms})을 서버가 확정해 담는다.
+     * targetRooms가 지정돼 있으면(개인 공지/테스트) 그 방들, 아니면 notify 권한 방 전체.
+     */
     @GetMapping("/api/bot/outbox/poll")
+    @SuppressWarnings("unchecked")
     public Object outboxPoll(@RequestParam(required = false) String limit) {
         int n = 10;
         try { if (limit != null) n = Integer.parseInt(limit); } catch (NumberFormatException ignore) { }
+        List<String> notify = rooms.notifyRooms();
+        List<Map<String, Object>> msgs = new ArrayList<>();
+        for (Map<String, Object> raw : outbox.poll(n)) {
+            Object tr = raw.get("targetRooms");
+            List<String> target = (tr instanceof List) ? (List<String>) tr : notify;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", raw.get("id"));
+            m.put("text", raw.get("text"));
+            m.put("rooms", target);
+            msgs.add(m);
+        }
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("messages", outbox.poll(n));
+        out.put("messages", msgs);
         return out;
     }
 

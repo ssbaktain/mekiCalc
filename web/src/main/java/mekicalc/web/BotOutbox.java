@@ -33,6 +33,7 @@ public final class BotOutbox {
         public String dedupKey;
         public String status = "pending";   // pending | sent
         public long leasedAt, createdAt, sentAt;
+        public List<String> targetRooms;    // null=notify 권한 방 전체, 아니면 특정 chatId 목록(개인 공지/테스트)
 
         Map<String, Object> toMap() {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -43,6 +44,7 @@ public final class BotOutbox {
             m.put("leasedAt", (double) leasedAt);
             m.put("createdAt", (double) createdAt);
             m.put("sentAt", (double) sentAt);
+            m.put("targetRooms", targetRooms);   // null이면 그대로 null 저장
             return m;
         }
         static Msg fromMap(Map<String, Object> m) {
@@ -54,9 +56,16 @@ public final class BotOutbox {
             x.leasedAt = (long) Json.num(m, "leasedAt", 0);
             x.createdAt = (long) Json.num(m, "createdAt", 0);
             x.sentAt = (long) Json.num(m, "sentAt", 0);
+            x.targetRooms = strList(m.get("targetRooms"));
             return x;
         }
         private static String str(Map<String, Object> m, String k) { Object v = m.get(k); return v == null ? null : v.toString(); }
+        private static List<String> strList(Object o) {
+            if (!(o instanceof List)) return null;
+            List<String> out = new ArrayList<>();
+            for (Object e : (List<?>) o) if (e != null) out.add(e.toString());
+            return out;
+        }
     }
 
     private final Path file;
@@ -91,14 +100,23 @@ public final class BotOutbox {
         } catch (IOException e) { System.err.println("bot_outbox.json 저장 실패: " + e); }
     }
 
-    /** 큐에 적재. dedupKey가 이미 있으면 무시(-1 반환). 성공 시 새 id. */
+    /** 큐에 적재(전체 notify 권한 방 대상). dedupKey가 이미 있으면 무시(-1 반환). 성공 시 새 id. */
     public synchronized long enqueue(String text, String dedupKey) {
+        return enqueue(text, dedupKey, null);
+    }
+
+    /**
+     * 큐에 적재. {@code targetRooms}가 null이면 발송 시 notify 권한 방 전체, 아니면 그 chatId 방들만
+     * (개인 공지·테스트). dedupKey가 이미 있으면 무시(-1 반환). 성공 시 새 id.
+     */
+    public synchronized long enqueue(String text, String dedupKey, List<String> targetRooms) {
         if (text == null || text.isBlank()) return -1;
         if (dedupKey != null && dedup.contains(dedupKey)) return -1;
         Msg x = new Msg();
         x.id = ++seq;
         x.text = text;
         x.dedupKey = dedupKey;
+        x.targetRooms = targetRooms;
         x.createdAt = System.currentTimeMillis() / 1000;
         msgs.add(x);
         if (dedupKey != null) dedup.add(dedupKey);
@@ -106,7 +124,10 @@ public final class BotOutbox {
         return x.id;
     }
 
-    /** 미발송(또는 lease 만료) 메시지 최대 limit건 반환 + lease 갱신. */
+    /**
+     * 미발송(또는 lease 만료) 메시지 최대 limit건 반환 + lease 갱신. 각 항목에 {@code targetRooms}(nullable)를
+     * 담아 보낸다 — null이면 발송 계층(컨트롤러)이 notify 권한 방 전체로 확정한다.
+     */
     public synchronized List<Map<String, Object>> poll(int limit) {
         long now = System.currentTimeMillis() / 1000;
         List<Map<String, Object>> out = new ArrayList<>();
@@ -117,6 +138,7 @@ public final class BotOutbox {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", (double) x.id);
             m.put("text", x.text);
+            m.put("targetRooms", x.targetRooms);
             out.add(m);
             if (out.size() >= limit) break;
         }
