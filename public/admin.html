@@ -77,7 +77,7 @@
       <table class="rooms" id="roomsTable" hidden>
         <thead>
           <tr>
-            <th class="center">선택</th>
+            <th class="center"><input type="checkbox" id="pickHeader" title="전체 선택/해제"></th>
             <th>방 이름</th>
             <th>chatId</th>
             <th class="center">공지·리마인더</th>
@@ -150,7 +150,18 @@
       empty.hidden = list.length !== 0;
       body.querySelectorAll('tr').forEach(tr => {
         $('.save', tr).addEventListener('click', () => saveRoom(tr));
+        $('.pick', tr).addEventListener('change', syncHeaderCheck);
       });
+      syncHeaderCheck();
+    }
+
+    // 헤더 전체 체크박스 상태 동기화(전부/일부/없음 → checked/indeterminate/unchecked).
+    function syncHeaderCheck() {
+      const h = $('#pickHeader'); if (!h) return;
+      const picks = [...$('#roomsBody').querySelectorAll('.pick')];
+      const n = picks.filter(c => c.checked).length;
+      h.checked = n > 0 && n === picks.length;
+      h.indeterminate = n > 0 && n < picks.length;
     }
 
     async function loadRooms() {
@@ -228,8 +239,9 @@
 
     $('#addBtn').addEventListener('click', addRoom);
     $('#reloadBtn').addEventListener('click', syncRooms);
-    $('#pickAll').addEventListener('click', () => setPick(true));
-    $('#pickNone').addEventListener('click', () => setPick(false));
+    $('#pickAll').addEventListener('click', () => { setPick(true); syncHeaderCheck(); });
+    $('#pickNone').addEventListener('click', () => { setPick(false); syncHeaderCheck(); });
+    $('#pickHeader').addEventListener('change', (e) => { setPick(e.target.checked); e.target.indeterminate = false; });
     $('#sendBtn').addEventListener('click', broadcast);
     loadRooms();
   </script>
