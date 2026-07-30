@@ -4,10 +4,12 @@ import static mekicalc.web.boot.Req.bool;
 import static mekicalc.web.boot.Req.strOpt;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import mekicalc.web.BotBridge;
+import mekicalc.web.BotOutbox;
 import mekicalc.web.RoomStore;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,10 +30,12 @@ public class AdminController {
 
     private final RoomStore rooms;
     private final BotBridge bridge;
+    private final BotOutbox outbox;
 
-    public AdminController(RoomStore rooms, BotBridge bridge) {
+    public AdminController(RoomStore rooms, BotBridge bridge, BotOutbox outbox) {
         this.rooms = rooms;
         this.bridge = bridge;
+        this.outbox = outbox;
     }
 
     /** 방 목록(+권한). */
@@ -75,5 +79,25 @@ public class AdminController {
         RoomStore.Room r = rooms.update(chatId, strOpt(req, "name"), bool(req, "notify", false), bool(req, "reply", false));
         if (r == null) throw new IllegalArgumentException("존재하지 않는 방: " + chatId);
         return r.toMap();
+    }
+
+    /**
+     * 개인 공지 / 테스트 발송. body: {text, targetRooms:[chatId,...]}. 선택한 방들만 대상으로 outbox에 적재한다
+     * (notify 권한 무관 — 관리자가 명시 지정). 매번 고유 dedupKey라 중복차단 없이 전송된다.
+     */
+    @PostMapping("/broadcast")
+    public Object broadcast(@RequestBody Map<String, Object> req) {
+        String text = strOpt(req, "text");
+        if (text == null || text.isBlank()) throw new IllegalArgumentException("메시지가 비어 있습니다.");
+        List<String> target = new ArrayList<>();
+        Object tr = req.get("targetRooms");
+        if (tr instanceof List) for (Object o : (List<?>) tr) if (o != null && !o.toString().isBlank()) target.add(o.toString());
+        if (target.isEmpty()) throw new IllegalArgumentException("발송할 방을 하나 이상 선택하세요.");
+        long id = outbox.enqueue(text, "broadcast:" + Instant.now().toEpochMilli(), target);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", id > 0);
+        out.put("id", (double) id);
+        out.put("rooms", (double) target.size());
+        return out;
     }
 }

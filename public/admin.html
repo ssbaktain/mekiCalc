@@ -38,6 +38,13 @@
       border-radius: 6px; padding: 6px 9px; font-size: 13px; }
     .add-form input.cid { width: 220px; } .add-form input.nm { width: 200px; }
     .muted-note { font-size: 12px; color: var(--muted, #8a94a6); margin-top: 6px; }
+    .send-box { margin-top: 18px; border-top: 1px solid var(--border, #2a3140); padding-top: 14px; }
+    .send-box h3 { margin: 0 0 2px; font-size: 15px; }
+    .send-box textarea { width: 100%; box-sizing: border-box; min-height: 72px; margin-top: 10px;
+      background: #0f131b; border: 1px solid var(--border, #2a3140); color: inherit; border-radius: 8px;
+      padding: 9px; font-family: inherit; font-size: 14px; resize: vertical; }
+    .send-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .send-status { font-size: 13px; color: #48bb78; }
     .empty { color: var(--muted, #8a94a6); font-size: 14px; padding: 14px 2px; }
     #roomsErr { color: #f56565; font-size: 13px; margin-top: 8px; }
   </style>
@@ -70,6 +77,7 @@
       <table class="rooms" id="roomsTable" hidden>
         <thead>
           <tr>
+            <th class="center">선택</th>
             <th>방 이름</th>
             <th>chatId</th>
             <th class="center">공지·리마인더</th>
@@ -83,6 +91,18 @@
       <div id="roomsErr" hidden></div>
 
       <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다.</div>
+
+      <div class="send-box">
+        <h3>개인 공지 / 테스트 발송</h3>
+        <p class="admin-sub" style="margin:2px 0 0">위 표에서 <b>선택</b>한 방에만 보냅니다(권한과 무관). 테스트할 땐 실운영 방을 해제하고 테스트 방만 선택하세요.</p>
+        <textarea id="bcText" placeholder="선택한 방에 보낼 메시지…"></textarea>
+        <div class="send-actions">
+          <button class="btn ghost" id="pickAll">전체 선택</button>
+          <button class="btn ghost" id="pickNone">전체 해제</button>
+          <button class="btn" id="sendBtn">선택 방에 발송</button>
+          <span id="sendMsg" class="send-status"></span>
+        </div>
+      </div>
 
       <details style="margin-top:12px">
         <summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a94a6)">chatId로 직접 추가(선택)</summary>
@@ -114,6 +134,7 @@
     function rowHtml(room) {
       const cid = esc(room.chatId);
       return `<tr data-chatid="${cid}">
+        <td class="center"><input type="checkbox" class="pick"></td>
         <td><input class="name" value="${esc(room.name)}"></td>
         <td><span class="cid">${cid}</span><div class="src">${room.source === 'manual' ? '수동' : '자동'}</div></td>
         <td class="center"><input type="checkbox" class="notify" ${room.notify ? 'checked' : ''}></td>
@@ -181,8 +202,35 @@
       } catch (e) { showErr('추가 실패: ' + e.message); }
     }
 
+    // 개인 공지 / 테스트 발송 — 체크한 방만 대상.
+    function pickedRooms() {
+      return [...$('#roomsBody').querySelectorAll('tr')]
+        .filter(tr => $('.pick', tr).checked).map(tr => tr.dataset.chatid);
+    }
+    function setPick(v) { $('#roomsBody').querySelectorAll('.pick').forEach(c => c.checked = v); }
+
+    async function broadcast() {
+      showErr('');
+      const text = $('#bcText').value.trim();
+      const picked = pickedRooms();
+      if (!text) { showErr('보낼 메시지를 입력하세요.'); return; }
+      if (!picked.length) { showErr('발송할 방을 하나 이상 선택하세요.'); return; }
+      if (!confirm(`선택한 ${picked.length}개 방에 발송할까요?\n\n${text.slice(0, 120)}`)) return;
+      const btn = $('#sendBtn'); btn.disabled = true;
+      try {
+        const r = await api('POST', '/api/admin/broadcast', { text, targetRooms: picked });
+        $('#sendMsg').textContent = `${r.rooms}개 방에 발송 큐 적재됨`;
+        $('#bcText').value = '';
+        setTimeout(() => { $('#sendMsg').textContent = ''; }, 3000);
+      } catch (e) { showErr('발송 실패: ' + e.message); }
+      finally { btn.disabled = false; }
+    }
+
     $('#addBtn').addEventListener('click', addRoom);
     $('#reloadBtn').addEventListener('click', syncRooms);
+    $('#pickAll').addEventListener('click', () => setPick(true));
+    $('#pickNone').addEventListener('click', () => setPick(false));
+    $('#sendBtn').addEventListener('click', broadcast);
     loadRooms();
   </script>
 </body>
