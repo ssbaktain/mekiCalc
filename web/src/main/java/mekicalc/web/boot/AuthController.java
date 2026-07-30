@@ -148,6 +148,7 @@ public class AuthController {
         m.put("oauthEnabled", auth.enabled());
         m.put("loggedIn", s != null);
         if (s != null) { m.put("name", s.name()); m.put("email", s.email()); }
+        m.put("isAdmin", auth.isAdmin(s));
         return m;
     }
 

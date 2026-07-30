@@ -1,6 +1,7 @@
 package mekicalc.web.boot;
 
 import java.nio.file.Path;
+import mekicalc.web.AdminConfig;
 import mekicalc.web.AuthService;
 import mekicalc.web.BotOutbox;
 import mekicalc.web.CalcService;
@@ -49,6 +50,12 @@ public class BeanConfig {
         return OAuthConfig.load(dataDir);
     }
 
+    /** 관리자 이메일 화이트리스트(data/admins.json). 없으면 관리자 0명. */
+    @Bean
+    public AdminConfig adminConfig(Path dataDir) {
+        return AdminConfig.load(dataDir);
+    }
+
     /** data/db.json 있으면 PostgreSQL, 없으면 OFF(파일 모드 폴백). */
     @Bean
     public Db db(Path dataDir) {
@@ -60,13 +67,13 @@ public class BeanConfig {
      * (DB가 늦게 뜨는 헤드리스 부팅 대비 waitReady(180) 폴백)
      */
     @Bean
-    public AuthService authService(OAuthConfig oauth, Db db, Path dataDir) {
+    public AuthService authService(OAuthConfig oauth, Db db, Path dataDir, AdminConfig admins) {
         PgAuthStore pg = null;
         if (db.enabled) {
             if (db.waitReady(180)) pg = new PgAuthStore(db);
             else System.err.println("DB 연결 실패(타임아웃), 파일 모드로 폴백");
         }
-        return new AuthService(oauth, dataDir, pg);
+        return new AuthService(oauth, dataDir, pg, admins);
     }
 
     @Bean

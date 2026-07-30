@@ -49,6 +49,7 @@ data/ui.json
 
 ### 로그인/시크릿 (커밋·배포 제외) ###
 data/oauth.json
+data/admins.json
 data/sessions.json
 data/users/
 data/db.json

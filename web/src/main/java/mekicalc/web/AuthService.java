@@ -32,6 +32,7 @@ public final class AuthService {
     private static final long SESSION_DAYS = 30;
 
     private final OAuthConfig cfg;
+    private final AdminConfig admins;  // 관리자 이메일 화이트리스트(빈 것=관리자 0명)
     private final Path sessionsFile;   // data/sessions.json (파일 모드)
     private final Path usersDir;       // data/users/ (파일 모드)
     private final PgAuthStore pg;      // null이면 파일 모드, 아니면 DB 모드
@@ -39,10 +40,13 @@ public final class AuthService {
     private final HttpClient http = HttpClient.newHttpClient();
     private final SecureRandom rng = new SecureRandom();
 
-    public AuthService(OAuthConfig cfg, Path dataDir) { this(cfg, dataDir, null); }
+    public AuthService(OAuthConfig cfg, Path dataDir) { this(cfg, dataDir, null, AdminConfig.empty()); }
 
-    public AuthService(OAuthConfig cfg, Path dataDir, PgAuthStore pg) {
+    public AuthService(OAuthConfig cfg, Path dataDir, PgAuthStore pg) { this(cfg, dataDir, pg, AdminConfig.empty()); }
+
+    public AuthService(OAuthConfig cfg, Path dataDir, PgAuthStore pg, AdminConfig admins) {
         this.cfg = cfg;
+        this.admins = admins;
         this.sessionsFile = dataDir.resolve("sessions.json");
         this.usersDir = dataDir.resolve("users");
         this.pg = pg;
@@ -52,6 +56,9 @@ public final class AuthService {
 
     public OAuthConfig config() { return cfg; }
     public boolean enabled() { return cfg.enabled; }
+
+    /** 세션이 관리자(화이트리스트 이메일)인지. null 세션·비로그인은 false. */
+    public boolean isAdmin(Session s) { return s != null && admins.isAdmin(s.email()); }
 
     /** 무작위 URL-safe 토큰(state/세션용). */
     public String randomToken() {

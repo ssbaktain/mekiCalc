@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import mekicalc.web.AuthService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class StaticController {
 
     private final Path webDir;
+    private final AuthService auth;
 
-    public StaticController(@Value("${mekicalc.web-dir:public}") String webDir) {
+    public StaticController(@Value("${mekicalc.web-dir:public}") String webDir, AuthService auth) {
         this.webDir = Path.of(webDir);
+        this.auth = auth;
     }
 
     @RequestMapping("/**")
@@ -48,12 +51,10 @@ public class StaticController {
         // 파일 매칭엔 디코딩된 경로 사용(구 serveStatic의 getRequestURI().getPath() 동등). 리다이렉트 목적지는 위에서 원문 URI 사용.
         String path = java.net.URLDecoder.decode(req.getRequestURI(), StandardCharsets.UTF_8);
         // /api·/auth 미매칭 경로는 정적/SPA 폴백 대상이 아님 → 404(HTML 반환·dev전용 엔드포인트 노출 방지).
-        if (path.startsWith("/api/") || path.startsWith("/auth/")) {
-            byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
-            res.setStatus(404);
-            res.setHeader("Content-Type", "text/plain; charset=utf-8");
-            try (OutputStream os = res.getOutputStream()) { os.write(nf); }
-            return;
+        if (path.startsWith("/api/") || path.startsWith("/auth/")) { notFound(res); return; }
+        // 관리자 페이지 게이팅: /admin* 은 관리자 세션만 서빙. 비관리자·비로그인은 404로 존재 자체를 숨긴다.
+        if (path.equals("/admin") || path.equals("/admin.html") || path.startsWith("/admin/")) {
+            if (!auth.isAdmin(auth.session(Req.cookie(req, "sid")))) { notFound(res); return; }
         }
         if (path.equals("/") || path.isEmpty()) path = "/index.html";
         // 경로 탈출 방지: web 디렉터리 밖으로 나가지 못하게 정규화 후 검증.
@@ -68,13 +69,7 @@ public class StaticController {
             if (html.startsWith(root) && Files.isRegularFile(html)) target = html;
             else if (!last.contains(".")) { target = root.resolve("index.html"); spaRoute = path; }
         }
-        if (!safe || !Files.isRegularFile(target)) {
-            byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
-            res.setStatus(404);
-            res.setHeader("Content-Type", "text/plain; charset=utf-8");
-            try (OutputStream os = res.getOutputStream()) { os.write(nf); }
-            return;
-        }
+        if (!safe || !Files.isRegularFile(target)) { notFound(res); return; }
         String name = target.getFileName().toString().toLowerCase();
         byte[] data = name.endsWith(".html") ? htmlWithVersionedAssets(target, spaRoute) : Files.readAllBytes(target);
         res.setStatus(200);
@@ -83,6 +78,14 @@ public class StaticController {
         res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         res.setContentLength(data.length);
         try (OutputStream os = res.getOutputStream()) { os.write(data); }
+    }
+
+    /** 404 응답(text/plain). 정적 미매칭·게이팅 실패 공용. */
+    private static void notFound(HttpServletResponse res) throws IOException {
+        byte[] nf = "404 Not Found".getBytes(StandardCharsets.UTF_8);
+        res.setStatus(404);
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        try (OutputStream os = res.getOutputStream()) { os.write(nf); }
     }
 
     private static String cacheControlFor(String name) {
