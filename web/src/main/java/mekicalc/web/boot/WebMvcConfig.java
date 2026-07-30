@@ -21,10 +21,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final EventLog eventLog;
     private final AuthService auth;
+    private final boolean devAdminBypass;
 
-    public WebMvcConfig(EventLog eventLog, AuthService auth) {
+    public WebMvcConfig(EventLog eventLog, AuthService auth,
+                        @org.springframework.beans.factory.annotation.Value("${mekicalc.dev-admin-bypass:false}") boolean devAdminBypass) {
         this.eventLog = eventLog;
         this.auth = auth;
+        this.devAdminBypass = devAdminBypass;
     }
 
     @Override
@@ -38,5 +41,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AccessLogInterceptor(eventLog, auth))
                 .addPathPatterns("/api/**")
                 .excludePathPatterns("/api/presets");
+        // 관리자 전용 API는 관리자 세션만(비관리자 403). dev 프로파일이면 우회.
+        registry.addInterceptor(new AdminAuthInterceptor(auth, devAdminBypass))
+                .addPathPatterns("/api/admin/**");
     }
 }

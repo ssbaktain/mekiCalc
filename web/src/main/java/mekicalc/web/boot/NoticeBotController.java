@@ -6,9 +6,11 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Instant;
 import mekicalc.web.BotOutbox;
 import mekicalc.web.BotService;
 import mekicalc.web.NoticeService;
+import mekicalc.web.RoomStore;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,10 +26,12 @@ public class NoticeBotController {
 
     private final NoticeService notices;
     private final BotOutbox outbox;
+    private final RoomStore rooms;
 
-    public NoticeBotController(NoticeService notices, BotOutbox outbox) {
+    public NoticeBotController(NoticeService notices, BotOutbox outbox, RoomStore rooms) {
         this.notices = notices;
         this.outbox = outbox;
+        this.rooms = rooms;
     }
 
     // ──────────────── 공지 ────────────────
@@ -83,6 +87,19 @@ public class NoticeBotController {
     @GetMapping("/api/bot/outbox/health")
     public Object outboxHealth() {
         return outbox.health();
+    }
+
+    /**
+     * 방 자동 등록(봇 브릿지 → 서버). 브릿지가 감지한 방을 권한 off(pending)로 올린다.
+     * 이미 있으면 이름·감지시각만 갱신(권한 보존). 관리자가 페이지에서 권한을 부여한다.
+     */
+    @PostMapping("/api/bot/rooms/register")
+    public Object registerRoom(@RequestBody Map<String, Object> req) {
+        boolean added = rooms.register(strOpt(req, "chatId"), strOpt(req, "name"), Instant.now().getEpochSecond());
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("added", added);
+        return out;
     }
 
     // 수동 트리거·시뮬레이션(remind-now, simulate-*)은 dev 전용으로 분리 → BotDevController(@Profile("dev")).

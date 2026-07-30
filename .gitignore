@@ -80,6 +80,7 @@ textAsset/
 ### 카톡봇 운영(미니PC 전용 — .java 소스만 레포, 스크립트·큐 데이터는 제외) ###
 bot/
 data/bot_outbox.json
+data/bot_rooms.json
 
 ### 공지 백업·마이그레이션 작업 산출물 (커밋 제외) ###
 data/notices.json.bak-*

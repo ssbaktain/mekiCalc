@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="/style.css">
   <style>
-    .admin-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+    .admin-wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
     .admin-wrap h1 { margin: 8px 0 4px; }
     .admin-sub { color: var(--muted, #8a94a6); margin: 0 0 24px; font-size: 14px; }
     .admin-card { border: 1px solid var(--border, #2a3140); border-radius: 12px;
@@ -19,6 +19,27 @@
     .admin-actions a { display: inline-block; margin: 8px 12px 0 0; }
     .admin-top { display: flex; justify-content: space-between; align-items: center; }
     .admin-top .links a { margin-left: 14px; font-size: 13px; }
+
+    table.rooms { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+    table.rooms th, table.rooms td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border, #2a3140); }
+    table.rooms th { color: var(--muted, #8a94a6); font-weight: 600; font-size: 12px; }
+    table.rooms td.center, table.rooms th.center { text-align: center; }
+    table.rooms input.name { width: 100%; box-sizing: border-box; background: #0f131b;
+      border: 1px solid var(--border, #2a3140); color: inherit; border-radius: 6px; padding: 5px 7px; }
+    table.rooms .cid { color: var(--muted, #8a94a6); font-size: 12px; font-family: monospace; }
+    table.rooms .src { font-size: 11px; color: var(--muted, #8a94a6); }
+    .btn { background: #2b6cb0; color: #fff; border: 0; border-radius: 7px; padding: 6px 12px;
+      cursor: pointer; font-size: 13px; }
+    .btn:hover { background: #2c7be5; }
+    .btn.ghost { background: transparent; border: 1px solid var(--border, #2a3140); color: inherit; }
+    .btn.saved { background: #2f855a; }
+    .add-form { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+    .add-form input { background: #0f131b; border: 1px solid var(--border, #2a3140); color: inherit;
+      border-radius: 6px; padding: 6px 9px; font-size: 13px; }
+    .add-form input.cid { width: 220px; } .add-form input.nm { width: 200px; }
+    .muted-note { font-size: 12px; color: var(--muted, #8a94a6); margin-top: 6px; }
+    .empty { color: var(--muted, #8a94a6); font-size: 14px; padding: 14px 2px; }
+    #roomsErr { color: #f56565; font-size: 13px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -43,10 +64,126 @@
     </section>
 
     <section class="admin-card">
-      <h2>카카오봇 관리 <span class="soon">준비 중</span></h2>
-      <p>방별 권한(공지·리마인더 / 명령 응답), 개인 공지·테스트 발송을 관리합니다.</p>
-      <p class="admin-sub" style="margin-top:10px">단계 2~5에서 채워집니다.</p>
+      <h2>카카오봇 방 관리</h2>
+      <p>방별 권한을 켜고 끕니다. <b>공지·리마인더</b>는 새 공지·종료 임박 알림 발송, <b>명령 응답</b>은 방에서 <code>/공지</code> 등 명령에 응답합니다. <b>방 새로고침</b>을 누르면 봇이 참여한 오픈채팅 방을 자동 인식하며, 새 방은 권한이 모두 꺼진 채 등록됩니다.</p>
+      <div style="margin:10px 0 4px"><button class="btn" id="reloadBtn">방 새로고침</button></div>
+      <table class="rooms" id="roomsTable" hidden>
+        <thead>
+          <tr>
+            <th>방 이름</th>
+            <th>chatId</th>
+            <th class="center">공지·리마인더</th>
+            <th class="center">명령 응답</th>
+            <th class="center"></th>
+          </tr>
+        </thead>
+        <tbody id="roomsBody"></tbody>
+      </table>
+      <div class="empty" id="roomsEmpty" hidden>아직 등록된 방이 없습니다. <b>방 새로고침</b>을 누르면 봇이 참여한 오픈채팅 방을 자동 인식합니다.</div>
+      <div id="roomsErr" hidden></div>
+
+      <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다.</div>
+
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer;font-size:13px;color:var(--muted,#8a94a6)">chatId로 직접 추가(선택)</summary>
+        <div class="add-form">
+          <input class="cid" id="addChatId" placeholder="chatId (숫자)">
+          <input class="nm" id="addName" placeholder="방 이름(선택)">
+          <button class="btn ghost" id="addBtn">방 추가</button>
+        </div>
+      </details>
     </section>
   </div>
+
+  <script>
+    const $ = (s, r = document) => r.querySelector(s);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    async function api(method, path, body) {
+      const opt = { method, headers: {} };
+      if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+      const r = await fetch(path, opt);
+      const text = await r.text();
+      let data = null; try { data = text ? JSON.parse(text) : null; } catch {}
+      if (!r.ok) throw new Error((data && data.error) || ('HTTP ' + r.status));
+      return data;
+    }
+
+    function showErr(msg) { const e = $('#roomsErr'); e.textContent = msg; e.hidden = !msg; }
+
+    function rowHtml(room) {
+      const cid = esc(room.chatId);
+      return `<tr data-chatid="${cid}">
+        <td><input class="name" value="${esc(room.name)}"></td>
+        <td><span class="cid">${cid}</span><div class="src">${room.source === 'manual' ? '수동' : '자동'}</div></td>
+        <td class="center"><input type="checkbox" class="notify" ${room.notify ? 'checked' : ''}></td>
+        <td class="center"><input type="checkbox" class="reply" ${room.reply ? 'checked' : ''}></td>
+        <td class="center"><button class="btn save">저장</button></td>
+      </tr>`;
+    }
+
+    function renderRooms(list) {
+      const body = $('#roomsBody'), table = $('#roomsTable'), empty = $('#roomsEmpty');
+      body.innerHTML = list.map(rowHtml).join('');
+      table.hidden = list.length === 0;
+      empty.hidden = list.length !== 0;
+      body.querySelectorAll('tr').forEach(tr => {
+        $('.save', tr).addEventListener('click', () => saveRoom(tr));
+      });
+    }
+
+    async function loadRooms() {
+      showErr('');
+      try {
+        const data = await api('GET', '/api/admin/rooms');
+        renderRooms((data && data.rooms) || []);
+      } catch (e) { showErr('방 목록을 불러오지 못했습니다: ' + e.message); }
+    }
+
+    // 봇 브릿지(Iris)에서 현재 오픈 그룹채팅 방을 조회해 자동 인식·등록.
+    async function syncRooms() {
+      showErr('');
+      const btn = $('#reloadBtn'), orig = btn.textContent;
+      btn.textContent = '인식 중…'; btn.disabled = true;
+      try {
+        const data = await api('POST', '/api/admin/rooms/sync');
+        renderRooms((data && data.rooms) || []);
+        btn.textContent = `${data.synced}개 인식 (신규 ${data.added})`;
+        setTimeout(() => { btn.textContent = orig; }, 2500);
+      } catch (e) {
+        btn.textContent = orig;
+        showErr('방 인식 실패: ' + e.message);
+      } finally { btn.disabled = false; }
+    }
+
+    async function saveRoom(tr) {
+      const chatId = tr.dataset.chatid;
+      const btn = $('.save', tr);
+      try {
+        await api('PUT', '/api/admin/rooms/' + encodeURIComponent(chatId), {
+          name: $('.name', tr).value.trim(),
+          notify: $('.notify', tr).checked,
+          reply: $('.reply', tr).checked,
+        });
+        btn.textContent = '저장됨'; btn.classList.add('saved');
+        setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 1200);
+      } catch (e) { showErr('저장 실패: ' + e.message); }
+    }
+
+    async function addRoom() {
+      const chatId = $('#addChatId').value.trim();
+      const name = $('#addName').value.trim();
+      if (!chatId) { showErr('chatId를 입력하세요.'); return; }
+      try {
+        await api('POST', '/api/admin/rooms', { chatId, name });
+        $('#addChatId').value = ''; $('#addName').value = '';
+        await loadRooms();
+      } catch (e) { showErr('추가 실패: ' + e.message); }
+    }
+
+    $('#addBtn').addEventListener('click', addRoom);
+    $('#reloadBtn').addEventListener('click', syncRooms);
+    loadRooms();
+  </script>
 </body>
 </html>

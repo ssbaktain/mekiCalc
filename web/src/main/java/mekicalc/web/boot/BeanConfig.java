@@ -3,6 +3,7 @@ package mekicalc.web.boot;
 import java.nio.file.Path;
 import mekicalc.web.AdminConfig;
 import mekicalc.web.AuthService;
+import mekicalc.web.BotBridge;
 import mekicalc.web.BotOutbox;
 import mekicalc.web.CalcService;
 import mekicalc.web.Db;
@@ -16,6 +17,7 @@ import mekicalc.web.NoticeSummarizer;
 import mekicalc.web.OAuthConfig;
 import mekicalc.web.OcrConfig;
 import mekicalc.web.PgAuthStore;
+import mekicalc.web.RoomStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -100,6 +102,19 @@ public class BeanConfig {
     @Bean
     public BotOutbox botOutbox(Path dataDir) {
         return new BotOutbox(dataDir);
+    }
+
+    /** 카카오봇 방 레지스트리(방별 공지/응답 권한). */
+    @Bean
+    public RoomStore roomStore(Path dataDir) {
+        return new RoomStore(dataDir);
+    }
+
+    /** 카카오봇 브릿지(Iris) 클라이언트 — 방 목록 조회. dev(bot-mock)면 가짜 방으로 대체. */
+    @Bean
+    public BotBridge botBridge(@Value("${mekicalc.iris-url:http://127.0.0.1:3000}") String irisUrl,
+                               @Value("${mekicalc.bot-mock:false}") boolean mock) {
+        return new BotBridge(irisUrl, mock);
     }
 
     /** 공지 크롤러(넥슨 포럼 폴링·요약). 시작/종료는 {@link CrawlerLifecycle}가 관리. */

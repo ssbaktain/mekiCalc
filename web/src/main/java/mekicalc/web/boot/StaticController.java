@@ -26,10 +26,13 @@ public class StaticController {
 
     private final Path webDir;
     private final AuthService auth;
+    private final boolean devAdminBypass;   // 로컬 dev 프로파일: admin 게이팅 우회(프로덕션 false)
 
-    public StaticController(@Value("${mekicalc.web-dir:public}") String webDir, AuthService auth) {
+    public StaticController(@Value("${mekicalc.web-dir:public}") String webDir, AuthService auth,
+                            @Value("${mekicalc.dev-admin-bypass:false}") boolean devAdminBypass) {
         this.webDir = Path.of(webDir);
         this.auth = auth;
+        this.devAdminBypass = devAdminBypass;
     }
 
     @RequestMapping("/**")
@@ -53,8 +56,9 @@ public class StaticController {
         // /api·/auth 미매칭 경로는 정적/SPA 폴백 대상이 아님 → 404(HTML 반환·dev전용 엔드포인트 노출 방지).
         if (path.startsWith("/api/") || path.startsWith("/auth/")) { notFound(res); return; }
         // 관리자 페이지 게이팅: /admin* 은 관리자 세션만 서빙. 비관리자·비로그인은 404로 존재 자체를 숨긴다.
+        // (dev 프로파일이면 로그인 없이 통과 — 로컬 UI 확인용.)
         if (path.equals("/admin") || path.equals("/admin.html") || path.startsWith("/admin/")) {
-            if (!auth.isAdmin(auth.session(Req.cookie(req, "sid")))) { notFound(res); return; }
+            if (!devAdminBypass && !auth.isAdmin(auth.session(Req.cookie(req, "sid")))) { notFound(res); return; }
         }
         if (path.equals("/") || path.isEmpty()) path = "/index.html";
         // 경로 탈출 방지: web 디렉터리 밖으로 나가지 못하게 정규화 후 검증.

@@ -1,7 +1,8 @@
 # 컴파일 후 웹 서버(Spring) 실행 — 스케줄드태스크(MekiCalc-Web)와 수동 실행 공용.
 #   .\build-web.ps1            # 빌드 + http://localhost:8080 실행
 #   .\build-web.ps1 -Port 9000 # 다른 포트
-param([int]$Port = 8080)
+#   .\build-web.ps1 -Dev       # 로컬 개발: dev 프로파일(관리자 게이팅 우회 등). 프로덕션/미니PC는 절대 사용 금지.
+param([int]$Port = 8080, [switch]$Dev)
 
 $ErrorActionPreference = "Stop"
 # 콘솔을 UTF-8로 맞춤(한글 윈도우 기본 CP949에서 자바 UTF-8 출력이 깨지지 않게).
@@ -49,10 +50,12 @@ Push-Location $root
 try {
     # 서버 콘솔 출력을 날짜별 롤링 파일로도 남김. 2>&1|Tee 중 네이티브 stderr가 파이프라인을 끊지 않도록 Continue.
     $ErrorActionPreference = "Continue"
-    & java '-Dfile.encoding=UTF-8' '-Dstdout.encoding=UTF-8' -cp $libGlob `
-        mekicalc.web.boot.WebApplication `
-        "--server.port=$Port" "--mekicalc.data-dir=$root\data" "--mekicalc.web-dir=$root\public" 2>&1 |
-        Tee-Object -FilePath $logFile -Append
+    $javaArgs = @('-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-cp', $libGlob,
+        'mekicalc.web.boot.WebApplication',
+        "--server.port=$Port", "--mekicalc.data-dir=$root\data", "--mekicalc.web-dir=$root\public")
+    # -Dev: 로컬 개발 프로파일(관리자 게이팅 우회). 프로덕션 스케줄드태스크는 -Dev 없이 실행 → default 프로파일.
+    if ($Dev) { $javaArgs += '--spring.profiles.active=dev'; Note "DEV PROFILE ON (admin bypass)" }
+    & java @javaArgs 2>&1 | Tee-Object -FilePath $logFile -Append
 } finally {
     Pop-Location
 }
