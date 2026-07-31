@@ -26,8 +26,9 @@
     table.rooms td.center, table.rooms th.center { text-align: center; }
     table.rooms input.name { width: 100%; box-sizing: border-box; background: #0f131b;
       border: 1px solid var(--border, #2a3140); color: inherit; border-radius: 6px; padding: 5px 7px; }
-    table.rooms .cid { color: var(--muted, #8a94a6); font-size: 12px; font-family: monospace; }
-    table.rooms .src { font-size: 11px; color: var(--muted, #8a94a6); }
+    table.rooms input.name::placeholder { color: var(--muted, #8a94a6); font-style: italic; }
+    table.rooms .cid { color: var(--muted, #8a94a6); font-size: 12px; font-family: monospace; word-break: break-all; }
+    table.rooms .src { font-size: 11px; color: var(--muted, #8a94a6); margin-left: 6px; }
     .btn { background: #2b6cb0; color: #fff; border: 0; border-radius: 7px; padding: 6px 12px;
       cursor: pointer; font-size: 13px; }
     .btn:hover { background: #2c7be5; }
@@ -47,6 +48,35 @@
     .send-status { font-size: 13px; color: #48bb78; }
     .empty { color: var(--muted, #8a94a6); font-size: 14px; padding: 14px 2px; }
     #roomsErr { color: #f56565; font-size: 13px; margin-top: 8px; }
+
+    /* ── 모바일: 방 관리 표를 행별 카드로 재배치(좁은 화면에서 방 이름 입력칸이 쪼그라들지 않게) ── */
+    @media (max-width: 640px) {
+      .admin-wrap { padding: 18px 12px 56px; }
+      .admin-top { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .admin-top .links a { margin: 0 14px 0 0; }
+      .admin-card { padding: 16px 14px; }
+
+      table.rooms, table.rooms tbody, table.rooms tr, table.rooms td { display: block; width: 100%; box-sizing: border-box; }
+      table.rooms thead { display: none; }                 /* 헤더 행 숨김 → 각 셀이 자기 라벨을 가짐 */
+      table.rooms tr { border: 1px solid var(--border, #2a3140); border-radius: 10px;
+        margin-bottom: 12px; padding: 4px 12px; background: #0f131b; }
+      table.rooms td { border-bottom: 1px solid var(--border, #2a3140); padding: 9px 0;
+        display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
+      table.rooms tr td:last-child { border-bottom: 0; }
+      table.rooms td.center { text-align: left; justify-content: space-between; }
+      table.rooms td::before { content: attr(data-label); color: var(--muted, #8a94a6);
+        font-size: 12px; font-weight: 600; flex: 0 0 auto; }
+      table.rooms td.act::before { content: none; }         /* 저장 버튼 행은 라벨 없이 전체폭 */
+      table.rooms input.name { flex: 1 1 auto; width: auto; min-width: 0; }
+      table.rooms .cid { text-align: right; }
+      table.rooms td.act { justify-content: stretch; padding-top: 10px; }
+      table.rooms td.act .save { width: 100%; padding: 9px; font-size: 14px; }
+
+      .add-form { flex-direction: column; align-items: stretch; }
+      .add-form input.cid, .add-form input.nm { width: 100%; box-sizing: border-box; }
+      .add-form .btn { width: 100%; padding: 9px; }
+      .send-actions .btn { flex: 1 1 auto; }
+    }
   </style>
 </head>
 <body>
@@ -90,7 +120,7 @@
       <div class="empty" id="roomsEmpty" hidden>아직 등록된 방이 없습니다. <b>방 새로고침</b>을 누르면 봇이 참여한 오픈채팅 방을 자동 인식합니다.</div>
       <div id="roomsErr" hidden></div>
 
-      <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다.</div>
+      <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다. <b>이름을 비우고 저장</b>하면 실제 카톡 방 이름(회색)이 표시됩니다.</div>
 
       <div class="send-box">
         <h3>개인 공지 / 테스트 발송</h3>
@@ -134,12 +164,12 @@
     function rowHtml(room) {
       const cid = esc(room.chatId);
       return `<tr data-chatid="${cid}">
-        <td class="center"><input type="checkbox" class="pick"></td>
-        <td><input class="name" value="${esc(room.name)}"></td>
-        <td><span class="cid">${cid}</span><div class="src">${room.source === 'manual' ? '수동' : '자동'}</div></td>
-        <td class="center"><input type="checkbox" class="notify" ${room.notify ? 'checked' : ''}></td>
-        <td class="center"><input type="checkbox" class="reply" ${room.reply ? 'checked' : ''}></td>
-        <td class="center"><button class="btn save">저장</button></td>
+        <td class="center pick-cell" data-label="선택"><input type="checkbox" class="pick"></td>
+        <td data-label="방 이름"><input class="name" value="${esc(room.name)}" placeholder="${esc(room.origName || room.chatId)}"></td>
+        <td data-label="chatId"><span class="cid">${cid}</span><span class="src">${room.source === 'manual' ? '수동' : '자동'}</span></td>
+        <td class="center" data-label="공지·리마인더"><input type="checkbox" class="notify" ${room.notify ? 'checked' : ''}></td>
+        <td class="center" data-label="명령 응답"><input type="checkbox" class="reply" ${room.reply ? 'checked' : ''}></td>
+        <td class="center act"><button class="btn save">저장</button></td>
       </tr>`;
     }
 

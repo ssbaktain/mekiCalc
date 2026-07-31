@@ -47,7 +47,7 @@ public final class BotBridge {
             Map<String, Object> row = Json.asMap(o);
             String chatId = str(row.get("id"));
             if (chatId == null || chatId.isBlank()) continue;
-            out.add(room(chatId, nameFrom(str(row.get("private_meta")), chatId)));
+            out.add(room(chatId, nameFrom(str(row.get("private_meta")), str(row.get("meta")), chatId)));
         }
         return out;
     }
@@ -64,23 +64,48 @@ public final class BotBridge {
         return r.body();
     }
 
-    /** private_meta({"name":".."})에서 방 이름을 뽑는다. 없으면 chatId로 폴백. */
-    private static String nameFrom(String privateMeta, String chatId) {
+    /**
+     * 방의 실제(오리지널) 이름을 뽑는다. ①private_meta({"name":".."}) = 현재 카톡 방 제목(대부분 여기 있음) →
+     * ②없으면 meta의 환영 메시지(type=1 "환영합니다. '방이름' 오픈채팅방입니다.")에서 파싱 →
+     * ③둘 다 없으면 chatId로 폴백. (private_meta가 null인 방이 실제로 존재 — 그때 환영 메시지가 유일한 이름 소스.)
+     */
+    private static String nameFrom(String privateMeta, String meta, String chatId) {
         if (privateMeta != null && !privateMeta.isBlank()) {
             try {
                 Object n = Json.asMap(Json.parse(privateMeta)).get("name");
                 if (n != null && !n.toString().isBlank()) return n.toString();
             } catch (Exception ignore) { }
         }
+        String w = welcomeName(meta);
+        if (w != null) return w;
         return chatId;
     }
 
-    /** dev 모드 mock(로컬 UI 테스트용). 실제 chat_id·이름 샘플. */
+    /** meta(JSON 배열)의 type=1 환영 메시지 "환영합니다. '방이름' 오픈채팅방입니다."에서 방 이름을 뽑는다. 없으면 null. */
+    private static String welcomeName(String meta) {
+        if (meta == null || meta.isBlank()) return null;
+        try {
+            for (Object o : Json.asList(Json.parse(meta))) {
+                Map<String, Object> m = Json.asMap(o);
+                if ((int) Json.num(m, "type", 0) != 1) continue;
+                String c = str(m.get("content"));
+                if (c == null) continue;
+                int a = c.indexOf('\''), b = c.lastIndexOf('\'');
+                if (a >= 0 && b > a) {
+                    String name = c.substring(a + 1, b).trim();
+                    if (!name.isBlank()) return name;
+                }
+            }
+        } catch (Exception ignore) { }
+        return null;
+    }
+
+    /** dev 모드 mock(로컬 UI 테스트용). 실제 chat_id·방 이름 샘플. */
     private static List<Map<String, Object>> mockRooms() {
         String[][] fake = {
-            {"18488589739179370", "메키000"}, {"18473102057478780", "메키001"},
-            {"18467154652119770", "메키002"}, {"18466995836545474", "메키003"},
-            {"18469658639955377", "메키004"},
+            {"18488589739179370", "테스트"}, {"18473102057478780", "탱쁜정"},
+            {"18467154652119770", "말랑단"}, {"18466995836545474", "말랑공지"},
+            {"18469658639955377", "스카1 악동 시즌2"},
         };
         List<Map<String, Object>> out = new ArrayList<>();
         for (String[] f : fake) out.add(room(f[0], f[1]));

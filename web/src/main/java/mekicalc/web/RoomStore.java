@@ -24,7 +24,8 @@ public final class RoomStore {
 
     public static final class Room {
         public String chatId;
-        public String name;
+        public String name;      // 관리자가 사이트에서 붙인 커스텀 표시명(비울 수 있음 → 그러면 origName 사용)
+        public String origName;  // 봇이 감지한 실제 카톡 방 이름(private_meta.name 등). 커스텀을 지웠을 때 회색 안내로 노출.
         public boolean notify;   // 공지·리마인더 발송 권한
         public boolean reply;    // 명령 응답 권한
         public long lastSeen;    // 마지막 감지(자동등록/갱신) epoch sec
@@ -34,6 +35,7 @@ public final class RoomStore {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("chatId", chatId);
             m.put("name", name);
+            m.put("origName", origName);
             m.put("notify", notify);
             m.put("reply", reply);
             m.put("lastSeen", (double) lastSeen);
@@ -44,6 +46,7 @@ public final class RoomStore {
             Room r = new Room();
             r.chatId = str(m, "chatId");
             r.name = str(m, "name");
+            r.origName = str(m, "origName");
             r.notify = Boolean.TRUE.equals(m.get("notify"));
             r.reply = Boolean.TRUE.equals(m.get("reply"));
             r.lastSeen = (long) Json.num(m, "lastSeen", 0);
@@ -95,13 +98,15 @@ public final class RoomStore {
      * lastSeen만 갱신하고 <b>이름·권한은 보존</b>한다 — 관리자가 사이트에서 바꾼 표시 이름이 sync로 덮이지 않게.
      * @return 새로 추가됐으면 true
      */
-    public synchronized boolean register(String chatId, String name, long nowSec) {
+    public synchronized boolean register(String chatId, String detectedName, long nowSec) {
         if (chatId == null || chatId.isBlank()) return false;
+        String det = (detectedName == null || detectedName.isBlank()) ? chatId : detectedName;
         Room r = rooms.get(chatId);
         if (r == null) {
             r = new Room();
             r.chatId = chatId;
-            r.name = (name == null || name.isBlank()) ? chatId : name;
+            r.name = det;        // 기본 표시명 = 감지된 실제 방 이름
+            r.origName = det;    // 오리지널(실제) 이름 보존
             r.notify = false; r.reply = false;   // pending: 관리자가 권한 부여
             r.lastSeen = nowSec;
             r.source = "auto";
@@ -109,7 +114,11 @@ public final class RoomStore {
             save();
             return true;
         }
-        if (nowSec > 0) { r.lastSeen = nowSec; save(); }   // 이름·권한 보존(관리자 설정 우선)
+        // 기존 방: 실제 이름(origName)은 항상 최신 감지값으로 갱신, 커스텀 name·권한은 보존(관리자 설정 우선).
+        boolean changed = false;
+        if (!det.equals(r.origName)) { r.origName = det; changed = true; }
+        if (nowSec > 0 && nowSec != r.lastSeen) { r.lastSeen = nowSec; changed = true; }
+        if (changed) save();
         return false;
     }
 
@@ -124,17 +133,20 @@ public final class RoomStore {
             r.lastSeen = nowSec;
             rooms.put(chatId, r);
         }
-        if (name != null && !name.isBlank()) r.name = name;
+        if (name != null && !name.isBlank()) { r.name = name; if (r.origName == null) r.origName = name; }
         else if (r.name == null) r.name = chatId;
         save();
         return r;
     }
 
-    /** 관리자 권한/이름 수정. 존재하지 않으면 null. */
+    /**
+     * 관리자 권한/이름 수정. 존재하지 않으면 null. name이 <b>빈 문자열</b>이면 커스텀 표시명을 지운다
+     * (그러면 UI는 origName을 회색 안내로 노출). name이 null(미전송)이면 이름은 손대지 않는다.
+     */
     public synchronized Room update(String chatId, String name, boolean notify, boolean reply) {
         Room r = rooms.get(chatId);
         if (r == null) return null;
-        if (name != null && !name.isBlank()) r.name = name;
+        if (name != null) r.name = name.isBlank() ? null : name;   // 빈 값 = 커스텀 지우기
         r.notify = notify;
         r.reply = reply;
         save();
