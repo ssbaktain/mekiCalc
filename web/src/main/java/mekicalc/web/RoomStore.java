@@ -47,6 +47,7 @@ public final class RoomStore {
             r.chatId = str(m, "chatId");
             r.name = str(m, "name");
             r.origName = str(m, "origName");
+            if (r.origName == null || r.origName.isBlank()) r.origName = r.name;   // origName 없는 옛 데이터 보정(다음 sync에서 실제 이름으로 갱신)
             r.notify = Boolean.TRUE.equals(m.get("notify"));
             r.reply = Boolean.TRUE.equals(m.get("reply"));
             r.lastSeen = (long) Json.num(m, "lastSeen", 0);
