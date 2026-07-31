@@ -216,8 +216,7 @@ function fmtScore(v) {
 function collectStats() {
   const stats = {};
   for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
-    const v = parseFloat(input.value);
-    stats[input.dataset.statId] = isNaN(v) ? 0 : v;
+    stats[input.dataset.statId] = statValueOf(input);   // 표시(버림)값이 아닌 계산용 풀값 우선
   }
   stats.JOB = parseInt($("job-sel").value, 10) || 0;   // 직업은 별도 선택기에서
   return stats;
@@ -667,6 +666,7 @@ function renderForm() {
   // 스탯 값 변경 시: (파생 트리거면)스탯 비례 데미지 즉시 반영 + 표기 버림 + 미저장 표시 + 자동 재계산
   for (const input of form.querySelectorAll("input[data-stat-id]")) {
     const id = input.dataset.statId;
+    input.addEventListener("input", () => { delete input.dataset.full; });   // 유저가 직접 편집 → 보존한 풀값 폐기, 표기값 신뢰
     if (STAT_PROP_TRIGGERS.has(id)) input.addEventListener("input", deriveStatProp);   // 입력 즉시 갱신
     input.addEventListener("change", () => {
       truncStatInput(input);                              // 게임 표기 규칙(소수 2자리부터 버림)
@@ -691,6 +691,21 @@ function truncStatInput(input) {
   input.value = truncStat(v, def ? def.unit : "FLAT");
 }
 
+// 최종뎀% 등은 게임 내부 곱연산 라운딩을 역산할 수 없어(넥슨 공식: 스탯창 표기대로 적용) 표기값은 소수 1자리로 두되,
+// 옵션 비교/변경으로 엔진이 계산한 결과는 풀 precision을 dataset.full에 숨겨 보존한다(반복 변경 시 반올림 누적 방지).
+// 화면(input.value)=게임 표기(버림), 계산 원본(collectStats)=full 우선. 유저가 직접 편집하면 full을 폐기해 표기값을 신뢰.
+function setStatValue(input, v, unit) {
+  if (v == null || !isFinite(v)) { input.value = "0"; delete input.dataset.full; return; }
+  input.value = truncStat(v, unit);   // 화면: 게임 표기(소수 1자리 버림)
+  input.dataset.full = String(v);     // 내부: 풀 precision 보존
+}
+function statValueOf(input) {
+  const f = input.dataset.full;
+  if (f != null && f !== "") { const n = parseFloat(f); if (isFinite(n)) return n; }
+  const v = parseFloat(input.value);
+  return isNaN(v) ? 0 : v;
+}
+
 // 스탯 비례 데미지%를 주스탯·부스탯에서 즉시 파생: 유효주스탯/100 + 부스탯×0.25%.
 // 유저 입력을 막지 않되(직접 수정 가능), 주스탯·부스탯을 건드리면 이 값으로 갱신한다.
 const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT", "DEFENSE"]);
@@ -708,11 +723,11 @@ function defenseToMainRatio(num) {
 
 function deriveStatProp() {
   const form = $("stat-form"); if (!form) return;
-  const num = (id) => { const el = form.querySelector(`input[data-stat-id="${id}"]`); const v = el ? parseFloat(el.value) : 0; return isNaN(v) ? 0 : v; };
+  const num = (id) => { const el = form.querySelector(`input[data-stat-id="${id}"]`); return el ? statValueOf(el) : 0; };   // 표시(버림)값이 아닌 풀값 기준 파생
   const out = form.querySelector('input[data-stat-id="STAT_PROP_DMG"]'); if (!out) return;
   const mainStat = num("MAIN_STAT_FLAT") * (1 + num("MAIN_STAT_PCT") / 100);
   const defEffMain = num("DEFENSE") * defenseToMainRatio(num);   // 아이언 월 주스탯 증가분: 선반영이라 주스탯% 곱셈 바깥의 최종 flat 값(주스탯% 미적용)
-  out.value = truncStat(mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025 + defEffMain / 100, "PCT");
+  setStatValue(out, mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025 + defEffMain / 100, "PCT");   // 표시는 버림, 계산은 풀값
 }
 
 // 현재 qualSet에 맞춰 각 필드의 '딜 미환산' 배지 표시/숨김.
@@ -1203,7 +1218,7 @@ $("mc-clear").addEventListener("click", () => {
 // 스탯 초기화: 입력값을 모두 0으로(프리셋은 그대로, 저장 전까진 디스크 미반영).
 $("stat-reset").addEventListener("click", () => {
   if (!confirm("스탯 입력값을 모두 0으로 초기화할까요?")) return;
-  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) input.value = "0";
+  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) { input.value = "0"; delete input.dataset.full; }
   statDirty = true;
   calcDamage();
 });
@@ -1993,8 +2008,8 @@ async function runApply() {
     };
     // 3-b) 부스탯 = 갱신된 myCube 전체에서 깡부스탯합 × (1+부스탯%합/100)로 파생해 프리셋 부스탯(+)에 반영
     const subInput = $("stat-form").querySelector('input[data-stat-id="SUB_STAT_FLAT"]');
-    if (subInput) subInput.value = truncStat(cubeSubStatFinal(myCube), "FLAT");
-    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생(엔진 증분값은 폼의 버림된 기존값 위에 더해져 소수 유실). 프리셋 저장 전에 갱신.
+    if (subInput) setStatValue(subInput, cubeSubStatFinal(myCube), "FLAT");   // 화면=표기, 계산=풀값
+    deriveStatProp();   // 스탯 비례 데미지는 주스탯+부스탯에서 새로 정확히 파생. 프리셋 저장 전에 갱신.
     // 4) 활성 스탯 프리셋에 반영(로그인 시 서버 동기화도 트리거)
     statPresets.presets[statPresets.active] = statPresetPayload();
     saveJSON(STATP_KEY, statPresets);
@@ -2024,7 +2039,7 @@ function fillStats(stats) {
   for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
     const def = statDefById(input.dataset.statId);
     const v = stats[input.dataset.statId];
-    input.value = (v == null) ? "0" : truncStat(v, def ? def.unit : "FLAT");   // 표기 규칙 적용(로드 시엔 파생은 안 함 → 저장값 보존)
+    setStatValue(input, v == null ? null : v, def ? def.unit : "FLAT");   // 화면=표기(버림), 계산 원본=풀값 보존
   }
 }
 
