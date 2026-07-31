@@ -827,6 +827,11 @@ html.deep-route #panel-home { display: none !important; }
   border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer;
 }
 .qp-row select:hover { border-color: var(--accent); }
+/* 빠른 전환 최상단 대상: 한 줄에 챕터(좁게 고정)+단계(넓게), 아래 구분선 */
+.qp-target-row { gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.qp-target-row select { padding-left: 8px; padding-right: 4px; }
+.qp-target-row #qs-chapter { flex: 0 0 58px; }
+.qp-target-row #qs-stage { flex: 1 1 0; }
 @media (max-width: 640px) {
   .quick-presets { right: 12px; bottom: 12px; }
   .qp-fab { width: 50px; height: 50px; font-size: 22px; }
@@ -859,7 +864,52 @@ html.deep-route #panel-home { display: none !important; }
 
 /* 2열 대시보드 — 두 카드 높이를 맞추고(stretch) 내부를 고르게 분산해 하단까지 채움.
    minmax(0,1fr): 콘텐츠 최소너비가 트랙을 밀어 카드가 컨테이너 밖으로 넘치는 것 방지 */
-.home-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+/* 딜 구성 탭: 대상 토글(세그먼트) */
+.ds-toggles { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 16px; }
+.ds-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card); }
+.ds-seg-btn { border: 0; background: transparent; color: var(--muted); padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ds-seg-btn + .ds-seg-btn { border-left: 1px solid var(--border); }
+.ds-seg-btn.active { background: var(--accent2); color: #fff; }
+.ds-seg-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ds-seg-btn:not(.active):not(:disabled):hover { color: var(--text); background: var(--card2); }
+
+/* 헤드라인: 1타 평균딜 · DPS */
+.ds-headline { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.ds-hl-tile { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; text-align: center; }
+.ds-hl-label { font-size: 13px; color: var(--muted); }
+.ds-hl-val { font-size: 30px; font-weight: 800; color: var(--accent); margin-top: 4px; font-variant-numeric: tabular-nums; word-break: break-all; }
+.ds-hl-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* 동료 기여 카드 */
+.ds-companion { display: flex; flex-direction: column; gap: 14px; }
+.ds-comp-empty { color: var(--muted); font-size: 14px; padding: 24px 6px; text-align: center; line-height: 1.6; }
+.ds-contrib { display: flex; align-items: baseline; justify-content: space-between; }
+.ds-contrib-label { font-size: 13px; color: var(--muted); }
+.ds-contrib-val { font-size: 26px; font-weight: 800; color: var(--accent2); font-variant-numeric: tabular-nums; }
+.ds-cmp-bars { display: flex; flex-direction: column; gap: 8px; }
+.cmp-bar-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; }
+.cmp-bar-name { font-size: 13px; color: var(--muted); }
+.cmp-bar-row .bar-track { height: 12px; }
+.cmp-bar-row .bar-val { font-size: 13px; font-variant-numeric: tabular-nums; }
+.ds-comp-note { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; padding-top: 12px; border-top: 1px solid var(--border); }
+.ds-comp-note .cdot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+.ds-comp-note b { color: var(--text); }
+
+/* 유물 기여 카드 */
+.ds-artifacts { display: flex; flex-direction: column; gap: 8px; }
+.ds-artifacts .cmp-bar-row { grid-template-columns: 96px 1fr auto; }
+.ds-artifacts .cmp-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 560px) {
+  .ds-headline { grid-template-columns: 1fr; }
+  .ds-toggles { gap: 8px; }
+  .ds-seg { flex: 1 1 auto; }
+  .ds-seg-btn { flex: 1 1 0; padding: 9px 10px; font-size: 13px; }
+}
+
+.home-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+/* 오른쪽 열: 동료 기여 + 유물 기여 세로 스택(각 카드는 내용만큼 독립 높이) */
+.ds-right { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.ds-right .dash-card { margin-bottom: 0; }
 .dash-card { margin-bottom: 18px; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .dash-card .dash-head { margin-bottom: 0; }
 .dash-card .stat-tiles, .dash-card .dps-bars, .dash-card .donut-body { margin-top: 0; }

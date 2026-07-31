@@ -70,9 +70,9 @@
       <p id="status" class="status home-status"></p>
 
       <details class="panel-about">
-        <summary>예상 데미지, 어떻게 보나요?</summary>
+        <summary>딜 구성, 어떻게 보나요?</summary>
         <div class="about-body">
-          <p>이 화면은 현재 적용된 프리셋(스탯·스킬·동료·유물)을 기준으로 계산한 <b>예상 데미지</b>를 보여줍니다. 1타 평균·최소·최대 데미지와 전투 시뮬레이션 기반 DPS, 플레이어와 동료의 딜 비중을 함께 확인할 수 있습니다. 좌측은 동료 미소환, 우측은 동료 소환 상태이며, 최소딜은 시간제 버프가 모두 꺼진 최소 데미지, 최대딜은 버프가 모두 켜지고 데미지 배율이 최대로 뜬 상황을 뜻합니다. 스킬 프리셋에서 체크한 스킬·버프만 계산에 반영되니 실제 사용하는 구성에 맞춰 두세요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p>
+          <p>현재 적용된 프리셋(스탯·스킬·동료·유물) 기준으로 <b>1타 평균딜</b>과 전투 시뮬레이션 기반 <b>DPS</b>를 숫자로, 나머지는 <b>평타·스킬·동료 딜 비중</b>(스킬은 스킬별)으로 보여줍니다. 위 토글로 <b>일반몹/보스</b>와 <b>동료 미소환/소환</b>을 바꿔 바로 비교할 수 있어요. 챕터·단계는 우하단 ⚡ 빠른 전환의 '챕터'에서 바꾸며 현재 스탯 프리셋에 저장됩니다. 스킬 프리셋에서 체크한 스킬·버프만 계산에 반영되니 실제 구성에 맞춰 두세요. 표시 수치는 절대값이 아니라 세팅 간 상대 비교용이에요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p>
         </div>
       </details>
 
@@ -82,40 +82,46 @@
         <span><b>표시 데미지는 실제 인게임 수치와 일치하지 않습니다.</b> 절대 수치가 아니라 옵션·세팅 간 <b>상대적 비율(효율)</b>을 비교하는 용도로만 참고하세요.</span>
       </div>
 
-      <!-- 대상 선택: 챕터/스테이지. 보스 스테이지=보스몹 계산, 일반 스테이지=일반몹 계산(해당 몹 방어력 반영) -->
-      <div id="target-box" class="target-select" hidden>
-        <span class="ts-purpose" title="여기서 고른 챕터/스테이지는 현재 스탯 프리셋에 저장돼요. 프리셋의 대상을 빠르게 바꾸는 곳이에요.">⚡ <b id="ts-preset-name"></b> 프리셋 챕터 변경</span>
-        <label class="ctl"><select id="tg-chapter"></select><span class="ts-name">챕터</span></label>
-        <label class="ctl"><select id="tg-stage"></select><span class="ts-name">스테이지</span></label>
-        <span id="ts-mode" class="ts-mode"></span>
+      <!-- 대상 토글: 일반몹/보스 · 동료 미소환/소환. 데이터는 이미 4조합 다 계산돼 즉시 전환.
+           (챕터/스테이지 선택은 우하단 ⚡ 빠른 전환의 '대상' 행으로 이동) -->
+      <div class="ds-toggles">
+        <div class="ds-seg" id="ds-mob" role="group" aria-label="대상 몬스터">
+          <button type="button" class="ds-seg-btn" data-v="normal">🗡️ 일반몹</button>
+          <button type="button" class="ds-seg-btn" data-v="boss">👑 보스</button>
+        </div>
+        <div class="ds-seg" id="ds-summon" role="group" aria-label="동료 소환 여부">
+          <button type="button" class="ds-seg-btn" data-v="solo">동료 미소환</button>
+          <button type="button" class="ds-seg-btn" data-v="summon">동료 소환</button>
+        </div>
       </div>
 
+      <!-- 헤드라인: 1타 평균딜 · DPS(숫자로 나오는 유일한 절대값) -->
+      <div id="ds-headline" class="ds-headline"></div>
+
       <div class="home-grid">
-        <!-- 좌: 딜 비중 도넛 + 범례(아래) + 플레이어/동료 분할 -->
+        <!-- 좌: 평타/스킬/동료 대분류 딜 비중 도넛 -->
         <div class="card dash-card">
-          <div class="dash-head">
-            <h2 id="dash-title">딜 비중</h2>
-            <span class="dash-sub" id="dash-share-sub"></span>
-          </div>
+          <div class="dash-head"><h2>딜 비중</h2><span class="dash-sub" id="ds-share-sub"></span></div>
           <div class="donut-body">
             <div id="donut-chart" class="donut-chart"></div>
-            <div id="pc-split" class="pc-split"></div>
             <div id="donut-legend" class="donut-legend"></div>
           </div>
         </div>
 
-        <!-- 우: 상세 + DPS 막대 -->
-        <div class="card dash-card">
-          <div class="dash-head"><h2>딜 상세</h2><span class="dash-sub" id="dash-detail-sub"></span></div>
-          <div id="home-stats" class="stat-tiles"></div>
-          <div id="home-dpsbars" class="dps-bars"></div>
+        <!-- 우: 동료 기여 + 유물 기여(독립 높이 세로 스택) -->
+        <div class="ds-right">
+          <div class="card dash-card">
+            <div class="dash-head"><h2>동료 기여</h2><span class="dash-sub" id="ds-comp-sub"></span></div>
+            <div id="ds-companion" class="ds-companion"></div>
+          </div>
+          <div class="card dash-card">
+            <div class="dash-head"><h2>유물 기여</h2><span class="dash-sub" id="ds-relic-sub"></span></div>
+            <div id="ds-artifacts" class="ds-artifacts"></div>
+          </div>
         </div>
       </div>
 
-      <!-- 동료 기여: 동료 딜 / 플레이어+동료 딜 / 동료 기여도 (동료 선택 시에만 표시) -->
-      <div id="home-companion" class="card dash-card comp-card" hidden></div>
-
-      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료·유물) 기준이에요. 좌측은 동료 미소환, 우측은 동료 소환 상태예요. DPS는 전투시간(일반 90초·보스 70초) 시뮬레이션 평균이고, 1타 딜은 한 대 기준(평균/최소/최대 — 버프·최소/최대뎀·유물 반영)이에요. 프리셋은 상단 프리셋 메뉴, 빠른 전환은 우하단 ⚡에서 바꿔요.</p>
+      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료·유물) 기준이에요. 위 토글로 일반몹/보스와 동료 미소환/소환을 바꿔 비교하세요. DPS는 전투시간(일반 90초·보스 70초) 시뮬레이션 평균, 1타 평균딜은 버프 가동률 평균을 반영한 한 대 기준이에요. 프리셋은 상단 프리셋 메뉴, 빠른 전환은 우하단 ⚡에서 바꿔요.</p>
     </section>
 
     <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->

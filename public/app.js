@@ -302,7 +302,7 @@ async function getSlots(part, grade) {
 // 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
-  { label: "예상 데미지", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입
+  { label: "딜 구성", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입. 1타 평균딜 + 평타/스킬/동료 딜 비중
   { label: "프리셋", items: [
     { label: "스탯", panel: "presets", sub: "stat", path: "/presets/stat" },
     { label: "스킬", panel: "presets", sub: "buff", path: "/presets/skill" },
@@ -755,33 +755,46 @@ function showDamage(data) {
   renderHome();   // 방어배수(targetFactor)는 호출 전에 갱신돼 있다고 가정(calcDamage가 병렬로 미리 받음)
 }
 
-// 현재 대상(일반/보스) — 스테이지 드롭다운에서 결정(보스 스테이지=보스몹, 일반 스테이지=일반몹).
+// 현재 대상(일반/보스) — 선택된 스테이지에서 결정(보스 스테이지=보스몹, 일반 스테이지=일반몹).
+// 딜 구성 탭은 이 값을 dealMob 기본으로만 쓰고, 토글로 일몹↔보스를 자유 전환한다.
 function currentTarget() {
-  const sv = $("tg-stage") && $("tg-stage").value;
-  if (sv) return sv === "boss" ? "boss" : "normal";
-  const t = targetOfActivePreset();   // 선택기 미구성(부팅 즉시 페인트) 시 저장된 프리셋 대상으로 판정
+  const t = currentTargetSel() || targetOfActivePreset();
   return (t && t.stage === "boss") ? "boss" : "normal";
 }
 
 // 선택 몹의 방어배수(서버 계산, 방어력 수치 미노출). 표시 딜에 곱해 '해당 몹 기준' 데미지로.
-let targetFactor = 1;
+// 방어배수: 일반몹·보스 각각(딜 구성 탭의 일몹/보스 토글이 각 대상 방어력까지 반영하도록 둘 다 미리 구함).
+let targetFactorNormal = 1, targetFactorBoss = 1;
+function factorFor(mob) { return mob === "boss" ? targetFactorBoss : targetFactorNormal; }
+// 보스만 선택된 프리셋이면 일반몹 기준은 그 챕터 마지막 일반 스테이지로.
+function lastNormalStage(ch) {
+  const c = targetCatalog && targetCatalog.chapters[ch];
+  if (!c || !c.stages || !c.stages.length) return "boss";
+  const mx = c.stages.slice().sort((a, b) => +b - +a)[0];
+  return "stage:" + mx;
+}
 async function refreshTargetFactor() {
-  const sv = $("tg-stage") && $("tg-stage").value;
-  if (!sv) { targetFactor = 1; return; }
+  const t = currentTargetSel();
+  const ch = t && t.ch, sv = t && t.stage;
+  if (!ch || !sv) { targetFactorNormal = 1; targetFactorBoss = 1; return; }
+  const base = { chapter: ch, pen: parseFloat(collectStats().DEF_PEN) || 0, stats: collectStats(), conversions: myConv };
+  const normalStage = sv === "boss" ? lastNormalStage(ch) : sv;
   try {
-    const res = await postJson("/api/target-damage", Object.assign({
-      chapter: $("tg-chapter").value, target: sv, pen: parseFloat(collectStats().DEF_PEN) || 0,
-      stats: collectStats(), conversions: myConv,   // 동료 소환창·방어감소 계산용
-    }, companionParams()));   // 동료 적 방어력 감소·방관을 방어배수에 반영
-    targetFactor = (res && res.factor > 0) ? res.factor : 1;
-    saveJSON(CACHE_TGTFACTOR, { tgt: currentTarget(), factor: targetFactor });   // 다음 즉시 페인트용
-  } catch (e) { targetFactor = 1; }
+    const [rn, rb] = await Promise.all([   // 동료 적 방어력 감소·방관도 각각 반영(companionParams)
+      postJson("/api/target-damage", Object.assign({ target: normalStage }, base, companionParams())),
+      postJson("/api/target-damage", Object.assign({ target: "boss" }, base, companionParams())),
+    ]);
+    targetFactorNormal = (rn && rn.factor > 0) ? rn.factor : 1;
+    targetFactorBoss = (rb && rb.factor > 0) ? rb.factor : 1;
+    saveJSON(CACHE_TGTFACTOR, { n: targetFactorNormal, b: targetFactorBoss });   // 다음 즉시 페인트용
+  } catch (e) { targetFactorNormal = 1; targetFactorBoss = 1; }
 }
 // 방어배수를 데미지 상세에 곱한 사본(비율/시간 값은 보존).
 function scaleDetail(det, f) {
   if (!det || !(f > 0) || f === 1) return det;
   const sc = (v) => (v == null ? v : v * f);
-  const scState = (s) => (s ? { avg: sc(s.avg), min: sc(s.min), max: sc(s.max), dps: sc(s.dps) } : s);
+  const scShares = (arr) => Array.isArray(arr) ? arr.map((x) => Object.assign({}, x, { dps: sc(x.dps) })) : arr;
+  const scState = (s) => (s ? Object.assign({}, s, { avg: sc(s.avg), min: sc(s.min), max: sc(s.max), dps: sc(s.dps), shares: scShares(s.shares) }) : s);
   const d = Object.assign({}, det, { solo: scState(det.solo), summon: scState(det.summon) });
   const scMap = (m) => { if (!m) return m; const o = {}; for (const k in m) o[k] = sc(m[k]); return o; };
   if (det.dps) d.dps = Object.assign({}, det.dps, {
@@ -791,6 +804,7 @@ function scaleDetail(det, f) {
     companionDetail: scMap(det.dps.companionDetail),
   });
   if (Array.isArray(det.shares)) d.shares = det.shares.map((s) => Object.assign({}, s, { dps: sc(s.dps) }));
+  if (Array.isArray(det.relicShares)) d.relicShares = det.relicShares.map((s) => Object.assign({}, s, { dps: sc(s.dps) }));
   return d;
 }
 
@@ -804,8 +818,8 @@ function targetOfActivePreset() {
   const p = activeStatPreset();
   return (p && p.target) || loadJSON(TARGET_KEY, null) || null;
 }
-// 대상 선택기 인스턴스(같은 값을 공유): 홈 + 스탯 프리셋 패널(직업 옆).
-const TARGET_PAIRS = [["tg-chapter", "tg-stage"], ["spt-chapter", "spt-stage"]];
+// 대상 선택기 인스턴스(같은 값을 공유): 프리셋 빠른 전환(플로팅) + 스탯 프리셋 패널(직업 옆).
+const TARGET_PAIRS = [["qs-chapter", "qs-stage"], ["spt-chapter", "spt-stage"]];
 function currentTargetSel() {
   for (const [chId, stId] of TARGET_PAIRS) {
     const st = $(stId);
@@ -867,13 +881,12 @@ function renderTargetSelector() {
     csel.addEventListener("change", () => { fillStages(ssel, csel.value, null); onTargetChange(chId, stId); });
     ssel.addEventListener("change", () => onTargetChange(chId, stId));
   }
-  const box = $("target-box"); if (box) box.hidden = false;
   syncTargetSelector();
   refreshTargetFactor().then(renderHome);   // 부팅 시엔 프리셋에 쓰지 않고 표시만
 }
 // 사용자가 (어느 선택기든) 대상을 바꾸면 활성 스탯 프리셋의 target에 저장하고 다른 선택기도 동기화.
 function onTargetChange(chId, stId) {
-  const csel = $(chId || "tg-chapter"), ssel = $(stId || "tg-stage");
+  const csel = $(chId || "qs-chapter"), ssel = $(stId || "qs-stage");
   if (!ssel || !ssel.value) return;
   const t = { ch: csel.value, stage: ssel.value };
   const p = activeStatPreset();
@@ -905,29 +918,191 @@ const OTHER_COLOR = "#6b7280";       // 기타 = 회색
 
 // 부팅 땐 renderHome이 동일 데이터로 여러 번(초기 계산 + 로그인 동기화 재계산 등) 호출돼 DOM을 계속 새로 만들고,
 // 그때마다 차트 진입 애니메이션이 재생→즉시 다음 렌더에 덮여 부자연스러웠다. → 결과가 같으면 재렌더를 건너뛴다(애니메이션 1회).
+// 딜 구성 탭 토글 상태. dealMob=null이면 프리셋 스테이지(일반/보스)를 기본으로 따른다.
+let dealMob = null;        // "normal" | "boss"
+let dealSummon = "solo";   // "solo" | "summon"
 let lastHomeSig = null;
-function renderHome() {
-  if (!lastDamage) return;
-  const tgt = currentTarget();   // 스테이지 드롭다운에서 일반/보스 결정
-  const rawDet = lastDamage.detail && (tgt === "boss" ? lastDamage.detail.boss : lastDamage.detail.normal);
-  const sig = JSON.stringify([tgt, targetFactor, rawDet]);
-  if (sig === lastHomeSig) return;   // 동일 결과 → 재렌더 스킵(중복 애니메이션·덮어쓰기 방지)
-  lastHomeSig = sig;
-  const det = scaleDetail(rawDet, targetFactor);   // 선택 몹 방어배수 반영(서버 계산)
-  const tname = tgt === "boss" ? "보스몹" : "일반몹";
-  const dps = det && det.dps;
-  const secs = dps && dps.windowSeconds ? Math.round(dps.windowSeconds) : (tgt === "boss" ? 70 : 90);
-  if ($("ts-mode")) $("ts-mode").textContent = `${tgt === "boss" ? "👑 보스몹" : "🗡️ 일반몹"} 기준`;
-  if ($("dash-share-sub")) $("dash-share-sub").textContent = `${tname} · ${secs}초 기준`;
-  $("dash-detail-sub").textContent = `${tname} · ${secs}초 기준`;
+function currentDealMob() { return dealMob || currentTarget(); }
 
-  const shares = (det && det.shares) || [];
-  renderDonut(shares, dps);
-  renderPcSplit(shares, dps);
-  renderHomeStats(det);
-  renderDpsBars(dps);
-  renderCompanionCard(det);
+function renderHome() {
+  if (!lastDamage || !lastDamage.detail) return;
+  const mob = currentDealMob();
+  const rawDet = mob === "boss" ? lastDamage.detail.boss : lastDamage.detail.normal;
+  if (!rawDet) return;
+  const f = factorFor(mob);
+  const canSummon = !!rawDet.summon;
+  const useSummon = dealSummon === "summon" && canSummon;
+  const sig = JSON.stringify([mob, useSummon, f, rawDet]);
+  if (sig === lastHomeSig) return;   // 동일 결과 → 재렌더 스킵(애니메이션 1회)
+  lastHomeSig = sig;
+  syncDealToggles(mob, canSummon, useSummon);
+  const det = scaleDetail(rawDet, f);   // 선택 몹 방어배수 반영(서버 계산)
+  const state = useSummon ? det.summon : det.solo;
+  if (!state) return;
+  renderDealHeadline(state, mob, det);
+  renderDealShares(state, mob, det);
 }
+
+// 토글 버튼 활성/비활성(동료 없으면 소환 버튼 잠금).
+function syncDealToggles(mob, canSummon, useSummon) {
+  const mobBox = $("ds-mob"), sumBox = $("ds-summon");
+  if (mobBox) mobBox.querySelectorAll(".ds-seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === mob));
+  if (sumBox) sumBox.querySelectorAll(".ds-seg-btn").forEach((b) => {
+    const solo = b.dataset.v === "solo";
+    b.disabled = !solo && !canSummon;
+    b.classList.toggle("active", b.dataset.v === (useSummon ? "summon" : "solo"));
+  });
+}
+
+// 헤드라인: 평타 한줄 평균딜 + DPS(숫자로 나오는 유일한 절대값). 몹/시뮬 문구는 위 토글로 자명해 생략.
+function renderDealHeadline(state) {
+  const box = $("ds-headline"); if (!box) return;
+  const tile = (label, v) =>
+    `<div class="ds-hl-tile"><div class="ds-hl-label">${label}</div>` +
+    `<div class="ds-hl-val">${v == null ? "—" : koreanUnit(v)}</div>` +
+    `<div class="ds-hl-sub">${v == null ? "" : fmt(Math.round(v))}</div></div>`;
+  box.innerHTML = tile("평타 한줄 평균딜", state.avg) + tile("DPS", state.dps);
+}
+
+// 딜 비중: 평타 + 각 스킬 + 동료가 도넛에 개별 조각으로. 범례에선 스킬을 '스킬 N개' 그룹으로 묶어 펼친다.
+function renderDealShares(state, mob, det) {
+  const shares = state.shares || [];
+  const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
+  const basic = shares.filter((x) => x.name === "평타").reduce((s, x) => s + (x.dps || 0), 0);
+  const comp = shares.filter((x) => x.companion).reduce((s, x) => s + (x.dps || 0), 0);
+  const skillItems = shares.filter((x) => !x.companion && x.name !== "평타").sort((a, b) => (b.dps || 0) - (a.dps || 0));
+  const slices = [];
+  if (basic > 0) slices.push({ name: "평타", dps: basic, color: PIE_COLORS[0], kind: "basic" });
+  skillItems.forEach((s, i) => { if ((s.dps || 0) > 0) slices.push({ name: s.name, dps: s.dps, color: PIE_COLORS[(i + 1) % PIE_COLORS.length], kind: "skill" }); });
+  if (comp > 0) slices.push({ name: activeCompanionLabel(), dps: comp, color: COMPANION_COLOR, kind: "companion" });
+  renderDealDonut(slices, total);
+  renderCompanionSummary(det);
+  renderArtifactSummary(det);
+  if ($("ds-share-sub")) $("ds-share-sub").textContent = "";
+}
+
+// 오른쪽 하단 카드: 각 유물의 딜 기여. det.relicShares(백엔드 유물별 기여)를 막대로. 데이터 없으면 안내.
+function renderArtifactSummary(det) {
+  const box = $("ds-artifacts"); if (!box) return;
+  const sub = $("ds-relic-sub");
+  const relics = activeRelic();
+  const rs = det && det.relicShares;   // [{name, dps}] — 백엔드에서 채워지면 표시
+  if (!relics || !relics.length) {
+    if (sub) sub.textContent = "";
+    box.innerHTML = `<p class="ds-comp-empty">유물을 장착하면 각 유물의 딜 기여가 여기에 표시됩니다.</p>`;
+    return;
+  }
+  if (!rs || !rs.length) {   // 유물은 있으나 기여 데이터 미구현 상태(백엔드 준비 예정)
+    if (sub) sub.textContent = `${relics.length}개 장착`;
+    box.innerHTML = `<p class="ds-comp-empty">유물별 딜 기여 계산을 준비 중이에요.</p>`;
+    return;
+  }
+  // 각 유물 기여를 %로: 그 유물이 없을 때 대비 딜 증가율(= dps / (전체 - dps)).
+  const full = (det.solo && det.solo.dps) || 0;
+  const rows = rs.map((s) => { const d = s.dps || 0, without = full - d; return { name: s.name, pct: without > 0 ? d / without * 100 : 0 }; })
+    .sort((a, b) => b.pct - a.pct);
+  const mx = Math.max(...rows.map((x) => x.pct), 0.01);
+  if (sub) sub.textContent = `${rows.length}개 · 딜 기여`;
+  box.innerHTML = rows.map((s, i) => {
+    const c = PIE_COLORS[(i + 1) % PIE_COLORS.length];
+    return `<div class="cmp-bar-row"><span class="cmp-bar-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>` +
+      `<div class="bar-track"><div class="bar-fill" style="width:${s.pct / mx * 100}%;background:${c}"></div></div>` +
+      `<span class="bar-val">+${num1s(s.pct)}%</span></div>`;
+  }).join("");
+}
+
+// 개별 조각 도넛 + 범례(평타·동료는 단독 행, 스킬은 그룹으로 묶어 펼침) + 조각↔범례 호버 하이라이트/툴팁.
+function renderDealDonut(slices, total) {
+  const chart = $("donut-chart"), legend = $("donut-legend");
+  if (!chart) return;
+  const g = slices.filter((x) => x.dps > 0);
+  if (!g.length || total <= 0) { chart.innerHTML = "<div class='donut-empty'>데이터 없음</div>"; if (legend) legend.innerHTML = ""; return; }
+  const S = 180, cx = S / 2, cy = S / 2, R = 84, r = 50;
+  let a = 0, paths = "";
+  g.forEach((s, i) => {
+    const deg = s.dps / total * 360;
+    const a1 = (i === g.length - 1) ? 360 : a + deg;
+    const d = (g.length === 1) ? ringPath(cx, cy, R, r, 0.01, 359.99) : ringPath(cx, cy, R, r, a, a1);
+    paths += `<path d="${d}" fill="${s.color}" class="pie-seg" data-i="${i}"><title>${escapeHtml(s.name + " · " + num1s(s.dps / total * 100) + "% (" + koreanUnit(s.dps) + ")")}</title></path>`;
+    a = a1;
+  });
+  chart.innerHTML =
+    `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛"><g class="donut-ring">${paths}</g>` +
+    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 딜</text>` +
+    `<text x="${cx}" y="${cy + 14}" class="donut-center-val">100%</text></svg>`;
+  if (legend) {
+    const lgRow = (i, dot, name, pct, val, cls) =>
+      `<div class="${cls || "lg-row"}" data-i="${i}">${dot}<span class="lg-name">${name}</span>` +
+      `<span class="lg-pct">${num1s(pct)}%</span><span class="lg-val">${koreanUnit(val)}</span></div>`;
+    const skills = g.map((s, i) => ({ s, i })).filter((o) => o.s.kind === "skill");
+    const skillSum = skills.reduce((t, o) => t + o.s.dps, 0);
+    let html = "";
+    let skillEmitted = false;
+    g.forEach((s, i) => {
+      if (s.kind === "skill") {
+        if (skillEmitted) return;
+        skillEmitted = true;
+        const head = `<div class="lg-row lg-other-head"><span class="lg-dot" style="background:${PIE_COLORS[1]}"></span>` +
+          `<span class="lg-name">스킬 <span class="lg-cnt">${skills.length}개</span></span>` +
+          `<span class="lg-pct">${num1s(skillSum / total * 100)}%</span><span class="lg-val">${koreanUnit(skillSum)}</span></div>`;
+        const subs = skills.map((o) =>
+          `<div class="lg-row lg-subrow" data-i="${o.i}"><span class="lg-subdot" style="background:${o.s.color};opacity:1"></span>` +
+          `<span class="lg-name">${escapeHtml(o.s.name)}</span><span class="lg-pct">${num1s(o.s.dps / total * 100)}%</span>` +
+          `<span class="lg-val">${koreanUnit(o.s.dps)}</span></div>`).join("");
+        html += `<div class="lg-group">${head}<div class="lg-sublist">${subs}</div></div>`;
+      } else {
+        html += lgRow(i, `<span class="lg-dot" style="background:${s.color}"></span>`, escapeHtml(s.name), s.dps / total * 100, s.dps);
+      }
+    });
+    legend.innerHTML = html;
+  }
+  // 조각 ↔ 범례 하이라이트 연동(복구).
+  const segs = chart.querySelectorAll(".pie-seg"), rows = legend ? legend.querySelectorAll("[data-i]") : [];
+  const hi = (i, on) => {
+    segs.forEach((p) => p.classList.toggle("dim", on && +p.dataset.i !== i));
+    rows.forEach((rw) => rw.classList.toggle("active", on && +rw.dataset.i === i));
+  };
+  segs.forEach((p) => { p.addEventListener("mouseenter", () => hi(+p.dataset.i, true)); p.addEventListener("mouseleave", () => hi(0, false)); });
+  rows.forEach((rw) => { rw.addEventListener("mouseenter", () => hi(+rw.dataset.i, true)); rw.addEventListener("mouseleave", () => hi(0, false)); });
+}
+
+// 오른쪽 카드: 동료 기여 — 미소환 vs 소환 종합 딜 + 소환 시 증가율 + 동료 순수 DPS. 동료 없으면 안내.
+function renderCompanionSummary(det) {
+  const box = $("ds-companion"); if (!box) return;
+  const sub = $("ds-comp-sub");
+  const solo = det.solo, summon = det.summon;
+  if (!summon || !solo) {
+    if (sub) sub.textContent = "";
+    box.innerHTML = `<p class="ds-comp-empty">동료 프리셋을 설정하면 소환 시 딜 기여를 여기서 볼 수 있어요.</p>`;
+    return;
+  }
+  const secs = (det.dps && det.dps.windowSeconds) ? Math.round(det.dps.windowSeconds) : 90;
+  const soloDps = solo.dps || 0, sumDps = summon.dps || 0;
+  const contrib = soloDps > 0 ? (sumDps / soloDps - 1) * 100 : 0;
+  const compShare = (summon.shares || []).find((x) => x.companion);
+  const compDps = compShare ? (compShare.dps || 0) : 0;
+  const nm = activeCompanionName();
+  if (sub) sub.textContent = nm || "";
+  const pMax = Math.max(soloDps, sumDps) || 1;
+  const bar = (name, v, c) =>
+    `<div class="cmp-bar-row"><span class="cmp-bar-name">${name}</span>` +
+    `<div class="bar-track"><div class="bar-fill" style="width:${v / pMax * 100}%;background:${c}"></div></div>` +
+    `<span class="bar-val">${koreanUnit(v)}</span></div>`;
+  box.innerHTML =
+    `<div class="ds-contrib"><span class="ds-contrib-label">동료 소환 시 종합 딜</span><b class="ds-contrib-val">+${num1s(contrib)}%</b></div>` +
+    `<div class="ds-cmp-bars">${bar("미소환", soloDps, PIE_COLORS[0])}${bar("소환", sumDps, COMPANION_COLOR)}</div>` +
+    `<div class="ds-comp-note"><i class="cdot" style="background:${COMPANION_COLOR}"></i>${activeCompanionLabel()} 순수 DPS <b>${koreanUnit(compDps)}</b> <span class="sub">${secs}초 소환 기준</span></div>`;
+}
+
+// 토글 이벤트(정적 요소 → 1회 등록). 값 바꾸면 sig 무효화 후 즉시 재렌더.
+if ($("ds-mob")) $("ds-mob").addEventListener("click", (e) => {
+  const b = e.target.closest(".ds-seg-btn"); if (!b) return;
+  dealMob = b.dataset.v; lastHomeSig = null; renderHome();
+});
+if ($("ds-summon")) $("ds-summon").addEventListener("click", (e) => {
+  const b = e.target.closest(".ds-seg-btn"); if (!b || b.disabled) return;
+  dealSummon = b.dataset.v; lastHomeSig = null; renderHome();
+});
 
 // 동료 기여 카드: 동료 평타·딜 스킬·버프의 데미지와 기여도(모두 소환 유지창 기준). 상단 딜 상세와 중복되는 합계 타일은 없앰. 동료 선택 시에만.
 function renderCompanionCard(det) {
@@ -2770,7 +2945,11 @@ const QP_TYPES = [
 ];
 function buildQuickPanel() {
   const rows = $("qp-rows"); if (!rows) return;
-  rows.innerHTML = QP_TYPES.map((t) => `<label class="qp-row"><span>${t.label}</span><select id="qs-${t.key}"></select></label>`).join("");
+  // 최상단: 대상 한 줄(챕터=좁게 고정, 단계=넓게). 스탯 프리셋의 target에 귀속
+  // (qs-chapter/qs-stage는 TARGET_PAIRS로 자동 채움·동기화).
+  const chapterRow = `<label class="qp-row qp-target-row"><span>챕터</span>` +
+    `<select id="qs-chapter" title="챕터"></select><select id="qs-stage" title="단계(일반/보스)"></select></label>`;
+  rows.innerHTML = chapterRow + QP_TYPES.map((t) => `<label class="qp-row"><span>${t.label}</span><select id="qs-${t.key}"></select></label>`).join("");
   for (const t of QP_TYPES) {
     $("qs-" + t.key).addEventListener("change", async () => {
       const store = t.store(); if (!store) return;
@@ -2785,6 +2964,7 @@ function buildQuickPanel() {
 }
 function syncQuickPanel() {
   for (const t of QP_TYPES) { const store = t.store(); if (store) fillPresetSel($("qs-" + t.key), store); }
+  syncTargetSelector();   // 대상(챕터/스테이지)을 현재 활성 스탯 프리셋 값으로 동기화
 }
 function toggleQuickPanel(open) {
   $("qp-panel").hidden = !open;
@@ -3563,7 +3743,8 @@ function ntHl(s) {
         const cDmg = loadJSON(CACHE_DMG, null);
         if (cDmg) {
           const cf = loadJSON(CACHE_TGTFACTOR, null);
-          if (cf && cf.tgt === currentTarget() && cf.factor > 0) targetFactor = cf.factor;
+          if (cf && cf.n > 0) targetFactorNormal = cf.n;
+          if (cf && cf.b > 0) targetFactorBoss = cf.b;
           lastDamage = cDmg;
           renderHome();
           damageShown = true;   // 이후 갱신은 조용히(‘계산 중’·‘오류’ 텍스트 안 띄움)

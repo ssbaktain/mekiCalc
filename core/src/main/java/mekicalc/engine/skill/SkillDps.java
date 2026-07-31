@@ -234,7 +234,7 @@ public final class SkillDps {
             // 버프 효과값 스케일: 기본 kind growth + 스킬별 valueGrowth override(buffValueScale).
             double scale = fixed ? 1.0 : buffValueScale(m, cl, input);
             double u = active != null ? (active.contains(Json.str(m, "id", "")) ? 1.0 : 0.0)
-                    : (fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl));
+                    : (fullBuff ? 1.0 : buffUptime(m, atkSpeedBase, buffDur, cl, input));
             if (Json.bool(m, "summon", false)) continue;   // 소환 상태 마커 자체는 효과 없음(게이팅 전용)
             // fullBuff(최대딜)는 천장 → 소환·발동 버프도 100%로 켠다. 평균/시뮬(active)만 가동률 게이팅.
             if (!fullBuff) {
@@ -870,7 +870,8 @@ public final class SkillDps {
                 u = (up instanceof Double) ? (Double) up
                         : "venom_u".equals(up) ? venomUptimeOf(eff)
                         : "purge".equals(up) ? purgeUptime(eff)
-                        : "byCooldown".equals(up) ? SkillDpsModel.buffUptimeByCooldown(Json.num(d, "dur", 0), Json.num(d, "cd", 0))
+                        : "byCooldown".equals(up) ? SkillDpsModel.buffUptimeByCooldown(Json.num(d, "dur", 0),
+                                SkillDpsModel.cooldown(Json.num(d, "cd", 0), diminish(eff.get(CDR_PCT), levelSum(d, "cdrMasteryByLevel", cl), 100), eff.get(CDR_FLAT)))
                         : 1.0;
                 if (Json.bool(d, "requiresSummon", false)) u *= summonUptime(eff);   // 비홀더 받피는 소환 중에만
             }
@@ -887,7 +888,8 @@ public final class SkillDps {
             double bd = Json.bool(m, "ignoreBuffDuration", false) ? 0 : eff.get(BUFF_DURATION);
             double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", charLevel(eff)))
                     * (1 + levelSum(m, "durMasteryPctByLevel", charLevel(eff)) / 100.0) * (1 + bd / 100.0);
-            return SkillDpsModel.buffUptimeByCooldown(dur, Json.num(m, "cd", 0));
+            double cdrPct = diminish(eff.get(CDR_PCT), levelSum(m, "cdrMasteryByLevel", charLevel(eff)), 100);
+            return SkillDpsModel.buffUptimeByCooldown(dur, SkillDpsModel.cooldown(Json.num(m, "cd", 0), cdrPct, eff.get(CDR_FLAT)));
         }
         return 0;
     }
@@ -1171,7 +1173,7 @@ public final class SkillDps {
             double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", cl))
                     * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0)
                     * (1 + (Json.bool(m, "ignoreBuffDuration", false) ? 0 : buffDur) / 100.0);
-            double u = buffUptime(m, atkSpeedBase, buffDur, cl);
+            double u = buffUptime(m, atkSpeedBase, buffDur, cl, input);
             if (dur <= 0 || u <= 0) continue;
             ids.add(Json.str(m, "id", ""));
             win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});   // u≥1이면 항상 active(period=dur)
@@ -1217,7 +1219,7 @@ public final class SkillDps {
             double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", cl))
                     * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0)
                     * (1 + (Json.bool(m, "ignoreBuffDuration", false) ? 0 : buffDur) / 100.0);
-            double u = buffUptime(m, atkSpeedBase, buffDur, cl);
+            double u = buffUptime(m, atkSpeedBase, buffDur, cl, input);
             if (dur <= 0 || u <= 0) continue;
             ids.add(Json.str(m, "id", ""));
             win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});
@@ -1272,14 +1274,17 @@ public final class SkillDps {
     }
 
     /** 버프 가동률: triggerCasts 있으면 발동형, 아니면 쿨 기반. 지속 마스터리·버프지속% 레벨 게이팅. */
-    private double buffUptime(Map<String, Object> m, double atkSpeedBase, double buffDurPct, int cl) {
+    private double buffUptime(Map<String, Object> m, double atkSpeedBase, double buffDurPct, int cl, StatBlock b) {
         double bd = Json.bool(m, "ignoreBuffDuration", false) ? 0 : buffDurPct;   // 퍼지(설치기)는 버프지속% 무시
         double dur = (Json.num(m, "dur", 0) + levelSum(m, "durMasteryFlatByLevel", cl))
                 * (1 + levelSum(m, "durMasteryPctByLevel", cl) / 100.0) * (1 + bd / 100.0);
         if (m.containsKey("triggerCasts")) {
             return SkillDpsModel.buffUptimeByTrigger(dur, (int) Json.num(m, "triggerCasts", 0), atkSpeedBase);
         }
-        return SkillDpsModel.buffUptimeByCooldown(dur, Json.num(m, "cd", 0));
+        // 실효쿨 = 쿨감(전역 + 스킬 마스터리 체감) 반영 — 소환 가동률과 동일 규칙. 쿨이 줄면 버프 재사용이 빨라져 가동률↑.
+        double cdrPct = diminish(b.get(CDR_PCT), levelSum(m, "cdrMasteryByLevel", cl), 100);
+        double effCd = SkillDpsModel.cooldown(Json.num(m, "cd", 0), cdrPct, b.get(CDR_FLAT));
+        return SkillDpsModel.buffUptimeByCooldown(dur, effCd);
     }
 
     /**

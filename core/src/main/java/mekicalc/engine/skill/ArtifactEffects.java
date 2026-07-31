@@ -69,6 +69,79 @@ public final class ArtifactEffects {
         return best;   // 임계 모두 초과 → else(최대)
     }
 
+    /** 유물 id → 표시 이름(없으면 id 그대로). */
+    public String nameOf(String id) {
+        Map<String, Object> a = byId.get(id);
+        return a == null ? id : Json.str(a, "name", id);
+    }
+
+    /** 초과분 파생값(감정물병): min(cap, max(0, source−threshold)/divisor × perStep). */
+    private static double excessDerived(Map<String, Object> dm, int awaken, double sourceVal) {
+        double excess = Math.max(0, sourceVal - Json.num(dm, "threshold", 0));
+        double divisor = Json.num(dm, "divisor", 1);
+        double per = arrAt(dm.get("perStep"), awaken);
+        double cap = arrAt(dm.get("cap"), awaken);
+        return Math.min(cap, divisor > 0 ? excess / divisor * per : 0);
+    }
+
+    /**
+     * 유물 1개가 <b>유저 프리셋 스탯에 이미 선반영한 값</b> {statId: 값}. 유물 기여를 구할 땐 이 값을 스탯에서 빼고
+     * 재계산해 "그 유물이 없을 때 대비 딜"을 얻는다. 대상=player·상시(또는 챕터사냥 컨텐츠·일반몹)만.
+     * <ul><li>선반영 소스(used:false, 공속·크확·공퍼·쿨감 등) → 각성값</li>
+     * <li>파생 결과(derived, 최대뎀배율=공속×비율 등) → <b>현재 스탯 기준</b> 파생값(총량)</li></ul>
+     * (엔진은 딜 계산에서 파생을 '버프 증가분'만 더하므로, 프리셋 소스분까지 빼야 유물 전체 기여가 잡힌다.)
+     */
+    public Map<String, Double> preReflectedPlayerStats(Equip eq, StatBlock b, boolean boss) {
+        Map<String, Double> out = new LinkedHashMap<>();
+        Map<String, Object> a = byId.get(eq.id);
+        if (a == null) return out;
+        List<Object> effs = Json.asList(a.get("effects"));
+        for (Object eo : effs) {
+            Map<String, Object> ef = Json.asMap(eo);
+            if (!"player".equals(Json.str(ef, "target", "player"))) continue;   // 동료 대상 선반영(소환지속 등)은 미소환 기준 0
+            String c = Json.str(ef, "content", "");
+            if (!c.isEmpty()) { if (!"챕터사냥".equals(c) || boss) continue; }   // 컨텐츠 유물: 챕터사냥(일반몹)만
+            else if (!"always".equals(Json.str(ef, "trigger", "always"))) continue;   // 상시 선반영만(조건부는 엔진이 계산)
+            String stat = Json.str(ef, "stat", "");
+            double val;
+            Object d = ef.get("derived");
+            if (d instanceof Map) {                                             // 파생 결과의 프리셋 선반영분(이 유물의 소스 기여 제거 후 기준)
+                Map<String, Object> dm = Json.asMap(d);
+                String from = Json.str(dm, "from", "");
+                double src = sourceAfterRemoval(effs, from, b, eq.awaken);
+                val = dm.containsKey("threshold") ? excessDerived(dm, eq.awaken, src)
+                        : arrAt(dm.get("ratio"), eq.awaken) / 100.0 * src;
+            } else if (!Json.bool(ef, "used", false)) {                        // 선반영 소스: 체감 스탯(공속)은 실효 차감분, 합산 스탯은 각성값
+                List<Object> vals = Json.asList(ef.get("values"));
+                if (vals.isEmpty()) continue;
+                Object vo = vals.get(Math.max(0, Math.min(eq.awaken, vals.size() - 1)));
+                if (!(vo instanceof Number)) continue;
+                double raw = ((Number) vo).doubleValue();
+                val = "ATK_SPEED".equals(stat) ? b.get(stat) - unmergeDim(b.get(stat), raw, 150) : raw;
+            } else continue;                                                   // used:true 비파생(어둠계약서 등)은 엔진 계산분 → 선반영 아님
+            if (!stat.isEmpty()) out.merge(stat, val, Double::sum);
+        }
+        return out;
+    }
+
+    /** 체감(DIMINISHING) 역연산: 합쳐진 값 merged 에서 raw delta 를 제거한 원래 값. (StatDef.unmerge 와 동일 공식) */
+    private static double unmergeDim(double merged, double delta, double max) {
+        return (max > 0 && delta > 0 && delta < max) ? (merged - delta) / (1.0 - delta / max) : merged - delta;
+    }
+
+    /** 파생 소스(from)에서 이 유물이 선반영한 raw를 제거한 값 — 공속은 체감 역산(unmerge), 그 외 합산은 뺄셈. */
+    private static double sourceAfterRemoval(List<Object> effs, String from, StatBlock b, int awaken) {
+        double raw = 0;
+        for (Object eo : effs) {
+            Map<String, Object> ef = Json.asMap(eo);
+            if (from.equals(Json.str(ef, "stat", "")) && !Json.bool(ef, "used", false)
+                    && "player".equals(Json.str(ef, "target", "player")))
+                raw += arrAt(ef.get("values"), awaken);
+        }
+        double cur = b.get(from);
+        return "ATK_SPEED".equals(from) ? unmergeDim(cur, raw, 150) : cur - raw;
+    }
+
     /** 장착 유물의 컴퓨트 효과(used:true, content 아님)를 각성값과 함께 해석. derived면 value=비율. */
     public List<Eff> resolvedCompute() {
         List<Eff> out = new ArrayList<>();
@@ -134,7 +207,7 @@ public final class ArtifactEffects {
                     if (v == 0) continue;
                     String stat = Json.str(ef, "stat", "");
                     if (Json.bool(ef, "dmgMult", false)) {                  // 육각목걸이: DMG × (1+v×중첩×u/100)
-                        double stacks = Json.num(ef, "maxStacks", 1);
+                        double stacks = stackCount(ef, boss, seconds, t, Json.num(ef, "maxStacks", 1));
                         eff.set("DMG", eff.get("DMG") * (1 + v * stacks * u / 100.0));
                     } else if ("FINAL_DMG".equals(stat)) {
                         eff.set("FINAL_DMG", multPct(eff.get("FINAL_DMG"), v * u));
@@ -208,14 +281,31 @@ public final class ArtifactEffects {
         }
     }
 
-    /** 효과 값. 파생=비율×(라이브−base), debuffCase=디버프 유무, perEnemy=선형, 그 외 values[각성]. */
+    /**
+     * dmgMult 유물(육각 수정 목걸이)의 중첩 수. <b>일반몹</b>=무한 사냥이라 상시 최대(maxStacks), <b>보스전</b>=제한 시간
+     * 안에서 0→최대로 쌓임(period마다 +1). 해석식(t&lt;0)은 전투시간 평균 스택, 시뮬(t≥0)은 그 순간 스택.
+     * (육각은 dur&gt;period+refresh라 한 번 쌓인 스택은 안 빠지므로 floor(t/period)+1로 근사.)
+     */
+    private static double stackCount(Map<String, Object> ef, boolean boss, double seconds, double t, double maxStacks) {
+        if (!boss) return maxStacks;
+        double period = Json.num(ef, "period", 0);
+        if (period <= 0) return maxStacks;
+        if (t >= 0) return Math.min(maxStacks, Math.floor(t / period) + 1);
+        double sum = 0; int n = 0;                                        // 해석식: 0~seconds 평균 스택
+        for (double tt = 0; tt < seconds; tt += 0.1) { sum += Math.min(maxStacks, Math.floor(tt / period) + 1); n++; }
+        return n > 0 ? sum / n : maxStacks;
+    }
+
+    /** 효과 값. 파생=비율×(라이브−base) 또는 초과분형, debuffCase=디버프 유무, perEnemy=선형, 그 외 values[각성]. */
     private static double playerValue(Map<String, Object> ef, int awaken, StatBlock eff, StatBlock base, boolean boss, boolean enemyDebuff) {
         Object d = ef.get("derived");
         if (d instanceof Map) {
             Map<String, Object> dm = Json.asMap(d);
             String from = Json.str(dm, "from", "");
+            if (dm.containsKey("threshold"))                             // 초과분형(감정물병): 라이브−프리셋 증가분만(프리셋분은 선반영)
+                return excessDerived(dm, awaken, eff.get(from)) - excessDerived(dm, awaken, base.get(from));
             double ratio = arrAt(dm.get("ratio"), awaken);
-            return ratio / 100.0 * (eff.get(from) - base.get(from));      // 버프로 늘어난 소스만큼만
+            return ratio / 100.0 * (eff.get(from) - base.get(from));      // 버프로 늘어난 소스만큼만(프리셋 소스분은 선반영)
         }
         if (Json.bool(ef, "debuffCase", false))
             return arrAt(ef.get(enemyDebuff ? "debuffValues" : "buffValues"), awaken);

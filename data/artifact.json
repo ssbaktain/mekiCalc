@@ -93,7 +93,7 @@
     { "id": "old_music_box", "name": "낡은 오르골", "grade": "LEGENDARY", "category": "compute",
       "raw": "디버프 걸리면 1개 제거, 25초간 공격력 25%(5각 50%)↑. 재사용 20초",
       "effects": [
-        { "stat": "ATK_PCT", "target": "player", "values": [25,30,35,40,45,50], "trigger": "onDebuffed", "dur": 25, "cd": 20, "assumeMax": true, "used": true, "note": "디버프 피격 트리거, 최대치 가정 상시" }
+        { "stat": "ATK_PCT", "target": "player", "values": [25,30,35,40,45,50], "trigger": "onDebuffed", "dur": 25, "cd": 20, "assumeMax": true, "bossOnly": true, "used": true, "note": "디버프 피격 트리거 → 일반몹 0, 보스전만 최대치 가정 상시" }
       ]},
 
     { "id": "silver_pendant", "name": "은 펜던트", "grade": "LEGENDARY", "category": "compute",
@@ -177,7 +177,9 @@
       "raw": "공격력 15%(5각 30%)↑. 60% 초과 공속 3%당 최종뎀 0.5%(5각 1%)↑ 최대 10%(5각 20%)",
       "effects": [
         { "stat": "ATK_PCT", "target": "player", "values": [15,18,21,24,27,30], "trigger": "always", "used": false, "note": "항상 공격력 → 선반영(계산 제외)" },
-        { "stat": "FINAL_DMG", "target": "player", "values": [10,12,14,16,18,20], "trigger": "always", "assumeMax": true, "used": true, "note": "공속 초과분 최종뎀, 최대치 가정" }
+        { "stat": "FINAL_DMG", "target": "player", "trigger": "always", "used": true,
+          "derived": { "from": "ATK_SPEED", "threshold": 60, "divisor": 3, "perStep": [0.5,0.6,0.7,0.8,0.9,1.0], "cap": [10,12,14,16,18,20] },
+          "note": "60% 초과 공속 3%당 최종뎀 perStep%, 최대 cap%. 라이브 공속 기반 파생(고정 최대치 아님)" }
       ]},
 
     { "id": "cheondo_elixir", "name": "천도나무용 명약", "grade": "LEGENDARY", "category": "compute",

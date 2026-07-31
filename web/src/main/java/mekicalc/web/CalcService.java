@@ -327,6 +327,10 @@ public final class CalcService {
                 // 딜 상세 = 대상별로 solo(동료 미소환) + summon(동료 소환) 상태의 {평균/최소/최대 평타딜, DPS} + 동료카드/도넛용 dps/shares.
                 Map<String, Object> dn = detailFor(nd, b, false, NORMAL_SECONDS, comp, inhN, uptime, Rp, playerRecv, art, enemyDebuff);
                 Map<String, Object> db = detailFor(nd, b, true, BOSS_SECONDS, comp, inhB, uptime, Rp, playerRecv, art, enemyDebuff);
+                if (art != null && artifacts != null && !artifacts.isEmpty()) {   // 유물별 딜 기여(미소환 DPS에서 그 유물 뺐을 때 감소분)
+                    dn.put("relicShares", relicShares(nd, b, false, NORMAL_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(dn)));
+                    db.put("relicShares", relicShares(nd, b, true, BOSS_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(db)));
+                }
                 out.put("normal", ((Map<?, ?>) dn.get("solo")).get("avg"));   // 헤드라인 = 동료 미소환 평균 평타딜
                 out.put("boss", ((Map<?, ?>) db.get("solo")).get("avg"));
                 detail.put("normal", dn);
@@ -367,7 +371,9 @@ public final class CalcService {
                                           ArtifactEffects art, boolean enemyDebuff) {
         Map<String, Object> det = new LinkedHashMap<>();
         SkillDps.SimContext ctxSolo = simCtx(art, b, enemyDebuff, 0);
-        det.put("solo", stateMap(nd.basicHitStatsCtx(b, boss, seconds, ctxSolo), nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2]));
+        Map<String, Object> soloState = stateMap(nd.basicHitStatsCtx(b, boss, seconds, ctxSolo), nd.dpsSimulateBreakdown(b, boss, seconds, ctxSolo)[2]);
+        soloState.put("shares", sharesFromParts(nd.dpsSimulateBySkill(b, boss, seconds, ctxSolo), 1.0, 0));   // 미소환 출처별(동료 조각 없음) — 합 = solo dps
+        det.put("solo", soloState);
         if (comp != null) {
             Map<String, Object> gift = comp.playerGift(b, boss);        // 가동률 평균 — 평균딜·DPS용
             @SuppressWarnings("unchecked")
@@ -379,6 +385,7 @@ public final class CalcService {
             SkillDps.SimContext ctxSummon = simCtx(art, b, enemyDebuff, 1);
             double avgHit = nd.basicHitStatsCtx(summonInput, boss, seconds, ctxSummon)[2];   // 평균 = 동료·플레이어 버프 가동률평균
             double sumPlayer = nd.dpsSimulateBreakdown(summonInput, boss, seconds, ctxSummon)[2];
+            Map<String, Double> summonParts = nd.dpsSimulateBySkill(summonInput, boss, seconds, ctxSummon);   // 소환 중 출처별(동료 버프 반영) — 원복 전에
             nd.setExternalAtkPct(0);
             // 최대딜 = 동료 버프 전부 ON + 플레이어 풀버프, 최소딜 = 동료 상시 패시브만 + 플레이어 무버프.
             double maxHit = giftState(nd, b, boss, seconds, comp.playerGiftRange(b, boss, true),  art, enemyDebuff, 1);
@@ -387,7 +394,9 @@ public final class CalcService {
             double recvScale = Rp > 0 ? 1 + recvBonus / Rp : 1;
             comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
             double compWin = comp.dpsBreakdown(inh, boss)[2];
-            det.put("summon", stateMap(new double[]{minHit, maxHit, avgHit}, sumPlayer * recvScale + compWin));
+            Map<String, Object> summonState = stateMap(new double[]{minHit, maxHit, avgHit}, sumPlayer * recvScale + compWin);
+            summonState.put("shares", sharesFromParts(summonParts, recvScale, compWin));   // 소환 중: 플레이어(받피증 스케일) + 동료 조각 — 합 = summon dps
+            det.put("summon", summonState);
         }
         // 동료 카드·도넛용: 출처별(평타·스킬…) 블렌드 지분 하나로 딜 상세(pp)와 딜 비중(shares)을 함께 산출 →
         // 두 뷰의 평타/스킬 비율이 항상 일치(같은 시뮬 기준).
@@ -527,6 +536,65 @@ public final class CalcService {
                 row.put("companion", true);
                 out.add(row);
             }
+        }
+        return out;
+    }
+
+    /**
+     * 출처별 parts(평타·각 스킬…)를 {name, dps} 배열로(dps 내림차순) 변환한다. 각 값에 {@code scale}을 곱하고
+     * (소환 상태의 받피증 스케일 등), {@code companionDps}가 양수면 '동료' 조각을 끝에 추가한다.
+     * solo(scale=1, companionDps=0)·summon(scale=recvScale, companionDps=소환 중 동료 DPS) 상태별 딜 비중 산출용.
+     */
+    /** 딜 상세 맵에서 미소환(solo) DPS를 꺼낸다(없으면 0). */
+    private static double soloDpsOf(Map<String, Object> det) {
+        Object s = det.get("solo");
+        if (!(s instanceof Map)) return 0;
+        Object d = ((Map<?, ?>) s).get("dps");
+        return d instanceof Number ? ((Number) d).doubleValue() : 0;
+    }
+
+    /**
+     * 유물별 딜 기여 = 미소환(solo) DPS에서 그 유물 하나를 뺐을 때의 감소분. compute 유물만 값이 나오고
+     * 선반영/컨텐츠/생존 유물은 엔진 딜 기여가 0이라 0으로 표시된다. 각 유물마다 시뮬 1회(유물 수만큼).
+     */
+    private List<Map<String, Object>> relicShares(SkillDps nd, StatBlock b, boolean boss, double seconds,
+                                                  List<ArtifactEffects.Equip> artifacts, boolean enemyDebuff,
+                                                  ArtifactEffects artFull, double fullSoloDps) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (int i = 0; i < artifacts.size(); i++) {
+            ArtifactEffects.Equip removed = artifacts.get(i);
+            List<ArtifactEffects.Equip> without = new ArrayList<>(artifacts);
+            without.remove(i);
+            ArtifactEffects artW = without.isEmpty() ? null : new ArtifactEffects(content.artifactRoot, without);
+            // 선반영 유물이면 프리셋에 이미 녹아든 각성 스탯을 빼고 재계산한다(compute 유물이면 빈 맵이라 b 그대로).
+            StatBlock bW = new StatBlock(b);
+            for (Map.Entry<String, Double> e : artFull.preReflectedPlayerStats(removed, b, boss).entrySet())
+                bW.set(e.getKey(), bW.get(e.getKey()) - e.getValue());
+            double dpsW = nd.dpsSimulateBreakdown(bW, boss, seconds, simCtx(artW, bW, enemyDebuff, 0))[2];
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", artFull.nameOf(removed.id));
+            row.put("dps", safe(Math.max(0, fullSoloDps - dpsW)));
+            out.add(row);
+        }
+        return out;
+    }
+
+    private static List<Map<String, Object>> sharesFromParts(Map<String, Double> parts, double scale, double companionDps) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map.Entry<String, Double> e : parts.entrySet()) {
+            if (e.getValue() <= 0) continue;
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", e.getKey());
+            row.put("dps", safe(e.getValue() * scale));
+            out.add(row);
+        }
+        out.sort((a, b2) -> Double.compare(((Number) b2.get("dps")).doubleValue(), ((Number) a.get("dps")).doubleValue()));
+        if (companionDps > 0) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", "동료");
+            row.put("dps", safe(companionDps));
+            row.put("companion", true);
+            out.add(row);
         }
         return out;
     }
