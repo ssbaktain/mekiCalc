@@ -176,7 +176,7 @@
     { "id": "emotion_bottle", "name": "감정의 물병", "grade": "LEGENDARY", "category": "compute",
       "raw": "공격력 15%(5각 30%)↑. 60% 초과 공속 3%당 최종뎀 0.5%(5각 1%)↑ 최대 10%(5각 20%)",
       "effects": [
-        { "stat": "ATK_PCT", "target": "player", "values": [15,18,21,24,27,30], "trigger": "always", "used": false, "note": "항상 공격력 → 선반영(계산 제외)" },
+        { "stat": "ATK_PCT", "target": "player", "values": [15,18,21,24,27,30], "trigger": "always", "used": true, "note": "상시 공격력% 버프 — 선반영 아님(프리셋 미포함), 엔진이 공퍼 버킷에 실시간 합산" },
         { "stat": "FINAL_DMG", "target": "player", "trigger": "always", "used": true,
           "derived": { "from": "ATK_SPEED", "threshold": 60, "divisor": 3, "perStep": [0.5,0.6,0.7,0.8,0.9,1.0], "cap": [10,12,14,16,18,20] },
           "note": "60% 초과 공속 3%당 최종뎀 perStep%, 최대 cap%. 라이브 공속 기반 파생(고정 최대치 아님)" }

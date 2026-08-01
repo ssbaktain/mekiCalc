@@ -124,6 +124,28 @@ public final class ArtifactEffects {
         return out;
     }
 
+    /**
+     * 유물 1개가 <b>동료 대상</b>으로 프리셋에 선반영한 값 {statId: 값}(소환 지속시간 등). 동료 유물의 딜 기여는
+     * 미소환(solo) 기준으로 0이라, 이 값을 스탯에서 빼고 <b>소환 종합 딜</b>(전투 평균, 동료 포함)을 재계산해 얻는다.
+     * 대상=companion·상시·선반영(used:false)·비파생만(소환지속=합산형이라 raw 그대로).
+     */
+    public Map<String, Double> preReflectedCompanionStats(Equip eq, StatBlock b, boolean boss) {
+        Map<String, Double> out = new LinkedHashMap<>();
+        Map<String, Object> a = byId.get(eq.id);
+        if (a == null) return out;
+        for (Object eo : Json.asList(a.get("effects"))) {
+            Map<String, Object> ef = Json.asMap(eo);
+            if (!"companion".equals(Json.str(ef, "target", "player"))) continue;
+            if (!"always".equals(Json.str(ef, "trigger", "always")) || Json.bool(ef, "used", false)) continue;
+            if (ef.get("derived") instanceof Map) continue;
+            String stat = Json.str(ef, "stat", "");
+            List<Object> vals = Json.asList(ef.get("values"));
+            if (stat.isEmpty() || vals.isEmpty()) continue;
+            out.merge(stat, arrAt(vals, eq.awaken), Double::sum);
+        }
+        return out;
+    }
+
     /** 체감(DIMINISHING) 역연산: 합쳐진 값 merged 에서 raw delta 를 제거한 원래 값. (StatDef.unmerge 와 동일 공식) */
     private static double unmergeDim(double merged, double delta, double max) {
         return (max > 0 && delta > 0 && delta < max) ? (merged - delta) / (1.0 - delta / max) : merged - delta;

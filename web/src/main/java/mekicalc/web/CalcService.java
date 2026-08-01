@@ -328,8 +328,8 @@ public final class CalcService {
                 Map<String, Object> dn = detailFor(nd, b, false, NORMAL_SECONDS, comp, inhN, uptime, Rp, playerRecv, art, enemyDebuff);
                 Map<String, Object> db = detailFor(nd, b, true, BOSS_SECONDS, comp, inhB, uptime, Rp, playerRecv, art, enemyDebuff);
                 if (art != null && artifacts != null && !artifacts.isEmpty()) {   // 유물별 딜 기여(미소환 DPS에서 그 유물 뺐을 때 감소분)
-                    dn.put("relicShares", relicShares(nd, b, false, NORMAL_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(dn)));
-                    db.put("relicShares", relicShares(nd, b, true, BOSS_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(db)));
+                    dn.put("relicShares", relicShares(nd, b, false, NORMAL_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(dn), comp));
+                    db.put("relicShares", relicShares(nd, b, true, BOSS_SECONDS, artifacts, enemyDebuff, art, soloDpsOf(db), comp));
                 }
                 out.put("normal", ((Map<?, ?>) dn.get("solo")).get("avg"));   // 헤드라인 = 동료 미소환 평균 평타딜
                 out.put("boss", ((Map<?, ?>) db.get("solo")).get("avg"));
@@ -556,13 +556,35 @@ public final class CalcService {
     /**
      * 유물별 딜 기여 = 미소환(solo) DPS에서 그 유물 하나를 뺐을 때의 감소분. compute 유물만 값이 나오고
      * 선반영/컨텐츠/생존 유물은 엔진 딜 기여가 0이라 0으로 표시된다. 각 유물마다 시뮬 1회(유물 수만큼).
+     *
+     * <p><b>동료 대상 선반영 유물</b>(아르웬의 유리구두=소환 지속시간)은 미소환 기준 딜 변화가 0이라, 대신
+     * <b>소환 종합 딜</b>(전투 평균, 동료 포함)을 기준으로 그 유물이 없을 때 대비 증가율(%)을 {@code pct}로 넣는다.
      */
     private List<Map<String, Object>> relicShares(SkillDps nd, StatBlock b, boolean boss, double seconds,
                                                   List<ArtifactEffects.Equip> artifacts, boolean enemyDebuff,
-                                                  ArtifactEffects artFull, double fullSoloDps) {
+                                                  ArtifactEffects artFull, double fullSoloDps, CompanionDps comp) {
         List<Map<String, Object>> out = new ArrayList<>();
+        double fullSummonTotal = Double.NaN;   // 동료 유물이 있을 때만(비쌈) 지연 계산
         for (int i = 0; i < artifacts.size(); i++) {
             ArtifactEffects.Equip removed = artifacts.get(i);
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", artFull.nameOf(removed.id));
+            // 동료 대상 선반영(소환 지속시간 등): 소환 종합 딜 기준 기여(미소환 기준 0이므로 별도 처리).
+            Map<String, Double> compReflected = comp == null ? java.util.Collections.emptyMap()
+                    : artFull.preReflectedCompanionStats(removed, b, boss);
+            if (!compReflected.isEmpty()) {
+                if (Double.isNaN(fullSummonTotal)) fullSummonTotal = combatTotalDps(nd, b, boss, seconds, comp, artFull, enemyDebuff);
+                StatBlock bC = new StatBlock(b);
+                for (Map.Entry<String, Double> e : compReflected.entrySet()) bC.set(e.getKey(), bC.get(e.getKey()) - e.getValue());
+                double withoutTotal = combatTotalDps(nd, bC, boss, seconds, comp, artFull, enemyDebuff);
+                double pct = withoutTotal > 0 ? Math.max(0, (fullSummonTotal - withoutTotal) / withoutTotal * 100) : 0;
+                row.put("dps", 0.0);
+                row.put("pct", safe(pct));
+                row.put("base", "summon");   // 소환 종합 딜 기준(프론트가 solo 기준 대신 이 pct를 씀)
+                out.add(row);
+                continue;
+            }
+            // 일반: 미소환(solo) DPS에서 그 유물을 뺐을 때 감소분.
             List<ArtifactEffects.Equip> without = new ArrayList<>(artifacts);
             without.remove(i);
             ArtifactEffects artW = without.isEmpty() ? null : new ArtifactEffects(content.artifactRoot, without);
@@ -571,12 +593,29 @@ public final class CalcService {
             for (Map.Entry<String, Double> e : artFull.preReflectedPlayerStats(removed, b, boss).entrySet())
                 bW.set(e.getKey(), bW.get(e.getKey()) - e.getValue());
             double dpsW = nd.dpsSimulateBreakdown(bW, boss, seconds, simCtx(artW, bW, enemyDebuff, 0))[2];
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("name", artFull.nameOf(removed.id));
             row.put("dps", safe(Math.max(0, fullSoloDps - dpsW)));
             out.add(row);
         }
         return out;
+    }
+
+    /**
+     * 소환 종합 딜(전투 평균) = 플레이어 블렌드 딜(소환 가동률 가중) + 동료 전투시간 평균 딜. detailFor의 {@code dps.total}과
+     * 동일 기준으로, 주어진 base 스탯 b(소환지속 차감본 등)로 재계산한다. 동료 없으면 플레이어 딜만.
+     */
+    private double combatTotalDps(SkillDps nd, StatBlock b, boolean boss, double seconds,
+                                  CompanionDps comp, ArtifactEffects art, boolean enemyDebuff) {
+        double playerRecv = comp == null ? 0 : nd.playerRecvBonus(nd.buffed(b).stats);
+        double uptime = comp == null ? 0 : comp.summonUptime(b);
+        double Rp = 1 + playerRecv;
+        Map<String, Double> parts = blendPlayerBySkill(nd, b, boss, comp, uptime, Rp, seconds, art, enemyDebuff);
+        double total = 0; for (double v : parts.values()) total += v;
+        if (comp != null) {
+            StatBlock inh = nd.fullBuffStats(b, boss, seconds, simCtx(art, b, enemyDebuff, 1));
+            comp.playerRecvBonus(playerRecv + artRecv(art, inh, boss, seconds));
+            total += comp.dpsOverSeconds(inh, boss, seconds)[2];
+        }
+        return total;
     }
 
     private static List<Map<String, Object>> sharesFromParts(Map<String, Double> parts, double scale, double companionDps) {

@@ -997,10 +997,14 @@ function renderArtifactSummary(det) {
     box.innerHTML = `<p class="ds-comp-empty">유물별 딜 기여 계산을 준비 중이에요.</p>`;
     return;
   }
-  // 각 유물 기여를 %로: 그 유물이 없을 때 대비 딜 증가율(= dps / (전체 - dps)).
+  // 각 유물 기여를 %로: 기본은 미소환(solo) 기준 딜 증가율(= dps / (전체 - dps)).
+  // 동료 유물(유리구두=소환지속)은 미소환 기준 0이라 백엔드가 소환 종합 딜 기준 pct를 직접 준다(s.pct 우선).
   const full = (det.solo && det.solo.dps) || 0;
-  const rows = rs.map((s) => { const d = s.dps || 0, without = full - d; return { name: s.name, pct: without > 0 ? d / without * 100 : 0 }; })
-    .sort((a, b) => b.pct - a.pct);
+  const rows = rs.map((s) => {
+    const d = s.dps || 0, without = full - d;
+    const pct = (s.pct != null) ? s.pct : (without > 0 ? d / without * 100 : 0);
+    return { name: s.name, pct };
+  }).sort((a, b) => b.pct - a.pct);
   const mx = Math.max(...rows.map((x) => x.pct), 0.01);
   if (sub) sub.textContent = `${rows.length}개 · 딜 기여`;
   box.innerHTML = rows.map((s, i) => {
