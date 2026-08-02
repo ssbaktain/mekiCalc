@@ -70,9 +70,9 @@
       <p id="status" class="status home-status"></p>
 
       <details class="panel-about">
-        <summary>딜 구성, 어떻게 보나요?</summary>
+        <summary>데미지 분석, 어떻게 보나요?</summary>
         <div class="about-body">
-          <p>현재 적용된 프리셋(스탯·스킬·동료·유물) 기준으로 <b>1타 평균딜</b>과 전투 시뮬레이션 기반 <b>DPS</b>를 숫자로, 나머지는 <b>평타·스킬·동료 딜 비중</b>(스킬은 스킬별)으로 보여줍니다. 위 토글로 <b>일반몹/보스</b>와 <b>동료 미소환/소환</b>을 바꿔 바로 비교할 수 있어요. 챕터·단계는 우하단 ⚡ 빠른 전환의 '챕터'에서 바꾸며 현재 스탯 프리셋에 저장됩니다. 스킬 프리셋에서 체크한 스킬·버프만 계산에 반영되니 실제 구성에 맞춰 두세요. 표시 수치는 절대값이 아니라 세팅 간 상대 비교용이에요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p>
+          <p>현재 적용된 프리셋(스탯·스킬·동료·유물) 기준으로 위쪽에 <b>세 숫자</b>를 보여줍니다 — <b>평타 한줄 평균딜</b>(버프 가동률 평균을 반영한 평타 한 대), <b>DPS</b>(위 토글에서 고른 상태, 즉 동료 미소환/소환 기준의 초당 딜), <b>DPS(n초 측정)</b>(실제 전투 한 판 동안 동료 소환 가동률까지 녹여 낸 실측 평균 — <b>보스는 챕터 보스 1판 70초</b>, <b>챕터 사냥은 끝이 없어 동료 소환 쿨 90초를 한 사이클</b>로 잡습니다). 미소환/소환을 따로 볼 것 없이 실전 결과를 한 숫자로 보고 싶다면 <b>DPS(n초 측정)</b>을 보세요. 나머지는 <b>평타·스킬·동료 딜 비중</b>(스킬은 스킬별)입니다. 위 토글로 <b>일반몹/보스</b>·<b>동료 미소환/소환</b>을 바꿔 비교하고, 챕터·단계는 우하단 ⚡ 빠른 전환의 '챕터'에서 바꾸며 현재 스탯 프리셋에 저장됩니다. 스킬 프리셋에서 체크한 스킬·버프만 계산에 반영되니 실제 구성에 맞춰 두세요. 표시 수치는 절대값이 아니라 세팅 간 상대 비교용이에요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p>
         </div>
       </details>
 
@@ -95,7 +95,7 @@
         </div>
       </div>
 
-      <!-- 헤드라인: 1타 평균딜 · DPS(숫자로 나오는 유일한 절대값) -->
+      <!-- 헤드라인 3박스: 평타 한줄 평균딜 · DPS(토글 상태 순간) · DPS(n초 측정=전투 70/90초 평균 실측, 소환 가동률 반영) -->
       <div id="ds-headline" class="ds-headline"></div>
 
       <div class="home-grid">
@@ -121,41 +121,71 @@
         </div>
       </div>
 
-      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료·유물) 기준이에요. 위 토글로 일반몹/보스와 동료 미소환/소환을 바꿔 비교하세요. DPS는 전투시간(일반 90초·보스 70초) 시뮬레이션 평균, 1타 평균딜은 버프 가동률 평균을 반영한 한 대 기준이에요. 프리셋은 상단 프리셋 메뉴, 빠른 전환은 우하단 ⚡에서 바꿔요.</p>
+      <p class="status home-foot">숫자는 현재 적용된 프리셋(스탯·스킬·동료·유물) 기준이에요. 위 토글로 일반몹/보스와 동료 미소환/소환을 바꿔 비교하세요. 평타 한줄 평균딜은 버프 가동률 평균을 반영한 한 대, DPS는 고른 토글 상태의 초당 딜, DPS(n초 측정)은 전투 한 판(보스 70초·사냥 90초)을 소환 가동률까지 반영해 낸 실측 평균이에요. 프리셋은 상단 프리셋 메뉴, 빠른 전환은 우하단 ⚡에서 바꿔요.</p>
     </section>
 
     <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->
     <section id="panel-presets" class="panel" hidden>
 
-      <!-- 스탯 -->
-      <div id="sub-stat" class="subpanel">
+      <!-- 프리셋 서브 메뉴바: 캐릭터·동료·유물·큐브 + (우측)설정. 클릭 시 navigate로 URL 동기화. -->
+      <div class="subtabs" role="tablist">
+        <button class="subtab" type="button" data-sub="build" role="tab">캐릭터</button>
+        <button class="subtab" type="button" data-sub="ally" role="tab">동료</button>
+        <button class="subtab" type="button" data-sub="relic" role="tab">유물</button>
+        <button class="subtab" type="button" data-sub="cube" role="tab">큐브</button>
+        <button class="subtab subtab-right" type="button" data-sub="settings" role="tab">설정</button>
+      </div>
+
+      <!-- 빌드 (스탯 + 스킬 통합) -->
+      <div id="sub-build" class="subpanel">
         <details class="panel-about">
-          <summary>스탯 입력은 어떻게 하나요?</summary>
-          <div class="about-body"><p>게임 내 스탯 창의 값(공격력·데미지%·크리티컬 확률/데미지·최소/최대 데미지 배율·공격 속도·최종 데미지 등)을 그대로 입력하는 화면입니다. 직업을 고르면 스킬 계수와 마스터리가 내부 계산에 자동 반영되고, 입력값은 이 브라우저에 자동 저장됩니다. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p></div>
+          <summary>캐릭터(스탯·스킬) 입력은?</summary>
+          <div class="about-body"><p>게임 스탯 창의 값과 사용하는 스킬을 한 화면에서 입력합니다. <b>직업</b>을 고르면 스탯 계산과 스킬 목록이 함께 그 직업 기준이 돼요(직업은 여기 하나에서만 바꿉니다). 왼쪽은 <b>스탯</b>(스탯창 순서 그대로), 오른쪽은 <b>딜/버프 스킬</b> 선택이에요. 체크한 스킬만 데미지 분석에 반영되고, 입력값은 이 브라우저에 자동 저장됩니다. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p></div>
         </details>
-        <div class="card">
+        <!-- 캐릭터 프리셋: 제목 첫 줄 + 오른쪽 밀착 컨트롤(다른 프리셋 탭과 통일) -->
+        <div class="card build-header">
           <div class="card-head">
-            <h2>스탯 입력</h2>
-            <div class="head-right">
-              <label class="ctl inline">직업
-                <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option></select>
-              </label>
-              <label class="ctl inline">대상
-                <select id="spt-chapter" title="챕터"></select>
-                <select id="spt-stage" title="스테이지"></select>
-              </label>
-              <button id="stat-reset" class="mini-btn ghost" type="button">초기화</button>
+            <h2>캐릭터 프리셋</h2>
+            <div class="preset-ctrls">
+              <select id="sp-sel"></select>
+              <button id="sp-save" class="mini-btn" type="button">저장</button>
+              <button id="sp-new" class="mini-btn ghost" type="button">추가</button>
+              <button id="sp-rename" class="mini-btn ghost" type="button">이름변경</button>
+              <button id="sp-del" class="mini-btn ghost" type="button">삭제</button>
             </div>
           </div>
-          <div class="preset-bar">
-            <span class="preset-label">스탯 프리셋</span>
-            <select id="sp-sel"></select>
-            <button id="sp-save" class="mini-btn" type="button">저장</button>
-            <button id="sp-new" class="mini-btn ghost" type="button">추가</button>
-            <button id="sp-rename" class="mini-btn ghost" type="button">이름변경</button>
-            <button id="sp-del" class="mini-btn ghost" type="button">삭제</button>
+        </div>
+        <!-- 직업·레벨·챕터: 프리셋 바와 별도 박스(스탯·스킬 계산 기준) -->
+        <div class="card">
+          <div class="bh-row">
+            <label class="ctl inline bh-job">직업
+              <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option></select>
+            </label>
+            <span id="build-level-slot"></span>
+            <label class="ctl inline">챕터
+              <select id="spt-chapter" title="챕터"></select>
+              <select id="spt-stage" title="스테이지"></select>
+            </label>
           </div>
+        </div>
+        <!-- 스탯 / 스킬 뷰 토글(한 번에 하나 · 항상 짧게) -->
+        <div class="build-viewtabs" id="build-viewtabs" role="group" aria-label="스탯/스킬 전환">
+          <button class="bv-tab active" data-bv="stat" type="button">스탯</button>
+          <button class="bv-tab" data-bv="skill" type="button">스킬</button>
+        </div>
+        <div id="bv-stat" class="card">
+          <div class="card-head"><h2>스탯</h2><div class="head-right"><button id="stat-reset" class="mini-btn ghost" type="button">초기화</button></div></div>
           <div id="stat-form">불러오는 중…</div>
+        </div>
+        <div id="bv-skill" class="card" hidden>
+          <div class="card-head"><h2>스킬</h2></div>
+          <div class="skill-views">
+            <button class="skill-view active" data-view="deal" type="button">딜 스킬</button>
+            <button class="skill-view" data-view="buff" type="button">버프 스킬</button>
+          </div>
+          <div id="deal-list">불러오는 중…</div>
+          <div id="buff-list" hidden>불러오는 중…</div>
+          <p class="status">체크한 스킬만 데미지 분석·추천·평가에 반영돼요. 표시 수치는 마스터리 미반영(레벨에 따라 내부 자동 적용).<br>딜과 버프를 함께 가진 스킬은 한쪽에서 끄면 양쪽 다 꺼집니다.</p>
         </div>
       </div>
 
@@ -168,17 +198,14 @@
         <div class="card">
           <div class="card-head">
             <h2>큐브 입력</h2>
-            <div class="head-right">
+            <div class="preset-ctrls">
+              <select id="cp-sel"></select>
+              <button id="cp-save" class="mini-btn" type="button">저장</button>
+              <button id="cp-new" class="mini-btn ghost" type="button">추가</button>
+              <button id="cp-rename" class="mini-btn ghost" type="button">이름변경</button>
+              <button id="cp-del" class="mini-btn ghost" type="button">삭제</button>
               <button id="mc-clear" class="mini-btn ghost" type="button">초기화</button>
             </div>
-          </div>
-          <div class="preset-bar">
-            <span class="preset-label">큐브 프리셋</span>
-            <select id="cp-sel"></select>
-            <button id="cp-save" class="mini-btn" type="button">저장</button>
-            <button id="cp-new" class="mini-btn ghost" type="button">추가</button>
-            <button id="cp-rename" class="mini-btn ghost" type="button">이름변경</button>
-            <button id="cp-del" class="mini-btn ghost" type="button">삭제</button>
           </div>
           <div class="controls">
             <label class="ctl">부위 추가<select id="mc-part-add"></select></label>
@@ -189,40 +216,7 @@
         </div>
       </div>
 
-      <!-- 버프 -->
-      <div id="sub-buff" class="subpanel" hidden>
-        <details class="panel-about">
-          <summary>스킬 선택은 무엇인가요?</summary>
-          <div class="about-body"><p>예상 데미지·추천·평가에 반영할 딜 스킬과 버프 스킬을 고르는 화면입니다. 체크한 스킬만 계산에 들어가므로 실제 사용하는 구성에 맞춰 두세요. 표시 수치는 마스터리 미반영이며, 마스터리(피해·쿨감·대상 수 등)는 레벨에 따라 내부 계산에 자동 적용됩니다.</p></div>
-        </details>
-        <div class="card">
-          <div class="card-head">
-            <h2>스킬 선택</h2>
-            <div class="head-right">
-              <label class="ctl inline">직업
-                <select id="bp-job"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option></select>
-              </label>
-            </div>
-          </div>
-          <div class="preset-bar">
-            <span class="preset-label">스킬 프리셋</span>
-            <select id="bp-sel"></select>
-            <button id="bp-save" class="mini-btn" type="button">저장</button>
-            <button id="bp-new" class="mini-btn ghost" type="button">추가</button>
-            <button id="bp-rename" class="mini-btn ghost" type="button">이름변경</button>
-            <button id="bp-del" class="mini-btn ghost" type="button">삭제</button>
-          </div>
-          <div class="skill-views">
-            <button class="skill-view active" data-view="deal" type="button">딜 스킬</button>
-            <button class="skill-view" data-view="buff" type="button">버프 스킬</button>
-          </div>
-          <div id="deal-list">불러오는 중…</div>
-          <div id="buff-list" hidden>불러오는 중…</div>
-          <p class="status">체크한 스킬·버프가 예상 데미지·추천·평가에 반영됩니다. PC는 <b>ⓘ에 마우스를 올리면</b>(모바일은 ⓘ를 탭) 상세가 보여요.<br>
-            딜과 버프를 함께 가진 스킬(<b>딜+버프</b> 표시)은 한쪽에서 끄면 다른 쪽에서도 함께 꺼집니다.<br>
-            표시 수치는 <b>마스터리 미반영</b>이에요. 마스터리(피해·쿨감·대상수 등)는 <b>레벨에 따라 내부 계산에 자동 적용</b>됩니다.</p>
-        </div>
-      </div>
+      <!-- 스킬은 빌드(sub-build) 오른쪽 열로 통합됨 -->
 
       <!-- 동료 -->
       <div id="sub-ally" class="subpanel" hidden>
@@ -231,14 +225,15 @@
           <div class="about-body"><p>메인 동료의 종류·등급·레벨·계승 비율을 입력하는 화면입니다. 서브 동료와 장착 효과는 이미 스탯 입력에 포함되므로 메인 동료만 넣으면 됩니다. 입력값은 예상 데미지의 동료 소환 기여도 계산에 쓰입니다.</p></div>
         </details>
         <div class="card">
-          <div class="card-head"><h2>동료 (메인)</h2></div>
-          <div class="preset-bar">
-            <span class="preset-label">동료 프리셋</span>
-            <select id="ap-sel"></select>
-            <button id="ap-save" class="mini-btn" type="button">저장</button>
-            <button id="ap-new" class="mini-btn ghost" type="button">추가</button>
-            <button id="ap-rename" class="mini-btn ghost" type="button">이름변경</button>
-            <button id="ap-del" class="mini-btn ghost" type="button">삭제</button>
+          <div class="card-head">
+            <h2>동료 (메인)</h2>
+            <div class="preset-ctrls">
+              <select id="ap-sel"></select>
+              <button id="ap-save" class="mini-btn" type="button">저장</button>
+              <button id="ap-new" class="mini-btn ghost" type="button">추가</button>
+              <button id="ap-rename" class="mini-btn ghost" type="button">이름변경</button>
+              <button id="ap-del" class="mini-btn ghost" type="button">삭제</button>
+            </div>
           </div>
           <div id="ally-body">불러오는 중…</div>
           <p class="status">서브 동료·장착 효과는 이미 스탯 입력에 포함돼서, <b>메인 동료</b>만 입력해요. 저장하면 (캐릭터 레벨·동료 레벨·계승 비율)이 데이터로 수집됩니다(공격력 계승 공식 자동화 전 임시).</p>
@@ -252,14 +247,15 @@
           <div class="about-body"><p>보유 유물의 각성도를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위쪽 장착에서 고른 유물만 예상 데미지에 반영됩니다. 뱃지로 계산 방식이 구분됩니다 — 딜 반영(조건/트리거 유물), 선반영·컨텐츠 전용·생존(딜 기여 0, 스탯 프리셋에 이미 포함).</p></div>
         </details>
         <div class="card">
-          <div class="card-head"><h2>유물</h2></div>
-          <div class="preset-bar">
-            <span class="preset-label">유물 프리셋</span>
-            <select id="rp-sel"></select>
-            <button id="rp-save" class="mini-btn" type="button">저장</button>
-            <button id="rp-new" class="mini-btn ghost" type="button">추가</button>
-            <button id="rp-rename" class="mini-btn ghost" type="button">이름변경</button>
-            <button id="rp-del" class="mini-btn ghost" type="button">삭제</button>
+          <div class="card-head">
+            <h2>유물</h2>
+            <div class="preset-ctrls">
+              <select id="rp-sel"></select>
+              <button id="rp-save" class="mini-btn" type="button">저장</button>
+              <button id="rp-new" class="mini-btn ghost" type="button">추가</button>
+              <button id="rp-rename" class="mini-btn ghost" type="button">이름변경</button>
+              <button id="rp-del" class="mini-btn ghost" type="button">삭제</button>
+            </div>
           </div>
           <div class="relic-layout">
             <div class="relic-equip">

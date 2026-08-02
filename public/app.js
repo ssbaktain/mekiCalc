@@ -215,20 +215,31 @@ function fmtScore(v) {
 
 function collectStats() {
   const stats = {};
-  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
+  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {   // 헤더 레벨 + 폼 필드
     stats[input.dataset.statId] = statValueOf(input);   // 표시(버림)값이 아닌 계산용 풀값 우선
   }
-  stats.JOB = parseInt($("job-sel").value, 10) || 0;   // 직업은 별도 선택기에서
+  stats.JOB = currentJob();   // 직업 단일 소스(job-sel = myBuffJob)
   return stats;
 }
 
-// 계산에 보낼 버프 선택. null이면 서버가 전부 적용(현행/하위호환), []는 전부 끔, [...]는 그것만.
-// 버프 프리셋의 직업이 현재 캐릭터(스탯) 직업과 다르면 폴백(null=전부 적용) — 엉뚱한 직업 버프로 0 적용되는 사고 방지.
-function activeBuffs() {
-  const job = parseInt($("job-sel").value, 10) || 0;
-  if (job !== myBuffJob) return null;
-  return myBuffs;   // null 또는 배열
+// ── 직업 단일 소스 ─────────────────────────────────────────────────────────
+// 계산 JOB(job-sel)·버프 작업상태(myBuffJob)를 항상 같은 값으로 동기화한다.
+// 어느 화면에서 직업을 바꿔도 계산 JOB·스킬 목록·버프 선택이 함께 따라간다(직업 desync 버그 근본 해결).
+function currentJob() { return parseInt($("job-sel").value, 10) || 0; }
+// job으로 두 곳을 맞춘다. 직업이 실제로 바뀌면 myBuffs를 초기화(전부 체크)해 "버프는 항상 현재 직업용" 불변식 유지.
+// 반환: 직업이 바뀌었는가(호출부가 스킬 목록 재렌더 여부 판단).
+function setJob(job) {
+  job = parseInt(job, 10) || 0;
+  const changed = job !== myBuffJob;
+  $("job-sel").value = String(job);
+  myBuffJob = job;
+  if (changed) myBuffs = null;   // 직업 변경 → 스킬 선택 초기화(불변식). 일관 상태(동일 직업)면 no-op이라 선택 보존.
+  return changed;
 }
+
+// 계산에 보낼 버프 선택. null이면 서버가 전부 적용(현행/하위호환), []는 전부 끔, [...]는 그것만.
+// myBuffs는 setJob 불변식으로 항상 현재 직업용 → 옛 job≠myBuffJob 폴백 가드 불필요.
+function activeBuffs() { return myBuffs; }
 
 async function postJson(url, payload) {
   const res = await fetch(url, {
@@ -278,11 +289,11 @@ function canLeaveStat() {
 }
 
 // 현재 보고 있는 편집기(스탯/큐브)의 미저장 이탈 가드.
-let currentSub = "stat";
+let currentSub = "build";
 let cubeNeedsRender = false;   // 큐브 데이터는 바뀌었지만 아직 화면 렌더 안 함(지연 로딩)
 function canLeaveEditors() {
   if ($("panel-presets").hidden) return true;
-  if (currentSub === "stat") return canLeaveStat();
+  if (currentSub === "build") return canLeaveStat();   // 빌드=스탯+스킬(statDirty가 둘 다 커버)
   if (currentSub === "cube") return canLeaveCube();
   return true;
 }
@@ -302,10 +313,9 @@ async function getSlots(part, grade) {
 // 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
-  { label: "딜 구성", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입. 1타 평균딜 + 평타/스킬/동료 딜 비중
+  { label: "데미지 분석", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입. 평타/DPS + 평타/스킬/동료 딜 비중 + 동료/유물 기여
   { label: "프리셋", items: [
-    { label: "스탯", panel: "presets", sub: "stat", path: "/presets/stat" },
-    { label: "스킬", panel: "presets", sub: "buff", path: "/presets/skill" },
+    { label: "캐릭터", panel: "presets", sub: "build", path: "/presets/build" },
     { label: "동료", panel: "presets", sub: "ally", path: "/presets/ally" },
     { label: "유물", panel: "presets", sub: "relic", path: "/presets/relic" },
     { label: "큐브", panel: "presets", sub: "cube", path: "/presets/cube" },
@@ -347,6 +357,10 @@ function allLeaves() {
   return out;
 }
 function leafByPath(path) { return allLeaves().find((l) => l.path === path) || null; }
+
+// 구 경로 호환: 스탯/스킬 프리셋이 '캐릭터'(빌드)로 통합됨 → 옛 북마크·링크를 새 경로로 정규화.
+const PATH_REDIRECTS = { "/presets/stat": "/presets/build", "/presets/skill": "/presets/build" };
+function normPath(path) { return PATH_REDIRECTS[path] || path; }
 
 // 라우트별 문서 제목·설명(크롤러가 렌더 시 반영, 유저 탭 제목도 갱신).
 const ROUTE_META = {
@@ -396,7 +410,7 @@ function applyLeaf(leaf, item, push) {
 }
 // 주소(path)로 이동. push=false는 초기 진입·뒤로가기(주소 안 바꿈).
 function navigate(path, push) {
-  const leaf = leafByPath(path) || MENU[0];
+  const leaf = leafByPath(normPath(path)) || MENU[0];   // 구 경로면 정규화(캐릭터 탭으로)
   applyLeaf(leaf, null, push);
 }
 
@@ -442,14 +456,16 @@ function selectSub(name) {
   document.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
-  if (name === "buff") renderBuffs();   // 버프 목록은 현재 스탯 기준 계산이라 탭 열 때마다 최신화
+  if (name === "build" && !booting) renderBuffs();   // 빌드 화면 스킬 목록 최신화(초기 pre-set 땐 미룸 — init 끝 refreshSkillData가 처리)
   if (name === "ally") renderAlly();
   if (name === "relic") renderRelic();
 }
 for (const b of document.querySelectorAll(".subtab")) {
   b.addEventListener("click", () => {
     if (b.dataset.sub !== currentSub && !canLeaveEditors()) return;   // 다른 서브탭으로 갈 때 미저장 가드
-    selectSub(b.dataset.sub);
+    // 서브탭도 진짜 경로가 있으므로 navigate로 태워 URL·상단 메뉴 활성까지 동기화(뒤로가기/북마크 정합).
+    const leaf = allLeaves().find((l) => l.panel === "presets" && l.sub === b.dataset.sub);
+    if (leaf) navigate(leaf.path, true); else selectSub(b.dataset.sub);
   });
 }
 
@@ -506,8 +522,8 @@ function buildMenu() {
   bar.appendChild(right);
   bar.addEventListener("mouseleave", closeMenus);   // 메뉴바 벗어나면 드롭다운 닫기
   buildMobileMenu(itemEls);   // 모바일 햄버거 메뉴(좁은 화면용)
-  // 프리셋 서브탭은 미리 스탯으로 세팅.
-  selectSub("stat");
+  // 프리셋 서브탭은 미리 빌드로 세팅.
+  selectSub("build");
   // 활성 메뉴는 '현재 경로' 기준으로 처음부터 설정. 무조건 첫 항목(예상 데미지)을 활성화하면
   // 이후 라우팅이 공지사항 등으로 바꿔 '예상 데미지 → 공지사항' 메뉴 깜빡임이 생김(딥링크 진입).
   const menuLeaf = leafByPath(location.pathname) || (location.pathname.startsWith("/notices") ? leafByPath("/notices") : null);
@@ -621,7 +637,12 @@ if (brandEl) brandEl.addEventListener("click", goHome);
 })();
 
 // 직업 변경: '딜 미환산' 표시 갱신 + 예상 데미지 재계산 + 미저장 표시.
-$("job-sel").addEventListener("change", () => { statDirty = true; deriveStatProp(); refreshQual(); calcDamage(); });   // 직업 바뀌면 방어력→주스탯 계수도 바뀌어 스탯 비례 재파생
+$("job-sel").addEventListener("change", () => {   // 직업 바뀌면 방어력→주스탯 계수 재파생 + 스킬 직업/목록도 동기
+  setJob($("job-sel").value); buffDirty = true;
+  statDirty = true; deriveStatProp(); refreshQual();
+  renderBuffs();   // 스킬 목록도 새 직업으로(숨겨진 스킬 화면도 미리 갱신)
+  calcDamage();
+});
 
 
 // ──────────────────── 스탯 입력 폼 ────────────────────
@@ -636,11 +657,16 @@ async function loadStats(pre) {
 
 function renderForm() {
   const groups = new Map();
+  let levelDef = null;
   for (const d of statDefs) {
     if (d.id === "JOB") continue;   // 직업은 상단 선택기에서
+    if (d.id === "LEVEL") { levelDef = d; continue; }   // 레벨은 상단 공용 헤더로(직업·대상 옆)
     if (!groups.has(d.group)) groups.set(d.group, []);
     groups.get(d.group).push(d);
   }
+  const slot = $("build-level-slot");   // 레벨: 헤더 슬롯. data-stat-id 동일 → 아래 핸들러/collectStats가 함께 처리
+  if (slot) slot.innerHTML = levelDef
+    ? `<label class="ctl inline">레벨<input type="number" id="f_${levelDef.id}" data-stat-id="${levelDef.id}" value="0" step="any" /></label>` : "";
   const form = $("stat-form");
   form.innerHTML = "";
   for (const [group, defs] of groups) {
@@ -654,17 +680,18 @@ function renderForm() {
       field.className = "field";
       field.dataset.statId = d.id;
       field.innerHTML =
-        `<label for="f_${d.id}">${d.name}</label>` +
+        `<div class="field-head"><label for="f_${d.id}">${d.name}</label>` +
+        `<span class="dmgx-badge" hidden>딜 미환산</span></div>` +
         `<div class="input-wrap"><input type="number" id="f_${d.id}" data-stat-id="${d.id}" value="0" step="any" />` +
-        `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>` +
-        `<span class="dmgx-badge" hidden>딜 미환산</span>`;
+        `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>`;
       grid.appendChild(field);
     }
     box.appendChild(grid);
     form.appendChild(box);
   }
   // 스탯 값 변경 시: (파생 트리거면)스탯 비례 데미지 즉시 반영 + 표기 버림 + 미저장 표시 + 자동 재계산
-  for (const input of form.querySelectorAll("input[data-stat-id]")) {
+  // #sub-build 범위 = 헤더 레벨 + 폼 필드 모두 커버(레벨을 헤더로 옮겼어도 동일 핸들러 적용)
+  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {
     const id = input.dataset.statId;
     input.addEventListener("input", () => { delete input.dataset.full; });   // 유저가 직접 편집 → 보존한 풀값 폐기, 표기값 신뢰
     if (STAT_PROP_TRIGGERS.has(id)) input.addEventListener("input", deriveStatProp);   // 입력 즉시 갱신
@@ -828,7 +855,8 @@ function currentTargetSel() {
   return targetOfActivePreset() || undefined;
 }
 // 스탯 프리셋 저장 페이로드(스탯 + 대상). 모든 저장 지점에서 사용.
-function statPresetPayload() { return { stats: collectStats(), target: currentTargetSel() }; }
+// 빌드 프리셋 = 스탯 + 대상 + 직업(stats.JOB) + 스킬(buffs/hitInterval). 스탯·스킬을 한 단위로 저장(직업 단일).
+function statPresetPayload() { return { stats: collectStats(), target: currentTargetSel(), buffs: myBuffs, hitInterval: myHitInterval }; }
 // 큐브/계산 API에 보낼 대상(챕터/스테이지). 보스/일반·방어력은 서버가 이걸로 결정.
 function targetForApi() {
   const t = currentTargetSel();
@@ -954,14 +982,18 @@ function syncDealToggles(mob, canSummon, useSummon) {
   });
 }
 
-// 헤드라인: 평타 한줄 평균딜 + DPS(숫자로 나오는 유일한 절대값). 몹/시뮬 문구는 위 토글로 자명해 생략.
-function renderDealHeadline(state) {
+// 헤드라인 3박스: 평타 한줄 평균딜 · DPS(토글 상태 순간) · DPS(n초 측정, 소환 가동률까지 반영한 전투 평균 실측).
+// 세 번째는 det.dps.total(전투 70/90초 평균)이라 미소환/소환 토글과 무관한 실전값. n=windowSeconds(보스70·사냥90).
+function renderDealHeadline(state, mob, det) {
   const box = $("ds-headline"); if (!box) return;
   const tile = (label, v) =>
     `<div class="ds-hl-tile"><div class="ds-hl-label">${label}</div>` +
     `<div class="ds-hl-val">${v == null ? "—" : koreanUnit(v)}</div>` +
     `<div class="ds-hl-sub">${v == null ? "" : fmt(Math.round(v))}</div></div>`;
-  box.innerHTML = tile("평타 한줄 평균딜", state.avg) + tile("DPS", state.dps);
+  const dps = det && det.dps ? det.dps : null;
+  const secs = dps && dps.windowSeconds ? Math.round(dps.windowSeconds) : (mob === "boss" ? 70 : 90);
+  box.innerHTML = tile("평타 한줄 평균딜", state.avg) + tile("DPS", state.dps)
+    + tile(`DPS(${secs}초 측정)`, dps ? dps.total : null);
 }
 
 // 딜 비중: 평타 + 각 스킬 + 동료가 도넛에 개별 조각으로. 범례에선 스킬을 '스킬 N개' 그룹으로 묶어 펼친다.
@@ -975,9 +1007,38 @@ function renderDealShares(state, mob, det) {
   if (basic > 0) slices.push({ name: "평타", dps: basic, color: PIE_COLORS[0], kind: "basic" });
   skillItems.forEach((s, i) => { if ((s.dps || 0) > 0) slices.push({ name: s.name, dps: s.dps, color: PIE_COLORS[(i + 1) % PIE_COLORS.length], kind: "skill" }); });
   if (comp > 0) slices.push({ name: activeCompanionLabel(), dps: comp, color: COMPANION_COLOR, kind: "companion" });
-  renderDealDonut(slices, total);
+  // 평타 외 조각(스킬/동료)이 하나도 없으면 = 스킬 프리셋이 덜 입력됨 → 도넛 블러 + 스킬 입력 CTA.
+  if (total > 0 && !slices.some((x) => x.kind !== "basic")) {
+    lockDonut("체크된 딜 스킬이 없어요.<br>스킬을 입력하면 스킬별 딜 비중을 볼 수 있어요.", "스킬 입력하러 가기", "/presets/build");
+  } else {
+    renderDealDonut(slices, total);
+  }
   renderCompanionSummary(det);
   renderArtifactSummary(det);
+  if ($("ds-share-sub")) $("ds-share-sub").textContent = "";
+}
+
+// ── 미입력/덜 입력된 프리셋 안내(블러 스켈레톤 + 입력 화면 CTA) ──
+// route-link라 기존 클릭 핸들러가 해당 프리셋 입력 탭으로 이동시킨다. msg는 정적 문자열(HTML 허용, <br> 등).
+function lockedBox(skeleton, msg, cta, path) {
+  return `<div class="locked-wrap"><div class="locked-blur" aria-hidden="true">${skeleton}</div>` +
+    `<div class="locked-cta"><p class="locked-msg">${msg}</p>` +
+    `<a class="route-link locked-btn" href="${path}">${cta} →</a></div></div>`;
+}
+function skelBars(n) {
+  const w = [80, 58, 42, 30];
+  let s = "";
+  for (let i = 0; i < n; i++) s += `<div class="cmp-bar-row"><span class="cmp-bar-name">···</span>` +
+    `<div class="bar-track"><div class="bar-fill" style="width:${w[i % w.length]}%"></div></div><span class="bar-val">··</span></div>`;
+  return s;
+}
+function skelDonut() {
+  return `<svg viewBox="0 0 180 180" class="donut-svg" aria-hidden="true"><circle cx="90" cy="90" r="67" fill="none" stroke="var(--muted)" stroke-width="34"/></svg>`;
+}
+function lockDonut(msg, cta, path) {
+  const chart = $("donut-chart"), legend = $("donut-legend");
+  if (chart) chart.innerHTML = lockedBox(skelDonut(), msg, cta, path);
+  if (legend) legend.innerHTML = "";
   if ($("ds-share-sub")) $("ds-share-sub").textContent = "";
 }
 
@@ -989,7 +1050,7 @@ function renderArtifactSummary(det) {
   const rs = det && det.relicShares;   // [{name, dps}] — 백엔드에서 채워지면 표시
   if (!relics || !relics.length) {
     if (sub) sub.textContent = "";
-    box.innerHTML = `<p class="ds-comp-empty">유물을 장착하면 각 유물의 딜 기여가 여기에 표시됩니다.</p>`;
+    box.innerHTML = lockedBox(skelBars(4), "장착한 유물이 없어요.<br>유물을 입력하면 각 유물의 딜 기여를 볼 수 있어요.", "유물 입력하러 가기", "/presets/relic");
     return;
   }
   if (!rs || !rs.length) {   // 유물은 있으나 기여 데이터 미구현 상태(백엔드 준비 예정)
@@ -1077,7 +1138,7 @@ function renderCompanionSummary(det) {
   const solo = det.solo, summon = det.summon;
   if (!summon || !solo) {
     if (sub) sub.textContent = "";
-    box.innerHTML = `<p class="ds-comp-empty">동료 프리셋을 설정하면 소환 시 딜 기여를 여기서 볼 수 있어요.</p>`;
+    box.innerHTML = lockedBox(skelBars(2), "메인 동료가 없어요.<br>동료를 입력하면 소환 시 딜 기여를 볼 수 있어요.", "동료 입력하러 가기", "/presets/ally");
     return;
   }
   const secs = (det.dps && det.dps.windowSeconds) ? Math.round(det.dps.windowSeconds) : 90;
@@ -1397,7 +1458,7 @@ $("mc-clear").addEventListener("click", () => {
 // 스탯 초기화: 입력값을 모두 0으로(프리셋은 그대로, 저장 전까진 디스크 미반영).
 $("stat-reset").addEventListener("click", () => {
   if (!confirm("스탯 입력값을 모두 0으로 초기화할까요?")) return;
-  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) { input.value = "0"; delete input.dataset.full; }
+  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) { input.value = "0"; delete input.dataset.full; }   // 헤더 레벨 포함
   statDirty = true;
   calcDamage();
 });
@@ -2215,7 +2276,7 @@ $("cmp-apply").addEventListener("click", runApply);
 // 스탯 입력 폼을 주어진 값으로 채운다(없는 스탯은 0).
 // double 덧뺄셈에서 생기는 부동소수점 노이즈(예: 321.90000000000003) 제거.
 function fillStats(stats) {
-  for (const input of $("stat-form").querySelectorAll("input[data-stat-id]")) {
+  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {   // 헤더 레벨 + 폼 필드
     const def = statDefById(input.dataset.statId);
     const v = stats[input.dataset.statId];
     setStatValue(input, v == null ? null : v, def ? def.unit : "FLAT");   // 화면=표기(버림), 계산 원본=풀값 보존
@@ -2229,7 +2290,7 @@ async function loadMyData(overwriteCube, pre) {
     const data = pre || await (await fetch("/api/mydata")).json();
     if (data.stats && Object.keys(data.stats).length) {
       fillStats(data.stats);
-      if (data.stats.JOB != null) $("job-sel").value = String(Math.round(data.stats.JOB));
+      if (data.stats.JOB != null) setJob(Math.round(data.stats.JOB));   // 직업 단일 동기(myBuffJob 포함)
     }
     if (overwriteCube || !localStorage.getItem(CONV_KEY)) {
       myConv = data.conversions || {};
@@ -2326,21 +2387,36 @@ function fillPresetSel(sel, store) {
   sel.value = store.active;
 }
 
-// 스탯 프리셋. skipRecompute=true면 폼만 채우고 재계산은 건너뜀(초기화 중 중복 호출 방지).
+// 빌드 프리셋 적용(스탯+직업+대상+스킬). skipRecompute=true면 폼만 채우고 재계산 건너뜀(초기화 중 중복 방지).
 function spApply(name, skipRecompute) {
   const p = statPresets.presets[name];
   if (!p) return;
   fillStats(p.stats);
-  $("job-sel").value = String(Math.round((p.stats && p.stats.JOB) || 0));
+  setJob(Math.round((p.stats && p.stats.JOB) || 0));   // 직업 단일 동기(스킬 직업/myBuffJob 포함)
+  if ("buffs" in p) myBuffs = Array.isArray(p.buffs) ? p.buffs.slice() : null;   // 빌드에 저장된 스킬 선택
+  myHitInterval = p.hitInterval || 0;
   syncTargetSelector();   // 대상(챕터/스테이지)도 프리셋 값으로 — 직업처럼 함께 전환
-  statDirty = false;   // 프리셋 적용 = 저장된 상태
+  statDirty = false; buffDirty = false;   // 프리셋 적용 = 저장된 상태
   if (skipRecompute) return;
+  renderBuffs();   // 스킬 목록/선택 반영(직업·버프 선택 바뀔 수 있음)
   refreshQual();
   recalcActivePanel();   // 프리셋 전환 시 보이는 패널까지 즉시 재계산(대상 반영 딜 포함)
 }
+// 구 buffPresets(스킬 프리셋)를 빌드(statPresets)로 1회 병합: buffs 필드 없는 프리셋에 동일이름 우선, 없으면 활성 스킬 프리셋 값.
+function migrateBuildBuffs() {
+  if (!statPresets || !statPresets.presets) return;
+  const bp = buffPresets && buffPresets.presets;
+  const active = bp && buffPresets.active ? bp[buffPresets.active] : null;
+  for (const [name, p] of Object.entries(statPresets.presets)) {
+    if ("buffs" in p) continue;
+    const src = (bp && bp[name]) || active || {};
+    p.buffs = Array.isArray(src.buffs) ? src.buffs.slice() : null;
+    p.hitInterval = src.hitInterval || 0;
+  }
+}
 function initStatPresets() {
   if (!statPresets) statPresets = { active: "기본", presets: { "기본": statPresetPayload() } };
-  else spApply(statPresets.active, booting);   // 초기화 중엔 재계산 미룸(init 끝에서 1번)
+  else { migrateBuildBuffs(); spApply(statPresets.active, booting); }   // 스킬 병합 후 적용(초기화 중엔 재계산 미룸)
   saveJSON(STATP_KEY, statPresets);
   fillPresetSel($("sp-sel"), statPresets);
   statDirty = false;
@@ -2349,7 +2425,7 @@ $("sp-sel").addEventListener("change", () => {
   if (!canLeaveStat()) { $("sp-sel").value = statPresets.active; return; }   // 미저장이면 취소 시 되돌림
   statPresets.active = $("sp-sel").value; saveJSON(STATP_KEY, statPresets); spApply(statPresets.active);
 });
-$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = statPresetPayload(); saveJSON(STATP_KEY, statPresets); statDirty = false; calcDamage(); toast(`'${statPresets.active}' 스탯 프리셋 저장됨`); });
+$("sp-save").addEventListener("click", () => { statPresets.presets[statPresets.active] = statPresetPayload(); saveJSON(STATP_KEY, statPresets); statDirty = false; buffDirty = false; calcDamage(); toast(`'${statPresets.active}' 캐릭터 프리셋 저장됨`); });
 $("sp-new").addEventListener("click", () => {
   const name = (prompt("새 스탯 프리셋 이름") || "").trim();
   if (!name || statPresets.presets[name]) return;
@@ -2427,31 +2503,7 @@ $("cp-rename").addEventListener("click", () => {
 });
 
 // ──────────────────── 버프 선택(편집기) ────────────────────
-
-// 활성 버프 프리셋 → 작업 상태(myBuffJob/myBuffs) 적재 후 화면·데미지 갱신.
-function bpApply(name) {
-  const p = buffPresets.presets[name];
-  if (!p) return;
-  myBuffJob = p.job || 0;
-  myBuffs = Array.isArray(p.buffs) ? p.buffs.slice() : null;
-  myHitInterval = p.hitInterval || 0;
-  buffDirty = false;
-  $("bp-job").value = String(myBuffJob);
-  if ($("hit-interval")) $("hit-interval").value = myHitInterval;
-  if (currentSub === "buff") renderBuffs();
-  recalcActivePanel();   // 스킬 프리셋 바뀌면 보이는 계산까지 즉시 갱신
-}
-
-function initBuffPresets() {
-  if (!buffPresets) {
-    const job = parseInt($("job-sel").value, 10) || 0;   // 현재 캐릭터 직업을 기본 버프 직업으로
-    buffPresets = { active: "기본", presets: { "기본": { job, buffs: null } } };
-    myBuffJob = job; myBuffs = null;
-  }
-  saveJSON(BUFFP_KEY, buffPresets);
-  fillPresetSel($("bp-sel"), buffPresets);
-  buffDirty = false;
-}
+// (구 스킬 프리셋 바 bpApply/initBuffPresets는 캐릭터 프리셋 통합으로 제거됨. 직업은 setJob 단일 소스, 스킬 선택은 myBuffs.)
 
 // 스킬 탭 데이터 캐시(딜 스킬 + 버프). 직전 응답을 localStorage에도 보관 → 도메인(터널 지연)에서도 즉시 표시.
 let skillData = loadJSON(CACHE_SKILLS, null);
@@ -2462,8 +2514,6 @@ function jobHasSkills(job) { return job === 1 || job === 2 || job === 3; }
 
 // 현재 스탯 기준 스킬/버프 목록을 그린다. 캐시/메모리에 있으면 즉시 렌더(불러오는 중 안 띄움), 항상 백그라운드로 최신화.
 async function renderBuffs() {
-  if (!buffPresets) initBuffPresets();
-  $("bp-job").value = String(myBuffJob);
   if ($("hit-interval")) $("hit-interval").value = myHitInterval;
   syncSkillViewButtons();
   if (!jobHasSkills(myBuffJob)) {   // DPS 모델 있는 직업만(나이트로드·다크나이트). 공용 등은 준비 중.
@@ -2484,9 +2534,9 @@ async function refreshSkillData() {
     const stats = collectStats(); stats.JOB = myBuffJob;
     const fresh = await postJson("/api/buffs", { stats });
     skillData = fresh; saveJSON(CACHE_SKILLS, fresh);
-    if (currentSub === "buff") renderActiveSkillView();
+    if (currentSub === "build") renderActiveSkillView();
   } catch (e) {
-    if (!skillData && currentSub === "buff") {
+    if (!skillData && currentSub === "build") {
       const a = skillView === "deal" ? $("deal-list") : $("buff-list");
       a.innerHTML = '<p class="status">오류: ' + e.message + '</p>';
     }
@@ -2599,7 +2649,7 @@ function toggleSkill(b, checked) {
   if (myBuffs == null) myBuffs = defaultCheckedIds();
   if (checked) { if (!myBuffs.includes(b.id)) myBuffs.push(b.id); }
   else myBuffs = myBuffs.filter((x) => x !== b.id);
-  buffDirty = true;
+  buffDirty = true; statDirty = true;   // 스킬도 빌드 프리셋의 일부 → 빌드 dirty
   calcDamage();
   if (b.locked && checked) toast("‘" + b.name + "’은(는) 아직 배우지 않은 스킬이라 과대평가될 수 있어요.");
   else if (!b.locked && !checked && (b.group === "passive" || b.group === "always"))
@@ -2616,41 +2666,19 @@ for (const btn of document.querySelectorAll(".skill-view")) {
   });
 }
 
-$("bp-sel").addEventListener("change", () => {
-  if (buffDirty && !confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?")) { $("bp-sel").value = buffPresets.active; return; }
-  buffPresets.active = $("bp-sel").value; saveJSON(BUFFP_KEY, buffPresets); bpApply(buffPresets.active);
-});
-$("bp-save").addEventListener("click", () => {
-  buffPresets.presets[buffPresets.active] = { job: myBuffJob, buffs: myBuffs, hitInterval: myHitInterval };
-  saveJSON(BUFFP_KEY, buffPresets); buffDirty = false;
-  toast(`'${buffPresets.active}' 스킬 프리셋 저장됨`);
-});
-$("bp-new").addEventListener("click", () => {
-  const name = (prompt("새 스킬 프리셋 이름") || "").trim();
-  if (!name || buffPresets.presets[name]) return;
-  buffPresets.presets[name] = { job: myBuffJob, buffs: myBuffs, hitInterval: myHitInterval };
-  buffPresets.active = name; saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
-  buffDirty = false;
-});
-$("bp-del").addEventListener("click", () => {
-  const names = Object.keys(buffPresets.presets);
-  if (names.length <= 1) return;
-  delete buffPresets.presets[buffPresets.active];
-  buffPresets.active = Object.keys(buffPresets.presets)[0];
-  saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets); bpApply(buffPresets.active);
-});
-// 피격 주기 입력은 제거됨(항상 '안 맞기'=최고 효율 가정 → myHitInterval=0). 반격 계산코드는 백엔드에 휴면 상태로 둠.
-$("bp-rename").addEventListener("click", () => {
-  if (renamePreset(buffPresets) == null) return;
-  saveJSON(BUFFP_KEY, buffPresets); fillPresetSel($("bp-sel"), buffPresets);
-  toast("스킬 프리셋 이름을 변경했습니다.");
-});
-$("bp-job").addEventListener("change", () => {
-  myBuffJob = parseInt($("bp-job").value, 10) || 0;
-  myBuffs = null;   // 직업 바뀌면 선택 초기화(전부 체크)
-  buffDirty = true;
-  renderBuffs(); calcDamage();
-});
+// 스킬 프리셋 바(bp-*)는 빌드 프리셋(sp-*)으로 통합돼 제거됨. 직업은 상단 공용 select(job-sel) 하나.
+// 피격 주기 입력도 제거(항상 '안 맞기'=최고 효율 가정 → myHitInterval=0). 반격 계산코드는 백엔드에 휴면.
+
+// 빌드 화면: 스탯/스킬 뷰 토글(한 번에 하나만 표시 → 항상 짧게)
+for (const btn of document.querySelectorAll(".bv-tab")) {
+  btn.addEventListener("click", () => {
+    const v = btn.dataset.bv;
+    document.querySelectorAll(".bv-tab").forEach((b) => b.classList.toggle("active", b === btn));
+    if ($("bv-stat")) $("bv-stat").hidden = (v !== "stat");
+    if ($("bv-skill")) $("bv-skill").hidden = (v !== "skill");
+    if (v === "skill") renderBuffs();   // 스킬 뷰 열 때 현재 직업 스킬 목록 최신화
+  });
+}
 
 // ──────────────────── 동료(메인) ────────────────────
 // 서브 동료·장착효과는 이미 스탯에 포함 → 메인 동료(동료/등급/레벨/공격력 계승비율)만 입력. 계산 연동은 동료 데이터 오면.
@@ -2936,10 +2964,8 @@ $("rp-rename").addEventListener("click", () => {
 // 어디서든 우하단 ⚡ → 작은 패널에서 프리셋을 바로 전환. 메인 셀렉트와 동일 로직 + 동기화.
 // 프리셋 종류를 추가할 땐 이 목록에만 한 줄 추가하면 플로팅 패널에 자동 반영됨(순서도 이 배열 순서).
 const QP_TYPES = [
-  { key: "sp", label: "스탯", main: "sp-sel", store: () => statPresets, saveKey: STATP_KEY,
+  { key: "sp", label: "캐릭터", main: "sp-sel", store: () => statPresets, saveKey: STATP_KEY,
     canLeave: () => canLeaveStat(), apply: (n) => spApply(n) },
-  { key: "bp", label: "스킬", main: "bp-sel", store: () => buffPresets, saveKey: BUFFP_KEY,
-    canLeave: () => !buffDirty || confirm("저장하지 않은 스킬 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => bpApply(n) },
   { key: "ap", label: "동료", main: "ap-sel", store: () => allyPresets, saveKey: ALLYP_KEY,
     canLeave: () => !allyDirty || confirm("저장하지 않은 동료 변경이 있습니다. 버리고 전환할까요?"), apply: (n) => apApply(n) },
   { key: "cp", label: "큐브", main: "cp-sel", store: () => cubePresets, saveKey: CUBEP_KEY,
@@ -3062,17 +3088,9 @@ async function applyBundleObj(b, merge) {
     if (b.conversions) { myConv = b.conversions; saveJSON(CONV_KEY, myConv); }
     if (b.ranges) { myRanges = b.ranges; saveJSON(RANGE_KEY, myRanges); }
   }
-  fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);
+  migrateBuildBuffs();   // 구 형식(스탯+스킬 분리) 번들이면 스킬을 빌드로 병합
+  fillPresetSel($("sp-sel"), statPresets); spApply(statPresets.active);   // 스킬(buffs)도 함께 적용됨
   fillPresetSel($("cp-sel"), cubePresets); await cpApply(cubePresets.active);
-  // 버프 프리셋: 활성 프리셋을 작업 상태로 적재(직업·선택). 버프 탭이 보이면 다시 그림.
-  if (buffPresets && buffPresets.presets[buffPresets.active]) {
-    const bp = buffPresets.presets[buffPresets.active];
-    myBuffJob = bp.job || 0; myBuffs = Array.isArray(bp.buffs) ? bp.buffs.slice() : null; buffDirty = false;
-    myHitInterval = bp.hitInterval || 0;
-    fillPresetSel($("bp-sel"), buffPresets); $("bp-job").value = String(myBuffJob);
-    if ($("hit-interval")) $("hit-interval").value = myHitInterval;
-    if (currentSub === "buff") renderBuffs();
-  }
   if (allyPresets) { fillPresetSel($("ap-sel"), allyPresets); allyDirty = false; if (currentSub === "ally") renderAlly(); }
   if (relicPresets) { fillPresetSel($("rp-sel"), relicPresets); rpApply(relicPresets.active); }
   renderConvSettings(); renderRangeSettings(); refreshQual(); calcDamage();
@@ -3090,9 +3108,9 @@ $("export-btn").addEventListener("click", () => {
 });
 // ── 선택 불러오기: 백업을 파싱해 프리셋 목록을 체크박스로 보여주고, 고른 것만 병합 ──
 const IMPORT_SECTIONS = [
-  { key: "statPresets", label: "스탯" },
+  { key: "statPresets", label: "캐릭터" },
   { key: "cubePresets", label: "큐브" },
-  { key: "buffPresets", label: "스킬" },
+  { key: "buffPresets", label: "스킬(구)" },
   { key: "allyPresets", label: "동료" },
   { key: "relicPresets", label: "유물" },
 ];
@@ -3721,7 +3739,7 @@ function ntHl(s) {
   // 대상 패널을 첫 페인트부터 노출한다. notices는 자족적(독립 fetch)이라 즉시 렌더, 계산 패널은 컨테이너만 노출하고
   // 정식 렌더는 데이터 로드 후 하단 navigate가 맡는다(초기화 중 계산 렌더 호출 방지). '/notices/{id}'도 notices로.
   const bootPath = location.pathname;
-  const bootLeaf = leafByPath(bootPath) || (bootPath.startsWith("/notices") ? leafByPath("/notices") : null);
+  const bootLeaf = leafByPath(normPath(bootPath)) || (bootPath.startsWith("/notices") ? leafByPath("/notices") : null);
   const bootDeep = !!(bootLeaf && bootLeaf !== MENU[0]);
   if (bootDeep) {
     for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + bootLeaf.panel);
@@ -3777,9 +3795,8 @@ function ntHl(s) {
     await loadMyData(false, boot && boot.mydata);   // 시작 시 내 값 자동 채움(배포 땐 빈 값)
     renderConvSettings();        // 딜 환산 설정 목록
     renderRangeSettings();       // 추천 범위 설정 목록
-    initStatPresets();           // 스탯 프리셋(없으면 '기본' 생성, 있으면 활성 적용 — 재계산은 미룸)
+    initStatPresets();           // 빌드 프리셋(스탯+직업+대상+스킬; 없으면 '기본' 생성, 구 스킬 프리셋 병합)
     await initCubePresets();     // 큐브 프리셋
-    initBuffPresets();           // 버프 프리셋(없으면 현재 직업 기준 '기본' 생성)
     initAllyPresets();           // 동료 프리셋(메인 동료)
     initRelicPresets();          // 유물 프리셋
     // 미환산 표시 + 예상 데미지는 서로 독립 → 병렬로 1회씩만(초기화 중 중복 호출 제거)

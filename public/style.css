@@ -163,6 +163,33 @@ main {
 .field input:focus { outline: none; border-color: var(--accent); }
 .field .unit { color: var(--muted); font-size: 12px; margin-left: 6px; min-width: 18px; }
 
+/* ── 빌드 화면(스탯+스킬 통합, B안: 내부 토글) ── */
+/* 820px 폭 그대로. 직업·대상·빌드 프리셋 공용 헤더 아래 [스탯/스킬] 토글로 한 번에 하나만(항상 짧게). */
+.build-header { margin-bottom: 16px; }
+.build-header .card-head { margin-bottom: 0; }   /* 프리셋 바만 담는 카드 → 하단 여백 제거 */
+.bh-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+.bh-job select { font-weight: 700; }
+/* 스탯/스킬 뷰 토글(폭 넓게 2등분) */
+.build-viewtabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.build-viewtabs .bv-tab { padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 15px; font-weight: 700; cursor: pointer; }
+.build-viewtabs .bv-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* 헤더 레벨 입력(직업 옆) */
+#build-level-slot .ctl.inline input { width: 66px; padding: 6px 8px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; text-align: right; }
+/* 촘촘 스탯 폼: 소분류 없이 스탯창 순서 · 가로형 행(라벨 왼쪽 · 짧은 입력칸 오른쪽). 2열 고정(라벨 줄넘김 없이 여유) */
+#sub-build #stat-form .field-grid { grid-template-columns: 1fr 1fr; gap: 5px 28px; }
+@media (max-width: 560px) { #sub-build #stat-form .field-grid { grid-template-columns: 1fr; } }
+#sub-build #stat-form .field { flex-direction: row; align-items: center; min-height: 0; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+/* 라벨+배지를 한 덩어리(왼쪽)로 → 입력칸은 항상 오른쪽 같은 위치(배지 유무와 무관하게 열 정렬 유지) */
+#sub-build #stat-form .field .field-head { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
+#sub-build #stat-form .field label { font-size: 13px; line-height: 1.2; }
+#sub-build #stat-form .field .input-wrap { flex: 0 0 auto; }
+#sub-build #stat-form .field input { width: 84px; padding: 6px 8px; font-size: 13px; text-align: right; }
+#sub-build #stat-form .field .unit { min-width: 10px; margin-left: 4px; }
+#sub-build #stat-form .dmgx-badge { font-size: 10px; margin: 0; padding: 0 5px; }
+/* 소분류(그룹 헤더) 숨김 — 스탯창 순서 그대로 평평하게(스탯 전부 한 그룹이라 무의미) */
+#sub-build #stat-form .group-title { display: none; }
+#sub-build #stat-form .group { margin-bottom: 0; }
+
 /* 상단 메뉴바 */
 .menubar {
   display: flex; justify-content: space-between; align-items: stretch;
@@ -606,12 +633,12 @@ main {
 .sc-lock { margin-left: auto; font-size: 13px; }
 
 /* 프리셋 바 */
-.preset-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-.preset-label { font-size: 13px; color: var(--muted); }
-.preset-bar select {
+.preset-ctrls select {
   padding: 7px 10px; background: var(--card2); border: 1px solid var(--border);
   border-radius: 8px; color: var(--text); font-size: 14px; min-width: 120px;
 }
+/* 프리셋 컨트롤: 제목 첫 줄 오른쪽에 밀착(선택박스+저장/추가/이름변경/삭제 등). 모든 프리셋 탭 공통. */
+.preset-ctrls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* 계정 / 로그인 */
 .google-btn {
@@ -874,7 +901,7 @@ html.deep-route #panel-home { display: none !important; }
 .ds-seg-btn:not(.active):not(:disabled):hover { color: var(--text); background: var(--card2); }
 
 /* 헤드라인: 1타 평균딜 · DPS */
-.ds-headline { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.ds-headline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
 .ds-hl-tile { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; text-align: center; }
 .ds-hl-label { font-size: 13px; color: var(--muted); }
 .ds-hl-val { font-size: 30px; font-weight: 800; color: var(--accent); margin-top: 4px; font-variant-numeric: tabular-nums; word-break: break-all; }
@@ -899,6 +926,16 @@ html.deep-route #panel-home { display: none !important; }
 .ds-artifacts { display: flex; flex-direction: column; gap: 8px; }
 .ds-artifacts .cmp-bar-row { grid-template-columns: 96px 1fr auto; }
 .ds-artifacts .cmp-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 미입력/덜 입력된 프리셋 안내: 스켈레톤 블러 + 해당 입력 화면으로 가는 버튼 */
+.locked-wrap { position: relative; min-height: 120px; }
+.locked-blur { filter: blur(3px); opacity: .32; pointer-events: none; user-select: none; }
+.locked-blur .bar-fill { background: var(--muted); }
+.locked-cta { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 10px; }
+.locked-msg { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+.locked-btn { display: inline-block; padding: 9px 16px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.locked-btn:hover { filter: brightness(1.08); }
+
 @media (max-width: 560px) {
   .ds-headline { grid-template-columns: 1fr; }
   .ds-toggles { gap: 8px; }
