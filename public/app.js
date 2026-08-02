@@ -1087,6 +1087,8 @@ function renderDealDonut(slices, total) {
   const g = slices.filter((x) => x.dps > 0);
   if (!g.length || total <= 0) { chart.innerHTML = "<div class='donut-empty'>데이터 없음</div>"; if (legend) legend.innerHTML = ""; return; }
   const S = 180, cx = S / 2, cy = S / 2, R = 84, r = 50;
+  const top = g.reduce((m, s) => (s.dps > m.dps ? s : m), g[0]);   // 가운데 기본 표시 = 주력(최대) 조각
+  const shortName = (nm) => (nm && nm.length > 7) ? nm.slice(0, 6) + "…" : (nm || "");
   let a = 0, paths = "";
   g.forEach((s, i) => {
     const deg = s.dps / total * 360;
@@ -1095,10 +1097,11 @@ function renderDealDonut(slices, total) {
     paths += `<path d="${d}" fill="${s.color}" class="pie-seg" data-i="${i}"><title>${escapeHtml(s.name + " · " + num1s(s.dps / total * 100) + "% (" + koreanUnit(s.dps) + ")")}</title></path>`;
     a = a1;
   });
+  // 가운데: 호버한 조각의 이름+비중을 보여줌(안 하면 주력 조각). 정적 '종합 딜 100%'보다 정보량↑.
   chart.innerHTML =
     `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛"><g class="donut-ring">${paths}</g>` +
-    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 딜</text>` +
-    `<text x="${cx}" y="${cy + 14}" class="donut-center-val">100%</text></svg>`;
+    `<text x="${cx}" y="${cy - 6}" class="donut-center-top" id="donut-ctr-name">${escapeHtml(shortName(top.name))}</text>` +
+    `<text x="${cx}" y="${cy + 14}" class="donut-center-val" id="donut-ctr-val">${num1s(top.dps / total * 100)}%</text></svg>`;
   if (legend) {
     const lgRow = (i, dot, name, pct, val, cls) =>
       `<div class="${cls || "lg-row"}" data-i="${i}">${dot}<span class="lg-name">${name}</span>` +
@@ -1125,11 +1128,14 @@ function renderDealDonut(slices, total) {
     });
     legend.innerHTML = html;
   }
-  // 조각 ↔ 범례 하이라이트 연동(복구).
+  // 조각 ↔ 범례 하이라이트 연동 + 가운데 텍스트 갱신(호버=그 조각 / 벗어나면 주력).
   const segs = chart.querySelectorAll(".pie-seg"), rows = legend ? legend.querySelectorAll("[data-i]") : [];
+  const ctrName = chart.querySelector("#donut-ctr-name"), ctrVal = chart.querySelector("#donut-ctr-val");
+  const setCenter = (s) => { if (ctrName) ctrName.textContent = shortName(s.name); if (ctrVal) ctrVal.textContent = num1s(s.dps / total * 100) + "%"; };
   const hi = (i, on) => {
     segs.forEach((p) => p.classList.toggle("dim", on && +p.dataset.i !== i));
     rows.forEach((rw) => rw.classList.toggle("active", on && +rw.dataset.i === i));
+    setCenter(on && g[i] ? g[i] : top);
   };
   segs.forEach((p) => { p.addEventListener("mouseenter", () => hi(+p.dataset.i, true)); p.addEventListener("mouseleave", () => hi(0, false)); });
   rows.forEach((rw) => { rw.addEventListener("mouseenter", () => hi(+rw.dataset.i, true)); rw.addEventListener("mouseleave", () => hi(0, false)); });
@@ -1216,86 +1222,12 @@ function companionTotal(dps) {
   return (dps.companionWindow || 0) * (dps.summonSeconds || 0);
 }
 
-// shares = [{name, dps, companion?}] → 총 딜(합산) 단위 파이 조각. 플레이어=dps×전투시간, 동료=소환창 총딜.
-// 작은 조각은 '기타'로 묶고, 동료는 항상 따로. winSec=전투시간(초), compTotal=동료 총딜(companionTotal).
-function buildSlices(shares, winSec, compTotal) {
-  const players = shares.filter((x) => !x.companion).map((x) => ({ name: x.name, dmg: (x.dps || 0) * winSec }));
-  const total = players.reduce((s, x) => s + x.dmg, 0) + (compTotal || 0);
-  if (total <= 0) return { slices: [], total: 0 };
-  players.sort((a, b) => b.dmg - a.dmg);   // 딜 지분 내림차순
-  const slices = [];
-  let ci = 0, otherDmg = 0; const otherItems = [];
-  for (const p of players) {
-    if ((p.dmg / total) >= 0.04 && slices.length < 8) slices.push({ name: p.name, dmg: p.dmg, color: PIE_COLORS[ci++ % PIE_COLORS.length] });
-    else { otherDmg += p.dmg; otherItems.push({ name: p.name, dmg: p.dmg }); }   // 기타에 묶인 항목들(호버용)
-  }
-  if (otherDmg > 0) slices.push({ name: "기타", dmg: otherDmg, color: OTHER_COLOR, other: true, items: otherItems });
-  if (compTotal > 0) slices.push({ name: activeCompanionLabel(), dmg: compTotal, color: COMPANION_COLOR, companion: true });
-  return { slices, total };
-}
-
 function polar(cx, cy, r, deg) { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
 function ringPath(cx, cy, R, r, a0, a1) {
   const large = (a1 - a0) > 180 ? 1 : 0;
   const [ox0, oy0] = polar(cx, cy, R, a0), [ox1, oy1] = polar(cx, cy, R, a1);
   const [ix1, iy1] = polar(cx, cy, r, a1), [ix0, iy0] = polar(cx, cy, r, a0);
   return `M${ox0.toFixed(2)} ${oy0.toFixed(2)} A${R} ${R} 0 ${large} 1 ${ox1.toFixed(2)} ${oy1.toFixed(2)} L${ix1.toFixed(2)} ${iy1.toFixed(2)} A${r} ${r} 0 ${large} 0 ${ix0.toFixed(2)} ${iy0.toFixed(2)} Z`;
-}
-
-function renderDonut(shares, dps) {
-  const chart = $("donut-chart"), legend = $("donut-legend");
-  if (!chart) return;
-  const winSec = (dps && dps.windowSeconds) || 0;
-  const { slices, total } = buildSlices(shares, winSec, companionTotal(dps));   // total·조각 모두 총 딜(합산)
-  if (!slices.length) { chart.innerHTML = "<div class='donut-empty'>데이터 없음</div>"; legend.innerHTML = ""; return; }
-  // 툴팁: '기타'면 묶인 항목 내역까지 펼쳐 보여줌
-  const tip = (s) => {
-    let t = `${s.name} · ${num1s(s.dmg / total * 100)}%`;
-    if (s.other && s.items && s.items.length) {
-      t += "\n" + s.items.map((it) => `· ${it.name} ${num1s(it.dmg / total * 100)}% (${koreanUnit(it.dmg)})`).join("\n");
-    }
-    return t;
-  };
-  const S = 180, cx = S / 2, cy = S / 2, R = 84, r = 50;
-  let a = 0, paths = "";
-  slices.forEach((s, i) => {
-    const frac = s.dmg / total, deg = frac * 360;
-    const a1 = (i === slices.length - 1) ? 360 : a + deg;   // 마지막은 360까지(부동소수 틈 방지)
-    let d;
-    if (slices.length === 1) d = ringPath(cx, cy, R, r, 0.01, 359.99);
-    else d = ringPath(cx, cy, R, r, a, a1);
-    paths += `<path d="${d}" fill="${s.color}" class="pie-seg" data-i="${i}"><title>${escapeHtml(tip(s))}</title></path>`;
-    a = a1;
-  });
-  chart.innerHTML =
-    `<svg viewBox="0 0 ${S} ${S}" class="donut-svg" role="img" aria-label="딜 구성 도넛"><g class="donut-ring">${paths}</g>` +
-    `<text x="${cx}" y="${cy - 6}" class="donut-center-top">종합 딜</text>` +
-    `<text x="${cx}" y="${cy + 14}" class="donut-center-val">${total > 0 ? koreanUnit(total) : "—"}</text></svg>`;
-  const lgRow = (cls, di, dot, name, pct, val, title) =>
-    `<div class="${cls}" data-i="${di}"${title ? ` title="${escapeHtml(title)}"` : ""}>` +
-    dot + `<span class="lg-name">${name}</span>` +
-    `<span class="lg-pct">${num1s(pct)}%</span><span class="lg-val">${koreanUnit(val)}</span></div>`;
-  legend.innerHTML = slices.map((s, i) => {
-    // 기타: 그래프엔 한 조각, 범례엔 세부 종류를 다 적되 '기타'로 묶어 펼침
-    if (s.other && s.items && s.items.length) {
-      const head = lgRow("lg-row lg-other-head", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
-        `기타 <span class="lg-cnt">${s.items.length}개</span>`, s.dmg / total * 100, s.dmg, tip(s));
-      const subs = s.items.map((it) =>
-        lgRow("lg-row lg-subrow", i, `<span class="lg-subdot"></span>`, escapeHtml(it.name), it.dmg / total * 100, it.dmg, "")
-      ).join("");
-      return `<div class="lg-group" data-i="${i}">${head}<div class="lg-sublist">${subs}</div></div>`;
-    }
-    return lgRow("lg-row", i, `<span class="lg-dot" style="background:${s.color}"></span>`,
-      escapeHtml(s.name), s.dmg / total * 100, s.dmg, tip(s));
-  }).join("");
-  // 범례 ↔ 조각 하이라이트 연동
-  const segs = chart.querySelectorAll(".pie-seg"), rows = legend.querySelectorAll(".lg-row");
-  const hi = (i, on) => {
-    segs.forEach((p) => p.classList.toggle("dim", on && +p.dataset.i !== i));
-    rows.forEach((rw) => rw.classList.toggle("active", on && +rw.dataset.i === i));
-  };
-  segs.forEach((p) => { p.addEventListener("mouseenter", () => hi(+p.dataset.i, true)); p.addEventListener("mouseleave", () => hi(0, false)); });
-  rows.forEach((rw) => { rw.addEventListener("mouseenter", () => hi(+rw.dataset.i, true)); rw.addEventListener("mouseleave", () => hi(0, false)); });
 }
 
 // 플레이어 vs 동료 비율 스택 바(데스크톱=가로, 모바일=세로 — 크기는 CSS의 --seg로 제어).
