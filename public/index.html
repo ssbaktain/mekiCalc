@@ -316,6 +316,12 @@
 
     <!-- 큐브 기댓값 -->
     <section id="panel-cube" class="panel" hidden>
+      <div class="subtabs cube-subtabs" role="tablist">
+        <a class="subtab route-link active" href="/cube" role="tab">큐브 기댓값</a>
+        <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
+      </div>
       <details class="panel-about">
         <summary>큐브 기댓값이란?</summary>
         <div class="about-body"><p>큐브 잠재능력의 각 옵션이 <b>내 딜을 몇 % 올려주는지</b>, 그리고 옵션의 등장 확률까지 함께 고려한 <b>큐브 한 개당 기댓값</b>을 계산합니다. 딜 증가량은 <b>현재 스탯</b>을 기준으로 하므로, 같은 옵션이라도 사람마다·부위마다 순위가 달라집니다. 예를 들어 크리티컬 배수가 이미 높은 캐릭터는 크리티컬 옵션의 한계 효율이 낮아지고, 대신 데미지%나 최대/최소 데미지% 쪽이 더 이득일 수 있습니다. 자세한 개념은 <a href="/guide/cube-value.html">큐브 잠재능력 기댓값 이해</a>를 참고하세요.</p></div>
@@ -351,6 +357,12 @@
 
     <!-- 옵션 비교 (좌/우 자유 선택) -->
     <section id="panel-optcompare" class="panel" hidden>
+      <div class="subtabs cube-subtabs" role="tablist">
+        <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
+        <a class="subtab route-link active" href="/cube/option-compare" role="tab">옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
+      </div>
       <details class="panel-about">
         <summary>옵션 비교는 어떻게 쓰나요?</summary>
         <div class="about-body"><p>서로 다른 두 큐브 잠재 옵션 조합을 좌우에 놓고, 어느 쪽이 현재 스탯에서 딜에 더 유리한지 나란히 비교합니다. "데미지% 3줄"과 "크리 데미지% + 최대 데미지% 조합"처럼 성격이 다른 세팅을 직접 견줘보고 싶을 때 사용하세요. 결과는 각 옵션의 딜 기여와 두 조합의 차이를 함께 보여줍니다.</p></div>
@@ -386,6 +398,12 @@
 
     <!-- 우선순위 추천 -->
     <section id="panel-recommend" class="panel" hidden>
+      <div class="subtabs cube-subtabs" role="tablist">
+        <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
+        <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link active" href="/cube/recommend" role="tab">우선순위 추천</a>
+      </div>
       <details class="panel-about">
         <summary>우선순위 추천은 어떻게 정해지나요?</summary>
         <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여줍니다. 각 추천에는 그 옵션을 얻기까지 <b>평균 몇 개의 큐브</b>가 드는지를 함께 표시하며(승급 추천은 승급에 드는 큐브까지 포함), 딜 증가량·평균 큐브 수·1회 리롤 비용을 종합한 "최종 효율" 기준으로도 정렬할 수 있어 실제 큐브를 돌릴 때의 가성비를 판단하는 데 도움이 됩니다. 딜 순위 슬라이더로 목표 수준(가성비 ~ 종결)을 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p></div>
@@ -419,6 +437,12 @@
 
     <!-- 내 옵션 비교/변경 -->
     <section id="panel-compare" class="panel" hidden>
+      <div class="subtabs cube-subtabs" role="tablist">
+        <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
+        <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
+        <a class="subtab route-link active" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
+      </div>
       <details class="panel-about">
         <summary>내 옵션 비교·변경은 무엇인가요?</summary>
         <div class="about-body"><p>현재 장착한 큐브 옵션과 바꾸려는 옵션의 <b>딜 차이</b>를 계산해, 실제로 갈아탈 가치가 있는지 판단합니다. 지금 세팅을 왼쪽에 두고 가정할 옵션을 오른쪽에 입력하면 변경 시 딜이 얼마나 오르거나 내리는지 바로 확인할 수 있고, 마음에 들면 그 옵션을 현재 큐브 프리셋에 그대로 반영할 수도 있습니다.</p></div>
@@ -431,12 +455,12 @@
           <label class="ctl">변경 후 스택<input id="cmp-stack" type="number" min="0" value="0" /></label>
         </div>
         <div id="cmp-editor" class="cmp-editor"></div>
+        <div id="cmp-diff"></div>
         <div class="btn-row">
           <button id="cmp-btn" class="primary-btn alt" type="button">비교</button>
           <button id="cmp-apply" class="primary-btn" type="button">이 옵션으로 변경</button>
         </div>
         <p id="cmp-status" class="status"></p>
-        <div id="cmp-result"></div>
       </div>
     </section>
 

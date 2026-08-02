@@ -314,14 +314,14 @@ async function getSlots(part, grade) {
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
   { label: "데미지 분석", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입. 평타/DPS + 평타/스킬/동료 딜 비중 + 동료/유물 기여
-  { label: "프리셋", items: [
+  { label: "프리셋", flat: true, divider: true, items: [   // flat: 드롭다운X·클릭 시 캐릭터 탭 진입(서브바가 세부전환). divider: 뒤에 세로 구분선
     { label: "캐릭터", panel: "presets", sub: "build", path: "/presets/build" },
     { label: "동료", panel: "presets", sub: "ally", path: "/presets/ally" },
     { label: "유물", panel: "presets", sub: "relic", path: "/presets/relic" },
     { label: "큐브", panel: "presets", sub: "cube", path: "/presets/cube" },
     { label: "설정", panel: "presets", sub: "settings", path: "/presets/settings" },
   ]},
-  { label: "큐브", items: [
+  { label: "큐브", flat: true, items: [   // flat: 드롭다운X·클릭 시 큐브 기댓값 진입(세부전환=각 큐브 패널 상단 서브바)
     { label: "큐브 기댓값", panel: "cube", path: "/cube" },
     { label: "옵션 비교", panel: "optcompare", path: "/cube/option-compare" },
     { label: "내 옵션 비교/변경", panel: "compare", path: "/cube/my-options" },
@@ -434,7 +434,7 @@ function recalcActivePanel() {
 
 // 내 옵션 비교: 프리셋 전환 시 좌측(현재 큐브)·결과를 갱신하되 우측(가정) 선택은 보존.
 async function refreshCompareOnPresetChange() {
-  const hadResult = $("cmp-result").innerHTML.trim() !== "";
+  const hadResult = $("cmp-diff").innerHTML.trim() !== "";
   const saved = [0, 1, 2].map((i) => { const s = $("cmp-right-" + i); return s ? s.value : ""; });
   await renderCompareEditor(false);   // 좌측=새 큐브 반영, 등급/스택 보존(우측 슬롯은 재생성됨)
   saved.forEach((v, i) => { const s = $("cmp-right-" + i); if (s && v && [...s.options].some((o) => o.value === v)) s.value = v; });
@@ -450,17 +450,18 @@ function setActiveMenu(item) {
 // 메뉴 클릭 진입점 → 공용 라우터로 위임(주소 갱신 포함).
 function selectLeaf(leaf, item) { applyLeaf(leaf, item, true); }
 
-// 프리셋 패널 안의 스탯/큐브 서브탭 선택.
+// 프리셋 패널 안의 서브탭 선택. 쿼리는 #panel-presets로 한정 — 큐브 페이지의 route-link 서브탭(.cube-subtabs)까지
+// 건드리면 안 됨(그건 정적 active + 라우터가 담당). 전역 .subtab로 잡으면 큐브 앵커에 active가 잘못 퍼짐.
 function selectSub(name) {
   currentSub = name;
-  document.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
+  document.querySelectorAll("#panel-presets .subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
   if (name === "build" && !booting) renderBuffs();   // 빌드 화면 스킬 목록 최신화(초기 pre-set 땐 미룸 — init 끝 refreshSkillData가 처리)
   if (name === "ally") renderAlly();
   if (name === "relic") renderRelic();
 }
-for (const b of document.querySelectorAll(".subtab")) {
+for (const b of document.querySelectorAll("#panel-presets .subtab")) {   // 프리셋 서브탭만(큐브 route-link 서브탭 제외)
   b.addEventListener("click", () => {
     if (b.dataset.sub !== currentSub && !canLeaveEditors()) return;   // 다른 서브탭으로 갈 때 미저장 가드
     // 서브탭도 진짜 경로가 있으므로 navigate로 태워 URL·상단 메뉴 활성까지 동기화(뒤로가기/북마크 정합).
@@ -478,7 +479,7 @@ function makeMenuItem(m) {
   label.textContent = m.label;
   item.appendChild(label);
 
-  if (m.items) {
+  if (m.items && !m.flat) {
     label.insertAdjacentHTML("beforeend", ' <span class="caret">▾</span>');
     const dd = document.createElement("div");
     dd.className = "menu-dropdown";
@@ -500,7 +501,9 @@ function makeMenuItem(m) {
       if (!wasOpen) item.classList.add("open");
     });
   } else {
-    label.addEventListener("click", (e) => { e.stopPropagation(); selectLeaf(m, item); });
+    // flat(프리셋): 드롭다운 없이 클릭 시 바로 진입(첫 서브=캐릭터). 세부 전환은 패널 내부 서브바가 담당.
+    const target = m.items ? m.items[0] : m;
+    label.addEventListener("click", (e) => { e.stopPropagation(); selectLeaf(target, item); });
   }
   return item;
 }
@@ -516,6 +519,7 @@ function buildMenu() {
     const el = makeMenuItem(m); left.appendChild(el); itemEls.push([m, el]);
     if (m.items) for (const it of m.items) routeItemEls.set(it.path, el);
     else if (m.path) routeItemEls.set(m.path, el);
+    if (m.divider) { const d = document.createElement("span"); d.className = "menu-divider"; d.setAttribute("aria-hidden", "true"); left.appendChild(d); }
   }
   for (const m of MENU_RIGHT) right.appendChild(makeMenuItem(m));
   bar.appendChild(left);
@@ -2156,14 +2160,29 @@ async function renderCompareEditor(resetGrade) {
   const leftTables = (line && line.grade) ? await getSlots(part, line.grade) : null;
   const rightTables = await getSlots(part, cmpRightGrade);
 
-  let rows = `<div class="sc-row sc-titles"><div class="sc-col-title">현재 (내 큐브)</div><div class="sc-col-title">가정</div></div>`;
+  // 옵션 비교 탭과 동일한 좌우 카드(.opt-sides). 왼쪽=내 장비(읽기전용, 내 큐브에서 자동) / 오른쪽=가정(편집).
   const leftGrade = (line && line.grade) ? gradeText(line.grade) : '<span class="muted">(없음)</span>';
-  rows += `<div class="sc-row"><div class="sc-cell sc-grade-cell">${leftGrade}</div><div class="sc-cell" id="ce-rg"></div></div>`;
+  let leftSlots = "";
   for (let i = 0; i < 3; i++) {
     const lo = (leftTables && line.slots[i]) ? findDraw(leftTables[i] || [], line.slots[i].stat, line.slots[i].value) : null;
-    rows += `<div class="sc-row">${scBox(lo, "neutral", i + 1)}<div class="sc-cell" id="ce-rs-${i}"></div></div>`;
+    leftSlots += `<div class="slot-row">${scBox(lo, "neutral")}</div>`;   // 번호 없이 — 오른쪽 드롭다운과 1:1 대칭
   }
-  $("cmp-editor").innerHTML = `<div class="slot-compare">${rows}</div>`;
+  $("cmp-editor").innerHTML =
+    `<div class="opt-sides">` +
+      `<div class="opt-side">` +
+        `<h3>현재 옵션</h3>` +
+        `<div class="controls ce-rg-row"><label class="ctl">등급<span class="ce-grade-box">${leftGrade}</span></label></div>` +
+        `${leftSlots}` +
+        `<div id="ce-l-result" class="opt-result"></div>` +
+      `</div>` +
+      `<div class="opt-side">` +
+        `<h3>비교 옵션</h3>` +
+        `<div class="controls ce-rg-row"><label class="ctl">등급<span id="ce-rg"></span></label></div>` +
+        `<div id="ce-rslots"></div>` +
+        `<div id="ce-r-result" class="opt-result"></div>` +
+      `</div>` +
+    `</div>`;
+  $("cmp-diff").innerHTML = "";   // 편집 시 이전 결과(딜 차이) 제거 — 다시 '비교' 눌러야 갱신
 
   // 우측 등급 select(동적 생성, id 유지)
   const gsel = document.createElement("select");
@@ -2173,11 +2192,13 @@ async function renderCompareEditor(resetGrade) {
   $("ce-rg").appendChild(gsel);
 
   // 우측 슬롯 select
+  const rsBox = $("ce-rslots");
   for (let i = 0; i < 3; i++) {
+    const row = document.createElement("div"); row.className = "slot-row";
     const sel = document.createElement("select");
     sel.id = "cmp-right-" + i;
     fillSlotSelect(sel, rightTables[i] || [], null);
-    $("ce-rs-" + i).appendChild(sel);
+    row.appendChild(sel); rsBox.appendChild(row);
   }
 }
 
@@ -2197,15 +2218,15 @@ async function runCompare() {
     });
     if (!data.valid) { $("cmp-status").textContent = "현재(내 큐브 옵션)가 비어 있어 비교할 수 없습니다. '내 큐브' 탭에서 입력하세요."; return; }
     $("cmp-status").textContent = "";
+    // 좌/우 카드 = 옵션 비교 탭과 동일 형식(딜 증가량·등장 확률·큐브 기댓값·효율)
+    if ($("ce-l-result")) $("ce-l-result").innerHTML = ocResultHtml({ inc: data.leftDeal, prob: data.leftProbSum });
+    if ($("ce-r-result")) $("ce-r-result").innerHTML = ocResultHtml({ inc: data.rightDeal, prob: data.rightProbSum });
+    // 하단(버튼 위) = 내 장비 → 가정 딜 증가량 차이만 크게
     const lose = data.dealDiff <= 0;
-    $("cmp-result").innerHTML =
-      `<div class="cmp-grid">` +
-      cell("딜 증가량 차이", `<b class="${lose ? "bad" : "good"}">${signPct(data.dealDiff)}</b>`) +
-      cell(lose ? "딜 손해" : "최종 효율", lose ? `<span class="bad">${signPct(data.dealDiff)}</span>` : fmtEff(data.gainEff)) +
-      cell("현재 딜 / 등장 확률", `${signPct(data.leftDeal)} / ${pct(data.leftProbSum, 3)}`) +
-      cell("가정 딜 / 등장 확률", `${signPct(data.rightDeal)} / ${pct(data.rightProbSum, 3)}`) +
-      cell("1회 리롤: 현재보다 좋을 확률", pct(data.totalProb, 3)) +
-      cell("1회 리롤: 가정보다 좋을 확률", pct(data.remainProb, 3)) +
+    $("cmp-diff").innerHTML =
+      `<div class="cmp-diff-box">` +
+        `<div class="cmp-diff-head">딜 증가량</div>` +
+        `<div class="cmp-diff-val ${lose ? "bad" : "good"}">${signPct(data.dealDiff)}</div>` +
       `</div>`;
   } catch (e) { $("cmp-status").textContent = "오류: " + e.message; }
   finally { done(); }

@@ -35,6 +35,9 @@ public final class ArtifactEffects {
         }
     }
 
+    /** 일반몹(챕터 사냥) 처치율 가정: 분당 110마리. onKill 트리거 유물(성배 등)의 가동률 산정 기준. */
+    private static final double NORMAL_KILLS_PER_MIN = 110;
+
     private final Map<String, Object> root;
     private final Map<String, Map<String, Object>> byId = new LinkedHashMap<>();
     private final List<Equip> equipped;
@@ -298,7 +301,17 @@ public final class ArtifactEffects {
             }
             case "companionSummoned":
                 return t < 0 ? compUptime : compUptime;   // 시뮬 정밀 창은 2b-3(현재 가동률 근사)
-            default:                                        // always/onKill/bossAttack/onDebuffed/onAttack(assumeMax·refresh)
+            case "onKill": {
+                // 처치 트리거(성배): 일반몹만 발동(보스 처치=전투종료라 전투 중 0). 분당 110마리 × 처치당 확률로
+                // 초당 발동수 λ 산정 → refresh/지속 dur 동안 "최근 dur 내 1회 이상 발동" 확률 = 1-e^(-λ·dur).
+                // (확률 100%면 e^(-큰수)≈0 → 가동률 1로 기존 '상시' 가정과 일치.)
+                if (boss) return 0;
+                double lambda = (NORMAL_KILLS_PER_MIN / 60.0) * (Json.num(ef, "chance", 100) / 100.0);
+                double d = dur > 0 ? dur : seconds;
+                if (lambda <= 0 || d <= 0) return 0;
+                return 1 - Math.exp(-lambda * d);
+            }
+            default:                                        // always/bossAttack/onDebuffed/onAttack(assumeMax·refresh)
                 return 1;
         }
     }

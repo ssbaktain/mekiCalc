@@ -197,6 +197,8 @@ main {
   margin-bottom: 16px; padding: 0 6px; position: relative; z-index: 20;
 }
 .menu-group { display: flex; }
+/* 프리셋 뒤 세로 구분선: 입력(데미지 분석·프리셋) ↔ 도구(큐브·비교·공지) 성격 구분. 살짝만. */
+.menu-divider { align-self: center; width: 2px; height: 24px; background: var(--muted); opacity: 0.6; border-radius: 1px; margin: 0 9px; flex: 0 0 auto; }
 .menu-item { position: relative; }
 .menu-label {
   background: none; border: none; cursor: pointer;
@@ -271,6 +273,7 @@ main {
 .subtab {
   padding: 10px 22px; font-size: 15px; font-weight: 700; cursor: pointer;
   color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 9px;
+  text-decoration: none; display: inline-flex; align-items: center;   /* 앵커(route-link) 서브탭도 버튼 pill과 동일하게 */
 }
 .subtab:hover { color: var(--accent); }
 .subtab.active { color: #fff; background: var(--accent2); border-color: var(--accent2); }
@@ -572,6 +575,29 @@ main {
 .opt-result { margin-top: 10px; }
 .opt-result .cmp-grid { grid-template-columns: 1fr 1fr; }
 @media (max-width: 640px) { .opt-sides { grid-template-columns: 1fr; } }
+/* 내 옵션 비교: 좌(현재 옵션·읽기전용) ↔ 우(비교 옵션·드롭다운) 완전 대칭.
+   등급·슬롯 모두 전폭 박스 + 동일 높이로 맞춰 좌우 행이 픽셀 단위로 정렬되게 한다. */
+.opt-side .ce-rg-row { margin-bottom: 8px; }
+.ce-rg-row .ctl { width: 100%; }              /* 등급 행 전폭 → 슬롯과 같은 폭 */
+#cmp-editor #ce-rg { display: block; }
+/* 등급: 좌 박스 = 우 select — 고정 height로 좌우 픽셀 일치(min-height면 native select/div 자연높이 차이로 어긋남) */
+#cmp-editor #ce-rg select, .ce-grade-box {
+  width: 100%; box-sizing: border-box; height: 38px; line-height: normal;
+  padding: 0 10px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; color: var(--text);
+}
+.ce-grade-box { display: flex; align-items: center; }
+/* 슬롯: 좌 박스 = 우 select — 고정 height로 좌우 픽셀 일치 */
+#cmp-editor .slot-row select, #cmp-editor .opt-side .sc-box {
+  box-sizing: border-box; height: 34px; min-height: 0; line-height: normal; padding: 0 10px;
+}
+#cmp-editor .opt-side .sc-box { flex: 1; min-width: 0; background: var(--card); border-radius: 6px; font-size: 13px; }
+/* 내 옵션 비교: 하단(버튼 위) 딜 증가량 차이만 크게 강조 */
+.cmp-diff-box { margin: 4px 0 2px; border: 1px solid rgba(124,156,255,0.4); background: rgba(124,156,255,0.06); border-radius: 10px; padding: 14px 16px; text-align: center; }
+.cmp-diff-head { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.cmp-diff-val { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.cmp-diff-val.good { color: #6fcf97; }
+.cmp-diff-val.bad { color: #e07a7a; }
 
 /* 장비 비교 */
 .gc-ocr { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; background: var(--card2); }

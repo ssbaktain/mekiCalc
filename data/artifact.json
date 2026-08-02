@@ -87,7 +87,7 @@
     { "id": "holy_grail", "name": "성배", "grade": "LEGENDARY", "category": "compute",
       "raw": "적 처치 시 2% 확률(보스 확정) 30초간 최종뎀 15%(5각 30%)↑",
       "effects": [
-        { "stat": "FINAL_DMG", "target": "player", "values": [15,18,21,24,27,30], "trigger": "onKill", "dur": 30, "refresh": true, "bossZero": true, "used": true, "note": "일반=잦은처치로 상시. 보스=처치가 전투종료라 전투중 0" }
+        { "stat": "FINAL_DMG", "target": "player", "values": [15,18,21,24,27,30], "trigger": "onKill", "chance": 2, "dur": 30, "refresh": true, "bossZero": true, "used": true, "note": "일반=처치당 2% 확률 → 분당 110마리 기준 가동률 1-e^(-(110/60)*0.02*30)=약67%. 보스=처치가 전투종료라 전투중 0" }
       ]},
 
     { "id": "old_music_box", "name": "낡은 오르골", "grade": "LEGENDARY", "category": "compute",
