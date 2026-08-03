@@ -471,6 +471,18 @@ main {
 .sc-badge.sc-unreach { color: var(--muted); background: rgba(255,255,255,0.05); border-color: var(--border); }
 /* 교차 기준 안내(보뎀=보스 / 일뎀=직전 스테이지) */
 .sc-note { color: var(--accent); font-size: 11px; font-weight: 600; }
+/* 스탯 비교: 소분류 그룹 안에서 촘촘한 행(라벨 왼쪽 · 값/뱃지 오른쪽)으로 한눈에 스캔 */
+.sc-form .group { margin-bottom: 16px; }
+.sc-form .field-grid { grid-template-columns: 1fr 1fr; gap: 2px 28px; }
+@media (max-width: 560px) { .sc-form .field-grid { grid-template-columns: 1fr; } }
+.sc-form .field { flex-direction: row; align-items: center; min-height: 0; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.sc-form .field > label { flex: 1 1 auto; min-width: 0; font-size: 13px; }
+.sc-form .field .input-wrap { flex: 0 0 auto; }
+.sc-form .field input { width: 92px; padding: 6px 8px; font-size: 13px; text-align: right; }
+.sc-form .field .unit { min-width: 10px; margin-left: 4px; }
+.sc-form .field .sc-badge { flex: 0 0 auto; align-self: center; margin: 0; }
+/* 딜 미환산·달성 불가 행은 빈 입력칸을 숨기고 뱃지만 오른쪽에 */
+.sc-form .field:has(.sc-badge:not([hidden])) .input-wrap { display: none; }
 
 /* 작은 버튼 */
 .mini-btn {
@@ -818,15 +830,14 @@ html.deep-route #panel-home { display: none !important; }
 .panel-about .about-body a:hover { text-decoration: underline; }
 
 /* 푸터 사이트맵 내비(크롤러 발견 경로 + 유저 탐색). */
-.footer-nav {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 32px;
-  max-width: 720px; margin: 0 auto 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
-  text-align: left;
+.footer-guides {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  max-width: 720px; margin: 0 auto 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
 }
-.footer-nav .fn-group { display: flex; flex-direction: column; gap: 4px; }
-.footer-nav .fn-title { color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-.footer-nav a { color: var(--accent); text-decoration: none; font-size: 13px; }
-.footer-nav a:hover { text-decoration: underline; }
+.footer-guides .fg-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+.footer-guides .fg-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; }
+.footer-guides a { color: var(--accent); text-decoration: none; font-size: 13px; }
+.footer-guides a:hover { text-decoration: underline; }
 
 /* 정적 가이드 페이지(/guide/*.html) */
 .guide { max-width: 760px; margin: 18px auto 8px; padding: 0 18px; line-height: 1.75; }
@@ -968,6 +979,13 @@ html.deep-route #panel-home { display: none !important; }
 
 /* 미입력/덜 입력된 프리셋 안내: 스켈레톤 블러 + 해당 입력 화면으로 가는 버튼 */
 .locked-wrap { position: relative; min-height: 120px; }
+.ds-headline > .locked-wrap { grid-column: 1 / -1; }   /* 헤드라인(3열 그리드) 블러는 전체 폭 스팬 */
+/* 미입력 시 탭 게이트: 카드만 블러(서브탭은 클릭 가능하게 유지) + 중앙 입력 CTA */
+.panel.char-gated { position: relative; }
+.panel.char-gated > .card { filter: blur(3px); opacity: .35; pointer-events: none; user-select: none; }
+/* 오버레이는 클릭을 통과시켜 뒤의 서브탭/설명이 눌리게 하고, 버튼만 클릭 대상으로 */
+.char-gate { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; pointer-events: none; }
+.char-gate .locked-btn { pointer-events: auto; }
 .locked-blur { filter: blur(3px); opacity: .32; pointer-events: none; user-select: none; }
 .locked-blur .bar-fill { background: var(--muted); }
 .locked-cta { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 10px; }

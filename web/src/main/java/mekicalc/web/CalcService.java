@@ -277,7 +277,7 @@ public final class CalcService {
             if (d.hidden || d.derived) continue;
             StatBlock b = new StatBlock();
             b.set(d.id, 1);
-            if (dm.hasQualitative(b)) ids.add(d.id);
+            if (dm.hasQualitative(b) || (job == 0 && COMMON_JOB_QUAL.contains(d.id))) ids.add(d.id);   // 공용: 기본공격/스킬 데미지도 딜 미환산으로 표시
         }
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("ids", ids);
@@ -1101,6 +1101,10 @@ public final class CalcService {
     /** 스탯 비교에서 제외할 스탯: 레벨(딜 모델 밖)·기본 공격 대상 수(상황 의존). 나머지 입력 가능한 스탯 전부 비교. */
     private static final Set<String> STAT_COMPARE_SKIP = Set.of("LEVEL", "BASIC_ATK_TARGETS");
 
+    /** 공용(직업 미선택)에선 스킬/기본공격 구분·로테이션이 없으므로 이 딜 구성 스탯들을 항상 '딜 미환산'으로 본다.
+     *  (쿨감·지속류는 이미 qualitative라 공용에서 딜 미환산 → 여기선 기본공격/스킬 데미지만 강제) */
+    private static final Set<String> COMMON_JOB_QUAL = Set.of("BASIC_ATK_DMG", "SKILL_DMG");
+
     /**
      * 기준 스탯 한 줄(refStatId=refValue)이 올려주는 딜 증가량 D와 <b>동일한 딜</b>을 내려면
      * 다른 각 스탯이 얼마나 필요한지(등가 증가량)를 계산한다. 각 스탯 y에 대해 f(w)=increase(현재,{y:w})가
@@ -1133,6 +1137,7 @@ public final class CalcService {
         double D = (refStatId != null && !refStatId.isEmpty() && refValue != 0)
                 ? refDm.increase(current, new StatBlock().with(refStatId, refValue)) : 0.0;
 
+        int job = (int) current.get("JOB");
         List<Map<String, Object>> rows = new ArrayList<>();
         for (StatDef d : content.stats.values()) {
             if (d.hidden || d.derived || STAT_COMPARE_SKIP.contains(d.id)) continue;
@@ -1142,15 +1147,19 @@ public final class CalcService {
             // 교차 기준 안내(현재 스테이지와 반대 유형이라 다른 대상으로 환산했음을 표시)
             if ("BOSS_DMG".equals(d.id) && !curBoss) row.put("note", "보스 기준");
             else if ("NORMAL_DMG".equals(d.id) && curBoss) row.put("note", "직전 스테이지 기준");
-            boolean qual = useDm.hasQualitative(new StatBlock().with(d.id, 1));
-            row.put("qual", qual);
+            boolean qual = useDm.hasQualitative(new StatBlock().with(d.id, 1))
+                    || (job == 0 && COMMON_JOB_QUAL.contains(d.id));   // 공용: 기본공격/스킬 데미지는 항상 딜 미환산
             if (d.id.equals(refStatId)) {
+                row.put("qual", qual);
                 row.put("self", true);
                 row.put("value", safe(refValue));
                 row.put("reachable", true);
             } else {
                 row.put("self", false);
                 double w = (D > 1e-12 && !qual) ? solveEquivalent(useDm, current, d.id, D) : Double.NaN;
+                // 큰 값에도 딜 기여가 0인 스탯(공용 직업의 스킬 데미지 등)은 '달성 불가'가 아니라 '딜 미환산'으로 표기한다.
+                if (!qual && !Double.isFinite(w) && !convertsToDamage(useDm, current, d.id)) qual = true;
+                row.put("qual", qual);
                 row.put("value", safe(w));
                 row.put("reachable", Double.isFinite(w));
             }
@@ -1239,6 +1248,11 @@ public final class CalcService {
 
     private double incOne(DealModel dm, StatBlock current, String sid, double w) {
         return dm.increase(current, new StatBlock().with(sid, w));
+    }
+
+    /** 큰 값을 줘도 딜 증가가 0이면 현재 설정에서 딜로 환산되지 않는 스탯(공용의 스킬 데미지·완전 포화 크리 등) → '딜 미환산'. */
+    private boolean convertsToDamage(DealModel dm, StatBlock current, String sid) {
+        return incOne(dm, current, sid, 1e6) > 0;
     }
 
     // ──────────────────── 장비 비교 OCR(Gemini 비전) ────────────────────

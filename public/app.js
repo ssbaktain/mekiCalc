@@ -333,9 +333,17 @@ const MENU = [
 ];
 const MENU_RIGHT = [];   // 설정은 프리셋 패널의 서브탭으로 이동
 
+// 캐릭터 스탯이 있어야 계산되는 탭 — 미입력이면 블러+CTA 게이트(정상 렌더 스킵). 홈은 박스별로 따로 처리.
+const CHAR_GATED_PANELS = new Set(["cube", "optcompare", "compare", "recommend", "statcompare", "gear"]);
+
 function showPanel(name) {
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
   document.body.classList.toggle("notices-active", name === "notices");   // 공지 탭은 비영리 → 광고 비노출(CSS)
+  if (CHAR_GATED_PANELS.has(name)) {   // 캐릭터 미입력 → 게이트. 내 옵션 비교·우선순위 추천은 큐브 프리셋도 필요.
+    const reqs = [{ empty: characterEmpty(), msg: "계산하려면 캐릭터 스탯이 필요해요.<br>스탯을 입력하면 이 기능을 쓸 수 있어요.", cta: "캐릭터 입력하러 가기", path: "/presets/build" }];
+    if (name === "compare" || name === "recommend") reqs.push({ empty: cubeEmpty(), msg: "큐브 프리셋이 아직 없어요.<br>큐브를 입력하면 이 기능을 쓸 수 있어요.", cta: "큐브 입력하러 가기", path: "/presets/cube" });
+    if (applyGate($("panel-" + name), reqs)) return;
+  }
   if (name === "home") renderHome();               // 홈 대시보드(로고로 진입)
   if (name === "compare") renderCompareEditor(true);
   if (name === "optcompare") renderOptCompare();
@@ -972,8 +980,10 @@ function renderHome() {
   const det = scaleDetail(rawDet, f);   // 선택 몹 방어배수 반영(서버 계산)
   const state = useSummon ? det.summon : det.solo;
   if (!state) return;
-  renderDealHeadline(state, mob, det);
-  renderDealShares(state, mob, det);
+  // 캐릭터(스탯) 프리셋이 전부 0/디폴트면 = 스탯 미입력 → 헤드라인·딜 비중 박스 블러 + 캐릭터 입력 CTA.
+  const empty = characterEmpty();
+  renderDealHeadline(state, mob, det, empty);
+  renderDealShares(state, mob, det, empty);
 }
 
 // 토글 버튼 활성/비활성(동료 없으면 소환 버튼 잠금).
@@ -989,8 +999,12 @@ function syncDealToggles(mob, canSummon, useSummon) {
 
 // 헤드라인 3박스: 평타 한줄 평균딜 · DPS(토글 상태 순간) · DPS(n초 측정, 소환 가동률까지 반영한 전투 평균 실측).
 // 세 번째는 det.dps.total(전투 70/90초 평균)이라 미소환/소환 토글과 무관한 실전값. n=windowSeconds(보스70·사냥90).
-function renderDealHeadline(state, mob, det) {
+function renderDealHeadline(state, mob, det, empty) {
   const box = $("ds-headline"); if (!box) return;
+  if (empty) {
+    box.innerHTML = lockedBox(skelHeadline(), "캐릭터 스탯이 아직 없어요.<br>스탯을 입력하면 예상 데미지를 볼 수 있어요.", "캐릭터 입력하러 가기", "/presets/build");
+    return;
+  }
   const tile = (label, v) =>
     `<div class="ds-hl-tile"><div class="ds-hl-label">${label}</div>` +
     `<div class="ds-hl-val">${v == null ? "—" : koreanUnit(v)}</div>` +
@@ -1002,7 +1016,14 @@ function renderDealHeadline(state, mob, det) {
 }
 
 // 딜 비중: 평타 + 각 스킬 + 동료가 도넛에 개별 조각으로. 범례에선 스킬을 '스킬 N개' 그룹으로 묶어 펼친다.
-function renderDealShares(state, mob, det) {
+function renderDealShares(state, mob, det, empty) {
+  if (empty) {   // 캐릭터 스탯 미입력 → 도넛 블러 + 캐릭터 CTA. 동료·유물은 각자 요구 프리셋 기준으로 블러됨.
+    lockDonut("캐릭터 스탯이 아직 없어요.<br>스탯을 입력하면 딜 비중을 볼 수 있어요.", "캐릭터 입력하러 가기", "/presets/build");
+    renderCompanionSummary(det);
+    renderArtifactSummary(det);
+    if ($("ds-share-sub")) $("ds-share-sub").textContent = "";
+    return;
+  }
   const shares = state.shares || [];
   const total = shares.reduce((s, x) => s + (x.dps || 0), 0);
   const basic = shares.filter((x) => x.name === "평타").reduce((s, x) => s + (x.dps || 0), 0);
@@ -1039,6 +1060,43 @@ function skelBars(n) {
 }
 function skelDonut() {
   return `<svg viewBox="0 0 180 180" class="donut-svg" aria-hidden="true"><circle cx="90" cy="90" r="67" fill="none" stroke="var(--muted)" stroke-width="34"/></svg>`;
+}
+function skelHeadline() {
+  const t = `<div class="ds-hl-tile"><div class="ds-hl-label">···</div><div class="ds-hl-val">—</div><div class="ds-hl-sub">···</div></div>`;
+  return `<div class="ds-headline ds-hl-skel">${t}${t}${t}</div>`;
+}
+
+// 캐릭터(스탯) 프리셋이 사실상 미입력(딜의 밑바탕이 전부 0/디폴트)인지 — 공격력·주스탯·방어력 모두 0이면 딜이 0.
+function characterEmpty() {
+  const s = collectStats();
+  return !((s.ATK_FLAT > 0) || (s.MAIN_STAT_FLAT > 0) || (s.DEFENSE > 0));
+}
+
+// 큐브 프리셋에 입력된 잠재 옵션(스탯 있는 슬롯)이 하나도 없으면 미작성.
+function cubeEmpty() {
+  if (!myCube || typeof myCube !== "object") return true;
+  for (const part of Object.values(myCube)) {
+    if (!part) continue;
+    for (const line of Object.values(part)) {
+      if (line && Array.isArray(line.slots) && line.slots.some((s) => s && s.stat)) return false;
+    }
+  }
+  return true;
+}
+
+// 패널 게이트: reqs=[{empty,msg,cta,path}]를 순서대로 검사, 첫 미충족을 블러+CTA로. 모두 충족이면 게이트 제거. true 반환 시 렌더 스킵.
+function applyGate(panel, reqs) {
+  if (!panel) return false;
+  const fail = reqs.find((r) => r.empty);
+  panel.classList.toggle("char-gated", !!fail);
+  let gate = panel.querySelector(":scope > .char-gate");
+  if (fail) {
+    if (!gate) { gate = document.createElement("div"); gate.className = "char-gate"; panel.appendChild(gate); }
+    gate.innerHTML = `<p class="locked-msg">${fail.msg}</p><a class="route-link locked-btn" href="${fail.path}">${fail.cta} →</a>`;
+  } else if (gate) {
+    gate.remove();
+  }
+  return !!fail;
 }
 function lockDonut(msg, cta, path) {
   const chart = $("donut-chart"), legend = $("donut-legend");
@@ -1147,9 +1205,12 @@ function renderCompanionSummary(det) {
   const box = $("ds-companion"); if (!box) return;
   const sub = $("ds-comp-sub");
   const solo = det.solo, summon = det.summon;
-  if (!summon || !solo) {
+  // 동료는 항상 하나가 선택돼 있어 '미선택'이 안 됨 → 디폴트/미작성 신호 = 공격력 계승 비율(ratio)이 0.
+  // ratio가 0이면(또는 동료·소환 데이터 없으면) 블러+CTA. 다른 게이트처럼 프리셋을 직접 검사.
+  const ally = activeCompanionSel();
+  if (!ally.companionId || !(ally.ratio > 0) || !summon || !solo) {
     if (sub) sub.textContent = "";
-    box.innerHTML = lockedBox(skelBars(2), "메인 동료가 없어요.<br>동료를 입력하면 소환 시 딜 기여를 볼 수 있어요.", "동료 입력하러 가기", "/presets/ally");
+    box.innerHTML = lockedBox(skelBars(2), "동료가 아직 없어요.<br>동료를 입력하면 소환 시 딜 기여를 볼 수 있어요.", "동료 입력하러 가기", "/presets/ally");
     return;
   }
   const secs = (det.dps && det.dps.windowSeconds) ? Math.round(det.dps.windowSeconds) : 90;
@@ -1715,7 +1776,31 @@ let scSource = null;   // {statId, value} 현재 기준
 let scTimer = null;
 
 function scStatDefs() {
-  return (statDefs || []).filter((d) => d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+  return (statDefs || []).filter((d) => !d.hidden && d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+}
+
+// 스탯 비교 전용 소분류(종류별로 묶어 한눈에 보이게). stats.json 순서는 캐릭터 폼이 '스탯창 순서'로 쓰므로 건드리지 않고 여기서만 그룹핑.
+const SC_GROUPS = [
+  { title: "+ 스탯", ids: ["ATK_FLAT", "MAIN_STAT_FLAT", "SUB_STAT_FLAT", "DEFENSE"] },
+  { title: "% 스탯", ids: ["ATK_PCT", "MAIN_STAT_PCT", "STAT_PROP_DMG", "CRIT_RATE", "CRIT_DMG", "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "BOSS_DMG", "NORMAL_DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
+  { title: "곱연산 스탯", ids: ["DEF_PEN", "ATK_SPEED", "FINAL_DMG"] },
+  { title: "기타 스탯", ids: ["COOLDOWN_REDUCTION_PCT", "COOLDOWN_REDUCTION", "SUMMON_DURATION", "BUFF_DURATION"] },
+  { title: "스킬 레벨", ids: ["SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "SKILL_LEVELS"] },
+];
+
+// scStatDefs를 SC_GROUPS 순서/분류로 묶어 [제목, defs[]] 배열로. 어느 그룹에도 없는 스탯은 '기타'로.
+function scGroupedDefs() {
+  const defById = new Map(scStatDefs().map((d) => [d.id, d]));
+  const used = new Set();
+  const grouped = [];
+  for (const g of SC_GROUPS) {
+    const defs = g.ids.map((id) => defById.get(id)).filter(Boolean);
+    defs.forEach((d) => used.add(d.id));
+    if (defs.length) grouped.push([g.title, defs]);
+  }
+  const rest = scStatDefs().filter((d) => !used.has(d.id));
+  if (rest.length) grouped.push(["기타", rest]);
+  return grouped;
 }
 
 function renderStatCompare() {
@@ -1723,14 +1808,9 @@ function renderStatCompare() {
   if (!form) return;
   // statDefs가 준비됐고 아직 안 그렸으면(또는 직전 로드 전 빈 상태면) 구성. statDefs 갱신 시 loadStats가 다시 부른다.
   if (form.querySelectorAll(".field").length === 0 && statDefs && statDefs.length) {
-    // 프리셋 스탯 탭과 동일한 그룹·필드 컴포넌트로 구성(입력창 UI 통일).
-    const groups = new Map();
-    for (const d of scStatDefs()) {
-      if (!groups.has(d.group)) groups.set(d.group, []);
-      groups.get(d.group).push(d);
-    }
+    // 소분류(SC_GROUPS)로 묶어 그룹 헤더와 함께 구성. 필드 컴포넌트는 프리셋 스탯 탭과 동일.
     form.innerHTML = "";
-    for (const [group, defs] of groups) {
+    for (const [group, defs] of scGroupedDefs()) {
       const box = document.createElement("div");
       box.className = "group";
       box.innerHTML = `<div class="group-title">${group}</div>`;
@@ -1761,7 +1841,16 @@ function renderStatCompare() {
 function scClear() {
   $("sc-head").hidden = true;
   document.querySelectorAll("#sc-form .field").forEach((f) => f.classList.remove("sc-src"));
-  document.querySelectorAll("#sc-form .sc-badge").forEach((b) => { b.hidden = true; b.textContent = ""; });
+  scApplyQualMarks();   // 빈 상태에서도 현재 직업의 '딜 미환산' 스탯을 미리 표시(공용의 기공뎀·스킬뎀·쿨감·지속 등)
+}
+
+// qualSet(현재 직업 기준 딜 미환산 스탯)을 sc-form 뱃지에 반영. 입력 전 빈 상태 프리마크용.
+function scApplyQualMarks() {
+  document.querySelectorAll("#sc-form .field").forEach((f) => {
+    const b = f.querySelector(".sc-badge"); if (!b) return;
+    if (qualSet.has(f.dataset.statId)) { b.hidden = false; b.textContent = "딜 미환산"; b.className = "dmgx-badge sc-badge"; }
+    else { b.hidden = true; b.textContent = ""; b.className = "dmgx-badge sc-badge"; }
+  });
 }
 
 // 기준 외 계산된 입력·뱃지 비우기(exceptId는 유지).
@@ -1777,7 +1866,7 @@ function onScInput(inp) {
   const id = inp.dataset.statId;
   const v = parseFloat(inp.value);
   if (isNaN(v) || v === 0) {
-    if (scSource && scSource.statId === id) { scSource = null; scClear(); scClearComputed(id); }
+    if (scSource && scSource.statId === id) { scSource = null; scClearComputed(id); scClear(); }
     return;
   }
   if (scSource && scSource.statId === id && scSource.value === v) return;   // 값 변화 없으면 재계산 안 함(blur 등 중복 트리거 방지)
