@@ -737,9 +737,10 @@ function statValueOf(input) {
   return isNaN(v) ? 0 : v;
 }
 
-// 스탯 비례 데미지%를 주스탯·부스탯에서 즉시 파생: 유효주스탯/100 + 부스탯×0.25%.
-// 유저 입력을 막지 않되(직접 수정 가능), 주스탯·부스탯을 건드리면 이 값으로 갱신한다.
-const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT", "DEFENSE"]);
+// 스탯 비례 데미지%를 주스탯·부스탯에서 즉시 파생: 유효주스탯/100 + 부스탯×0.25% + 방어력환산주스탯/100.
+// 유저 입력을 막지 않되(직접 수정 가능), 아래 값을 건드리면 이 값으로 갱신한다.
+// LEVEL·SKILL_LEVELS·SKILL_LEVEL_2는 방어력→주스탯 변환율(defenseToMainRatio)을 바꾸므로 함께 트리거해야 stale 방지.
+const STAT_PROP_TRIGGERS = new Set(["MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT", "DEFENSE", "LEVEL", "SKILL_LEVELS", "SKILL_LEVEL_2"]);
 
 // 방어력→주스탯 변환 계수(방어력 1당 주스탯). DamageModel.defenseToMainRatio와 동일 공식 — 백엔드와 함께 수정할 것.
 // 다크나이트 아이언 월(2차 패시브): base 10% × (1 + 0.3%/레벨 × 총스킬레벨). 총스킬레벨 = 2차 레벨 파생분 + 모스렙 + 2스렙.
@@ -753,9 +754,9 @@ function defenseToMainRatio(num) {
 }
 
 function deriveStatProp() {
-  const form = $("stat-form"); if (!form) return;
-  const num = (id) => { const el = form.querySelector(`input[data-stat-id="${id}"]`); return el ? statValueOf(el) : 0; };   // 표시(버림)값이 아닌 풀값 기준 파생
-  const out = form.querySelector('input[data-stat-id="STAT_PROP_DMG"]'); if (!out) return;
+  const scope = $("sub-build"); if (!scope) return;   // 레벨 입력은 stat-form 밖(build-level-slot)에 있어 sub-build 전체를 조회 — 안 그러면 num("LEVEL")=0으로 baseSkillLevel이 늘 0
+  const num = (id) => { const el = scope.querySelector(`input[data-stat-id="${id}"]`); return el ? statValueOf(el) : 0; };   // 표시(버림)값이 아닌 풀값 기준 파생
+  const out = scope.querySelector('input[data-stat-id="STAT_PROP_DMG"]'); if (!out) return;
   const mainStat = num("MAIN_STAT_FLAT") * (1 + num("MAIN_STAT_PCT") / 100);
   const defEffMain = num("DEFENSE") * defenseToMainRatio(num);   // 아이언 월 주스탯 증가분: 선반영이라 주스탯% 곱셈 바깥의 최종 flat 값(주스탯% 미적용)
   setStatValue(out, mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025 + defEffMain / 100, "PCT");   // 표시는 버림, 계산은 풀값
@@ -2346,6 +2347,7 @@ function spApply(name, skipRecompute) {
   if (!p) return;
   fillStats(p.stats);
   setJob(Math.round((p.stats && p.stats.JOB) || 0));   // 직업 단일 동기(스킬 직업/myBuffJob 포함)
+  deriveStatProp();   // 저장값은 옛 공식 기준일 수 있어 스탯 비례 데미지%를 현재 주스탯·부스탯·방어력·레벨·스킬레벨로 재파생(stale 교정)
   if ("buffs" in p) myBuffs = Array.isArray(p.buffs) ? p.buffs.slice() : null;   // 빌드에 저장된 스킬 선택
   myHitInterval = p.hitInterval || 0;
   syncTargetSelector();   // 대상(챕터/스테이지)도 프리셋 값으로 — 직업처럼 함께 전환
