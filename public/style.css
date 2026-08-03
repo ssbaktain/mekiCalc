@@ -179,13 +179,26 @@ main {
 #sub-build #stat-form .field-grid { grid-template-columns: 1fr 1fr; gap: 5px 28px; }
 @media (max-width: 560px) { #sub-build #stat-form .field-grid { grid-template-columns: 1fr; } }
 #sub-build #stat-form .field { flex-direction: row; align-items: center; min-height: 0; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-/* 라벨+배지를 한 덩어리(왼쪽)로 → 입력칸은 항상 오른쪽 같은 위치(배지 유무와 무관하게 열 정렬 유지) */
-#sub-build #stat-form .field .field-head { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
+/* 스탯 이름 오른쪽에 i 정보 버튼(호버 툴팁) — 라벨은 입력칸과 수직 중앙 유지 */
+#sub-build #stat-form .field .field-head { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 5px; }
 #sub-build #stat-form .field label { font-size: 13px; line-height: 1.2; }
 #sub-build #stat-form .field .input-wrap { flex: 0 0 auto; }
-#sub-build #stat-form .field input { width: 84px; padding: 6px 8px; font-size: 13px; text-align: right; }
+#sub-build #stat-form .field input { width: 108px; padding: 6px 8px; font-size: 13px; text-align: right; }
 #sub-build #stat-form .field .unit { min-width: 10px; margin-left: 4px; }
-#sub-build #stat-form .dmgx-badge { font-size: 10px; margin: 0; padding: 0 5px; }
+/* i 정보 버튼: 기존 .buff-info와 동일 디자인(ⓘ 글리프·보더리스·muted→accent) + 호버 data-tip 툴팁 */
+.qual-info {
+  flex: 0 0 auto; position: relative; padding: 0; outline: none;
+  background: none; border: none; color: var(--muted); font-size: 14px; line-height: 1; cursor: help;
+}
+.qual-info:hover, .qual-info:focus { color: var(--accent); }
+.qual-info:hover::after, .qual-info:focus-visible::after {
+  content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px);
+  transform: translateX(-50%); white-space: nowrap; z-index: 30; pointer-events: none;
+  background: #20242d; color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12px; font-weight: 400; font-style: normal;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
 /* 소분류(그룹 헤더) 숨김 — 스탯창 순서 그대로 평평하게(스탯 전부 한 그룹이라 무의미) */
 #sub-build #stat-form .group-title { display: none; }
 #sub-build #stat-form .group { margin-bottom: 0; }

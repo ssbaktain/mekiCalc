@@ -685,7 +685,7 @@ function renderForm() {
       field.dataset.statId = d.id;
       field.innerHTML =
         `<div class="field-head"><label for="f_${d.id}">${d.name}</label>` +
-        `<span class="dmgx-badge" hidden>딜 미환산</span></div>` +
+        `<button type="button" class="qual-info" hidden aria-label="데미지 미환산 스탯" data-tip="데미지 미환산 스탯">ⓘ</button></div>` +
         `<div class="input-wrap"><input type="number" id="f_${d.id}" data-stat-id="${d.id}" value="0" step="any" />` +
         `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>`;
       grid.appendChild(field);
@@ -762,11 +762,11 @@ function deriveStatProp() {
   setStatValue(out, mainStat / 100 + num("SUB_STAT_FLAT") * 0.0025 + defEffMain / 100, "PCT");   // 표시는 버림, 계산은 풀값
 }
 
-// 현재 qualSet에 맞춰 각 필드의 '딜 미환산' 배지 표시/숨김.
+// 현재 qualSet에 맞춰 각 필드의 '데미지 미환산' i 정보 버튼 표시/숨김.
 function applyQualMarkers() {
   for (const field of $("stat-form").querySelectorAll(".field")) {
-    const badge = field.querySelector(".dmgx-badge");
-    if (badge) badge.hidden = !qualSet.has(field.dataset.statId);
+    const info = field.querySelector(".qual-info");
+    if (info) info.hidden = !qualSet.has(field.dataset.statId);
   }
 }
 
