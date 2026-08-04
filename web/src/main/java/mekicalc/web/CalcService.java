@@ -822,6 +822,7 @@ public final class CalcService {
         out.put("cycleDps", safe(cyc[2] * f));
         out.put("detail", scaleMap(cd.detail(b, boss), f));   // 항목별 DPS(방어배수 반영)
         out.put("statsView", cd.statsView(b, boss));   // 동료 유효 스탯(자체버프 반영 확인용 — 방어배수 미적용)
+        out.put("playerGift", cd.playerGift(b, boss).get("buffs"));   // 동료가 플레이어에게 주는 버프(공속버프 등, 가동률 평균)
         return out;
     }
 

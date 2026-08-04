@@ -393,6 +393,81 @@
         { "type": "passive", "lvl": 2, "raw": "쌍권총 크루 소환 시 4초마다 적 3명 1000% 피해 3회", "proc": {"on":"period","period":4,"deal":{"coeff":1000,"hits":3,"targets":3},"cond":"쌍권총 크루 소환 중"} },
         { "type": "passive", "lvl": 3, "raw": "동료+플레이어 스킬 데미지 15% 증가", "buffs": [ {"stat":"SKILL_DMG","value":15,"target":"both","used":true} ] }
       ]}
+    }},
+
+    { "id": "nightWalker", "name": "나이트워커", "_src": "시그너스 신규 동료(도적), 클뜯 SkillTable+로컬라이징 복호화 2026-08-05. 평타(x10 스킬)는 gradeBasicAttack 전역처리. StarDust 폭발 추가피해는 raw 명시(계수 소환체라 deal 미반영).", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 크리티컬 저항 15% 증가, 최대 HP 10% 보호막", "buffs": [ {"stat":"CRIT_RESIST","value":15,"target":"player","dur":10,"used":false,"note":"크리저항"}, {"stat":"SHIELD","value":10,"target":"player","dur":10,"used":false} ] },
+        { "type": "passive", "raw": "공격 시 30% 확률 20% 추가 피해, 3초간 적 공격력 15% 감소", "proc": {"on":"companionAttack","chance":30,"deal":{"coeff":20,"hits":1,"targets":1},"debuff":{"stat":"ENEMY_ATK","value":-15,"target":"enemy","dur":3,"used":false}} }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 크리티컬 저항 15% 증가, 최대 HP 15% 보호막", "buffs": [ {"stat":"CRIT_RESIST","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":15,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 14, "raw": "관통 표창 전방 7명 160% 피해 + 잔상 폭발 7명 240% 피해, 1초 기절", "deal": {"coeff":160,"hits":1,"targets":7}, "finisher": {"coeff":240,"hits":1,"targets":7,"note":"잔상 폭발(별도 스킬 813221, MaxTargetCount 7, 관통계수×1.5)"}, "cc":"기절1초" },
+        { "type": "passive", "raw": "공격 시 30% 확률 50% 추가 피해, 3초간 적 공격력 20% 감소", "proc": {"on":"companionAttack","chance":30,"deal":{"coeff":50,"hits":1,"targets":1},"debuff":{"stat":"ENEMY_ATK","value":-20,"target":"enemy","dur":3,"used":false}} },
+        { "type": "passive", "lvl": 3, "cd": 1, "raw": "공격 시 50% 확률 60% 추가 피해 + 플레이어 HP 회복(쿨 1초)", "proc": {"on":"companionAttack","chance":50,"cd":1,"deal":{"coeff":60,"hits":1,"targets":1}} }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 크리티컬 저항 15% 증가, 최대 HP 20% 보호막", "buffs": [ {"stat":"CRIT_RESIST","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":20,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 14, "raw": "관통 표창 전방 7명 360% 피해 + 잔상 폭발 7명 540% 피해, 1초 기절", "deal": {"coeff":360,"hits":1,"targets":7}, "finisher": {"coeff":540,"hits":1,"targets":7,"note":"잔상 폭발(별도 스킬 813321, MaxTargetCount 7, 관통계수×1.5)"}, "cc":"기절1초" },
+        { "type": "active", "cd": 21, "raw": "8초간 플레이어 공격력 40% 증가, 받는 피해 15% 감소", "buffs": [ {"stat":"ATK_PCT","value":40,"target":"player","dur":8,"used":true}, {"stat":"PLAYER_RECV_DMG","value":-15,"target":"player","dur":8,"used":false,"note":"받는피해감소"} ] },
+        { "type": "passive", "raw": "공격 시 30% 확률 150% 추가 피해, 3초간 적 공격력 25% 감소", "proc": {"on":"companionAttack","chance":30,"deal":{"coeff":150,"hits":1,"targets":1},"debuff":{"stat":"ENEMY_ATK","value":-25,"target":"enemy","dur":3,"used":false}} },
+        { "type": "passive", "lvl": 2, "cd": 1, "raw": "공격 시 50% 확률 180% 추가 피해 + 플레이어 HP 회복(쿨 1초)", "proc": {"on":"companionAttack","chance":50,"cd":1,"deal":{"coeff":180,"hits":1,"targets":1}} },
+        { "type": "passive", "lvl": 3, "raw": "동료 스킬 발동 시 2초간 공격 속도 5% 증가(최대 5중첩)", "proc": {"on":"companionSkill","buff":{"stat":"ATK_SPEED","value":5,"target":"player","dur":2,"maxStacks":5,"used":true,"note":"동료 스킬 발동당 +1중첩(최대5), 2초 지속. 평균중첩=min(5, 스킬발동빈도×2)"}} },
+        { "type": "passive", "lvl": 5, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 8, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 10, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "dur": 10, "raw": "10초간 크리티컬 저항 15% 증가, 최대 HP 25% 보호막", "buffs": [ {"stat":"CRIT_RESIST","value":15,"target":"player","dur":10,"used":false}, {"stat":"SHIELD","value":25,"target":"player","dur":10,"used":false} ] },
+        { "type": "active", "cd": 14, "raw": "관통 표창 전방 7명 1400% 피해 + 잔상 폭발 7명 2100% 피해, 1초 기절", "deal": {"coeff":1400,"hits":1,"targets":7}, "finisher": {"coeff":2100,"hits":1,"targets":7,"note":"잔상 폭발(별도 스킬 813421, MaxTargetCount 7, 관통계수×1.5)"}, "cc":"기절1초" },
+        { "type": "active", "cd": 21, "raw": "8초간 플레이어 공격력 40% 증가, 받는 피해 15% 감소", "buffs": [ {"stat":"ATK_PCT","value":40,"target":"player","dur":8,"used":true}, {"stat":"PLAYER_RECV_DMG","value":-15,"target":"player","dur":8,"used":false,"note":"받는피해감소"} ] },
+        { "type": "active", "cd": 23, "lvl": 4, "raw": "15초간 플레이어 최종 데미지 10% 증가", "buffs": [ {"stat":"FINAL_DMG","value":10,"target":"player","dur":15,"used":true} ] },
+        { "type": "passive", "raw": "공격 시 30% 확률 500% 추가 피해, 3초간 적 공격력 30% 감소", "proc": {"on":"companionAttack","chance":30,"deal":{"coeff":500,"hits":1,"targets":1},"debuff":{"stat":"ENEMY_ATK","value":-30,"target":"enemy","dur":3,"used":false}} },
+        { "type": "passive", "lvl": 1, "cd": 1, "raw": "공격 시 50% 확률 600% 추가 피해 + 플레이어 HP 회복(쿨 1초)", "proc": {"on":"companionAttack","chance":50,"cd":1,"deal":{"coeff":600,"hits":1,"targets":1}} },
+        { "type": "passive", "lvl": 2, "raw": "동료 스킬 발동 시 2초간 공격 속도 5% 증가(최대 5중첩)", "proc": {"on":"companionSkill","buff":{"stat":"ATK_SPEED","value":5,"target":"player","dur":2,"maxStacks":5,"used":true,"note":"동료 스킬 발동당 +1중첩(최대5), 2초 지속. 평균중첩=min(5, 스킬발동빈도×2)"}} },
+        { "type": "passive", "lvl": 3, "raw": "공격 시 30% 확률 800% 추가 피해, 적 5초간 HP 회복력 20% 감소", "proc": {"on":"companionAttack","chance":30,"deal":{"coeff":800,"hits":1,"targets":1},"debuff":{"stat":"HP_REGEN","value":-20,"target":"enemy","dur":5,"used":false,"note":"적 HP회복력 감소(플레이어 딜 무관)"}} },
+        { "type": "passive", "lvl": 5, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 8, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 10, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] }
+      ]}
+    }},
+
+    { "id": "windBreaker", "name": "윈드브레이커", "_src": "시그너스 신규 동료(궁수), 2026-08-05. 평타(x10)는 gradeBasicAttack 전역. [정령의 기운] 계수 클라확정(기본 RARE13/EPIC30/UNIQUE80/LEG310%, 개수15, 강화 50%확률2배→기대×1.5). 스킬발동당 재생성분(EPIC1/UNIQUE2/LEG3개)을 on:companionSkill proc딜로 반영(도트1틱 즉발 근사). enter 15개 초기버스트·보스전 거대화살 추가정령은 미반영(보수적).", "grades": {
+      "RARE": { "skills": [
+        { "type": "summon", "raw": "정령의 기운 15개 생성(각 13% 추가 피해, 50% 확률 2배 강화)", "deal": {"coeff":19.5,"hits":15}, "note": "소환 시 정령 15개×기본13%×강화기대1.5(50%확률2배). 소환창 시간평균(dealPerCast/W)" },
+        { "type": "passive", "raw": "동료+플레이어 공격력 8% 증가", "buffs": [ {"stat":"ATK_PCT","value":8,"target":"both","used":true} ] }
+      ]},
+      "EPIC": { "skills": [
+        { "type": "summon", "raw": "정령의 기운 15개 생성(각 30% 추가 피해, 50% 확률 2배 강화)", "deal": {"coeff":45,"hits":15}, "note": "소환 시 정령 15개×기본30%×강화기대1.5(50%확률2배). 소환창 시간평균(dealPerCast/W)" },
+        { "type": "active", "cd": 19, "raw": "회전 화살 전방 8명 180% 피해 2회, 1.2초 기절", "deal": {"coeff":180,"hits":2,"targets":8}, "cc":"기절1.2초" },
+        { "type": "passive", "raw": "동료+플레이어 공격력 12% 증가", "buffs": [ {"stat":"ATK_PCT","value":12,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 3, "cd": 2, "raw": "스킬 발동 시 정령의 기운 1개 생성(2초 쿨)", "proc": { "on": "companionSkill", "chance": 100, "deal": {"coeff":45,"hits":1}, "note": "정령 1개×기본30%×강화기대1.5(50%확률2배). 스킬발동당(2초 쿨) 생성, 도트1틱 즉발 근사" } }
+      ]},
+      "UNIQUE": { "skills": [
+        { "type": "summon", "raw": "정령의 기운 15개 생성(각 80% 추가 피해, 50% 확률 2배 강화)", "deal": {"coeff":120,"hits":15}, "note": "소환 시 정령 15개×기본80%×강화기대1.5(50%확률2배). 소환창 시간평균(dealPerCast/W)" },
+        { "type": "active", "cd": 19, "raw": "회전 화살 전방 8명 600% 피해 2회, 1.2초 기절", "deal": {"coeff":600,"hits":2,"targets":8}, "cc":"기절1.2초" },
+        { "type": "active", "cd": 18, "raw": "대상 화살 2연타 390% + 840% 피해, 8초간 받는 피해 25% 증가", "deal": {"coeff":390,"hits":1,"targets":1}, "finisher": {"coeff":840,"hits":1,"targets":1}, "debuffs": [ {"stat":"RECV_DMG","value":25,"target":"enemy","dur":8,"used":true,"note":"약점"} ] },
+        { "type": "passive", "raw": "동료+플레이어 공격력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 2, "cd": 2, "raw": "스킬 발동 시 정령의 기운 2개 생성(2초 쿨)", "proc": { "on": "companionSkill", "chance": 100, "deal": {"coeff":120,"hits":2}, "note": "정령 2개×기본80%×강화기대1.5(50%확률2배). 스킬발동당(2초 쿨) 생성, 도트1틱 즉발 근사" } },
+        { "type": "passive", "lvl": 3, "raw": "동료 최종 데미지 15% 증가, 챕터 보스 전투 시 플레이어 최종 데미지 5% 증가", "buffs": [ {"stat":"FINAL_DMG","value":15,"target":"companion","used":true}, {"stat":"FINAL_DMG","value":5,"target":"player","bossOnly":true,"used":true,"note":"챕터보스"} ] },
+        { "type": "passive", "lvl": 5, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 8, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 10, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] }
+      ]},
+      "LEGENDARY": { "skills": [
+        { "type": "summon", "raw": "정령의 기운 15개 생성(각 310% 추가 피해, 50% 확률 2배 강화)", "deal": {"coeff":465,"hits":15}, "note": "소환 시 정령 15개×기본310%×강화기대1.5(50%확률2배). 소환창 시간평균(dealPerCast/W)" },
+        { "type": "active", "cd": 19, "raw": "회전 화살 전방 8명 2300% 피해 2회, 1.2초 기절", "deal": {"coeff":2300,"hits":2,"targets":8}, "cc":"기절1.2초" },
+        { "type": "active", "cd": 18, "raw": "대상 화살 2연타 1550% + 3450% 피해, 8초간 받는 피해 25% 증가", "deal": {"coeff":1550,"hits":1,"targets":1}, "finisher": {"coeff":3450,"hits":1,"targets":1}, "debuffs": [ {"stat":"RECV_DMG","value":25,"target":"enemy","dur":8,"used":true,"note":"약점"} ] },
+        { "type": "active", "cd": 25, "lvl": 4, "raw": "화살 13회 발사, 전방 4명 각 780% 피해(공속 비례 발사속도). [챕터보스] 발사마다 정령의 기운 2개 생성", "deal": {"coeff":780,"hits":13,"targets":4}, "finisher": {"coeff":465,"hits":26,"bossOnly":true,"note":"[챕터보스] 정령 26개(13발×2)×기본310%×강화기대1.5"}, "note": "화살13회 딜 + 보스전 정령 26개 반영(bossOnly)" },
+        { "type": "passive", "raw": "동료+플레이어 공격력 15% 증가", "buffs": [ {"stat":"ATK_PCT","value":15,"target":"both","used":true} ] },
+        { "type": "passive", "lvl": 1, "cd": 2, "raw": "스킬 발동 시 정령의 기운 3개 생성(2초 쿨)", "proc": { "on": "companionSkill", "chance": 100, "deal": {"coeff":465,"hits":3}, "note": "정령 3개×기본310%×강화기대1.5(50%확률2배). 스킬발동당(2초 쿨) 생성, 도트1틱 즉발 근사" } },
+        { "type": "passive", "lvl": 2, "raw": "동료 최종 데미지 15% 증가, 챕터 보스 전투 시 플레이어 최종 데미지 5% 증가", "buffs": [ {"stat":"FINAL_DMG","value":15,"target":"companion","used":true}, {"stat":"FINAL_DMG","value":5,"target":"player","bossOnly":true,"used":true,"note":"챕터보스"} ] },
+        { "type": "passive", "lvl": 3, "cd": 0.5, "raw": "공격 시 35% 확률 거대 화살 전방 5명 750% 피해. [챕터보스] 거대화살마다 정령의 기운 2개 생성", "proc": {"on":"companionAttack","chance":35,"cd":0.5,"deal":{"coeff":750,"hits":1,"targets":5}}, "note": "거대화살 딜 반영. 보스전 정령 2개는 아래 별도 엔트리로 반영" },
+        { "type": "passive", "lvl": 3, "cd": 0.5, "raw": "[챕터보스] 거대 화살 발사마다 정령의 기운 2개 생성", "proc": {"on":"companionAttack","chance":35,"cd":0.5,"bossOnly":true,"deal":{"coeff":465,"hits":2}}, "note": "거대화살 proc(35%,cd0.5)당 정령 2개×기본310%×강화기대1.5, 보스전만" },
+        { "type": "passive", "lvl": 5, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 8, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] },
+        { "type": "passive", "lvl": 10, "raw": "동료 최종 데미지 25% 증가", "buffs": [ {"stat":"FINAL_DMG","value":25,"target":"companion","used":true} ] }
+      ]}
     }}
   ]
 }
