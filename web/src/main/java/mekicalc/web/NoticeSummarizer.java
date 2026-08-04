@@ -216,6 +216,7 @@ public final class NoticeSummarizer {
                 && d.issues == null && d.eventMeta == null && d.mailRewards == null)) {
             throw new IOException("구조화 추출 결과가 비어 있습니다.");
         }
+        demoteWrongIssue(d, boardType);   // '확인 중인 현상'이 아닌 게시판인데 issue로 오분류되면 일반 안내로 강등(프롬프트 비결정성 보완)
         stripBoilerplate(d);   // 상투 안내(점검·이벤트 규약·표준 수령 등) 결정론적 제거(프롬프트 비결정성 보완)
         fixLongItemTexts(d);   // Tier 2: 40자 초과 item.text만 재압축(sections 한정, 쿠폰/우편 제외)
         return d;
@@ -243,6 +244,42 @@ public final class NoticeSummarizer {
         java.util.regex.Pattern.compile("고객센터|1:1\\s*문의|문의\\s*(하|주|부탁)"),
         java.util.regex.Pattern.compile("이용에\\s*참고|참고\\s*(부탁|바랍)"),
     };
+
+    /**
+     * 'issue'(확인 중인 현상)는 '확인 중인 현상' 게시판 전용 유형이다. 다른 게시판(공지사항·패치노트·이벤트) 글이
+     * issue로 잘못 분류되면 렌더러가 "⚠️ 확인 중인 현상 안내" + 🔴확인중/✅수정완료 템플릿을 붙여 오해를 준다
+     * (예: '월드 아레나 제재 완료 안내'가 '확인 중인 현상'으로 보임). 이 경우 issues 데이터를 일반 안내(info 섹션)로
+     * 옮기고 notice_type을 etc로 강등한다 → 헤더가 "📋 {제목}"이 되고 본문은 그대로 보존. 쿠폰·우편 보상은 손대지 않는다.
+     */
+    static void demoteWrongIssue(NoticeData d, String boardType) {
+        if (d == null || !"issue".equals(d.noticeType)) return;
+        if ("확인 중인 현상".equals(boardType)) return;   // 정상: 확인 중인 현상 게시판 글
+        if (d.issues != null) {
+            NoticeData.Section info = null;
+            for (NoticeData.Section s : d.sections) if ("info".equals(s.key)) { info = s; break; }
+            if (info == null) {
+                info = new NoticeData.Section();
+                info.key = "info"; info.heading = "안내";
+                d.sections.add(info);
+            }
+            for (NoticeData.OpenIssue o : d.issues.open) {
+                if (o.text == null) continue;
+                NoticeData.Item it = new NoticeData.Item();
+                it.text = o.text;
+                if (o.workaround != null) it.sub.add(o.workaround);
+                info.items.add(it);
+            }
+            for (NoticeData.FixedIssue f : d.issues.fixed) {
+                if (f.text == null) continue;
+                NoticeData.Item it = new NoticeData.Item();
+                it.text = f.fixedDate != null ? f.text + " (" + f.fixedDate + ")" : f.text;
+                info.items.add(it);
+            }
+            if (info.items.isEmpty()) d.sections.remove(info);
+            d.issues = null;
+        }
+        d.noticeType = "etc";
+    }
 
     static boolean isBoilerplate(String t) {
         if (t == null) return false;
@@ -336,7 +373,10 @@ public final class NoticeSummarizer {
                 + "6. 같은 대상이 반복되면 합친다. (예: 신규 직업 A,B + 신규 동료 A,B → \"직업/동료: A, B\")\n"
                 + "7. 본문에 없는 내용을 추측해서 넣지 않는다. 해당 없는 필드는 null 또는 빈 배열.\n"
                 + "8. 날짜는 \"M/D(요일)\" 형식으로 통일한다.\n"
-                + "9. notice_type 판단: 게시판 유형을 우선하되, 제목·본문과 명백히 어긋나면 본문 기준으로 정정한다. '오류'가 아니라 반드시 'issue'(확인 중인 현상). 공지사항 게시판의 운영방향/사과/디렉터 글은 devnote.\n"
+                + "9. notice_type 판단: 게시판 유형을 신뢰한다. 특히 issue(확인 중인 현상)는 게시판 유형이 '확인 중인 현상'일 때만 쓴다. "
+                + "공지사항·패치노트·이벤트 게시판의 글은 버그·오류·제재·조치·보상 지급 내용을 담고 있어도 issue로 분류하지 마라 — '확인 중인 현상'은 넥슨 전용 게시판이자 '조사 중인 알려진 문제' 개념이라, 다른 게시판 글(예: 제재 완료 안내, 보상 지급 안내)에 이 유형을 붙이면 완전히 틀린 안내가 된다. "
+                + "그런 글은 성격에 따라 분류한다: 밸런스/버그 수정 위주면 patchnote, 이벤트면 event, 운영방향/사과/디렉터 글은 devnote, 제재·보상 지급·서버·점검·계정 등 일반 안내는 etc. "
+                + "게시판이 '확인 중인 현상'인데 본문이 명백히 다른 유형(예: 순수 이벤트)일 때만 예외적으로 정정한다.\n"
                 + "10. [중요] 각 공지에 관례적으로 붙는, 그 공지 '고유 정보'가 아닌 일반 안내·면책·메타 문구는 추출하지 마라(무시). 유형별 예: \n"
                 + "  - 점검/패치: '지연/순단 현상 발생 가능', '데이터 다운로드 진행/필요', 'Wi-Fi 이용 권장', '게임 접속/이용 지연', '게임 완전 종료 후 재실행', '패치 일정은 변경될 수 있음'.\n"
                 + "  - 이벤트: '이벤트 규약 참조', '이벤트 유의사항', '내용은 사전 안내 없이 변경/종료될 수 있음', '기간·보상은 변동될 수 있음'. "

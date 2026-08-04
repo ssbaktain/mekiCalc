@@ -238,6 +238,30 @@ public final class NoticeCrawler {
         outbox.enqueue(buildNoticeMessage(n), "notice:" + n.threadId);
     }
 
+    /**
+     * [dev 검증용] 저장된 공지 1건을 넥슨에서 다시 가져와 <b>재요약</b>한 뒤 카톡 렌더 결과를 반환한다(저장·발송 안 함).
+     * notice_type 오분류 등을 실제 파이프라인으로 확인하는 용도. 반환: {ok, category, noticeType, message}.
+     */
+    public Map<String, Object> previewNotice(String threadId) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        NoticeStore.Notice n = store.get(threadId);
+        if (n == null) { out.put("ok", false); out.put("reason", "저장에 없는 threadId: " + threadId); return out; }
+        try {
+            Map<String, Object> detail = getJson(String.format(THREAD_URL, threadId));
+            String text = htmlToText(str(detail, "content"));
+            if (text.isBlank()) text = n.title;
+            NoticeData d = summarizer.extractStructured(n.category, n.title, text, n.sourceUrl);
+            out.put("ok", true);
+            out.put("category", n.category);
+            out.put("noticeType", d.noticeType);
+            out.put("message", NoticeKakaoRenderer.render(d, n.sourceUrl));
+        } catch (Exception e) {
+            out.put("ok", false);
+            out.put("reason", String.valueOf(e.getMessage()));
+        }
+        return out;
+    }
+
     /** 신규 공지 발신 메시지 본문. 구조화 데이터가 있으면 카톡 렌더러(§5), 없으면 레거시 폴백. 실제 배달·시뮬 공용. */
     private String buildNoticeMessage(NoticeStore.Notice n) {
         if (n.data != null) return NoticeKakaoRenderer.render(n.data, n.sourceUrl);

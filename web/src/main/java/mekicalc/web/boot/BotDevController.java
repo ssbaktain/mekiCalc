@@ -4,6 +4,7 @@ import mekicalc.web.BotOutbox;
 import mekicalc.web.NoticeCrawler;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -41,5 +42,11 @@ public class BotDevController {
     @GetMapping("/api/bot/simulate-remind")
     public Object simulateRemind() {
         return crawler.simulateReminder();
+    }
+
+    /** [테스트] 저장된 공지를 다시 가져와 재요약 후 카톡 렌더 결과 미리보기(저장·발송 안 함). notice_type 오분류 확인용. */
+    @GetMapping("/api/bot/preview-notice")
+    public Object previewNotice(@RequestParam String thread) {
+        return crawler.previewNotice(thread);
     }
 }
