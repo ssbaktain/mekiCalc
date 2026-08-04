@@ -19,6 +19,7 @@ const CACHE_DMG   = "mekicalc.cache.damage.v1";
 const CACHE_TGTFACTOR = "mekicalc.cache.tgtfactor.v1";   // 직전 방어배수({tgt,factor}) — 즉시 페인트 시 신선값과 일치시켜 애니메이션 1회 유지
 const CACHE_SKILLS = "mekicalc.cache.skills.v1";   // 스킬 탭 목록(즉시 페인트용, 직업별)
 const CACHE_COMPANIONS = "mekicalc.cache.companions.v1";   // 동료 목록(정적, 즉시 표시용)
+const CACHE_COMPANION_META = "mekicalc.cache.companionMeta.v1";   // 동료 계승 상수(등급별 레벨별 계승비율 등, 정적)
 
 let statDefs = [];
 let meta = { parts: [], grades: [], gradeKo: {} };
@@ -43,6 +44,7 @@ let buffDirty = false;
 let allyPresets = loadJSON(ALLYP_KEY, null);
 let allyDirty = false;
 let companions = loadJSON(CACHE_COMPANIONS, []);
+let companionMeta = loadJSON(CACHE_COMPANION_META, {});   // {inheritByLevel, gradeLevelCap, compareLevel}
 // 유물: 작업 상태 myRelic=[{id,awaken,on}], 프리셋 relicPresets. 카탈로그=목록+슬롯임계(bootstrap).
 let artifactCatalog = loadJSON(CACHE_ARTIFACTS, { list: [], slotByAwakenSum: [] });
 let myRelic = normalizeRelic(loadJSON(RELIC_KEY, null));   // { awaken:{id:0~5}, equipped:[id...] }
@@ -317,8 +319,8 @@ const MENU = [
   { label: "프리셋", flat: true, divider: true, items: [   // flat: 드롭다운X·클릭 시 캐릭터 탭 진입(서브바가 세부전환). divider: 뒤에 세로 구분선
     { label: "캐릭터", panel: "presets", sub: "build", path: "/presets/build" },
     { label: "동료", panel: "presets", sub: "ally", path: "/presets/ally" },
-    { label: "유물", panel: "presets", sub: "relic", path: "/presets/relic" },
     { label: "큐브", panel: "presets", sub: "cube", path: "/presets/cube" },
+    { label: "유물", panel: "presets", sub: "relic", path: "/presets/relic" },
     { label: "설정", panel: "presets", sub: "settings", path: "/presets/settings" },
   ]},
   { label: "큐브", flat: true, items: [   // flat: 드롭다운X·클릭 시 큐브 기댓값 진입(세부전환=각 큐브 패널 상단 서브바)
@@ -2728,6 +2730,35 @@ for (const btn of document.querySelectorAll(".bv-tab")) {
 // 서브 동료·장착효과는 이미 스탯에 포함 → 메인 동료(동료/등급/레벨/공격력 계승비율)만 입력. 계산 연동은 동료 데이터 오면.
 function companionById(id) { return companions.find((c) => c.id === id) || null; }
 
+// 공격력 계승비율(%) 자동 산출: 등급별 레벨별 표(inheritByLevel) + 플레이어 compareLevel 보정.
+// 동료 레벨을 입력하면 계승비율이 자동으로 따라간다(수동입력 폐지). 클라 추출·검증: 섀도어 레전 L4=72%.
+function inheritRatioAuto(grade, level, playerLevel) {
+  const arr = ((companionMeta && companionMeta.inheritByLevel) || {})[grade];
+  if (!arr || !arr.length) return 0;
+  const cap = arr.length;
+  const lv = Math.max(1, Math.min(parseInt(level, 10) || 1, cap));
+  let r = arr[lv - 1];
+  const cl = ((companionMeta && companionMeta.compareLevel) || {})[grade];   // 플레이어가 미달이면 감산(EPIC/UNIQUE/LEGENDARY)
+  const pl = parseInt(playerLevel, 10) || 0;
+  if (cl && pl > 0 && pl < cl) r = (r * pl) / cl;
+  return Math.round(r * 100) / 100;
+}
+// 현재 캐릭터 레벨(계승 compareLevel 보정용).
+function currentCharLevel() { return parseInt((collectStats() || {}).LEVEL, 10) || 0; }
+// 동료 등급 만렙(gradeLevelCap) — 레벨 입력 상한.
+function companionLevelCap(grade) { return ((companionMeta && companionMeta.gradeLevelCap) || {})[grade] || 0; }
+// 동료 레벨 입력칸 상한·클램프 갱신.
+function updateAllyLevelCap() {
+  const el = $("al-level"); if (!el) return;
+  const cap = companionLevelCap($("al-grade").value);
+  if (cap > 0) { el.max = cap; if ((parseInt(el.value, 10) || 1) > cap) el.value = cap; }
+}
+// 계승비율 입력칸(읽기전용)에 자동값 표시.
+function updateAllyRatio() {
+  const el = $("al-ratio"); if (!el) return;
+  el.value = inheritRatioAuto($("al-grade").value, $("al-level").value, currentCharLevel());
+}
+
 function initAllyPresets() {
   if (!allyPresets) allyPresets = { active: "기본", presets: { "기본": {} } };
   saveJSON(ALLYP_KEY, allyPresets);
@@ -2748,17 +2779,19 @@ function renderAlly() {
     '<label class="ctl">동료<select id="al-companion"></select></label>' +
     '<label class="ctl">등급<select id="al-grade"></select></label>' +
     '<label class="ctl">레벨<input id="al-level" type="number" min="1" step="1"></label>' +
-    '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" min="0" step="any"></label>' +
+    '<label class="ctl">공격력 계승 비율(%)<input id="al-ratio" type="number" readonly tabindex="-1" title="동료 등급·레벨로 자동 계산됩니다"></label>' +
     '</div>';
   const csel = $("al-companion");
   for (const c of companions) csel.add(new Option(c.name || c.id, c.id));
   csel.value = p.companionId || companions[0].id;
   fillAllyGrades(csel.value, p.grade);
   $("al-level").value = p.level != null ? p.level : 1;
-  $("al-ratio").value = p.ratio != null ? p.ratio : 0;
+  updateAllyLevelCap();
+  updateAllyRatio();   // 계승비율은 등급·레벨로 자동(읽기전용)
   // 동료 딜은 홈 예상 데미지에서 확인. 여기선 입력만 받고, 바뀌면 홈을 갱신.
-  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); allyDirty = true; calcDamage(); });
-  for (const id of ["al-grade", "al-level", "al-ratio"]) $(id).addEventListener("change", () => { allyDirty = true; calcDamage(); });
+  csel.addEventListener("change", () => { fillAllyGrades(csel.value, null); updateAllyLevelCap(); updateAllyRatio(); allyDirty = true; calcDamage(); });
+  $("al-grade").addEventListener("change", () => { updateAllyLevelCap(); updateAllyRatio(); allyDirty = true; calcDamage(); });
+  $("al-level").addEventListener("input", () => { updateAllyRatio(); allyDirty = true; calcDamage(); });
 }
 
 // 큰 수 → 조/억 표기.
@@ -2782,11 +2815,13 @@ function fillAllyGrades(companionId, selected) {
 
 function collectAlly() {
   if (!$("al-companion")) return {};
+  const grade = $("al-grade").value;
+  const level = parseInt($("al-level").value, 10) || 1;
   return {
     companionId: $("al-companion").value,
-    grade: $("al-grade").value,
-    level: parseInt($("al-level").value, 10) || 1,
-    ratio: parseFloat($("al-ratio").value) || 0,
+    grade: grade,
+    level: level,
+    ratio: inheritRatioAuto(grade, level, currentCharLevel()),   // 등급·레벨로 자동
   };
 }
 
@@ -2795,7 +2830,9 @@ function activeCompanionSel() {
   const live = (currentSub === "ally") ? collectAlly() : null;
   const p = (live && live.companionId) ? live : (allyPresets && allyPresets.presets[allyPresets.active]) || {};
   if (!p.companionId) return {};
-  return { companionId: p.companionId, grade: p.grade, level: p.level != null ? p.level : 1, ratio: p.ratio != null ? p.ratio : 0 };
+  const level = p.level != null ? p.level : 1;
+  // 계승비율은 항상 등급·레벨로 자동 산출(저장된 옛 수동 ratio는 무시 → 레벨이 단일 소스).
+  return { companionId: p.companionId, grade: p.grade, level: level, ratio: inheritRatioAuto(p.grade, level, currentCharLevel()) };
 }
 
 // 활성 동료 이름(없으면 ""). 예: "캡틴".
@@ -2825,16 +2862,6 @@ function apApply(name) {
   recalcActivePanel();   // 동료 프리셋 바뀌면 홈 예상 데미지·보이는 계산 즉시 갱신(예전엔 새로고침해야 반영됐음)
 }
 
-// 저장 시 (캐릭터 레벨·동료·등급·동료 레벨·계승 비율)을 서버에 수집 → 추후 비율 공식화. 비율 0이면 생략.
-function collectAllyRatio(data) {
-  if (!data.companionId || !data.ratio) return;
-  const charLevel = parseInt(collectStats().LEVEL, 10) || 0;
-  fetch("/api/ally-ratio", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ts: new Date().toISOString(), charLevel, companionId: data.companionId, grade: data.grade, companionLevel: data.level, ratio: data.ratio }),
-  }).catch(() => {});
-}
-
 $("ap-sel").addEventListener("change", () => {
   if (allyDirty && !confirm("저장하지 않은 동료 변경이 있습니다. 버리고 전환할까요?")) { $("ap-sel").value = allyPresets.active; return; }
   allyPresets.active = $("ap-sel").value; saveJSON(ALLYP_KEY, allyPresets); apApply(allyPresets.active);
@@ -2844,7 +2871,6 @@ $("ap-save").addEventListener("click", () => {
   allyPresets.presets[allyPresets.active] = data;
   saveJSON(ALLYP_KEY, allyPresets); allyDirty = false;
   toast(`'${allyPresets.active}' 동료 프리셋 저장됨`);
-  collectAllyRatio(data);
 });
 $("ap-new").addEventListener("click", () => {
   const name = (prompt("새 동료 프리셋 이름") || "").trim();
@@ -3833,6 +3859,7 @@ function ntHl(s) {
     if (!painted || metaChanged) { try { await loadMeta(boot && boot.meta); } catch (e) { console.error("메타 로드 실패", e); } }
     else await renderCube();      // 메타 그대로(즉시페인트됨) → 큐브 에디터만 렌더
     if (boot && boot.companions) { companions = boot.companions; saveJSON(CACHE_COMPANIONS, companions); }   // 동료 목록(정적)
+    if (boot && boot.companionMeta) { companionMeta = boot.companionMeta; saveJSON(CACHE_COMPANION_META, companionMeta); }   // 계승 상수(정적)
     if (boot && boot.artifacts) { artifactCatalog = boot.artifacts; saveJSON(CACHE_ARTIFACTS, artifactCatalog); }   // 유물 카탈로그(정적)
     if (boot && boot.targetCatalog) { targetCatalog = boot.targetCatalog; saveJSON(CACHE_MONDEF, targetCatalog); }   // 대상 카탈로그(정적, 방어력 미포함)
     renderTargetSelector();      // 예상 데미지: 대상(스테이지/보스) 선택

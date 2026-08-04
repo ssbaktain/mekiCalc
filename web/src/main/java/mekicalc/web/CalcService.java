@@ -764,6 +764,20 @@ public final class CalcService {
     }
 
     /**
+     * 동료 계승 상수(프론트 자동계산용). 등급+동료레벨(+플레이어레벨 보정)으로 공격력 계승비율을 프론트가 산출한다.
+     * @return {inheritByLevel, gradeLevelCap, compareLevel}
+     */
+    public Map<String, Object> companionMeta() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        Map<String, Object> root = content.companionRoot;
+        for (String k : new String[]{"inheritByLevel", "gradeLevelCap", "compareLevel"}) {
+            Object v = root.get(k);
+            if (v != null) out.put(k, v);
+        }
+        return out;
+    }
+
+    /**
      * 메인 동료 DPS 기여 미리보기(Stage 1: 계승·소환 가동률·동료 평타). 계승비율은 입력값(ratio) 사용(A안).
      * @return {valid, ratioUsed, refRatio(참고), uptime, basicDps}
      */

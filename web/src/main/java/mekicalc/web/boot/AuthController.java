@@ -90,6 +90,7 @@ public class AuthController {
         out.put("meta", service.meta());
         out.put("mydata", service.myData());
         out.put("companions", service.companions());
+        out.put("companionMeta", service.companionMeta());
         out.put("artifacts", service.artifactCatalog());
         out.put("targetCatalog", service.targetCatalog());
         out.put("me", meInfo(sessionFrom(req)));
