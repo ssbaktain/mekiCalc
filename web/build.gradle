@@ -18,3 +18,6 @@ dependencies {
 application {
     mainClass = 'mekicalc.web.boot.WebApplication'
 }
+
+// 로컬 개발 bootRun: data/·public/이 루트에 있으므로 작업 디렉터리를 프로젝트 루트로(installDist 실행과 동일).
+tasks.named('bootRun') { workingDir = rootProject.projectDir }

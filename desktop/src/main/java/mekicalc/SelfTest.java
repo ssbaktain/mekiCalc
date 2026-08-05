@@ -58,6 +58,7 @@ public final class SelfTest {
         testSkillDpsModelCore();
         testSkillDps();
         testDarkKnight();
+        testHero();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -504,6 +505,28 @@ public final class SelfTest {
         checkTrue("dk.gungnir.baseMult", p134 > 0 && p134 < p133 * 0.6);
         // 총합 DPS 양수(엔진 일반화 파이프라인 동작).
         checkTrue("dk.total.pos", nd.totalDps(b, true) > 0);
+    }
+
+    /** 히어로: 콤보 스택 엔진 검증(기본공격 공용 동일, 콤보 최종뎀, 일반몹>보스 콤보 분기, 총합 양수). */
+    private static void testHero() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        SkillData sd = SkillData.load(Path.of("data"), "hero");
+        SkillDps nd = new SkillDps(g.model, new SkillDpsModel(sd));
+        StatBlock b = new StatBlock().set("LEVEL", 150).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        // 기본4차(레이징블로우)=공용 4차와 동일 974.4(보스, raw perHit는 콤보 미반영).
+        check("hero.perHit.basic4", nd.perHit(sd.skill("basic4"), b, true), 974.4);
+        // 콤보 최종뎀: 일반몹 buffed 만렙 8스택 → 최종뎀 반영(스택당 6%×8=48% 선형합 + 인레이지 등). >40 확인.
+        double fdMob = nd.buffed(b, false, false).stats.get("FINAL_DMG");
+        checkTrue("hero.combo.finalDmg", fdMob > 40);
+        // 콤보 boss 분기: 공속 낮추면 보스 콤보(공속평균)<일반몹(최대8) → 보스 최종뎀 낮음.
+        StatBlock slow = new StatBlock(b).set("ATK_SPEED", -80);   // aps 0.2 → 보스 콤보 min(8, 0.2×10)=2
+        double fdMobSlow = nd.buffed(slow, false, false).stats.get("FINAL_DMG");
+        double fdBossSlow = nd.buffed(slow, false, true).stats.get("FINAL_DMG");
+        checkTrue("hero.combo.bossLess", fdBossSlow < fdMobSlow);
+        // 총합 DPS 양수(일반몹/보스, 콤보·조건딜 파이프라인 동작).
+        checkTrue("hero.total.mob", nd.totalDps(b, false) > 0);
+        checkTrue("hero.total.boss", nd.totalDps(b, true) > 0);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {

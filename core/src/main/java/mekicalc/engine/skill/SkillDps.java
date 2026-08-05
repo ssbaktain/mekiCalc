@@ -44,6 +44,8 @@ public final class SkillDps {
     private final Set<String> activeBuffs;
     /** 피격 주기(초). 페이크 반격(피격 시 발동) 빈도·버프손실 산정용. 0이면 반격·손실 미적용. */
     private final double hitInterval;
+    /** 히어로 콤보 평균 스택(buffed에서 세팅, 조건딜 참조용 StatBlock 키). */
+    private static final String COMBO_STACK = "COMBO_STACK";
     /** 외부(동료) 스킬 공퍼% — 플레이어 스킬 공퍼 버킷(skillAtkSum)에 합산되어 한 번만 곱연산된다. 0이면 미적용. */
     private double externalAtkPct = 0;
 
@@ -120,18 +122,16 @@ public final class SkillDps {
      * 피해량 마스터리는 typeFactor에, 보스 피해량 마스터리는 G의 보스뎀%에 각각 '합산'된다(별도 곱 없음).
      */
     public double perHit(Skill s, StatBlock b, boolean boss) {
-        double coeff = SkillDpsModel.coefficient(s.num("base", 0) * baseMultFactor(s, charLevel(b)), growthOf(s), skillLevel(s, b)) / 100.0;
+        double coeff = coeffFrac(s, s.num("base", 0), b);   // 콤보보너스(히어로 플래시슬래시 콤보3↑ 50%↑) 포함
         boolean basic = s.kind.equals("basic");
         int cl = charLevel(b);
         // 피해량 마스터리는 기본공격뎀%/스킬뎀%에 합산되어 typeFactor에 이미 반영(별도 곱 아님).
         double typeFactor = typeDmgWithMastery(s, b);
-        // 보스 피해량 마스터리(평타+보스)도 별도 곱이 아니라 보스뎀%(BOSS_DMG)에 '합산'된다(실측 2026-07).
-        // → BOSS_DMG에 더한 StatBlock으로 G를 계산해 (1+(BOSS_DMG+마스터리)/100)로 반영.
+        // 보스뎀 합산(BOSS_DMG에 '합산' 후 G 계산, 실측 2026-07): 평타 보스뎀 마스터리 + 인핸스레이징블로우 bossDmgBonus(보스뎀+100%).
         StatBlock gb = b;
-        if (basic && boss) {
-            double mb = levelSum(s.raw, "masteryBossByLevel", cl);
-            if (mb != 0) { gb = new StatBlock(b); gb.set(BOSS_DMG, gb.get(BOSS_DMG) + mb); }
-        }
+        double mbAdd = (basic && boss) ? levelSum(s.raw, "masteryBossByLevel", cl) : 0;
+        if (boss) mbAdd += s.num("bossDmgBonus", 0);   // 없는 스킬은 0
+        if (mbAdd != 0) { gb = new StatBlock(b); gb.set(BOSS_DMG, gb.get(BOSS_DMG) + mbAdd); }
 
         double meyong = 1.0;
         if (s.has("meyong")) {
@@ -139,7 +139,13 @@ public final class SkillDps {
                     charLevel(b), allSkillLv(b), tierSkillLv(b, data.meyongTier()));
             meyong = 1 + bonus / 100.0;
         }
-        return dm.globalMultiplier(gb, boss) * coeff * typeFactor * meyong * finalMasteryFactor(s, b);
+        // 인핸스레이징블로우: 콤보 comboOverBase 초과 중첩당 최종뎀 +comboOverFinalByStack%
+        double comboOver = 1.0;
+        if (s.has("comboOverFinalByStack")) {
+            double over = Math.max(0, b.get(COMBO_STACK) - s.num("comboOverBase", 0));
+            comboOver = 1 + over * s.num("comboOverFinalByStack", 0) / 100.0;
+        }
+        return dm.globalMultiplier(gb, boss) * coeff * typeFactor * meyong * comboOver * finalMasteryFactor(s, b);
     }
 
     /** 그 레벨에서 기본 공격 타격 수 = hitsBase + (개방된 타격 마스터리). */
@@ -184,18 +190,21 @@ public final class SkillDps {
      * 공격력 별도 버킷(숙련된 표창술 + 다크사이트 등 스킬 공퍼)을 계산한다.
      * 상시 스탯 패시브(공격력% 제외)는 이미 입력에 포함되어 건드리지 않는다.
      */
-    public Buffed buffed(StatBlock input) { return buffed(input, false); }
-    public Buffed buffed(StatBlock input, boolean fullBuff) { return buffed(input, fullBuff, null); }
+    public Buffed buffed(StatBlock input) { return buffed(input, false, null, false); }
+    public Buffed buffed(StatBlock input, boolean fullBuff) { return buffed(input, fullBuff, null, false); }
+    /** boss 지정(히어로 콤보 스택 분기용: 일반몹 최대 / 보스 공속평균). */
+    public Buffed buffed(StatBlock input, boolean fullBuff, boolean boss) { return buffed(input, fullBuff, null, boss); }
 
     /** 시뮬 스냅샷: 시간제 버프를 가동률 평균이 아니라 '지금 켜진 것만 100%'로 적용(버프 겹침 비선형 포착). */
-    public Buffed buffedActive(StatBlock input, Set<String> active) { return buffed(input, false, active); }
+    public Buffed buffedActive(StatBlock input, Set<String> active) { return buffed(input, false, active, false); }
 
     /**
      * fullBuff=true면 모든 사용 버프를 <b>가동률 1(풀버프)</b>로 적용한다(동료 계승 기준: 풀버프 상태에서 소환).
      * active!=null이면 시뮬 스냅샷: 시간제 버프는 active에 든 것만 100%, 나머지 0%.
      * 둘 다 아니면 장기 평균(가동률 u). 페이크 반격 버프손실은 평균 모드에서만 적용.
      */
-    private Buffed buffed(StatBlock input, boolean fullBuff, Set<String> active) {
+    private Buffed buffed(StatBlock input, boolean fullBuff, Set<String> active) { return buffed(input, fullBuff, active, false); }
+    private Buffed buffed(StatBlock input, boolean fullBuff, Set<String> active, boolean boss) {
         int cl = charLevel(input);
         double atkSpeedBase = input.get(ATK_SPEED);   // 순환 방지: 가동률은 입력 공속 기준
         double buffDur = input.get(BUFF_DURATION);    // 버프 지속시간 증가% → 가동률↑
@@ -286,7 +295,10 @@ public final class SkillDps {
             if (fk != null && wantsBuff(fk, cl)) {
                 Map<String, Object> c = Json.asMap(fk.get("counter"));
                 if (c != null && cl < Json.num(c, "buffKeepMasteryOpen", Double.MAX_VALUE)) {
-                    double rate = (Json.num(c, "proc", 0) / 100.0) / hitInterval;   // 초당 반격 발동률
+                    double pf = Json.num(c, "proc", 0) / 100.0;
+                    double ccd = Json.num(c, "cd", 0);
+                    // 반격 빈도 = 1/(쿨 + 성공까지 평균대기). 쿨은 반격 성공 시점부터 돌고(성공해야 쿨 시작), 성공대기 = 피격주기/확률. cd=0이면 단순 확률/피격주기.
+                    double rate = (pf > 0 && ccd > 0) ? 1.0 / (ccd + hitInterval / pf) : pf / hitInterval;
                     double buffLost = Math.min(1.0, rate * Json.num(c, "buffLossSec", 0));
                     double fd = Json.num(fk, "finalDmg", 0) * passiveScale(fk, cl, input)
                             + levelSum(fk, "finalDmgMasteryByLevel", cl);
@@ -294,6 +306,20 @@ public final class SkillDps {
                 }
             }
         }
+        // ★히어로 콤보 스택: 공격력%(버킷 선형)+최종뎀(스택합 후 1회 곱, arcaneStack과 동형). 일반몹=최대스택 / 보스=공속기반 평균.
+        Map<String, Object> combo = data.combo();
+        if (combo != null && cl >= Json.num(combo, "open", Double.MAX_VALUE)) {
+            double maxStack = Json.num(combo, "maxStack", 0) + levelSum(combo, "maxStackPlus", cl);
+            double stack = (fullBuff || !boss) ? maxStack   // 일반몹: 자동전투 만렙 콤보 상시 유지
+                    : Math.min(maxStack, (1 + atkSpeedBase / 100.0)   // 보스: 공속×발동율×지속
+                        * (cl >= Json.num(combo, "procFullOpen", Double.MAX_VALUE) ? 1.0 : Json.num(combo, "procBase", 0) / 100.0)
+                        * Json.num(combo, "dur", 0));
+            skillAtkSum += stack * (Json.num(combo, "atkPctPerStack", 0) + levelSum(combo, "atkPctMasteryByLevel", cl));   // 콤보 공격력%
+            if (cl >= Json.num(combo, "finalDmgOpen", Double.MAX_VALUE))   // 콤보시너지(75렙): 최종뎀 = 스택×스택당(선형 합) 1회 곱
+                eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), stack * (Json.num(combo, "finalDmgPerStack", 0) + levelSum(combo, "finalDmgMasteryByLevel", cl))));
+            eff.set(COMBO_STACK, stack);   // 조건딜(플래시슬래시 콤보3↑·인핸스레이징블로우 콤보5↑)용
+        }
+
         return new Buffed(eff, 1 + (skillAtkSum + externalAtkPct) / 100.0);   // 동료 스킬 공퍼도 같은 합 버킷에 합산
     }
 
@@ -360,7 +386,7 @@ public final class SkillDps {
      * perHit는 데미지범위 평균((최소+최대)/2)을 내장 → 최소·최대는 그 비율로 환산. 최소>최대면 최소로 고정.
      */
     public double[] basicHitStats(StatBlock input, boolean boss) {
-        Buffed bf = buffed(input);
+        Buffed bf = buffed(input, false, boss);
         Skill basic = highestBasic(charLevel(bf.stats));
         if (basic == null) return new double[]{0, 0, 0};
         double avg = perHit(basic, bf, boss) * recvDmgFactor(bf.stats);   // fAvg(=평균 데미지범위) 내장
@@ -743,7 +769,14 @@ public final class SkillDps {
 
     /** 스킬 계수(스케일 반영) / 100. */
     private double coeffFrac(Skill s, double base, StatBlock eff) {
-        return SkillDpsModel.coefficient(base * baseMultFactor(s, charLevel(eff)), growthOf(s), skillLevel(s, eff)) / 100.0;
+        double c = SkillDpsModel.coefficient(base * baseMultFactor(s, charLevel(eff)), growthOf(s), skillLevel(s, eff)) / 100.0;
+        // 콤보 조건 보너스(히어로 플래시슬래시): 콤보 minStack 이상이면 피해 +dmgPct%
+        if (s.has("comboBonus")) {
+            Map<String, Object> cb = Json.asMap(s.raw.get("comboBonus"));
+            if (eff.get(COMBO_STACK) >= Json.num(cb, "minStack", 0))
+                c *= 1 + Json.num(cb, "dmgPct", 0) / 100.0;
+        }
+        return c;
     }
 
     /** 스킬 계수 상승비 = coeffGrowth 오버라이드(있으면) 아니면 kind growth. (비홀더스 리벤지 0.5 등 kind와 다른 경우.) */
@@ -796,6 +829,25 @@ public final class SkillDps {
         if (Json.bool(s.raw, "requiresSummon", false)) v *= summonUptime(eff);
         return v;
     }
+
+    /**
+     * 트라이엄프 페더 전용 게이트 = 천사의힘 가동률(U1) × 깃털 대상쿨 상한. triggerCd 없으면 1.0(다른 proc 스킬 무영향).
+     * 천사의힘: 공격 시 triggerProc%로 강림(triggerDur초 지속, triggerCd초 쿨). 강림 중에만 깃털(proc%) 발동, 동일 대상 procHitCd초 재발동 금지.
+     */
+    private double triumphGate(Skill s, StatBlock eff, double actionsPerSec) {
+        if (!s.has("triggerCd")) return 1.0;
+        double cps = 1 + eff.get(ATK_SPEED) / 100.0;
+        double tp = s.num("triggerProc", 0) / 100.0;
+        double wait = (tp > 0 && cps > 0) ? 1.0 / (tp * cps) : 0;   // 쿨 종료 후 강림 재발동 평균 대기
+        double tcd = s.num("triggerCd", 0);
+        double u1 = (tcd + wait > 0) ? s.num("triggerDur", 0) / (tcd + wait) : 1.0;   // 천사의힘 가동률
+        double procPct = (s.num("proc", 0) + levelSum(s.raw, "procMasteryByLevel", charLevel(eff))) / 100.0;
+        double freq = actionsPerSec * procPct;   // 초당 깃털 발동(상한 전)
+        double hitCd = s.num("procHitCd", 0);
+        double cap = (hitCd > 0 && freq > 0) ? Math.min(1.0, (1.0 / hitCd) / freq) : 1.0;   // 대상당 procHitCd초 1회 상한
+        return u1 * cap;
+    }
+
     public double shadowExtraPerHit(StatBlock eff, boolean boss) { return procExtraPerHit(data.skill("shadowPartner"), eff, boss); }
     public double fatalExtraPerHit(StatBlock eff, boolean boss) { return procExtraPerHit(data.skill("fatalVenom"), eff, boss); }
 
@@ -941,7 +993,7 @@ public final class SkillDps {
      * 항상 단일대상(1마리) 기준 — 대상수 곱 계산은 제거됨.
      */
     public double[] dpsBreakdown(StatBlock input, boolean boss) {
-        return dpsBreakdownWith(buffed(input), boss);
+        return dpsBreakdownWith(buffed(input, false, boss), boss);
     }
     /** 주어진 버프 스냅샷(평균/스냅)으로 [평타만, 스킬만, 전체] DPS. 시뮬은 시점별 스냅샷으로 이걸 적분. */
     public double[] dpsBreakdownWith(Buffed bf, boolean boss) {
@@ -960,6 +1012,7 @@ public final class SkillDps {
         for (Skill s : data.skills()) {
             if (!s.kind.equals("dealActive")) continue;      // 평타/패시브/마크는 별도
             if (!wants(s.id, s.open, cl)) continue;          // 미사용(체크 해제) 딜 스킬 제외. 미습득 체크 시 적용=과대
+            if (s.has("comboReq") && eff.get(COMBO_STACK) < s.num("comboReq", 0)) continue;   // 콤보 부족 시 사용 불가(인핸스레이징블로우 콤보5↑)
             double cd = cooldown(s, eff);
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;   // 소환 게이팅(비홀더 쇼크 등)
@@ -996,7 +1049,7 @@ public final class SkillDps {
         double procPerProc = 0;
         for (Skill s : data.skills()) {
             if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
-            procPerProc += procExtraPerHit(s, eff, boss);
+            procPerProc += procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec);   // 트페=천사의힘 가동률×깃털쿨상한, 그 외=1
         }
         double procDps = procActionsPerSec * procPerProc * atkF;
 
@@ -1014,7 +1067,10 @@ public final class SkillDps {
             Map<String, Object> fk = buffById("fake");
             Map<String, Object> c = (fk == null) ? null : Json.asMap(fk.get("counter"));
             if (c != null && wantsBuff(fk, cl)) {
-                double rate = (Json.num(c, "proc", 0) / 100.0) / hitInterval;
+                double pf = Json.num(c, "proc", 0) / 100.0;
+                double ccd = Json.num(c, "cd", 0);
+                // 반격 빈도 = 1/(쿨 + 성공까지 평균대기). 쿨은 반격 성공 시점부터. cd=0이면 단순 확률/피격주기.
+                double rate = (pf > 0 && ccd > 0) ? 1.0 / (ccd + hitInterval / pf) : pf / hitInterval;
                 counterDps = fakeCounterPerHit(eff, boss) * atkF * rate;
             }
         }
@@ -1031,7 +1087,7 @@ public final class SkillDps {
      * 각 항목 = {name, dps}. 모든 값에 받피증(recv) 반영.
      */
     public List<Map<String, Object>> dpsBySkill(StatBlock input, boolean boss) {
-        Map<String, Double> parts = partsWith(buffed(input), boss);
+        Map<String, Double> parts = partsWith(buffed(input, false, boss), boss);
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map.Entry<String, Double> e : parts.entrySet()) {
             if (e.getValue() <= 0) continue;
@@ -1062,6 +1118,7 @@ public final class SkillDps {
         for (Skill s : data.skills()) {
             if (!s.kind.equals("dealActive")) continue;
             if (!wants(s.id, s.open, cl)) continue;
+            if (s.has("comboReq") && eff.get(COMBO_STACK) < s.num("comboReq", 0)) continue;   // 콤보 부족 시 사용 불가(인핸스레이징블로우)
             double cd = cooldown(s, eff);
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;
@@ -1093,7 +1150,7 @@ public final class SkillDps {
         // 발동 추가타(쉐파·페이탈·파이널어택): 스킬별로 따로 표기. 미습득/미선택은 0이라 빠짐.
         for (Skill s : data.skills()) {
             if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
-            double d = procActionsPerSec * procExtraPerHit(s, eff, boss) * atkF;
+            double d = procActionsPerSec * procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec) * atkF;
             if (d > 0) parts.merge(s.name, d, Double::sum);
         }
 
@@ -1224,7 +1281,7 @@ public final class SkillDps {
             ids.add(Json.str(m, "id", ""));
             win.add(new double[]{dur, u >= 1.0 ? dur : dur / u});
         }
-        if (ids.isEmpty() && ctx == null) return partsWith(buffed(input), boss);   // 시간제 버프·컨텍스트 없으면 스냅샷 분해
+        if (ids.isEmpty() && ctx == null) return partsWith(buffed(input, false, boss), boss);   // 시간제 버프·컨텍스트 없으면 스냅샷 분해
         double T = seconds > 0 ? seconds : 90;
         int steps = Math.max(1, (int) Math.round(T / DT));
         Map<String, Double> sum = new LinkedHashMap<>();

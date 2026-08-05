@@ -36,6 +36,7 @@ public final class GameContent {
     public final SkillData skillData;      // 나이트로드
     public final SkillData skillDataDk;    // 다크나이트
     public final SkillData skillDataBishop; // 비숍
+    public final SkillData skillDataHero;  // 히어로
     /** 메인 동료 데이터(companions.json의 companions 배열, 원본 맵). 없으면 빈 목록(동료 탭 "준비 중"). */
     public final List<Map<String, Object>> companions;
     /** companions.json 전체 맵(소환쿨/유지·계승비율·등급평타 등 상수 포함). DPS 계산용. */
@@ -53,7 +54,7 @@ public final class GameContent {
 
     private GameContent(Map<String, StatDef> stats, Profile profile,
                         Map<String, Double> currency, List<StatSource> sources,
-                        EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop,
+                        EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop, SkillData skillDataHero,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
                         Map<String, Object> monsterDefense,
                         Map<String, Object> artifactRoot, List<Map<String, Object>> artifacts,
@@ -66,6 +67,7 @@ public final class GameContent {
         this.skillData = skillData;
         this.skillDataDk = skillDataDk;
         this.skillDataBishop = skillDataBishop;
+        this.skillDataHero = skillDataHero;
         this.companions = companions;
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
@@ -97,6 +99,12 @@ public final class GameContent {
         } catch (Exception e) {
             skillDataBishop = null;
         }
+        SkillData skillDataHero;
+        try {
+            skillDataHero = SkillData.load(dataDir, "hero");
+        } catch (Exception e) {
+            skillDataHero = null;
+        }
         Map<String, Object> compRoot = loadCompanionRoot(dataDir);
         List<Map<String, Object>> comps = new ArrayList<>();
         Object arr = compRoot.get("companions");
@@ -107,7 +115,7 @@ public final class GameContent {
         Object artArr = artRoot.get("artifacts");
         if (artArr != null) for (Object o : Json.asList(artArr)) arts.add(Json.asMap(o));
         Map<String, Object> gearOpts = loadJsonMap(dataDir, "gear_options.json");
-        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop,
+        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop, skillDataHero,
                 comps, compRoot, monDef, artRoot, arts, gearOpts, dataDir);
     }
 

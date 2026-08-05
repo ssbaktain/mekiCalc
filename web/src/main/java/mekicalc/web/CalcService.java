@@ -52,6 +52,7 @@ public final class CalcService {
     private static final int JOB_NIGHTLORD = 1;
     private static final int JOB_DARK_KNIGHT = 2;
     private static final int JOB_BISHOP = 3;
+    private static final int JOB_HERO = 4;
     private static final double NORMAL_SECONDS = 90;   // 일반몹(챕터 스테이지) 기준 전투시간
     private static final double BOSS_SECONDS = 70;      // 보스(챕터 보스) 기준 전투시간
 
@@ -109,6 +110,7 @@ public final class CalcService {
         if (job == JOB_NIGHTLORD) return content.skillData;
         if (job == JOB_DARK_KNIGHT) return content.skillDataDk;
         if (job == JOB_BISHOP) return content.skillDataBishop;
+        if (job == JOB_HERO) return content.skillDataHero;
         return null;
     }
 

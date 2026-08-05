@@ -48,11 +48,12 @@ public final class SkillData {
     private final List<Map<String, Object>> statPassives;
     private final int meyongTier;
     private final int meyongOpen;
+    private final Map<String, Object> combo;   // 히어로 콤보 스택(없는 직업은 null)
 
     private SkillData(Map<Integer, Integer> advanceLevels, Map<String, Double> growth,
                       List<Skill> skills, List<Map<String, Object>> buffs,
                       List<Map<String, Object>> debuffs, List<Map<String, Object>> statPassives,
-                      int meyongTier, int meyongOpen) {
+                      int meyongTier, int meyongOpen, Map<String, Object> combo) {
         this.advanceLevels = advanceLevels;
         this.growth = growth;
         this.skills = skills;
@@ -61,6 +62,7 @@ public final class SkillData {
         this.statPassives = statPassives;
         this.meyongTier = meyongTier;
         this.meyongOpen = meyongOpen;
+        this.combo = combo;
     }
 
     public Map<Integer, Integer> advanceLevels() { return advanceLevels; }
@@ -85,6 +87,8 @@ public final class SkillData {
     public List<Map<String, Object>> statPassives() { return statPassives; }
     public int meyongTier() { return meyongTier; }
     public int meyongOpen() { return meyongOpen; }
+    /** 히어로 콤보 스택 정의(없는 직업은 null). */
+    public Map<String, Object> combo() { return combo; }
 
     /** 나이트로드 스킬 데이터(하위호환). */
     public static SkillData load(Path dir) throws IOException {
@@ -112,9 +116,11 @@ public final class SkillData {
         int meyongTier = (int) Json.num(mey, "tier", 4);
         int meyongOpen = (int) Json.num(mey, "open", 100);
 
+        Map<String, Object> combo = root.containsKey("combo") ? Json.asMap(root.get("combo")) : null;
+
         return new SkillData(adv, growth, skills,
                 rawList(root.get("buffs")), rawList(root.get("debuffs")), rawList(root.get("statPassives")),
-                meyongTier, meyongOpen);
+                meyongTier, meyongOpen, combo);
     }
 
     private static List<Map<String, Object>> rawList(Object o) {

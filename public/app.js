@@ -2555,8 +2555,8 @@ $("cp-rename").addEventListener("click", () => {
 let skillData = loadJSON(CACHE_SKILLS, null);
 let skillView = "deal";   // "deal"(딜 스킬) | "buff"(버프 스킬)
 
-// DPS 모델(스킬 데이터)이 있는 직업 = 나이트로드(1)·다크나이트(2)·비숍(3). 직업 추가 시 여기만 늘리면 됨.
-function jobHasSkills(job) { return job === 1 || job === 2 || job === 3; }
+// DPS 모델(스킬 데이터)이 있는 직업 = 나이트로드(1)·다크나이트(2)·비숍(3)·히어로(4). 직업 추가 시 여기만 늘리면 됨.
+function jobHasSkills(job) { return job === 1 || job === 2 || job === 3 || job === 4; }
 
 // 현재 스탯 기준 스킬/버프 목록을 그린다. 캐시/메모리에 있으면 즉시 렌더(불러오는 중 안 띄움), 항상 백그라운드로 최신화.
 async function renderBuffs() {

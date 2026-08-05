@@ -231,7 +231,7 @@
       "LEGENDARY": { "skills": [
         { "type": "summon", "dur": 20, "raw": "20초간 플레이어 공격 속도 20% 증가", "buffs": [ {"stat":"ATK_SPEED","value":20,"target":"player","dur":20,"used":true} ] },
         { "type": "active", "cd": 13, "raw": "10초간 대상 방어력 15% 감소, 대상 1000% 피해 3회", "deal": {"coeff":1000,"hits":3,"targets":1}, "debuffs": [ {"stat":"DEF","value":-15,"target":"enemy","dur":10,"used":false} ] },
-        { "type": "active", "cd": 30, "raw": "20초간 3초마다 적 3명 500% 피해", "dot": {"coeff":500,"hits":1,"period":3,"dur":20,"targets":3} },
+        { "type": "active", "cd": 30, "raw": "20초간 3초마다 적 3명 1400% 피해(피닉스)", "dot": {"coeff":1400,"hits":1,"period":3,"dur":20,"targets":3}, "note": "클라 807430 확정: LEG 1400%(UNIQUE 500%). 2026-08-05 전동료 감사 수정" },
         { "type": "active", "cd": 23, "lvl": 4, "raw": "대상 800% 피해 20회, 공속 빠를수록 빠르게 발사", "deal": {"coeff":800,"hits":20,"targets":1} },
         { "type": "passive", "raw": "동료+플레이어 크리티컬 확률 15% 증가", "buffs": [ {"stat":"CRIT_RATE","value":15,"target":"both","used":true} ] },
         { "type": "passive", "raw": "1초마다 대상 145% 피해, 3초간 받는 피해 5% 증가", "proc": {"on":"period","period":1,"deal":{"coeff":145,"hits":1,"targets":1},"debuff":{"stat":"RECV_DMG","value":5,"target":"enemy","dur":3,"used":true}} },
