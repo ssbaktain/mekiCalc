@@ -33,3 +33,14 @@ tasks.register('simDiag', JavaExec) {
     if (project.hasProperty('job')) systemProperty 'job', project.property('job')
     if (project.hasProperty('lv')) systemProperty 'lv', project.property('lv')
 }
+
+// 실 프리셋 절대값 대조(전 직업, 조/경): gradlew :desktop:presetCompare
+tasks.register('presetCompare', JavaExec) {
+    group = 'verification'
+    description = '활성 프리셋 스탯으로 전 직업 신엔진 절대 DPS(조/경)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.PresetCompare'
+    workingDir = rootProject.projectDir
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+}
