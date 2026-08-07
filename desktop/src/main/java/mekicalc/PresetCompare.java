@@ -44,12 +44,27 @@ public final class PresetCompare {
         if (b.get("MAX_DMG_MULT") == 0) b.set("MAX_DMG_MULT", 100);
         int lv = (int) b.get("LEVEL");
 
+        // 챕터별 실제 몬스터 방어력(monster_defense.json): boss=챕터보스, stages 평균=챕터사냥. chapter 미지정이면 0(상대지표).
+        int chapter = Integer.parseInt(System.getProperty("chapter", "0"));
+        double bossDef = 0, huntDef = 0;
+        if (chapter > 0) {
+            Map<String, Object> chs = Json.asMap(Json.asMap(Json.parse(Files.readString(Path.of("data/monster_defense.json")))).get("chapters"));
+            Map<String, Object> ch = Json.asMap(chs.get(String.valueOf(chapter)));
+            if (ch != null) {
+                bossDef = Json.num(ch, "boss", 0);
+                Map<String, Object> stages = Json.asMap(ch.get("stages"));
+                double sum = 0; int n = 0;
+                if (stages != null) for (Object v : stages.values()) if (v instanceof Number nn) { sum += nn.doubleValue(); n++; }
+                huntDef = n > 0 ? sum / n : 0;
+            }
+        }
         GameData g = GameData.load(Path.of("data"));
         TimelineSimulator sim = new TimelineSimulator(g.model);
-        ContentProfile boss = ContentProfile.plain(Content.CHAPTER_BOSS, 0, 0);
-        ContentProfile hunt = ContentProfile.plain(Content.CHAPTER_HUNT, 0, 0);
+        ContentProfile boss = ContentProfile.plain(Content.CHAPTER_BOSS, bossDef, 0);
+        ContentProfile hunt = ContentProfile.plain(Content.CHAPTER_HUNT, huntDef, 0);
 
-        System.out.printf("=== 프리셋 '%s' lv%d 전직업 절대 DPS (방어력0 상대지표) ===%n", active, lv);
+        String defLabel = chapter > 0 ? String.format("챕터%d 방어력(보스%.0f/사냥%.0f)", chapter, bossDef, huntDef) : "방어력0 상대지표";
+        System.out.printf("=== 프리셋 '%s' lv%d 전직업 절대 DPS (%s) ===%n", active, lv, defLabel);
         System.out.printf("%-13s %14s %14s%n", "직업", "챕터보스", "챕터사냥");
         for (String job : JOBS) {
             double db = simDps(g, sim, job, b, lv, boss);
