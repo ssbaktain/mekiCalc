@@ -1481,7 +1481,8 @@
    "area": false,
    "trigger": {
     "type": "OnState",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "requireState": "HolyCharge"
    },
    "dealChild": null,
    "summonSkill": null,

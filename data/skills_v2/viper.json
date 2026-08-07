@@ -876,7 +876,8 @@
      "growth": null,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_1"
+     "state": "LuckyDice_1",
+     "exclusiveGroup": "excl_113060"
     },
     {
      "stat": "Attack",
@@ -884,7 +885,8 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_2"
+     "state": "LuckyDice_2",
+     "exclusiveGroup": "excl_113060"
     },
     {
      "stat": "Attack",
@@ -892,7 +894,8 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_3"
+     "state": "LuckyDice_3",
+     "exclusiveGroup": "excl_113060"
     },
     {
      "stat": "Attack",
@@ -900,7 +903,8 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_4"
+     "state": "LuckyDice_4",
+     "exclusiveGroup": "excl_113060"
     },
     {
      "stat": "Attack",
@@ -908,7 +912,8 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_5"
+     "state": "LuckyDice_5",
+     "exclusiveGroup": "excl_113060"
     },
     {
      "stat": "Attack",
@@ -916,7 +921,8 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "5000",
-     "state": "LuckyDice_6"
+     "state": "LuckyDice_6",
+     "exclusiveGroup": "excl_113060"
     }
    ],
    "debuff": [],

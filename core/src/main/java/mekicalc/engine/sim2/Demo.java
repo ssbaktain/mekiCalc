@@ -91,21 +91,9 @@ public final class Demo {
      */
     @SuppressWarnings("unchecked")
     private static void patchData(List<Object> skills) {
-        for (Object o : skills) {
-            Map<String, Object> s = Json.asMap(o);
-            String idx = Json.str(s, "index", "");
-            switch (idx) {
-                // 24070 디바인저지먼트 counterEvery=10(State MaxStack+ClearState)는 analyze trigger_counter 자동추출로 이관.
-                case "24090" -> Json.asMap(s.get("trigger")).put("requireState", "HolyCharge");
-                // 113030 서펜트스톤(SerpentStone:5+consume)·114090 서펜트어썰트(AssaultMode) requireState는
-                // analyze(trigger_require_state/trigger_consume) 자동추출로 이관 — patchData 불필요.
-                case "113060" -> {
-                    for (Object bo : Json.asList(s.get("buff")))
-                        Json.asMap(bo).put("exclusiveGroup", "LuckyDice");
-                }
-                default -> { }
-            }
-        }
+        // ★발동조건(counterEvery·counterOn·requireState·consumeRequire·exclusiveGroup)은 전부 analyze 파이프라인
+        //   (trigger_counter/trigger_require_state/trigger_consume/buff_exclusive_group)에서 자동추출 → patchData 불필요(no-op).
+        //   24070 디바인저지먼트10회·24090 홀리차지OnState·113030 서펜트스톤5·114090 어썰트모드·113060 럭키다이스6면 전부 이관 완료.
     }
 
     /** 동일 조건 비교용 기준 스탯(두 직업 공통). */
