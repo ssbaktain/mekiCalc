@@ -158,7 +158,13 @@ public final class TimelineSimulator {
         }
         double dps = durationSec > 0 ? total / durationSec : 0;
         double ttk = (content.enemyHp() > 0 && dps > 0) ? content.enemyHp() / dps : 0;
-        return new SimResult(total, dps, per, ttk);
+        // 자버프 가동률 진단: 전투 중반 유효 스탯 스냅샷(딜 관련 주요 stat).
+        StatBlock mid = applyBuffs(stats, buffs, durationSec * 0.5);
+        Map<String, Double> midStats = new LinkedHashMap<>();
+        for (String k : new String[]{"SKILL_ATK_PCT", "FINAL_DMG", "BASIC_ATK_DMG", "SKILL_DMG",
+                "CRIT_DMG", "BOSS_DMG", "NORMAL_DMG", "ATK_PCT", "STAT_PROP_DMG"})
+            midStats.put(k, mid.get(k));
+        return new SimResult(total, dps, per, ttk, midStats);
     }
 
     /** 이벤트 주체: 본체(companion=false, summonEnd=∞) 또는 동료(companion=true, base=계승 스탯, summonEnd=소환창 종료). */

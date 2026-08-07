@@ -60,6 +60,10 @@ public final class SimDiag {
 
         System.out.printf("=== %s lv%d ===%n", job, lv);
         System.out.printf("신엔진 dps=%.3e | 구엔진 dps=%.3e | ratio=%.3f%n", res.dps(), oldDps, ratio);
+        System.out.println("--- 유효 스탯(자버프 반영, 전투중반) ---");
+        StringBuilder sb = new StringBuilder("  ");
+        res.midStats().forEach((k, v) -> sb.append(String.format("%s=%.0f  ", k, v)));
+        System.out.println(sb);
         System.out.println("--- 신엔진 스킬별 기여 (dps) ---");
         res.perSkill().entrySet().stream()
                 .sorted((x, y) -> Double.compare(y.getValue(), x.getValue()))
