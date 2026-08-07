@@ -937,7 +937,9 @@
    "area": false,
    "trigger": {
     "type": "OnActiveSkill",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "counterEvery": 7,
+    "counterOn": "activeSkill"
    },
    "dealChild": null,
    "summonSkill": null,

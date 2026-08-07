@@ -95,11 +95,7 @@ public final class Demo {
             Map<String, Object> s = Json.asMap(o);
             String idx = Json.str(s, "index", "");
             switch (idx) {
-                case "24070" -> {
-                    Map<String, Object> tg = Json.asMap(s.get("trigger"));
-                    tg.put("counterEvery", 10.0);
-                    tg.put("counterOn", "basicAttack");
-                }
+                // 24070 디바인저지먼트 counterEvery=10(State MaxStack+ClearState)는 analyze trigger_counter 자동추출로 이관.
                 case "24090" -> Json.asMap(s.get("trigger")).put("requireState", "HolyCharge");
                 // 113030 서펜트스톤(SerpentStone:5+consume)·114090 서펜트어썰트(AssaultMode) requireState는
                 // analyze(trigger_require_state/trigger_consume) 자동추출로 이관 — patchData 불필요.

@@ -852,7 +852,9 @@
    "area": false,
    "trigger": {
     "type": "OnHit",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "counterEvery": 40,
+    "counterOn": "basicAttack"
    },
    "dealChild": null,
    "summonSkill": null,
