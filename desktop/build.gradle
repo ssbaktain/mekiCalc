@@ -34,6 +34,29 @@ tasks.register('simDiag', JavaExec) {
     if (project.hasProperty('lv')) systemProperty 'lv', project.property('lv')
 }
 
+// sim2 회귀(가동률 수학 9종): gradlew :desktop:selfTest2
+tasks.register('selfTest2', JavaExec) {
+    group = 'verification'
+    description = 'sim2 SelfTest2 — 가동률 수학 회귀'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.engine.sim2.SelfTest2'
+    workingDir = rootProject.projectDir
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+}
+
+// sim2 팔라딘 vs 바이퍼 데모(실측 가동률 리포트): gradlew :desktop:sim2Demo
+tasks.register('sim2Demo', JavaExec) {
+    group = 'verification'
+    description = 'sim2 Demo — 팔라딘/바이퍼 편차 + 버프 실측 가동률'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.engine.sim2.Demo'
+    args = ['data/skills_v2']
+    workingDir = rootProject.projectDir
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+}
+
 // 실 프리셋 절대값 대조(전 직업, 조/경): gradlew :desktop:presetCompare
 tasks.register('presetCompare', JavaExec) {
     group = 'verification'

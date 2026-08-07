@@ -37,4 +37,9 @@ public final class Profile {
                 Json.num(m, "skillLevelPerLevel", 0.004),
                 Json.bool(m, "additiveDamage", false));
     }
+
+    /** 기본값(profile.json 부재 시·sim2 데모/테스트용). fromJson 기본값과 동일. */
+    public static Profile defaults() {
+        return new Profile(0.0, 2.9, 0.004, false);
+    }
 }
