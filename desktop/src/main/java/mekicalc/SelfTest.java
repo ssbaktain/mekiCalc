@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.nio.file.Files;
 import mekicalc.config.CharacterIO;
 import mekicalc.config.ConversionIO;
@@ -22,6 +24,12 @@ import mekicalc.engine.skill.NightlordDealModel;
 import mekicalc.engine.skill.SkillDps;
 import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
+import mekicalc.engine.sim.Content;
+import mekicalc.engine.sim.ContentProfile;
+import mekicalc.engine.sim.SkillDataV2;
+import mekicalc.engine.sim.SkillEngineImpl;
+import mekicalc.engine.sim.SkillSelection;
+import mekicalc.engine.sim.TimelineSimulator;
 import mekicalc.json.Json;
 import mekicalc.model.Profile;
 import mekicalc.model.StatBlock;
@@ -59,6 +67,8 @@ public final class SelfTest {
         testSkillDps();
         testDarkKnight();
         testHero();
+        testBowmaster();
+        testSimEngine();
         testRangeBestEffort();
         testSlotLock();
         testGradeUp();
@@ -527,6 +537,28 @@ public final class SelfTest {
         // 총합 DPS 양수(일반몹/보스, 콤보·조건딜 파이프라인 동작).
         checkTrue("hero.total.mob", nd.totalDps(b, false) > 0);
         checkTrue("hero.total.boss", nd.totalDps(b, true) > 0);
+    }
+
+    /** 보우마스터: 컨센트레이션 크뎀 스택 + 피닉스 소환 + 애로우플래터 설치dot 검증(기본공격 공용, 크뎀 증가, 총합 양수). */
+    private static void testBowmaster() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        SkillData sd = SkillData.load(Path.of("data"), "bowmaster");
+        SkillDps nd = new SkillDps(g.model, new SkillDpsModel(sd));
+        StatBlock b = new StatBlock().set("LEVEL", 150).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        // 기본4차(언카운터블 애로우)=공용 4차와 동일 974.4(보스). ※다른 직업 테스트와 동일하게 크리 미설정(perHit는 크리 반영).
+        check("bow.perHit.basic4", nd.perHit(sd.skill("basic4"), b, true), 974.4);
+        // 컨센트레이션: 스킬 발동 시 크뎀 스택 → buffed 크뎀이 base 대비 증가.
+        double cdBase = b.get("CRIT_DMG");
+        double cdBuffed = nd.buffed(b, false, false).stats.get("CRIT_DMG");
+        checkTrue("bow.concentration.critDmg", cdBuffed > cdBase);
+        // 피닉스 94렙: 일반몹 데미지 +100%(normalDmgBonus, AttackPowerExcludeBoss) → 일반몹 1타 > 보스 1타.
+        double phMob = nd.perHit(sd.skill("phoenix"), b, false);
+        double phBoss = nd.perHit(sd.skill("phoenix"), b, true);
+        checkTrue("bow.phoenix.normalBonus", phMob > phBoss);
+        // 총합 DPS 양수(피닉스 소환·애로우플래터 설치dot·컨센트레이션 파이프라인 동작).
+        checkTrue("bow.total.mob", nd.totalDps(b, false) > 0);
+        checkTrue("bow.total.boss", nd.totalDps(b, true) > 0);
     }
 
     private static double maxShownDeal(CubeRecommender.EquipOpts eo) {
@@ -1139,6 +1171,74 @@ public final class SelfTest {
         Map<String, StatDef> m = new LinkedHashMap<>();
         for (StatDef d : defs) m.put(d.id, d);
         return m;
+    }
+
+    /**
+     * 재설계 엔진(engine.sim) 회귀 테스트: 14직업 전체 동작(딜 &gt; 0) + 5직업 신규/기존 비율 범위.
+     * 비율은 방어배수(0.833)·레벨조건 등으로 1.0이 아니므로 넓은 범위(0.3~3.0)로 공통버그(버프중복·타수폭증 등) 회귀만 잡는다.
+     */
+    private static void testSimEngine() throws Exception {
+        GameData g = GameData.load(Path.of("data"));
+        TimelineSimulator sim = new TimelineSimulator(g.model);
+        ContentProfile cont = ContentProfile.plain(Content.CHAPTER_BOSS, 0, 0);
+        // ★만렙=140(4차 스킬 만렙). 200은 게임에 없는 값이라 4차 effLevel이 비현실적으로 부풀어 골든이 왜곡됨.
+        StatBlock b = new StatBlock().set("LEVEL", 140).set("ATK_FLAT", 1_000_000)
+                .set("CRIT_RATE", 100).set("CRIT_DMG", 300).set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        String[] jobs = {"hero", "paladin", "darkknight", "archmagetc", "archmagefp", "bishop", "bowmaster",
+                "marksman", "nightlord", "shadower", "viper", "captain", "nightwalker", "windbreaker"};
+        for (String job : jobs) {
+            double dps = simDps(g, sim, job, b, 140, cont);
+            checkTrue("sim.job." + job, dps > 0);
+        }
+        // 5직업 신규 vs 기존 비율(공통버그 회귀 방지) — 100렙
+        StatBlock b100 = new StatBlock().set("LEVEL", 100).set("ATK_FLAT", 100)
+                .set("MIN_DMG_MULT", 100).set("MAX_DMG_MULT", 100);
+        for (String job : new String[]{"nightlord", "bishop", "darkknight"}) {
+            SkillData sd = SkillData.load(Path.of("data"), job);
+            double oldDps = new SkillDps(g.model, new SkillDpsModel(sd)).totalDps(b100, true);
+            double newDps = simDps(g, sim, job, b100, 100, cont);
+            double ratio = oldDps > 0 ? newDps / oldDps : 0;
+            checkTrue("sim.golden." + job + " (ratio=" + String.format("%.2f", ratio) + ")", ratio > 0.3 && ratio < 3.0);
+        }
+        // 만렙(140) 종합 골든 — 신규/기존 비율. ★주의: 이 비교는 버프 조건이 불일치(기존 totalDps/dpsBySkill은
+        //   내부 buffed() 상시패시브 적용, 신규는 raw+plan버프)라 절대 정확도가 아닌 회귀 감지용. 넓은 범위로 crash·폭주만 방지.
+        for (String job : new String[]{"nightlord", "bishop", "darkknight", "bowmaster", "hero"}) {
+            SkillData sd = SkillData.load(Path.of("data"), job);
+            double oldDps = new SkillDps(g.model, new SkillDpsModel(sd)).totalDps(b, true);
+            double newDps = simDps(g, sim, job, b, 140, cont);
+            double ratio = oldDps > 0 ? newDps / oldDps : 0;
+            checkTrue("sim.golden140." + job + " (ratio=" + String.format("%.2f", ratio) + ")", ratio > 0.2 && ratio < 2.0);
+        }
+        // n마리 대상수 확장 테스트 — 현재는 1마리 세팅이지만 추후 컨텐츠별 마리수 세팅 대비.
+        // 마리수 늘리면 광역기 대상(min(스킬 targetCount, n))이 커져 종합 dps는 단조 증가해야 하고, crash·역전 없어야.
+        for (String job : new String[]{"nightlord", "bishop", "bowmaster"}) {
+            double prev = -1;
+            for (int n : new int[]{1, 7, 84}) {
+                double d = simDps(g, sim, job, b, 140, ContentProfile.multi(Content.CHAPTER_HUNT, 0, 0, n));
+                checkTrue("sim.multiTarget." + job + ".n" + n + " (dps=" + String.format("%.2e", d) + ")", d > 0 && d >= prev - 1e-6);
+                prev = d;
+            }
+        }
+    }
+
+    private static double simDps(GameData g, TimelineSimulator sim, String job, StatBlock b, int lv, ContentProfile cont) throws Exception {
+        SkillDataV2 dv2 = SkillDataV2.load(Files.readString(Path.of("data/skills_v2/" + job + ".json")));
+        Set<String> actives = new LinkedHashSet<>();
+        for (Map<String, Object> s : dv2.all()) {
+            if (!"active".equals(s.get("type"))) continue;
+            int op = (s.get("open") instanceof Number n) ? n.intValue() : 0;
+            String idx = (String) s.get("index");
+            if (op <= lv && !isBasicAtk(idx)) actives.add(idx);
+        }
+        String basic = dv2.creatureIndex() * 10000 + 4 * 1000 + 10 + "";
+        var plans = new SkillEngineImpl(dv2).plan(b, new SkillSelection(actives, basic));
+        return sim.run(plans, b, cont, 90).dps();
+    }
+
+    /** 기본공격(평타) index: 끝 4자리 {1~4}010. */
+    private static boolean isBasicAtk(String idx) {
+        try { int suf = Integer.parseInt(idx) % 10000; return suf % 1000 == 10 && suf / 1000 >= 1 && suf / 1000 <= 4; }
+        catch (Exception e) { return false; }
     }
 
     private static void check(String name, double actual, double expected) {

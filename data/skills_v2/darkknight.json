@@ -1,0 +1,1498 @@
+{
+ "job": "darkknight",
+ "creatureIndex": 3,
+ "indirectSrc": [
+  "Defence"
+ ],
+ "skills": [
+  {
+   "index": "31010",
+   "name": "슬래시 블러스트",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "31020",
+   "name": "워리어 리프",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "31030",
+   "name": "아이언 바디",
+   "open": 10,
+   "type": "passive",
+   "cd": 0,
+   "desc": "STR이 30 증가하고, 방어력이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Str",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "Defence",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "util": [],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "아이언 바디 - 방어력",
+     "desc": "아이언 바디 방어력 증가량 10%p 추가 증가",
+     "type": "selfStat",
+     "stat": "Defence",
+     "value": 100.0
+    }
+   ]
+  },
+  {
+   "index": "31040",
+   "name": "워리어 마스터리",
+   "open": 15,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최대 HP가 10% 이동 속도가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MaxHp",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "RunSpeedMms",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "워리어 마스터리 - 속도",
+     "desc": "워리어 마스터리 이동 속도 증가량 5%p 추가 증가",
+     "type": "selfStat",
+     "stat": "RunSpeedMms",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "32010",
+   "name": "스피어 풀링",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 창을 휘둘러 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "스피어 풀링 - 피해",
+     "desc": "스피어 풀링 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "스피어 풀링 - 대상",
+     "desc": "스피어 풀링 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "스피어 풀링 - 피해",
+     "desc": "스피어 풀링 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "스피어 풀링 - 보스 몬스터 피해",
+     "desc": "스피어 풀링에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "스피어 풀링 - 피해",
+     "desc": "스피어 풀링 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "스피어 풀링 - 타격",
+     "desc": "스피어 풀링 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "32020",
+   "name": "비홀더",
+   "open": 35,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "비홀더를 소환합니다. 비홀더는 20초간 나를 따라다니며 주변 적 6명의 받는 피해를 «15»% 증가시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "33041",
+    "durationMs": "20000",
+    "tickMs": "1000",
+    "dmg": {
+     "coeff": 60.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true
+    },
+    "maxTarget": "6"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "비홀더 - 받는 피해",
+     "desc": "비홀더 받는 피해 증가량 10%p 추가 증가",
+     "type": "none"
+    },
+    {
+     "open": 104,
+     "name": "비홀더 - 재사용",
+     "desc": "비홀더 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "32030",
+   "name": "비홀더 쇼크",
+   "open": 40,
+   "type": "active",
+   "cd": 18.0,
+   "desc": "[비홀더 소환 중] 비홀더가 주변 적 6명을 공격하여 «70»% 피해를 6회 입히고 1.5초간 기절시킵니다.",
+   "targetCount": 6,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": "32021",
+   "summonSkill": "32020",
+   "summonDurMs": 20000,
+   "damage": [
+    {
+     "coeff": 70.0,
+     "hits": "6",
+     "growth": 0.5,
+     "dot": false,
+     "override": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "비홀더 쇼크 - 피해",
+     "desc": "비홀더 쇼크 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "32040",
+   "name": "하이퍼 바디",
+   "open": 45,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 공격력이 12% 증가하고, 아군 플레이어의 방어력을 15% 증가시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "120",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "HyperBody_AttackUp"
+    }
+   ],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "Defence",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "15000",
+     "state": "HyperBody"
+    }
+   ],
+   "util": [],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "하이퍼 바디 - 지속",
+     "desc": "하이퍼 바디 지속시간 +50%",
+     "type": "durPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "32050",
+   "name": "아이언 월",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "방어력의 10%만큼 STR이 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Str",
+     "val": "$CreatureFinalStat(FiredCreature;Defence) * 100 / 1000",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "32060",
+   "name": "웨폰 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "32070",
+   "name": "웨폰 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "32080",
+   "name": "파이널 어택",
+   "open": 50,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 25% 확률로 파이널 어택이 발동하여 «35»% 추가 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 35.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 54,
+     "name": "파이널 어택 - 피해",
+     "desc": "파이널 어택 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "33010",
+   "name": "라만차 스피어",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 창을 휘둘러 전방의 적 6명을 공격하여 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "라만차 스피어 - 보스 몬스터 피해",
+     "desc": "라만차 스피어에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "라만차 스피어 - 보스 몬스터 피해",
+     "desc": "라만차 스피어에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "라만차 스피어 - 피해",
+     "desc": "라만차 스피어 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "라만차 스피어 - 타격",
+     "desc": "라만차 스피어 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "33020",
+   "name": "돌진",
+   "open": 63,
+   "type": "active",
+   "cd": 22.0,
+   "desc": "전방으로 돌격하며 12명에게 «600»% 피해를 입히고 2.5초간 기절시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 600.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "돌진 - 피해",
+     "desc": "돌진 피해량 +80%",
+     "type": "dmgPct",
+     "value": 80.0
+    },
+    {
+     "open": 90,
+     "name": "돌진 - 재사용",
+     "desc": "돌진 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "33030",
+   "name": "크로스 오버 체인",
+   "open": 66,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 공격력이 15% 증가합니다. 현재 HP가 50% 이하라면, 공격력 증가 효과가 사라지고 받는 피해가 10% 감소합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "15000",
+     "state": "CrossOverChain"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "100",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "15000",
+     "state": "CrossOverChain_2"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "크로스 오버 체인 - 공격력",
+     "desc": "크로스 오버 체인 공격력 증가량 100% 증가",
+     "type": "ratioValue",
+     "value": 100.0,
+     "stat": "Attack"
+    }
+   ]
+  },
+  {
+   "index": "33040",
+   "name": "비홀더 도미넌트",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "[비홀더 소환 중] 비홀더를 강화하여 1초마다 주변 적 6명에게 «60»% 지속 피해를 입힙니다.",
+   "targetCount": 6,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 1000
+   },
+   "dealChild": "33041",
+   "summonSkill": "32020",
+   "summonDurMs": 20000,
+   "damage": [
+    {
+     "coeff": 60.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true,
+     "override": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 78,
+     "name": "비홀더 도미넌트 - 피해",
+     "desc": "비홀더 도미넌트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 94,
+     "name": "비홀더 도미넌트 - 대상",
+     "desc": "비홀더 도미넌트 최대 대상 수 +3",
+     "type": "summonTargetPlus",
+     "value": 3
+    }
+   ]
+  },
+  {
+   "index": "33050",
+   "name": "비홀더 쇼크 강화",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "비홀더 쇼크의 대상이 3명으로 변경되고, 최종 데미지가 100% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "32021",
+     "stat": "FinalDamage",
+     "value": "1000",
+     "growth": 0.3
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "33060",
+   "name": "비홀더스 버프",
+   "open": 69,
+   "type": "passive",
+   "cd": 0,
+   "desc": "비홀더의 힘을 끌어내 소환 지속시간 동안 아군 플레이어의 공격력을 15% 증가시킵니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": "32020",
+   "summonDurMs": 20000,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 82,
+     "name": "비홀더스 버프 - 보스 몬스터 데미지",
+     "desc": "비홀더 소환 지속시간 동안 아군 플레이어의 보스 몬스터 데미지 20% 증가",
+     "type": "enableDeal",
+     "value": [
+      "33061",
+      "2"
+     ]
+    },
+    {
+     "open": 98,
+     "name": "비홀더스 버프 - 공격력",
+     "desc": "비홀더스 버프 공격력 증가량 50% 추가 증가",
+     "type": "ratioValue",
+     "value": 50.0,
+     "stat": "Attack"
+    }
+   ]
+  },
+  {
+   "index": "33070",
+   "name": "로드 오브 다크니스",
+   "open": 72,
+   "type": "passive",
+   "cd": 2.0,
+   "desc": "공격 시 30% 확률로 HP를 1.5% 회복하고, 5초간 크리티컬 확률이 8%, 크리티컬 데미지가 30% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 30.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LordOfDarkness"
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "300",
+     "growth": 0.3,
+     "tgt": "Parent",
+     "durationMs": "5000",
+     "state": "LordOfDarkness_2"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Heal",
+     "val": 1.5,
+     "growth": 0.3
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "33080",
+   "name": "인듀어",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "디버프 내성이 15 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "DebuffResist",
+     "val": "15",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "34010",
+   "name": "다크 임페일",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 눈에 보이지 않을 정도로 빠르게 창을 찔러 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "다크 임페일 - 보스 몬스터 피해",
+     "desc": "다크 임페일에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "다크 임페일 - 보스 몬스터 피해",
+     "desc": "다크 임페일에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "다크 임페일 - 피해",
+     "desc": "다크 임페일 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "다크 임페일 - 타격",
+     "desc": "다크 임페일 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "34020",
+   "name": "궁니르 디센트",
+   "open": 103,
+   "type": "active",
+   "cd": 13.0,
+   "desc": "신화 속의 창을 적에게 던져 대상에게 «1800»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1800.0,
+     "hits": "2",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "궁니르 디센트 - 피해",
+     "desc": "궁니르 디센트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 134,
+     "name": "궁니르 디센트 - 타격",
+     "desc": "궁니르 디센트 기본 피해량 -50%, 타격 횟수 +4",
+     "type": "changeSkill",
+     "to": "34021"
+    }
+   ]
+  },
+  {
+   "index": "34030",
+   "name": "다크 레조넌스",
+   "open": 115,
+   "type": "active",
+   "cd": 35.0,
+   "desc": "순수한 어둠의 힘을 개방하여 20초간 공격력이 30% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "300",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "20000",
+     "state": "DarkResonance"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "다크 레조넌스 - 지속",
+     "desc": "다크 레조넌스 지속시간 +40%",
+     "type": "durPct",
+     "value": 40.0
+    }
+   ]
+  },
+  {
+   "index": "34040",
+   "name": "매직 크래쉬",
+   "open": 117,
+   "type": "active",
+   "cd": 28.0,
+   "desc": "대상의 지면에 바위를 소환하여 폭발시켜 대상의 버프를 1개 제거하고, 대상 주변 적 5명에게 «4800»% 피해를 1회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 4800.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "100",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "15000",
+     "state": "MagicCrash"
+    }
+   ],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Dispel",
+     "tgt": "Target"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 126,
+     "name": "매직 크래쉬 - 약화",
+     "desc": "매직 크래쉬에 피해입은 적 15초간 받는 피해 10% 증가",
+     "type": "enableDeal",
+     "value": [
+      "34040",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "34050",
+   "name": "리인카네이션",
+   "open": 107,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최종 데미지가 10% 증가합니다. HP가 1% 밑으로 내려가면 최종 데미지 증가 효과가 사라지고 2초간 피해 면역 상태가 됩니다. 전투 중 한 번만 발동하며 발동 시 죽음을 피할 수 있습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": null,
+     "state": "Reincarnation_FinalDamage"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MinHpRatio",
+     "val": "1",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": "Reincarnation"
+    },
+    {
+     "stat": "Heal",
+     "val": 10.0,
+     "growth": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "리인카네이션 - 회복",
+     "desc": "리인카네이션 최종 데미지 증가량 +100%, 피해 면역 효과 발동 시 최대 HP의 10% 회복",
+     "type": "enableDeal",
+     "value": [
+      "34051",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "34060",
+   "name": "비홀더스 리벤지",
+   "open": 110,
+   "type": "passive",
+   "cd": 5.0,
+   "desc": "[비홀더 소환 중] 다크나이트가 직접 공격한 적에게 비홀더가 복수의 낙인을 새겨 «850»% 추가 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": "34062",
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 850.0,
+     "hits": "2",
+     "growth": 0.5,
+     "dot": true,
+     "override": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "비홀더스 리벤지 - 피해",
+     "desc": "비홀더스 리벤지 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 138,
+     "name": "비홀더스 리벤지 - 암흑 투기",
+     "desc": "비홀더 쇼크 사용 시 암흑 투기를 4개 발사하여 경로 상의 적들에게 «2200»% 피해 (비홀더스 리벤지 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "34061",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "34070",
+   "name": "스탠스",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "받는 피해가 5% 감소하고, 최종 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "34080",
+   "name": "어드밴스드 파이널 어택",
+   "open": 105,
+   "type": "passive",
+   "cd": 0,
+   "desc": "파이널 어택 최종 데미지가 500% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "32080",
+     "stat": "FinalDamage",
+     "value": "5000",
+     "growth": 0.4
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "어드밴스드 파이널 어택 - 강화",
+     "desc": "어드밴스드 파이널 어택 최종 데미지 증가량 +50%",
+     "type": "ratioBoost",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "34090",
+   "name": "어드밴스드 웨폰 마스터리",
+   "open": 120,
+   "type": "passive",
+   "cd": 0,
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "SkillPower",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "MaxDamageRatio",
+     "val": "200",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "34100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 비홀더 도미넌트 40% 돌진 30% 비홀더 쇼크 30%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "33041",
+     "stat": "FinalDamage",
+     "value": "400",
+     "growth": null
+    },
+    {
+     "targetSkill": "33020",
+     "stat": "FinalDamage",
+     "value": "300",
+     "growth": null
+    },
+    {
+     "targetSkill": "32021",
+     "stat": "FinalDamage",
+     "value": "300",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

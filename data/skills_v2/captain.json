@@ -1,0 +1,1484 @@
+{
+ "job": "captain",
+ "creatureIndex": 12,
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "121010",
+   "name": "더블 파이어",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 탄환을 연속 발사하여 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "더블 파이어 - 대상",
+     "desc": "더블 파이어 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "더블 파이어 - 대상",
+     "desc": "더블 파이어 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "121020",
+   "name": "크리티컬 로어",
+   "open": 10,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "크리티컬 로어 - 크리티컬 데미지",
+     "desc": "크리티컬 로어 크리티컬 데미지 5% 증가",
+     "type": "selfStat",
+     "stat": "CriticalPower",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "121030",
+   "name": "퀵모션",
+   "open": 15,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 6%, 이동 속도가 8% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "60",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "RunSpeedMms",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "퀵 모션 - 속도",
+     "desc": "퀵 모션 공격 속도 증가량 5%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "121040",
+   "name": "파이렛 리프",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "122010",
+   "name": "매그넘 샷",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 탄환을 매우 빠른 속도로 발사하여 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "매그넘 샷 - 대상",
+     "desc": "매그넘 샷 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "매그넘 샷 - 보스 몬스터 피해",
+     "desc": "매그넘 샷에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "매그넘 샷 - 타격",
+     "desc": "매그넘 샷 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "122020",
+   "name": "스위프트 파이어",
+   "open": 33,
+   "type": "active",
+   "cd": 17.0,
+   "desc": "대상에게 세 발의 탄환을 연속 발사하여 각각 «180»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 180.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "30",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "8000",
+     "state": "SwiftFire_Weakness",
+     "stateMax": 3
+    }
+   ],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "스위프트 파이어 - 피해",
+     "desc": "스위프트 파이어 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 54,
+     "name": "스위프트 파이어 - 약화",
+     "desc": "스위프트 파이어 타격마다 대상의 받는 피해 3% 증가 (최대 3회 중첩 가능)",
+     "type": "enableDeal",
+     "value": [
+      "122020",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "122030",
+   "name": "서먼 크루",
+   "open": 35,
+   "type": "active",
+   "cd": 35.0,
+   "desc": "노틸러스의 쌍권총 크루를 20초간 소환합니다. 쌍권총 크루는 3초마다 대상에게 «95»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "서먼 크루 - 피해",
+     "desc": "쌍권총 크루 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "122040",
+   "name": "백스텝샷",
+   "open": 50,
+   "type": "active",
+   "cd": 3.0,
+   "desc": "후방으로 긴급 회피하며 총을 발사하여 전방의 적에게 «60»% 피해를 입힙니다. 이 스킬은 자동으로 사용하지 않습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 60.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "122050",
+   "name": "건 액셀레이션",
+   "open": 40,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "건 액셀레이션 - 속도",
+     "desc": "건 액셀레이션 공격 속도 증가량 7%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "122060",
+   "name": "건 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "122070",
+   "name": "피지컬 트레이닝",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BaseAttackPower",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "122080",
+   "name": "인피닛 불릿",
+   "open": 45,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "123010",
+   "name": "더블 배럴 샷",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 강력한 화기를 발사하여 전방의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "더블 배럴 샷 - 보스 몬스터 피해",
+     "desc": "더블 배럴 샷에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "더블 배럴 샷 - 보스 몬스터 피해",
+     "desc": "더블 배럴 샷에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "더블 배럴 샷 - 타격",
+     "desc": "더블 배럴 샷 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "123020",
+   "name": "불릿 스매시",
+   "open": 66,
+   "type": "active",
+   "cd": 23.0,
+   "desc": "거대한 탄환을 발사하여 전방의 적 6명에게 «170»% 피해를 4회 입히고 2초간 기절시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 170.0,
+     "hits": "4",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "불릿 스매시 - 피해",
+     "desc": "불릿 스매시 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "123030",
+   "name": "시즈 봄버",
+   "open": 63,
+   "type": "active",
+   "cd": 22.0,
+   "desc": "고정형 대포를 30초간 설치하여 2.5초마다 대상 주변 적 4명에게 «290»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "123031",
+    "durationMs": "30000",
+    "tickMs": "2500",
+    "dmg": {
+     "coeff": 290.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "1"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "시즈 봄버 - 설치",
+     "desc": "시즈 봄버 최대 설치 수 +1",
+     "type": "summonFirePlus",
+     "value": 1
+    },
+    {
+     "open": 82,
+     "name": "시즈 봄버 - 피해",
+     "desc": "시즈 봄버 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "123040",
+   "name": "어셈블 크루",
+   "open": 69,
+   "type": "passive",
+   "cd": 0,
+   "desc": "서먼 크루 사용 시 명사수 크루를 함께 소환합니다. 명사수 크루는 4초마다 탄환을 발사하여 대상 주변 적 3명에게 «190»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 78,
+     "name": "어셈블 크루 - 피해",
+     "desc": "명사수 크루 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 94,
+     "name": "어셈블 크루 - 타격 주기",
+     "desc": "쌍권총 크루와 명사수 크루의 타격 주기 30% 감소",
+     "type": "tickPct",
+     "value": 30.0
+    },
+    {
+     "open": 104,
+     "name": "어셈블 크루 - 지속",
+     "desc": "버프 지속시간 증가 능력치에 의해 쌍권총 크루와 명사수 크루의 지속시간이 증가",
+     "type": "durPct",
+     "value": null
+    }
+   ]
+  },
+  {
+   "index": "123050",
+   "name": "풀메탈 자켓",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalPower",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "PiercePower",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 98,
+     "name": "풀메탈 자켓 - 방어 관통력",
+     "desc": "풀메탈 자켓 크리티컬 데미지 증가량의 절반만큼 방어 관통력 증가",
+     "type": "enableDeal",
+     "value": [
+      "123050",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "123060",
+   "name": "럭키 다이스",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 20% 증가합니다. 7초마다 정육면체 주사위를 굴려 5초간 등장한 주사위 숫자에 비례하여 공격력이 0 ~ 5% 추가로 증가합니다. 한번 등장한 숫자는 30초간 다시 등장하지 않습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 7000
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "0",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_1"
+    },
+    {
+     "stat": "Attack",
+     "val": "10",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_2"
+    },
+    {
+     "stat": "Attack",
+     "val": "20",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_3"
+    },
+    {
+     "stat": "Attack",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_4"
+    },
+    {
+     "stat": "Attack",
+     "val": "40",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_5"
+    },
+    {
+     "stat": "Attack",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_6"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 90,
+     "name": "럭키 다이스 - 공격력",
+     "desc": "럭키 다이스 기본 공격력 증가량 +5%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "123070",
+   "name": "발키리 페이션트",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "방어력이 18%, 디버프 내성이 8 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Defence",
+     "val": "180",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "DebuffResist",
+     "val": "8",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "123080",
+   "name": "할로포인트 불릿",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최종 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "124010",
+   "name": "퍼실레이드",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 일제 사격을 퍼부어 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    },
+    {
+     "coeff": 580.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "퍼실레이드 - 보스 몬스터 피해",
+     "desc": "퍼실레이드에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "퍼실레이드 - 보스 몬스터 피해",
+     "desc": "퍼실레이드에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "퍼실레이드 - 타격",
+     "desc": "퍼실레이드 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "124020",
+   "name": "헤드 샷",
+   "open": 103,
+   "type": "active",
+   "cd": 18.0,
+   "desc": "대상의 머리를 맞혀 «2900»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 2900.0,
+     "hits": "2",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "헤드 샷 - 피해",
+     "desc": "헤드 샷 피해량 +100%",
+     "type": "dmgPct",
+     "value": 100.0
+    }
+   ]
+  },
+  {
+   "index": "124030",
+   "name": "전함 노틸러스",
+   "open": 105,
+   "type": "active",
+   "cd": 33.0,
+   "desc": "전함 노틸러스호에 공격 명령을 내려 주변의 적 15명에게 «1950»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1950.0,
+     "hits": "5",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "전함 노틸러스 - 파이널 어택",
+     "desc": "[전함 노틸러스 스킬 장착 중] 공격 시 15% 확률로 «850»% 추가 피해 (전함 노틸러스 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "124031",
+      "1"
+     ]
+    },
+    {
+     "open": 126,
+     "name": "전함 노틸러스 - 피해",
+     "desc": "전함 노틸러스 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "124040",
+   "name": "래피드 파이어",
+   "open": 117,
+   "type": "active",
+   "cd": 21.0,
+   "desc": "아주 빠른 속도로 탄을 7회 발사하여 각각 «1350»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1350.0,
+     "hits": "7",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "래피드 파이어 - 피해",
+     "desc": "래피드 파이어 피해량 +70%",
+     "type": "dmgPct",
+     "value": 70.0
+    }
+   ]
+  },
+  {
+   "index": "124050",
+   "name": "배틀쉽 봄버",
+   "open": 110,
+   "type": "active",
+   "cd": 20.0,
+   "desc": "노틸러스 호의 배틀쉽을 소환합니다. 배틀쉽은 3초 후 자신의 후방에 도착하며 주변 적 5명에게 «3800»% 피해를 2회 입힙니다. 이후 30초간 머무르며 2초마다 배틀쉽 전방의 적에게 «3300»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "배틀쉽 봄버 - 폭격",
+     "desc": "배틀쉽 봄버의 매 2회째 공격이 폭격으로 변경되어 대상 주변 적 8명에게 «1900»% 피해 3회 (배틀쉽 봄버 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "124054",
+      "2"
+     ]
+    },
+    {
+     "open": 138,
+     "name": "배틀쉽 봄버 - 설치",
+     "desc": "배틀쉽 봄버 최대 설치 수 +1",
+     "type": "enableDeal",
+     "value": [
+      "124051",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "124060",
+   "name": "파이렛 스타일",
+   "open": 115,
+   "type": "active",
+   "cd": 42.0,
+   "desc": "18초간 최종 데미지가 18% 증가하지만, 회피가 «5» 감소합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "180",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "18000",
+     "state": "PirateStyle"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "AvoidChance",
+     "val": "-5",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "18000",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "124070",
+   "name": "퀵 드로우",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "기본 공격 데미지가 25% 증가합니다. 퍼실레이드를 3번째 사용할 때마다 피해량이 2배로 적용되고, 헤드 샷 혹은 래피드 파이어의 재사용 대기시간이 1.5초 감소합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BaseAttackPower",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "124080",
+   "name": "크루 커맨더십",
+   "open": 107,
+   "type": "passive",
+   "cd": 0,
+   "desc": "쌍권총 크루의 최종 데미지가 250%, 명사수 크루의 최종 데미지가 100% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "122032",
+     "stat": "FinalDamage",
+     "value": "2500",
+     "growth": 0.4
+    },
+    {
+     "targetSkill": "123043",
+     "stat": "FinalDamage",
+     "value": "1000",
+     "growth": 0.4
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "크루 커맨더십 - 최종 데미지",
+     "desc": "서먼 크루 사용 시 20초간 최종 데미지 20% 증가",
+     "type": "selfStat",
+     "stat": "FinalDamage",
+     "value": 200.0
+    }
+   ]
+  },
+  {
+   "index": "124090",
+   "name": "캡틴 디그니티",
+   "open": 120,
+   "type": "passive",
+   "cd": 18.0,
+   "desc": "기본 공격 및 헤드 샷과 래피드 파이어 공격 시 25% 확률로 대상에게 «1800»% 추가 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1800.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 134,
+     "name": "캡틴 디그니티 - 피해",
+     "desc": "캡틴 디그니티 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "124100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 시즈 봄버 20% 불릿 스매시 40% 스위프트 파이어 80%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "123031",
+     "stat": "FinalDamage",
+     "value": "200",
+     "growth": null
+    },
+    {
+     "targetSkill": "123032",
+     "stat": "FinalDamage",
+     "value": "200",
+     "growth": null
+    },
+    {
+     "targetSkill": "123020",
+     "stat": "FinalDamage",
+     "value": "400",
+     "growth": null
+    },
+    {
+     "targetSkill": "122020",
+     "stat": "FinalDamage",
+     "value": "800",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

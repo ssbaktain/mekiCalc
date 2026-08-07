@@ -1,0 +1,1528 @@
+{
+ "job": "bishop",
+ "creatureIndex": 6,
+ "indirectSrc": [
+  "Defence",
+  "HpRatio"
+ ],
+ "skills": [
+  {
+   "index": "61010",
+   "name": "에너지 볼트",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 적에게 에너지 응집체를 날려 폭발시켜 주변 적 2명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "61020",
+   "name": "마나 웨이브",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "61030",
+   "name": "매직 가드",
+   "open": 15,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 공격력이 12%, 방어력이 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "120",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "MagicGuard"
+    }
+   ],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "Defence",
+     "val": "120",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "MagicGuard_2"
+    }
+   ],
+   "util": [],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "매직 가드 - 재사용",
+     "desc": "매직 가드 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "61040",
+   "name": "텔레포트",
+   "open": 10,
+   "type": "active",
+   "cd": 10.0,
+   "desc": "입력된 방향에 따라 상,하,좌,우로 일정 거리만큼 순간 이동합니다. 챕터 사냥에서는 발동 후 재사용 대기시간이 50% 감소합니다. 사용중인 스킬을 취소하고 즉시 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "텔레포트 - 재사용",
+     "desc": "텔레포트 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "62010",
+   "name": "홀리 애로우",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 성스러운 화살을 발사하여 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "홀리 애로우 - 피해",
+     "desc": "홀리 애로우 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "홀리 애로우 - 대상",
+     "desc": "홀리 애로우 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "홀리 애로우 - 피해",
+     "desc": "홀리 애로우 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "홀리 애로우 - 보스 몬스터 피해",
+     "desc": "홀리 애로우에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "홀리 애로우 - 피해",
+     "desc": "홀리 애로우 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "홀리 애로우 - 타격",
+     "desc": "홀리 애로우 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "62020",
+   "name": "힐",
+   "open": 35,
+   "type": "active",
+   "cd": 18.0,
+   "desc": "10초간 아군 플레이어에게 지속 회복을 부여하여 1초마다 HP를 1% 회복시킵니다. 스킬 지속시간 동안 대상의 HP가 30% 이상이라면, 공격력이 10% 증가합니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "100",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "10000",
+     "state": "Heal_Buff"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Heal",
+     "val": 1.0,
+     "growth": 0.4
+    }
+   ],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "힐 - 지속",
+     "desc": "힐 지속시간 +50%",
+     "type": "durPct",
+     "value": 50.0
+    },
+    {
+     "open": 54,
+     "name": "힐 - 공격력",
+     "desc": "HP가 30% 이상일 때 공격력 8% 증가",
+     "type": "selfStat",
+     "stat": "Attack",
+     "value": 80.0
+    }
+   ]
+  },
+  {
+   "index": "62030",
+   "name": "블레스",
+   "open": 40,
+   "type": "active",
+   "cd": 24.0,
+   "desc": "15초간 아군 플레이어의 공격력을 16% 증가시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "160",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "15000",
+     "state": "Bless"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "블레스 - 지속",
+     "desc": "블레스 지속시간 +30%",
+     "type": "durPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "62040",
+   "name": "매직 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "62050",
+   "name": "하이 위즈덤",
+   "open": 50,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 8% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "62060",
+   "name": "인빈서블",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "방어력의 10%만큼 INT가 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Int",
+     "val": "$CreatureFinalStat(FiredCreature;Defence) * 100 / 1000",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "62070",
+   "name": "스펠 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "62080",
+   "name": "MP이터",
+   "open": 45,
+   "type": "passive",
+   "cd": 0.8,
+   "desc": "공격 시 50% 확률로 MP를 1.5% 회복합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 50.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "MP 이터 - MP 부스트",
+     "desc": "MP가 50% 이상일 때 공격 속도 7% 증가",
+     "type": "selfStat",
+     "stat": "AttackSpeed",
+     "value": 70.0
+    }
+   ]
+  },
+  {
+   "index": "63010",
+   "name": "샤이닝 레이",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 성스러운 빛으로 주변의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "샤이닝 레이 - 보스 몬스터 피해",
+     "desc": "샤이닝 레이에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "샤이닝 레이 - 보스 몬스터 피해",
+     "desc": "샤이닝 레이에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "샤이닝 레이 - 피해",
+     "desc": "샤이닝 레이 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "샤이닝 레이 - 타격",
+     "desc": "샤이닝 레이 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "63020",
+   "name": "홀리 파운틴",
+   "open": 66,
+   "type": "active",
+   "cd": 40.0,
+   "desc": "25초간 지속되는 성스러운 분수를 소환하여 범위 내 아군 플레이어의 HP를 2% 회복시킵니다. 홀리 파운틴의 회복 효과는 3초 동안 다시 받을 수 없습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "홀리 파운틴 - 보스 몬스터 데미지",
+     "desc": "홀리 파운틴 회복 효과 발동 시 15초간 대상의 보스 몬스터 데미지 10% 증가",
+     "type": "enableDeal",
+     "value": [
+      "63021",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "63030",
+   "name": "홀리 매직 쉘",
+   "open": 69,
+   "type": "active",
+   "cd": 27.0,
+   "desc": "22초간 공격력이 15% 증가하고, 아군 플레이어의 받는 피해를 5% 감소시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "22000",
+     "state": "HolyMagicShell_Self"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "50",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "22000",
+     "state": "HolyMagicShell_Ally"
+    },
+    {
+     "type": "Cleanse",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 82,
+     "name": "홀리 매직쉘 - 정화",
+     "desc": "홀리 매직쉘 발동 시 대상의 디버프 1개 제거",
+     "type": "enableDeal",
+     "value": [
+      "63030",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "63040",
+   "name": "디바인 프로텍션",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "전투 시작 시 신성한 보호막을 활성화하여 15초간 방어력이 25% 증가하고, 2초간 디버프에 면역이 됩니다. 이후 20초마다 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 300
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "Defence",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "DivineProtection"
+    },
+    {
+     "stat": "Defence",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "DivineProtection"
+    }
+   ],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "63050",
+   "name": "트라이엄프 페더",
+   "open": 63,
+   "type": "passive",
+   "cd": 18.0,
+   "desc": "공격 시 15% 확률로 10초간 천사의 힘이 강림합니다. 스킬 지속시간 동안 공격 시 35% 확률로 천사의 날개 깃털이 생성되어 «150»% 추가 피해를 2회 입힙니다. 동일한 대상에게는 1초간 다시 발동하지 않습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 15.0
+   },
+   "dealChild": "63051",
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 150.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    },
+    {
+     "coeff": 150.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "트라이엄프 페더 - 피해",
+     "desc": "트라이엄프 페더 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 78,
+     "name": "트라이엄프 페더 - 확률",
+     "desc": "트라이엄프 페더 깃털 생성 확률 +10%",
+     "type": "procAdd",
+     "value": 10.0
+    },
+    {
+     "open": 94,
+     "name": "트라이엄프 페더 - 강림",
+     "desc": "천사의 힘 강림 시 주변 임의의 적 7명에게 추가 피해 효과 발동 동일 대상 발동 제한시간 미적용",
+     "type": "enableDeal",
+     "value": [
+      "63050",
+      "2"
+     ]
+    },
+    {
+     "open": 104,
+     "name": "트라이엄프 페더 - 타격",
+     "desc": "트라이엄프 페더 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "63060",
+   "name": "홀리 심볼",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "전투 시작 시 축복을 내려 14초간 아군 플레이어의 일반 몬스터 데미지가 15%, 디버프 내성이 5 증가합니다. 이후 28초마다 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 300
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackPowerExcludeBoss",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "14000",
+     "state": "HolySymbol_Ally"
+    },
+    {
+     "stat": "AttackPower",
+     "val": "250",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "14000",
+     "state": "HolySymbol_Self"
+    },
+    {
+     "stat": "AttackPowerExcludeBoss",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "14000",
+     "state": "HolySymbol_Ally"
+    },
+    {
+     "stat": "AttackPower",
+     "val": "250",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "14000",
+     "state": "HolySymbol_Self"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "DebuffResist",
+     "val": "5",
+     "growth": 0.3,
+     "tgt": "Parent",
+     "durationMs": "14000",
+     "state": "HolySymbol_Ally2"
+    },
+    {
+     "stat": "DebuffResist",
+     "val": "5",
+     "growth": 0.3,
+     "tgt": "Parent",
+     "durationMs": "14000",
+     "state": "HolySymbol_Ally2"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 90,
+     "name": "홀리 심볼 - 데미지",
+     "desc": "홀리 심볼 발동 시 자신을 제외한 아군 플레이어가 2명 이하라면 자신의 데미지 25% 증가",
+     "type": "enableDeal",
+     "value": [
+      "63060",
+      "3"
+     ]
+    },
+    {
+     "open": 98,
+     "name": "홀리 심볼 - 지속",
+     "desc": "홀리 심볼 지속시간 +50%",
+     "type": "durPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "63070",
+   "name": "매직 크리티컬",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 8% 크리티컬 데미지가 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "120",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "63080",
+   "name": "엘리먼트 앰플리피케이션",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "현재 MP가 50% 이상이라면, MP 소모량이 10% 증가하고, 최종 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MpConsumeRatio",
+     "val": "100",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "64010",
+   "name": "빅뱅",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 신성력을 넓게 퍼뜨린 후 폭발시켜 주변의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "7",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "빅뱅 - 보스 몬스터 피해",
+     "desc": "빅뱅에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "빅뱅 - 보스 몬스터 피해",
+     "desc": "빅뱅에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "빅뱅 - 피해",
+     "desc": "빅뱅 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "빅뱅 - 타격",
+     "desc": "빅뱅 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "64020",
+   "name": "엔젤레이",
+   "open": 103,
+   "type": "active",
+   "cd": 17.0,
+   "desc": "대상에게 성검을 3회 발사하여 각각 «680»% 피해를 2회 입히고, 1초간 기절시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 680.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    },
+    {
+     "coeff": 680.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "엔젤레이 - 피해",
+     "desc": "엔젤레이 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 122,
+     "name": "엔젤레이 - 보스 몬스터 피해",
+     "desc": "엔젤레이가 보스 몬스터 타격 시 «680»% 추가 피해 (엔젤레이 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "64020",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "64030",
+   "name": "제네시스",
+   "open": 105,
+   "type": "active",
+   "cd": 23.0,
+   "desc": "주변의 적 10명에게 신성한 빛의 기둥을 떨어뜨려 «700»% 피해를 6회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": "64031",
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 700.0,
+     "hits": "6",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "제네시스 - 피해",
+     "desc": "제네시스  피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 126,
+     "name": "제네시스 - 재사용",
+     "desc": "제네시스 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "64040",
+   "name": "어드밴스드 블레스",
+   "open": 107,
+   "type": "active",
+   "cd": 26.0,
+   "desc": "20초간 아군 플레이어의 최종 데미지를 7% 증가시키고, MP 소모량을 7% 감소시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "70",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "20000",
+     "state": "AdvancedBless"
+    },
+    {
+     "stat": "FinalDamage",
+     "val": "40",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "20000",
+     "state": "AdvancedBless_Myself"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MpConsumeRatio",
+     "val": "-70",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "20000",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "어드밴스드 블레스 - 최종 데미지",
+     "desc": "어드밴스드 블레스 지속시간 동안 MP가 50% 이상일 때 자신의 최종 데미지 4% 증가",
+     "type": "enableDeal",
+     "value": [
+      "64040",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "64050",
+   "name": "인피니티",
+   "open": 110,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 자신의 최종 데미지가 15% 증가하고, 1초마다 1% 추가로 증가합니다. 추가 효과는 최대 10회까지 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "Infinity"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "64060",
+   "name": "바하뮤트",
+   "open": 115,
+   "type": "active",
+   "cd": 80.0,
+   "desc": "30초간 바하뮤트를 소환합니다. 바하뮤트는 4초마다 주변 적 3명을 공격하여 «3500»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "64061",
+    "durationMs": "30000",
+    "tickMs": "4000",
+    "dmg": {
+     "coeff": 3500.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "1"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "바하뮤트 - 피해 & 대상",
+     "desc": "바하뮤트 피해량 +50%, 최대 대상 수 +3",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 138,
+     "name": "바하뮤트 - 재사용",
+     "desc": "바하뮤트 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "64070",
+   "name": "마스터 매직",
+   "open": 117,
+   "type": "passive",
+   "cd": 0,
+   "desc": "버프 지속시간이 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BuffDurationRatio",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "64080",
+   "name": "아케인 에임",
+   "open": 120,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 25% 확률로 10초간 최종 데미지가 3% 증가합니다. 최대 5회 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "10000",
+     "state": "ArcaneAim",
+     "stateMax": 5
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "64090",
+   "name": "홀리 블러드",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최종 데미지가 5% 증가합니다. 현재 HP 10%마다 크리티컬 데미지가 2% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "$CreatureFinalStat(FiredCreature;HpRatio) / 100 * 20",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 134,
+     "name": "홀리 블러드 - 공격 속도",
+     "desc": "현재 HP 10% 당 공격 속도 1.5% 증가",
+     "type": "selfStat",
+     "stat": "AttackSpeed",
+     "value": null
+    }
+   ]
+  },
+  {
+   "index": "64100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬의 최종 데미지가 증가합니다. 트라이엄프 페더 50%  다음 스킬들의 HP 회복량이 증가합니다. 힐 25% 홀리 파운틴 30%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "63051",
+     "stat": "FinalDamage",
+     "value": "500",
+     "growth": null
+    },
+    {
+     "targetSkill": "63052",
+     "stat": "FinalDamage",
+     "value": "500",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

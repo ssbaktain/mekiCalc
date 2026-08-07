@@ -20,3 +20,16 @@ tasks.register('selfTest', JavaExec) {
     systemProperty 'file.encoding', 'UTF-8'
     systemProperty 'stdout.encoding', 'UTF-8'
 }
+
+// 시뮬 진단(스킬별 DPS 기여 분해): gradlew :desktop:simDiag -Pjob=darkknight -Plv=140
+tasks.register('simDiag', JavaExec) {
+    group = 'verification'
+    description = '신엔진 스킬별 DPS 기여 분해(값 변화 원인 추적)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.SimDiag'
+    workingDir = rootProject.projectDir
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+    if (project.hasProperty('job')) systemProperty 'job', project.property('job')
+    if (project.hasProperty('lv')) systemProperty 'lv', project.property('lv')
+}

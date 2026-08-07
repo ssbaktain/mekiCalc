@@ -1,0 +1,1433 @@
+{
+ "job": "archmagetc",
+ "creatureIndex": 4,
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "41010",
+   "name": "에너지 볼트",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 적에게 에너지 응집체를 날려 폭발시켜 주변 적 2명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "41020",
+   "name": "마나 웨이브",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "41030",
+   "name": "매직 가드",
+   "open": 15,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 공격력이 12%, 방어력이 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "120",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "MagicGuard"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Defence",
+     "val": "120",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "MagicGuard_2"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "매직 가드 - 재사용",
+     "desc": "매직 가드 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "41040",
+   "name": "텔레포트",
+   "open": 10,
+   "type": "active",
+   "cd": 10.0,
+   "desc": "입력된 방향에 따라 상,하,좌,우로 일정 거리만큼 순간 이동합니다. 챕터 사냥에서는 발동 후 재사용 대기시간이 50% 감소합니다. 사용중인 스킬을 취소하고 즉시 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "텔레포트 - 재사용",
+     "desc": "텔레포트 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "42010",
+   "name": "콜드 빔",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방에 얼음 수정을 소환하여 5명의 적에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "콜드 빔 - 피해",
+     "desc": "콜드 빔 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "콜드 빔 - 대상",
+     "desc": "콜드 빔 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "콜드 빔 - 피해",
+     "desc": "콜드 빔 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "콜드 빔 - 보스 몬스터 피해",
+     "desc": "콜드 빔에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "콜드 빔 - 피해",
+     "desc": "콜드 빔 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "콜드 빔 - 타격",
+     "desc": "콜드 빔 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "42020",
+   "name": "프리징 이펙트",
+   "open": 35,
+   "type": "passive",
+   "cd": 0,
+   "desc": "얼음 스킬로 적 공격 시 25% 확률로 5초간 냉기를 부여합니다. 냉기 상태의 적은 이동 속도가 «5»%, 회피가 «1» 감소합니다. 냉기는 최대 5회 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "$CreatureStateCount(TargetCreature;Ice) * 20",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "5000",
+     "state": "Ice_3"
+    }
+   ],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "RunSpeedMms",
+     "val": "-50",
+     "growth": 0.3,
+     "tgt": "Target",
+     "durationMs": "5000",
+     "state": "Ice",
+     "stateMax": 5
+    },
+    {
+     "stat": "AvoidChance",
+     "val": "$CreatureStateCount(TargetCreature;Ice) * (0-1)",
+     "growth": 0.3,
+     "tgt": "Parent",
+     "durationMs": "5000",
+     "state": "Ice_2"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 54,
+     "name": "프리징 이펙트 - 오라",
+     "desc": "2초마다 주변 적 5명에게 냉기 중첩 부여 냉기 중첩 당 대상의 받는 피해 2% 증가",
+     "type": "enableDeal",
+     "value": [
+      "42021",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "42030",
+   "name": "썬더 볼트",
+   "open": 38,
+   "type": "active",
+   "cd": 18.0,
+   "desc": "주변 적 8명에게 번개를 떨어트려 «180»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 180.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "썬더 볼트 - 피해",
+     "desc": "썬더 볼트 피해량 +70%",
+     "type": "dmgPct",
+     "value": 70.0
+    }
+   ]
+  },
+  {
+   "index": "42040",
+   "name": "메디테이션",
+   "open": 40,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 아군 플레이어의 공격력을 20% 증가시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "200",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "15000",
+     "state": "Meditation"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "메디테이션 - 지속",
+     "desc": "메디테이션 지속시간 +30%",
+     "type": "durPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "42050",
+   "name": "매직 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "42060",
+   "name": "스펠 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "42070",
+   "name": "하이 위즈덤",
+   "open": 50,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 8% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "42080",
+   "name": "MP 이터",
+   "open": 45,
+   "type": "passive",
+   "cd": 1.0,
+   "desc": "공격 시 50% 확률로 MP를 1.5% 회복합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 50.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "MP 이터 - MP 부스트",
+     "desc": "MP가 50% 이상일 때 공격 속도 7% 증가",
+     "type": "selfStat",
+     "stat": "AttackSpeed",
+     "value": 70.0
+    }
+   ]
+  },
+  {
+   "index": "43010",
+   "name": "아이스 스트라이크",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 주변에 얼음 폭풍을 일으켜 6명의 적에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "아이스 스트라이크 - 보스 몬스터 피해",
+     "desc": "아이스 스트라이크에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "아이스 스트라이크 - 보스 몬스터 피해",
+     "desc": "아이스 스트라이크에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "아이스 스트라이크 - 피해",
+     "desc": "아이스 스트라이크 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "아이스 스트라이크 - 타격",
+     "desc": "아이스 스트라이크 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "43020",
+   "name": "글레이셜 월",
+   "open": 63,
+   "type": "active",
+   "cd": 22.0,
+   "desc": "전방으로 빙벽을 생성하여 8명의 적에게 «290»% 피해를 3회 입히고 2초간 빙결시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "글레이셜 월 - 피해",
+     "desc": "글레이셜 월 피해량 +80%",
+     "type": "dmgPct",
+     "value": 80.0
+    },
+    {
+     "open": 90,
+     "name": "글레이셜 월 - 재사용",
+     "desc": "글레이셜 월 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "43030",
+   "name": "썬더 스피어",
+   "open": 69,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "10초간 지속되는 번개의 구체를 소환합니다. 구체는 주변 적을 향해 이동하며 2초마다 구체 주변의 적 6명에게 «100»% 피해를 3회 입힙니다. 이 스킬은 일반 몬스터 데미지가 150% 추가로 적용됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "43031",
+    "durationMs": "10000",
+    "tickMs": "2000",
+    "dmg": {
+     "coeff": 100.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "6"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "썬더 스피어 - 피해",
+     "desc": "썬더 스피어 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 78,
+     "name": "썬더 스피어 - 재사용",
+     "desc": "썬더 스피어 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    },
+    {
+     "open": 94,
+     "name": "썬더 스피어 - 일반 몬스터 피해",
+     "desc": "썬더 스피어 일반 몬스터 데미지 100%p 추가 증가",
+     "type": "statAdd",
+     "value": 100.0,
+     "stat": "AttackPowerExcludeBoss"
+    },
+    {
+     "open": 104,
+     "name": "썬더 스피어 - 타격 주기",
+     "desc": "썬더 스피어 타격 주기 30% 감소",
+     "type": "tickPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "43040",
+   "name": "엘리멘탈 어댑팅",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "전투 시작 시 장막을 활성화하여 15초간 방어력이 25% 증가하고, 2초간 디버프에 면역이 됩니다. 이후 20초마다 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 300
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Defence",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "ElementalAdapting_IL"
+    },
+    {
+     "stat": "Defence",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "ElementalAdapting_IL"
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "43050",
+   "name": "프로즌 브레이크",
+   "open": 66,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 적에게 걸린 냉기 중첩 수 * 3%만큼 증가된 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 98,
+     "name": "프로즌 브레이크 - 피해",
+     "desc": "프로즌 브레이크 냉기 중첩 당 피해 증가량 2%p 증가",
+     "type": "setSkill",
+     "key": "Value",
+     "value": "$CreatureStateCount(TargetCreature;Ice) * 50"
+    }
+   ]
+  },
+  {
+   "index": "43060",
+   "name": "엘리멘탈 리셋",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 20% 확률로 7초간 대상의 받는 피해를 «10»% 증가시킵니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 20.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Target",
+     "durationMs": "7000",
+     "state": "ElementalReset_IL"
+    }
+   ],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 82,
+     "name": "엘리멘탈 리셋 - 확률",
+     "desc": "엘리멘탈 리셋의 발동 확률이 2배로 증가",
+     "type": "procRatio",
+     "value": 1000.0
+    }
+   ]
+  },
+  {
+   "index": "43070",
+   "name": "매직 크리티컬",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 8% 크리티컬 데미지가 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "120",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "43080",
+   "name": "엘리먼트 앰플리피케이션",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "현재 MP가 50% 이상이라면, MP 소모량이 10% 증가하고, 최종 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MpConsumeRatio",
+     "val": "100",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "44010",
+   "name": "체인 라이트닝",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 대상의 주변으로 전이되는 전류를 발사하여 최대 6명의 적에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "체인 라이트닝 - 보스 몬스터 피해",
+     "desc": "체인 라이트닝에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "체인 라이트닝 - 보스 몬스터 피해",
+     "desc": "체인 라이트닝에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "체인 라이트닝 - 피해",
+     "desc": "체인 라이트닝 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "체인 라이트닝 - 타격",
+     "desc": "체인 라이트닝 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "44020",
+   "name": "프리징 브레스",
+   "open": 103,
+   "type": "active",
+   "cd": 45.0,
+   "desc": "5초간 지속되는 냉기 숨결을 소환하여 0.5초마다 전방의 적 10명에게 «800»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "44021",
+    "durationMs": "5000",
+    "tickMs": "500",
+    "dmg": {
+     "coeff": 800.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "10"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "프리징 브레스 - 피해",
+     "desc": "프리징 브레스 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 118,
+     "name": "프리징 브레스 - 약화",
+     "desc": "프리징 브레스에 피해입은 적 30초간 받는 피해 15% 증가",
+     "type": "enableDeal",
+     "value": [
+      "44021",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "44030",
+   "name": "블리자드",
+   "open": 105,
+   "type": "active",
+   "cd": 33.0,
+   "desc": "주변 임의의 적에게 냉기의 창을 떨어뜨려 5명의 적에게 «600»% 피해를 3회 입힙니다. 냉기의 창은 3개 소환됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 600.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "블리자드 - 파이널 어택",
+     "desc": "[블리자드 스킬 장착 중] 공격 시 20% 확률로 «750»% 추가 피해 (블리자드 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "44031",
+      "1"
+     ]
+    },
+    {
+     "open": 134,
+     "name": "블리자드 - 피해",
+     "desc": "블리자드 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "44040",
+   "name": "프로즌 오브",
+   "open": 107,
+   "type": "active",
+   "cd": 23.0,
+   "desc": "전방으로 이동하는 얼음 구체를 5초간 소환하여 0.5초마다 구체 주변의 적 10명에게 «900»% 피해를 입힙니다. 범위 내 적이 1명일 때 피해량이 절반으로 감소합니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "44041",
+    "durationMs": "5000",
+    "tickMs": "500",
+    "dmg": {
+     "coeff": 450.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "10"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "프로즌 오브 - 피해",
+     "desc": "프로즌 오브 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 126,
+     "name": "프로즌 오브 - 타격 주기",
+     "desc": "프로즌 오브 타격 주기 0.2초 감소",
+     "type": "summonTickMs",
+     "value": -200.0
+    }
+   ]
+  },
+  {
+   "index": "44050",
+   "name": "인피니티",
+   "open": 110,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 자신의 최종 데미지가 15% 증가하고, 1초마다 1% 추가로 증가합니다. 추가 효과는 최대 10회까지 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "Infinity"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "44060",
+   "name": "엘퀴네스",
+   "open": 115,
+   "type": "active",
+   "cd": 80.0,
+   "desc": "30초간 엘퀴네스를 소환합니다. 엘퀴네스는 4초마다 주변 적 3명을 공격하여 «3500»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "44061",
+    "durationMs": "30000",
+    "tickMs": "4000",
+    "dmg": {
+     "coeff": 3500.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "3"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "엘퀴네스 - 타격 주기",
+     "desc": "엘퀴네스 타격 주기 40% 감소",
+     "type": "tickPct",
+     "value": 40.0
+    },
+    {
+     "open": 138,
+     "name": "엘퀴네스 - 피해 & 대상",
+     "desc": "엘퀴네스 피해량 +50%, 최대 대상 수 +3",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "44070",
+   "name": "마스터 매직",
+   "open": 117,
+   "type": "passive",
+   "cd": 0,
+   "desc": "버프 지속시간이 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BuffDurationRatio",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "44080",
+   "name": "아케인 에임",
+   "open": 120,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 25% 확률로 10초간 최종 데미지가 3% 증가합니다. 최대 5회 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "10000",
+     "state": "ArcaneAim",
+     "stateMax": 5
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "44090",
+   "name": "프로스트 이펙트",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 적에게 걸린 냉기 중첩 수 * 6%만큼 자신의 번개 스킬 피해량이 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "44100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 썬더 스피어 20% 글레이셜 월 30% 썬더 볼트 100%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "43031",
+     "stat": "FinalDamage",
+     "value": "200",
+     "growth": null
+    },
+    {
+     "targetSkill": "43020",
+     "stat": "FinalDamage",
+     "value": "300",
+     "growth": null
+    },
+    {
+     "targetSkill": "42030",
+     "stat": "FinalDamage",
+     "value": "1000",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

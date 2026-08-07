@@ -1,0 +1,1489 @@
+{
+ "job": "marksman",
+ "creatureIndex": 8,
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "81010",
+   "name": "애로우 블로우",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 다수의 화살을 발사하여 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "애로우 블로우 - 피해",
+     "desc": "애로우 블로우 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "애로우 블로우 - 대상",
+     "desc": "애로우 블로우 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "애로우 블로우 - 피해",
+     "desc": "애로우 블로우 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "애로우 블로우 - 대상",
+     "desc": "애로우 블로우 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "애로우 블로우 - 피해",
+     "desc": "애로우 블로우 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "81020",
+   "name": "더블 점프",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "81030",
+   "name": "크리티컬 샷",
+   "open": 15,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "크리티컬 샷 - 크리티컬",
+     "desc": "크리티컬 샷 크리티컬 확률 5%p 증가",
+     "type": "selfStat",
+     "stat": "CriticalChance",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "81040",
+   "name": "아처 마스터리",
+   "open": 10,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5%, 이동 속도가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "RunSpeedMms",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "아처 마스터리 - 속도",
+     "desc": "아처 마스터리 공격 속도 5%p 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "82010",
+   "name": "피어싱",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 화살을 발사하여 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "피어싱 - 피해",
+     "desc": "피어싱 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "피어싱 - 대상",
+     "desc": "피어싱 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "피어싱 - 피해",
+     "desc": "피어싱 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "피어싱 - 보스 몬스터 피해",
+     "desc": "피어싱에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "피어싱 - 피해",
+     "desc": "피어싱 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "피어싱 - 타격",
+     "desc": "피어싱 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "82020",
+   "name": "리트리트 샷",
+   "open": 35,
+   "type": "active",
+   "cd": 19.0,
+   "desc": "뒤로 후퇴하며 대상을 3회 공격하여 각각 «250»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 250.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "리트리트 샷 - 피해",
+     "desc": "리트리트 샷 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 49,
+     "name": "리트리트 샷 - 기절",
+     "desc": "리트리트 샷 타격 대상 1초간 기절",
+     "type": "enableDeal",
+     "value": [
+      "82020",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "82030",
+   "name": "크로스보우 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "82040",
+   "name": "소울 애로우 : 석궁",
+   "open": 45,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "82050",
+   "name": "크로스보우 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "82060",
+   "name": "파이널 어택 : 석궁",
+   "open": 50,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 25% 확률로 파이널 어택이 발동하여 «35»% 추가 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 35.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 54,
+     "name": "파이널 어택 - 피해",
+     "desc": "파이널 어택 피해량 50% 증가",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "82070",
+   "name": "피지컬 트레이닝",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BaseAttackPower",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "82080",
+   "name": "데미지 리버싱",
+   "open": 40,
+   "type": "passive",
+   "cd": 10.0,
+   "desc": "공격 시 25% 확률로 5초간 지속되는 보호막을 생성하여 최대 HP의 15%만큼 피해를 방어합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "데미지 리버싱 - 지속",
+     "desc": "데미지 리버싱 보호막 지속시간 +100%",
+     "type": "durPct",
+     "value": 100.0
+    }
+   ]
+  },
+  {
+   "index": "83010",
+   "name": "피어싱 II",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 강력한 화살을 발사하여 전방의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "피어싱 II - 보스 몬스터 피해",
+     "desc": "피어싱 II에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "피어싱 II - 보스 몬스터 피해",
+     "desc": "피어싱 II에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "피어싱 II - 피해",
+     "desc": "피어싱 II 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "피어싱 II - 타격",
+     "desc": "피어싱 II 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "83020",
+   "name": "프리져",
+   "open": 69,
+   "type": "active",
+   "cd": 60.0,
+   "desc": "20초간 프리져를 소환합니다. 프리져는 3초마다 주변 적 3명을 공격하여 «600»% 피해를 입히고, 20% 확률로 1초간 빙결시킵니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "83021",
+    "durationMs": "20000",
+    "tickMs": "3000",
+    "dmg": {
+     "coeff": 600.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "3"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 78,
+     "name": "프리져 - 대상",
+     "desc": "프리져 최대 대상 수 +2",
+     "type": "summonTargetPlus",
+     "value": 2
+    },
+    {
+     "open": 82,
+     "name": "프리져 - 피해",
+     "desc": "프리져 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 94,
+     "name": "프리져 - 일반 몬스터 데미지",
+     "desc": "프리져에 일반 몬스터 데미지 100%p 추가 적용",
+     "type": "statAdd",
+     "value": 100.0,
+     "stat": "AttackPowerExcludeBoss"
+    },
+    {
+     "open": 104,
+     "name": "프리져 - 재사용",
+     "desc": "프리져 재사용 대기시간 50% 감소",
+     "type": "cdrPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "83030",
+   "name": "볼트 스위프트",
+   "open": 63,
+   "type": "active",
+   "cd": 21.0,
+   "desc": "화살을 사방으로 발사해 주변의 적 10명에게 «380»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 380.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "볼트 스위프트 - 피해",
+     "desc": "볼트 스위프트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 98,
+     "name": "볼트 스위프트 - 기절",
+     "desc": "볼트 스위프트 타격 대상 1.5초간 기절",
+     "type": "enableDeal",
+     "value": [
+      "83030",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "83040",
+   "name": "볼트 플로우",
+   "open": 60,
+   "type": "active",
+   "cd": 10.0,
+   "desc": "30초간 특수한 표식을 설치합니다. 표식이 지속되는동안 공격력이 25% 증가하고, 이 스킬을 다시 사용 시 해당 표식의 위치로 이동하며 표식이 소멸됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "30000",
+     "state": "BoltFlow_Buff"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "83050",
+   "name": "페인 킬러",
+   "open": 66,
+   "type": "active",
+   "cd": 25.0,
+   "desc": "자신에게 걸린 모든 디버프를 즉시 제거하고, HP를 10%, MP를 10% 회복합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Cleanse",
+     "tgt": "Myself"
+    },
+    {
+     "stat": "Heal",
+     "val": 10.0,
+     "growth": 0.3
+    }
+   ],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "페인 킬러 - 면역",
+     "desc": "페인 킬러 사용 시 3초간 디버프 면역",
+     "type": "enableDeal",
+     "value": [
+      "83050",
+      "4"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "83060",
+   "name": "익스트림 아쳐리 : 석궁",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "방어력이 10% 감소하는 대신, 최종 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Defence",
+     "val": "-100",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "83070",
+   "name": "모탈 블로우",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "적을 40회 직접 타격하면 5초간 최종 데미지가 10% 증가합니다. 효과가 지속되는 동안에는 타격 중첩이 쌓이지 않습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnHit",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "83070_2"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 90,
+     "name": "모탈 블로우 - 지속",
+     "desc": "모탈 블로우 지속시간 +5초",
+     "type": "durMs",
+     "value": 5000.0
+    }
+   ]
+  },
+  {
+   "index": "83080",
+   "name": "마크맨쉽",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "적이 1명일 때 공격력이 20% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "200",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "84010",
+   "name": "인핸스 피어싱",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 강화된 관통 화살을 발사하여 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "인핸스 피어싱 - 보스 몬스터 피해",
+     "desc": "인핸스 피어싱에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "인핸스 피어싱 - 보스 몬스터 피해",
+     "desc": "인핸스 피어싱에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "인핸스 피어싱 - 피해",
+     "desc": "인핸스 피어싱 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "인핸스 피어싱 - 타격",
+     "desc": "인핸스 피어싱 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "84020",
+   "name": "스나이핑",
+   "open": 103,
+   "type": "active",
+   "cd": 12.0,
+   "desc": "대상의 급소를 노려 «3800»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 3800.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "스나이핑 - 피해",
+     "desc": "스나이핑 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 134,
+     "name": "스나이핑 - 인핸스",
+     "desc": "스나이핑에 피해입은 적에게 표식을 남기고 표식 대상을 스나이핑으로 공격 시 «5700»% 피해 (스나이핑 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "changeSkill",
+     "to": "84021"
+    }
+   ]
+  },
+  {
+   "index": "84030",
+   "name": "샤프 아이즈",
+   "open": 115,
+   "type": "active",
+   "cd": 35.0,
+   "desc": "18초간 크리티컬 데미지의 20%만큼 아군 플레이어의 크리티컬 데미지를 증가시킵니다. 자신은 크리티컬 데미지가 40% 추가로 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalPower",
+     "val": "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "18000",
+     "state": "SharpEyes"
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "18000",
+     "state": "SharpEyes"
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "400",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "99999999",
+     "state": "SharpEyes_Self"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 126,
+     "name": "샤프 아이즈 - 지속",
+     "desc": "샤프 아이즈 지속시간 +50%",
+     "type": "durPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "84040",
+   "name": "애로우 일루전",
+   "open": 110,
+   "type": "active",
+   "cd": 45.0,
+   "desc": "대상 위치에 환상의 화살을 소환해 주변 적들을 3초간 속박하고, 25초간 3초마다 주변 적 10명을 공격하여 «2400»% 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "84041",
+    "durationMs": "25000",
+    "tickMs": "3000",
+    "dmg": {
+     "coeff": 2400.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    },
+    "maxTarget": "10"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "애로우 일루전 - 피해",
+     "desc": "애로우 일루전 피해량 +50% 환상의 화살 소멸 시 주변 적 3초간 속박",
+     "type": "enableDeal",
+     "value": [
+      "84040",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "84050",
+   "name": "어디셔널 볼트",
+   "open": 107,
+   "type": "passive",
+   "cd": 0.1,
+   "desc": "인핸스 피어싱과 스나이핑으로 공격 시 15% 확률로 추가 폭발이 발생하여 대상 주변 적 3명에게 «650»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 15.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 650.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    },
+    {
+     "coeff": 650.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "어디셔널 볼트 - 피해",
+     "desc": "어디셔널 볼트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 138,
+     "name": "어디셔널 볼트 - 타격 & 대상",
+     "desc": "어디셔널 볼트 피해 범위 증가 및 타격 횟수 +1, 최대 대상 수 +2",
+     "type": "enableDeal",
+     "value": [
+      "84050",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "84060",
+   "name": "크로스보우 엑스퍼트",
+   "open": 120,
+   "type": "passive",
+   "cd": 0,
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "SkillPower",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "MaxDamageRatio",
+     "val": "200",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "84070",
+   "name": "일루전 스탭",
+   "open": 117,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 14% 증가합니다. 15초마다 9초간 공격력 증가 효과가 사라지는 대신 회피가 15 증가하고, 받는 피해가 10% 감소합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 15000
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "280",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "9000",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "AvoidChance",
+     "val": "15",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "9000",
+     "state": "IllusionStep"
+    },
+    {
+     "stat": "Toughness",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "9000",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "일루전 스탭 - 강화",
+     "desc": "일루전 스탭 지속시간 동안 공격력 증가 효과가 사라지지 않고 2배로 적용",
+     "type": "enableDeal",
+     "value": [
+      "84070",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "84080",
+   "name": "어드밴스드 파이널 어택",
+   "open": 105,
+   "type": "passive",
+   "cd": 0,
+   "desc": "파이널 어택 최종 데미지가 500% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "82060",
+     "stat": "FinalDamage",
+     "value": "5000",
+     "growth": 0.4
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "어드밴스드 파이널 어택 - 강화",
+     "desc": "파이널 어택 최종 데미지 증가량 +50%",
+     "type": "ratioBoost",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "84090",
+   "name": "라스트맨 스탠딩",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최종 데미지가 15% 증가합니다. 적이 1명이라면 5% 추가로 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "FinalDamage",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "84100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 볼트 스위프트 25% 프리져 30% 리트리트 샷 100%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "83030",
+     "stat": "FinalDamage",
+     "value": "250",
+     "growth": null
+    },
+    {
+     "targetSkill": "83021",
+     "stat": "FinalDamage",
+     "value": "300",
+     "growth": null
+    },
+    {
+     "targetSkill": "82020",
+     "stat": "FinalDamage",
+     "value": "1000",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

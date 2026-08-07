@@ -1,0 +1,1510 @@
+{
+ "job": "hero",
+ "creatureIndex": 1,
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "11010",
+   "name": "슬래시 블러스트",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "11020",
+   "name": "워리어 리프",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "11030",
+   "name": "아이언 바디",
+   "open": 10,
+   "type": "passive",
+   "cd": 0,
+   "desc": "STR이 30 증가하고, 방어력이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Str",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Defence",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "아이언 바디 - 방어력",
+     "desc": "아이언 바디 방어력 증가량 10%p 추가 증가",
+     "type": "selfStat",
+     "stat": "Defence",
+     "value": 100.0
+    }
+   ]
+  },
+  {
+   "index": "11040",
+   "name": "워리어 마스터리",
+   "open": 15,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최대 HP가 10% 이동 속도가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "MaxHp",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "RunSpeedMms",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "워리어 마스터리 - 속도",
+     "desc": "워리어 마스터리 이동 속도 증가량 5%p 추가 증가",
+     "type": "selfStat",
+     "stat": "RunSpeedMms",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "12010",
+   "name": "브랜디쉬",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "브랜디쉬 - 대상",
+     "desc": "브랜디쉬 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "브랜디쉬 - 보스 몬스터 피해",
+     "desc": "브랜디쉬에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "브랜디쉬 - 타격",
+     "desc": "브랜디쉬 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "12020",
+   "name": "플래시 슬래시",
+   "open": 35,
+   "type": "active",
+   "cd": 16.0,
+   "desc": "전방의 적 7명에게 «350»% 피해를 입힙니다. 자신의 콤보 중첩이 3 이상이라면 피해량이 50% 증가합니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 350.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "플래시 슬래시 - 피해",
+     "desc": "플래시 슬래시 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "12030",
+   "name": "콤보 어택",
+   "open": 45,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 40% 확률로 10초간 공격력이 4% 증가하는 콤보를 획득합니다. 콤보는 최대 5회 중첩됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 40.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "40",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "10000",
+     "state": "ComboAttack",
+     "stateMax": 5
+    },
+    {
+     "stat": "PiercePower",
+     "val": "$CreatureStateCount(FiredCreature;ComboAttack) * 10",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "10000",
+     "state": "ComboAttack3"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "콤보 어택 - 공격력",
+     "desc": "콤보 어택 공격력 증가량 1.5%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "12040",
+   "name": "스피릿 블레이드",
+   "open": 40,
+   "type": "active",
+   "cd": 45.0,
+   "desc": "20초간 받는 피해가 8% 감소하고, 아군 플레이어의 공격력을 10% 증가시킵니다.",
+   "targetCount": 0,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "100",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "20000",
+     "state": "SpiritBladeAttack"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "80",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "20000",
+     "state": "SpiritBladeToughness"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "스피릿 블레이드 - 재사용",
+     "desc": "스피릿 블레이드 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "12050",
+   "name": "웨폰 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "12060",
+   "name": "웨폰 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "12070",
+   "name": "파이널 어택",
+   "open": 50,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 시 25% 확률로 파이널 어택이 발동하여 «35»% 추가 피해를 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 25.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 35.0,
+     "hits": "1",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 54,
+     "name": "파이널 어택 - 피해",
+     "desc": "파이널 어택 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "12080",
+   "name": "피지컬 트레이닝",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BaseAttackPower",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "13010",
+   "name": "브레이브 슬래시",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "브레이브 슬래시 - 보스 몬스터 피해",
+     "desc": "브레이브 슬래시에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "브레이브 슬래시 - 보스 몬스터 피해",
+     "desc": "브레이브 슬래시에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "브레이브 슬래시 - 타격",
+     "desc": "브레이브 슬래시 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "13020",
+   "name": "오라 블레이드",
+   "open": 69,
+   "type": "active",
+   "cd": 16.0,
+   "desc": "전방으로 검기를 날려 8명에게 «250»% 피해를 4회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 250.0,
+     "hits": "4",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "오라 블레이드 - 피해",
+     "desc": "오라 블레이드 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 94,
+     "name": "오라 블레이드 - 타격",
+     "desc": "오라 블레이드 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    },
+    {
+     "open": 104,
+     "name": "오라 블레이드 - 재사용",
+     "desc": "오라 블레이드 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "13030",
+   "name": "돌진",
+   "open": 63,
+   "type": "active",
+   "cd": 22.0,
+   "desc": "전방으로 돌격하며 12명에게 «600»% 피해를 입히고 2.5초간 기절시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 600.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "돌진 - 피해",
+     "desc": "돌진 피해량 +80%",
+     "type": "dmgPct",
+     "value": 80.0
+    },
+    {
+     "open": 90,
+     "name": "돌진 - 재사용",
+     "desc": "돌진 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "13040",
+   "name": "스카링 소드",
+   "open": 66,
+   "type": "active",
+   "cd": 30.0,
+   "desc": "15초간 검에 예기가 더해져 공격 시 35% 확률로 10초간 대상의 공격력을 «10»% 감소시키고, 받는 피해를 «20»% 증가시킵니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "-100",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "10000",
+     "state": "ScaringSword_AttackDown"
+    }
+   ],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "200",
+     "growth": 0.4,
+     "tgt": "Target",
+     "durationMs": "10000",
+     "state": "ScaringSword_Weakness"
+    }
+   ],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 78,
+     "name": "스카링 소드 - 약화",
+     "desc": "스카링 소드 받는 피해 증가량 8%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "13050",
+   "name": "콤보 시너지",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "콤보가 중첩될 확률이 10%p 증가하고, 콤보 중첩마다 최종 데미지가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "10000",
+     "state": "ComboAttack2",
+     "stateMax": 5
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 82,
+     "name": "콤보 시너지 - 최종 데미지",
+     "desc": "콤보 시너지 최종 데미지 증가량 1%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "13060",
+   "name": "셀프 리커버리",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "매초 HP를 1%, MP를 0.5% 회복합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "HpRegenRatio",
+     "val": "10",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "MpRegenRatio",
+     "val": "5",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 98,
+     "name": "셀프 리커버리 - 공격력",
+     "desc": "HP가 50% 이상일 때 최종 데미지 5% 증가",
+     "type": "selfStat",
+     "stat": "FinalDamage",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "13070",
+   "name": "찬스 어택",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 8% 증가하고, 상태이상 데미지가 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "AttackPowerInCc",
+     "val": "120",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "13080",
+   "name": "인듀어",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "디버프 내성이 15 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "DebuffResist",
+     "val": "15",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "14010",
+   "name": "레이징 블로우",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "레이징 블로우 - 보스 몬스터 피해",
+     "desc": "레이징 블로우에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "레이징 블로우 - 보스 몬스터 피해",
+     "desc": "레이징 블로우에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "레이징 블로우 - 타격",
+     "desc": "레이징 블로우 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "14020",
+   "name": "인핸스 레이징 블로우",
+   "open": 107,
+   "type": "active",
+   "cd": 19.0,
+   "desc": "전방의 적 9명을 순식간에 여러 번 베어 «550»% 피해를 6회 입힙니다. 이 스킬은 보스 몬스터 데미지가 100% 추가로 적용되며, 콤보 중첩이 5 이상일 때 사용할 수 있습니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 550.0,
+     "hits": "6",
+     "growth": 0.5,
+     "dot": false,
+     "bossDmg": 100.0
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "인핸스 레이징 블로우 - 피해",
+     "desc": "인핸스 레이징 블로우 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 138,
+     "name": "인핸스 레이징 블로우 - 피해",
+     "desc": "인핸스 레이징 블로우 콤보 초과 중첩 당 최종 데미지 +20%",
+     "type": "finalDmgPct",
+     "value": null
+    }
+   ]
+  },
+  {
+   "index": "14030",
+   "name": "인사이징",
+   "open": 103,
+   "type": "active",
+   "cd": 19.0,
+   "desc": "대상의 위치에 거대한 검을 내리꽂아 대상 주변 적 5명에게 «900»% 피해를 3회 입히고, 10초 동안 상처를 남겨 1초마다 «150»% 피해를 입힙니다. 대상이 보스라면 상처 지속시간 동안 받는 피해가 «10»% 증가합니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 900.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    },
+    {
+     "coeff": 150.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": true,
+     "dotDurMs": "10000",
+     "dotTickMs": "1000"
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "100",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "10000",
+     "state": null
+    }
+   ],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "인사이징 - 피해",
+     "desc": "인사이징 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 134,
+     "name": "인사이징 - 약화",
+     "desc": "인사이징 받는 피해 증가량 +50%",
+     "type": "ratioValue",
+     "value": 50.0,
+     "stat": "Weakness"
+    }
+   ]
+  },
+  {
+   "index": "14040",
+   "name": "매직 크래쉬",
+   "open": 117,
+   "type": "active",
+   "cd": 28.0,
+   "desc": "대상의 지면에 바위를 소환하여 폭발시켜 대상의 버프를 1개 제거하고, 대상 주변 적 5명에게 «4800»% 피해를 1회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 4800.0,
+     "hits": "1",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "100",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "15000",
+     "state": "MagicCrash"
+    }
+   ],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Dispel",
+     "tgt": "Target"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 126,
+     "name": "매직 크래쉬 - 약화",
+     "desc": "매직 크래쉬에 피해입은 적 15초간 받는 피해 10% 증가",
+     "type": "enableDeal",
+     "value": [
+      "14040",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "14050",
+   "name": "인레이지",
+   "open": 115,
+   "type": "passive",
+   "cd": 0,
+   "desc": "10초마다 힘을 폭발시켜 5초간 최종 데미지가 12%, 크리티컬 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 10000
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "120",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "Enrage"
+    },
+    {
+     "stat": "CriticalPower",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "14060",
+   "name": "어드밴스드 콤보",
+   "open": 110,
+   "type": "passive",
+   "cd": 0,
+   "desc": "콤보 어택의 최대 중첩 수가 2개 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "어드밴스드 콤보 - 최대 중첩",
+     "desc": "콤보 어택 최대 중첩 수 +1",
+     "type": "stackPlus",
+     "state": "ComboAttack",
+     "value": 1
+    },
+    {
+     "open": 130,
+     "name": "어드밴스드 콤보 - 방어 관통력",
+     "desc": "콤보 중첩 당 방어 관통력 1% 증가",
+     "type": "enableDeal",
+     "value": [
+      "12030",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "14070",
+   "name": "스탠스",
+   "open": 125,
+   "type": "passive",
+   "cd": 0,
+   "desc": "받는 피해가 5% 감소하고, 최종 데미지가 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "14080",
+   "name": "어드밴스드 파이널 어택",
+   "open": 105,
+   "type": "passive",
+   "cd": 0,
+   "desc": "파이널 어택 최종 데미지가 500% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "12070",
+     "stat": "FinalDamage",
+     "value": "5000",
+     "growth": 0.4
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "어드밴스드 파이널 어택 - 강화",
+     "desc": "어드밴스드 파이널 어택 최종 데미지 증가량 +50%",
+     "type": "ratioBoost",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "14090",
+   "name": "컴뱃 마스터리",
+   "open": 120,
+   "type": "passive",
+   "cd": 0,
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "SkillPower",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "MaxDamageRatio",
+     "val": "200",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "14100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 오라 블레이드 20% 돌진 30% 플래시 슬래시 80%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "13020",
+     "stat": "FinalDamage",
+     "value": "200",
+     "growth": null
+    },
+    {
+     "targetSkill": "13030",
+     "stat": "FinalDamage",
+     "value": "300",
+     "growth": null
+    },
+    {
+     "targetSkill": "12020",
+     "stat": "FinalDamage",
+     "value": "800",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}

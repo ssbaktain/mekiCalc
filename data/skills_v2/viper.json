@@ -1,0 +1,1520 @@
+{
+ "job": "viper",
+ "creatureIndex": 11,
+ "indirectSrc": [
+  "AttackSpeed"
+ ],
+ "skills": [
+  {
+   "index": "111010",
+   "name": "써머솔트 킥",
+   "open": null,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 점프 후 뒤로 회전하며 다리로 주변 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 26.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 12,
+     "name": "써머솔트 킥 - 피해",
+     "desc": "써머솔트 킥 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 15,
+     "name": "써머솔트 킥 - 대상",
+     "desc": "써머솔트 킥 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 19,
+     "name": "써머솔트 킥 - 피해",
+     "desc": "써머솔트 킥 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 22,
+     "name": "써머솔트 킥 - 대상",
+     "desc": "써머솔트 킥 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 26,
+     "name": "써머솔트 킥 - 피해",
+     "desc": "써머솔트 킥 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    }
+   ]
+  },
+  {
+   "index": "111020",
+   "name": "크리티컬 로어",
+   "open": 10,
+   "type": "passive",
+   "cd": 0,
+   "desc": "크리티컬 확률이 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "CriticalChance",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 21,
+     "name": "크리티컬 로어 - 크리티컬 데미지",
+     "desc": "크리티컬 로어 크리티컬 데미지 5% 증가",
+     "type": "selfStat",
+     "stat": "CriticalPower",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "111030",
+   "name": "퀵모션",
+   "open": 15,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 6%, 이동 속도가 8% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "AttackSpeed",
+     "val": "60",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "util": [
+    {
+     "stat": "RunSpeedMms",
+     "val": "80",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": [
+    {
+     "open": 24,
+     "name": "퀵 모션 - 속도",
+     "desc": "퀵 모션 공격 속도 증가량 5%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "111040",
+   "name": "파이렛 리프",
+   "open": null,
+   "type": "passive",
+   "cd": 0,
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "112010",
+   "name": "쇼크 웨이브",
+   "open": 30,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 점프후 착지하여 발생시킨 충격파로 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 40.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 32,
+     "name": "쇼크 웨이브 - 피해",
+     "desc": "쇼크 웨이브 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 37,
+     "name": "쇼크 웨이브 - 대상",
+     "desc": "쇼크 웨이브 최대 대상 수 +1",
+     "type": "targetPlus",
+     "value": 1
+    },
+    {
+     "open": 42,
+     "name": "쇼크 웨이브 - 피해",
+     "desc": "쇼크 웨이브 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 47,
+     "name": "쇼크 웨이브 - 보스 몬스터 피해",
+     "desc": "쇼크 웨이브에 보스 몬스터 데미지 15% 추가 적용",
+     "type": "statAdd",
+     "value": 15.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 52,
+     "name": "쇼크 웨이브 - 피해",
+     "desc": "쇼크 웨이브 피해량 +20%",
+     "type": "dmgPct",
+     "value": 20.0
+    },
+    {
+     "open": 56,
+     "name": "쇼크 웨이브 - 타격",
+     "desc": "쇼크 웨이브 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "112020",
+   "name": "어드밴스드 대쉬",
+   "open": 50,
+   "type": "active",
+   "cd": 6.0,
+   "desc": "전방으로 신속하게 이동합니다. 사용중인 스킬을 취소하고 즉시 발동합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "50",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "AdvancedDash_Toughness"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 54,
+     "name": "어드밴스드 대쉬 - 보호",
+     "desc": "어드밴스드 대쉬 사용 후 5초간 받는 피해 5% 감소",
+     "type": "enableDeal",
+     "value": [
+      "112020",
+      "3"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "112030",
+   "name": "씨 서펜트 버스트",
+   "open": 35,
+   "type": "passive",
+   "cd": 7.0,
+   "desc": "기본 공격 시 40% 확률로 수룡의 파동이 퍼져 전방의 적 5명에게 «130»% 추가 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 40.0
+   },
+   "dealChild": "112031",
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 130.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    },
+    {
+     "coeff": 430.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    },
+    {
+     "coeff": 430.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    },
+    {
+     "coeff": 480.0,
+     "hits": "3",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "20",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": "SerpentStone",
+     "stateMax": 5
+    },
+    {
+     "stat": "FinalDamage",
+     "val": "20",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": "SerpentStone",
+     "stateMax": 5
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 39,
+     "name": "씨 서펜트 버스트 - 피해",
+     "desc": "씨 서펜트 버스트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "112040",
+   "name": "너클 액셀레이션",
+   "open": 33,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격 속도가 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "AttackSpeed",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "util": [],
+   "masteries": [
+    {
+     "open": 44,
+     "name": "너클 액셀레이션 - 속도",
+     "desc": "너클 액셀레이션 공격 속도 증가량 7%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "112050",
+   "name": "멘탈 클리어리티",
+   "open": 40,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 12% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "120",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "112060",
+   "name": "너클 마스터리",
+   "open": 43,
+   "type": "passive",
+   "cd": 0,
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "MinDamageRatio",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "112070",
+   "name": "피지컬 트레이닝",
+   "open": 38,
+   "type": "passive",
+   "cd": 0,
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "BaseAttackPower",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "112080",
+   "name": "인듀어런스",
+   "open": 45,
+   "type": "passive",
+   "cd": 0,
+   "desc": "5초마다 HP를 2% 회복합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 5000
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Heal",
+     "val": 2.0,
+     "growth": 0.3
+    }
+   ],
+   "masteries": [
+    {
+     "open": 49,
+     "name": "인듀어런스 - 공격력",
+     "desc": "HP가 50% 이상일 때 공격력 5% 증가",
+     "type": "selfStat",
+     "stat": "Attack",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "113010",
+   "name": "터닝 킥",
+   "open": 60,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 점프후 회전하며 다리로 주변의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 80.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 62,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 66,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 71,
+     "name": "터닝 킥 - 보스 몬스터 피해",
+     "desc": "터닝 킥에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 76,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 80,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 84,
+     "name": "터닝 킥 - 보스 몬스터 피해",
+     "desc": "터닝 킥에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 88,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 92,
+     "name": "터닝 킥 - 피해",
+     "desc": "터닝 킥 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 96,
+     "name": "터닝 킥 - 타격",
+     "desc": "터닝 킥 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "113020",
+   "name": "스크류 펀치",
+   "open": 63,
+   "type": "active",
+   "cd": 21.0,
+   "desc": "전방으로 돌진하며 기가 실린 주먹으로 7명에게 «340»% 피해를 2회 입히고 1.8초간 기절시킵니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 340.0,
+     "hits": "2",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "type": "Stun",
+     "tgt": "Parent"
+    }
+   ],
+   "masteries": [
+    {
+     "open": 73,
+     "name": "스크류 펀치 - 피해",
+     "desc": "스크류 펀치 피해량 +80%",
+     "type": "dmgPct",
+     "value": 80.0
+    }
+   ]
+  },
+  {
+   "index": "113030",
+   "name": "서펜트 스톤",
+   "open": 66,
+   "type": "active",
+   "cd": 0,
+   "desc": "[서펜트 스톤 5개 필요] 모든 서펜트 스톤을 소모하여 10초간 어썰트 모드에 돌입하고, 최종 데미지가 25% 증가합니다.  [서펜트 스톤 스킬 장착 중] 씨 서펜트 버스트 발동 시 서펜트 스톤을 획득하여 최종 데미지가 2% 증가합니다. 최대 5회 중첩되며 어썰트 모드에서는 서펜트 스톤을 획득할 수 없습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "250",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "10000",
+     "state": "AssaultMode"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 68,
+     "name": "서펜트 스톤 - 시작",
+     "desc": "[서펜트 스톤 스킬 장착 중] 전투 시작 시 서펜트 스톤 3개 획득",
+     "type": "raw",
+     "effect": {
+      "kind": "unknown",
+      "op": "UseSkill"
+     }
+    },
+    {
+     "open": 94,
+     "name": "서펜트 스톤 - 지속",
+     "desc": "어썰트 모드 지속시간 5초 증가",
+     "type": "durMs",
+     "value": 5000.0
+    },
+    {
+     "open": 104,
+     "name": "서펜트 스톤 - 중첩",
+     "desc": "씨 서펜트 버스트 발동 시 서펜트 스톤 1개 추가 획득",
+     "type": "enableDeal",
+     "value": [
+      "112031",
+      "5"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "113040",
+   "name": "씨 서펜트 강화 I",
+   "open": 72,
+   "type": "passive",
+   "cd": 0,
+   "desc": "씨 서펜트 버스트의 최대 대상 수가 2명 증가하고, 피해량이 «430»%로 변경됩니다. (씨 서펜트 강화 I 스킬 레벨에 비례하여 피해량 증가)",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 78,
+     "name": "씨 서펜트 강화 I - 재사용",
+     "desc": "씨 서펜트 버스트 재사용 대기시간 2초 감소",
+     "type": "cdFlatMs",
+     "value": -2000.0,
+     "targetSkill": "112030"
+    }
+   ]
+  },
+  {
+   "index": "113050",
+   "name": "서펜트 어썰트",
+   "open": 69,
+   "type": "passive",
+   "cd": 0,
+   "desc": "어썰트 모드에서 기본 공격 시 씨 서펜트 버스트 대신 발동하여 주변 적 12명에게 «480»% 추가 피해를 3회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 82,
+     "name": "서펜트 어썰트 - 피해",
+     "desc": "서펜트 어썰트 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "113060",
+   "name": "럭키 다이스",
+   "open": 74,
+   "type": "passive",
+   "cd": 0,
+   "desc": "공격력이 20% 증가합니다. 7초마다 정육면체 주사위를 굴려 5초간 등장한 주사위 숫자에 비례하여 공격력이 0 ~ 5% 추가로 증가합니다. 한번 등장한 숫자는 30초간 다시 등장하지 않습니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnTimer",
+    "procPct": 100.0,
+    "fastByAtkSpeed": false,
+    "periodMs": 7000
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "Attack",
+     "val": "0",
+     "growth": null,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_1"
+    },
+    {
+     "stat": "Attack",
+     "val": "10",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_2"
+    },
+    {
+     "stat": "Attack",
+     "val": "20",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_3"
+    },
+    {
+     "stat": "Attack",
+     "val": "30",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_4"
+    },
+    {
+     "stat": "Attack",
+     "val": "40",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_5"
+    },
+    {
+     "stat": "Attack",
+     "val": "50",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "5000",
+     "state": "LuckyDice_6"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 90,
+     "name": "럭키 다이스 - 공격력",
+     "desc": "럭키 다이스 기본 공격력 증가량 +5%p 추가 증가",
+     "type": "none"
+    }
+   ]
+  },
+  {
+   "index": "113070",
+   "name": "윌로우 디펜시브",
+   "open": 60,
+   "type": "passive",
+   "cd": 0,
+   "desc": "받는 피해가 10% 감소합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [
+    {
+     "stat": "Toughness",
+     "val": "100",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "masteries": []
+  },
+  {
+   "index": "113080",
+   "name": "그로기 마스터리",
+   "open": 75,
+   "type": "passive",
+   "cd": 0,
+   "desc": "상태이상 데미지가 15%, 데미지가 25% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "AttackPowerInCc",
+     "val": "150",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    },
+    {
+     "stat": "AttackPower",
+     "val": "250",
+     "growth": 0.3,
+     "tgt": "Myself",
+     "durationMs": "99999999",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 98,
+     "name": "그로기 마스터리 - 최종 데미지",
+     "desc": "상태이상 적 공격 시 5초간 최종 데미지 5% 증가",
+     "type": "selfStat",
+     "stat": "FinalDamage",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "114010",
+   "name": "훅 봄버",
+   "open": 100,
+   "type": "active",
+   "cd": 0,
+   "desc": "[기본 공격 효과] 주먹을 내질러 만든 강한 폭발의 기로 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 290.0,
+     "hits": "5",
+     "growth": 0.4,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 102,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +10%",
+     "type": "dmgPct",
+     "value": 10.0
+    },
+    {
+     "open": 106,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +11%",
+     "type": "dmgPct",
+     "value": 11.0
+    },
+    {
+     "open": 111,
+     "name": "훅 봄버 - 보스 몬스터 피해",
+     "desc": "훅 봄버에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 116,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +12%",
+     "type": "dmgPct",
+     "value": 12.0
+    },
+    {
+     "open": 120,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +13%",
+     "type": "dmgPct",
+     "value": 13.0
+    },
+    {
+     "open": 124,
+     "name": "훅 봄버 - 보스 몬스터 피해",
+     "desc": "훅 봄버에 보스 몬스터 데미지 10% 추가 적용",
+     "type": "statAdd",
+     "value": 10.0,
+     "stat": "AttackPowerToBoss"
+    },
+    {
+     "open": 128,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +14%",
+     "type": "dmgPct",
+     "value": 14.0
+    },
+    {
+     "open": 132,
+     "name": "훅 봄버 - 피해",
+     "desc": "훅 봄버 피해량 +15%",
+     "type": "dmgPct",
+     "value": 15.0
+    },
+    {
+     "open": 136,
+     "name": "훅 봄버 - 타격",
+     "desc": "훅 봄버 적 타격 횟수 +1",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "114020",
+   "name": "피스트 인레이지",
+   "open": 103,
+   "type": "active",
+   "cd": 16.0,
+   "desc": "소나기와 같은 펀치를 퍼부어 전방의 적 4명에게 «900»% 피해를 3회 입힙니다. 대상이 보스라면 동일한 피해를 2회 더 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 900.0,
+     "hits": "3",
+     "growth": 0.5,
+     "dot": false
+    },
+    {
+     "coeff": 900.0,
+     "hits": "2",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 108,
+     "name": "피스트 인레이지 - 피해",
+     "desc": "피스트 인레이지 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    },
+    {
+     "open": 134,
+     "name": "피스트 인레이지 - 재사용",
+     "desc": "피스트 인레이지 재사용 대기시간 30% 감소",
+     "type": "cdrPct",
+     "value": 30.0
+    }
+   ]
+  },
+  {
+   "index": "114030",
+   "name": "전함 노틸러스",
+   "open": 105,
+   "type": "active",
+   "cd": 33.0,
+   "desc": "전함 노틸러스호에 공격 명령을 내려 주변의 적 15명에게 «1950»% 피해를 5회 입힙니다.",
+   "targetCount": 1,
+   "area": true,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1950.0,
+     "hits": "5",
+     "growth": 0.5,
+     "dot": false
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 113,
+     "name": "전함 노틸러스 - 파이널 어택",
+     "desc": "[전함 노틸러스 스킬 장착 중] 공격 시 15% 확률로 «850»% 추가 피해 (전함 노틸러스 스킬 레벨에 비례하여 피해량 증가)",
+     "type": "enableDeal",
+     "value": [
+      "114031",
+      "1"
+     ]
+    },
+    {
+     "open": 126,
+     "name": "전함 노틸러스 - 피해",
+     "desc": "전함 노틸러스 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "114040",
+   "name": "바이퍼지션",
+   "open": 115,
+   "type": "active",
+   "cd": 28.0,
+   "desc": "12초간 최종 데미지가 10%, 방어 관통력이 5% 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "100",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "12000",
+     "state": "Vipersition"
+    },
+    {
+     "stat": "PiercePower",
+     "val": "50",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "12000",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "114050",
+   "name": "윈드 부스터",
+   "open": 107,
+   "type": "active",
+   "cd": 35.0,
+   "desc": "15초간 공격 속도가 20% 증가하고, 공격 속도의 20%만큼 최종 데미지가 증가합니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "$CreatureFinalStat(UsedCreature;AttackSpeed) * 200 / 1000",
+     "growth": null,
+     "tgt": "Parent",
+     "durationMs": "15000",
+     "state": null
+    }
+   ],
+   "debuff": [],
+   "indirect": [
+    {
+     "stat": "AttackSpeed",
+     "val": "200",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "15000",
+     "state": "WindBooster"
+    }
+   ],
+   "util": [],
+   "masteries": []
+  },
+  {
+   "index": "114060",
+   "name": "타임 리프",
+   "open": 125,
+   "type": "active",
+   "cd": 65.0,
+   "desc": "액티브 스킬의 재사용 대기시간이 즉시 50% 감소하고, 40초간 최종 데미지가 30% 증가합니다. 이 스킬은 스킬 장착 시, 최초 전투 시작 시 12초의 재사용 대기시간이 적용됩니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "None",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [
+    {
+     "stat": "FinalDamage",
+     "val": "300",
+     "growth": 0.4,
+     "tgt": "Myself",
+     "durationMs": "40000",
+     "state": "TimeLeap"
+    }
+   ],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 138,
+     "name": "타임 리프 - 부여",
+     "desc": "타임 리프 사용 시 자신을 제외한 아군 플레이어의 액티브 스킬 재사용 대기시간 즉시 3초 감소 (30초간 효과를 다시 받을 수 없음) 자신의 최종 데미지 증가량 10%p 증가",
+     "type": "enableDeal",
+     "value": [
+      "114060",
+      "2"
+     ]
+    }
+   ]
+  },
+  {
+   "index": "114070",
+   "name": "씨 서펜트 강화 II",
+   "open": 110,
+   "type": "passive",
+   "cd": 0,
+   "desc": "씨 서펜트 버스트의 최대 대상 수가 2명 증가하고, 최종 데미지가 100% 증가합니다. 수룡의 파동이 더 멀리 퍼집니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "112034",
+     "stat": "FinalDamage",
+     "value": "1000",
+     "growth": 0.3
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 118,
+     "name": "씨 서펜트 강화 II - 타격 & 재사용",
+     "desc": "씨 서펜트 버스트 적 타격 횟수 +1, 재사용 대기시간 2초 감소",
+     "type": "hitPlus",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": "114080",
+   "name": "씨 서펜트 인레이지",
+   "open": 117,
+   "type": "passive",
+   "cd": 16.0,
+   "desc": "피스트 인레이지 발동 시 수룡이 나타나 전방의 적 8명에게 «1700»% 추가 피해를 2회 입히고, 피해입은 대상에게 어썰트 마크를 남겨 5초간 받는 피해를 «15»% 증가시킵니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnActiveSkill",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [
+    {
+     "coeff": 1700.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    }
+   ],
+   "summon": null,
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [
+    {
+     "stat": "Weakness",
+     "val": "150",
+     "growth": 0.4,
+     "tgt": "Parent",
+     "durationMs": "5000",
+     "state": "SerpentMark"
+    }
+   ],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 122,
+     "name": "씨 서펜트 인레이지 - 피해",
+     "desc": "씨 서펜트 인레이지 피해량 +100%",
+     "type": "dmgPct",
+     "value": 100.0
+    }
+   ]
+  },
+  {
+   "index": "114090",
+   "name": "서펜트 어썰트 인레이지",
+   "open": 120,
+   "type": "passive",
+   "cd": 16.0,
+   "desc": "어썰트 모드에서 씨 서펜트 인레이지 공격 시 5초간 격앙된 수룡을 전방에 불러내어 1초마다 주변 적 9명에게 «1300»% 피해를 2회 입힙니다.",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnAttack",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": {
+    "child": "114091",
+    "durationMs": "5000",
+    "tickMs": "1000",
+    "dmg": {
+     "coeff": 1300.0,
+     "hits": "2",
+     "growth": 0.4,
+     "dot": true
+    },
+    "maxTarget": "9"
+   },
+   "skillBoost": [],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": [
+    {
+     "open": 130,
+     "name": "서펜트 어썰트 인레이지 - 피해",
+     "desc": "서펜트 어썰트 인레이지 피해량 +50%",
+     "type": "dmgPct",
+     "value": 50.0
+    }
+   ]
+  },
+  {
+   "index": "114100",
+   "name": "메이플 용사",
+   "open": 100,
+   "type": "passive",
+   "cd": 0,
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 서펜트 어썰트 60% 스크류 펀치 40%",
+   "targetCount": 1,
+   "area": false,
+   "trigger": {
+    "type": "OnStart",
+    "procPct": 100.0
+   },
+   "dealChild": null,
+   "summonSkill": null,
+   "summonDurMs": null,
+   "damage": [],
+   "summon": null,
+   "skillBoost": [
+    {
+     "targetSkill": "113051",
+     "stat": "FinalDamage",
+     "value": "600",
+     "growth": null
+    },
+    {
+     "targetSkill": "113020",
+     "stat": "FinalDamage",
+     "value": "400",
+     "growth": null
+    }
+   ],
+   "buff": [],
+   "debuff": [],
+   "indirect": [],
+   "util": [],
+   "masteries": []
+  }
+ ]
+}
