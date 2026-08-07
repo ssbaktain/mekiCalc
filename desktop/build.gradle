@@ -57,6 +57,18 @@ tasks.register('sim2Demo', JavaExec) {
     systemProperty 'stdout.encoding', 'UTF-8'
 }
 
+// sim2 실 프리셋 전 직업 대조: gradlew :desktop:presetCompare2 -Pchapter=35
+tasks.register('presetCompare2', JavaExec) {
+    group = 'verification'
+    description = 'sim2 활성 프리셋 전 직업 DPS(조/경, 챕터 방어력)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mekicalc.PresetCompare2'
+    workingDir = rootProject.projectDir
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+    if (project.hasProperty('chapter')) systemProperty 'chapter', project.property('chapter')
+}
+
 // 실 프리셋 절대값 대조(전 직업, 조/경): gradlew :desktop:presetCompare
 tasks.register('presetCompare', JavaExec) {
     group = 'verification'
