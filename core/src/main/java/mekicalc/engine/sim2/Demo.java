@@ -101,13 +101,8 @@ public final class Demo {
                     tg.put("counterOn", "basicAttack");
                 }
                 case "24090" -> Json.asMap(s.get("trigger")).put("requireState", "HolyCharge");
-                case "113030" -> {   // 서펜트 스톤: "[서펜트 스톤 5개 필요] 모든 스톤 소모 → 10초 어썰트 모드"
-                    Map<String, Object> tg = Json.asMap(s.get("trigger"));
-                    tg.put("requireState", "SerpentStone:5");
-                    tg.put("consumeRequire", true);
-                }
-                case "114090" -> Json.asMap(s.get("trigger")).put("requireState", "AssaultMode");
-                    // 서펜트 어썰트 인레이지: "어썰트 모드에서 … 공격 시"(원문)
+                // 113030 서펜트스톤(SerpentStone:5+consume)·114090 서펜트어썰트(AssaultMode) requireState는
+                // analyze(trigger_require_state/trigger_consume) 자동추출로 이관 — patchData 불필요.
                 case "113060" -> {
                     for (Object bo : Json.asList(s.get("buff")))
                         Json.asMap(bo).put("exclusiveGroup", "LuckyDice");

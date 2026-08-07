@@ -728,7 +728,9 @@
    "area": false,
    "trigger": {
     "type": "None",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "requireState": "SerpentStone:5",
+    "consumeRequire": true
    },
    "dealChild": null,
    "summonSkill": null,
@@ -1445,7 +1447,8 @@
    "area": false,
    "trigger": {
     "type": "OnAttack",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "requireState": "AssaultMode"
    },
    "dealChild": null,
    "summonSkill": null,

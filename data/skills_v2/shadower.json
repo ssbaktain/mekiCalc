@@ -717,7 +717,9 @@
    "area": true,
    "trigger": {
     "type": "None",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "requireState": "Meso",
+    "consumeRequire": true
    },
    "dealChild": null,
    "summonSkill": null,
@@ -1345,7 +1347,8 @@
    "area": false,
    "trigger": {
     "type": "OnAttack",
-    "procPct": 20.0
+    "procPct": 20.0,
+    "requireState": "103060"
    },
    "dealChild": null,
    "summonSkill": null,

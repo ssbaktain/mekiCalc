@@ -1093,7 +1093,8 @@
    "area": true,
    "trigger": {
     "type": "None",
-    "procPct": 100.0
+    "procPct": 100.0,
+    "requireState": "ComboAttack:5"
    },
    "dealChild": null,
    "summonSkill": null,
