@@ -283,7 +283,10 @@
      "growth": null,
      "tgt": "Parent",
      "durationMs": "5000",
-     "state": "Ice_3"
+     "state": "Ice_3",
+     "stackRef": "Ice",
+     "stackMult": 20,
+     "stackRefMax": 5
     }
    ],
    "indirect": [],
@@ -303,7 +306,10 @@
      "growth": 0.3,
      "tgt": "Parent",
      "durationMs": "5000",
-     "state": "Ice_2"
+     "state": "Ice_2",
+     "stackRef": "Ice",
+     "stackMult": 1,
+     "stackRefMax": 5
     }
    ],
    "masteries": [

@@ -825,7 +825,10 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "2000",
-     "state": null
+     "state": null,
+     "stackRef": "ShadowMomentum",
+     "stackMult": 40,
+     "stackRefMax": 5
     },
     {
      "stat": "Attack",

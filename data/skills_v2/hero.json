@@ -350,7 +350,10 @@
      "growth": null,
      "tgt": "Parent",
      "durationMs": "10000",
-     "state": "ComboAttack3"
+     "state": "ComboAttack3",
+     "stackRef": "ComboAttack",
+     "stackMult": 10,
+     "stackRefMax": 5
     }
    ],
    "debuff": [],

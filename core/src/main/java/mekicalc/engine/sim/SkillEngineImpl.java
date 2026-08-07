@@ -303,9 +303,17 @@ public final class SkillEngineImpl implements SkillEngine {
             String cltStat = Json.str(b, "stat");
             String sid = StatNameMap.id(cltStat);
             if (sid == null) continue;                       // 딜 무관
-            double raw = parseNum(Json.str(b, "val"));
-            if (Double.isNaN(raw)) continue;                 // 함수형($…) — TODO 동적 평가
-            double amount = StatNameMap.toPct(SkillDpsModel.coefficient(raw, Json.num(b, "growth", 0), lv));
+            double amount;
+            String stackRef = Json.str(b, "stackRef", null);
+            if (stackRef != null) {
+                // 함수형 $CreatureStateCount(...;State)×N: 정상상태 만스택 근사 = State MaxStack + stackPlus 마스터리, ×배수(콤보 방관·컨센 크뎀 등).
+                int stacks = (int) Json.num(b, "stackRefMax", 1) + stackPlus.getOrDefault(stackRef, 0);
+                amount = StatNameMap.toPct(stacks * Json.num(b, "stackMult", 1));
+            } else {
+                double raw = parseNum(Json.str(b, "val"));
+                if (Double.isNaN(raw)) continue;             // 그 외 함수형($…) — TODO 동적 평가
+                amount = StatNameMap.toPct(SkillDpsModel.coefficient(raw, Json.num(b, "growth", 0), lv));
+            }
             amount *= 1 + masteryRatioValue(s, cl, cltStat) / 100.0;   // 버프/디버프 증가량 배수 마스터리(크로스오버 공퍼 +100% 등)
             // 스택 시스템(콤보 등): 정상상태 근사 = 스택당 값 × 최대스택(base stateMax + 마스터리 stackPlus).
             Object smO = b.get("stateMax");

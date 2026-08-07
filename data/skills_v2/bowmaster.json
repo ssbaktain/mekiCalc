@@ -909,7 +909,10 @@
      "growth": 0.3,
      "tgt": "Myself",
      "durationMs": "4000",
-     "state": "73070_2"
+     "state": "73070_2",
+     "stackRef": "73070",
+     "stackMult": 30,
+     "stackRefMax": 10
     }
    ],
    "debuff": [],
