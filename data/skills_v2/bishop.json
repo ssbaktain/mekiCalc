@@ -1138,7 +1138,8 @@
      "coeff": 680.0,
      "hits": "3",
      "growth": 0.5,
-     "dot": true
+     "dot": true,
+     "bossOnly": true
     }
    ],
    "summon": null,

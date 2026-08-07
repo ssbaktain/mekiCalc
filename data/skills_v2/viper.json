@@ -333,25 +333,29 @@
      "coeff": 130.0,
      "hits": "2",
      "growth": 0.4,
-     "dot": true
+     "dot": true,
+     "requireStateNot": "AssaultMode"
     },
     {
      "coeff": 430.0,
      "hits": "2",
      "growth": 0.4,
-     "dot": true
+     "dot": true,
+     "requireStateNot": "AssaultMode"
     },
     {
      "coeff": 430.0,
      "hits": "2",
      "growth": 0.4,
-     "dot": true
+     "dot": true,
+     "requireStateNot": "AssaultMode"
     },
     {
      "coeff": 480.0,
      "hits": "3",
      "growth": 0.4,
-     "dot": true
+     "dot": true,
+     "requireState": "AssaultMode"
     }
    ],
    "summon": null,
@@ -1147,7 +1151,8 @@
      "coeff": 900.0,
      "hits": "2",
      "growth": 0.5,
-     "dot": false
+     "dot": false,
+     "bossOnly": true
     }
    ],
    "summon": null,

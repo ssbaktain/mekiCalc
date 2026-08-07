@@ -702,19 +702,22 @@
      "coeff": 120.0,
      "hits": "2",
      "growth": 0.5,
-     "dot": false
+     "dot": false,
+     "requireStateNot": "PoisonRegion_Attack"
     },
     {
      "coeff": 120.0,
      "hits": "2",
      "growth": 0.5,
-     "dot": false
+     "dot": false,
+     "requireStateNot": "PoisonRegion_Attack"
     },
     {
      "coeff": 120.0,
      "hits": "2",
      "growth": 0.5,
-     "dot": false
+     "dot": false,
+     "requireStateNot": "PoisonRegion_Attack"
     }
    ],
    "summon": null,

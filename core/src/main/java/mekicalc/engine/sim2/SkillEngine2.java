@@ -148,9 +148,10 @@ public final class SkillEngine2 {
         Map<String, Object> summon = null;
         Map<String, Object> src;
         if (dmgArr != null && !dmgArr.isEmpty()) {
-            if (dmgArr.size() > 1)
-                warns.add(new Warn("MULTI_DAMAGE_ENTRIES", Json.str(s, "name"),
-                        "damage 엔트리 " + dmgArr.size() + "개 중 첫 번째만 사용(구간 강화판 선택 규칙 미정 — SCHEMA 확장 필요)."));
+            // 조건 없는 다중 엔트리는 아래 buildCast에서 합산 처리(완료). 조건부(bossOnly/State배타)만 아직 미반영 → Warn.
+            if (dmgArr.size() > 1 && dmgArr.stream().anyMatch(e -> hasDmgCond(Json.asMap(e))))
+                warns.add(new Warn("MULTI_DAMAGE_COND", Json.str(s, "name"),
+                        "조건부 damage 엔트리(보스추가타/State배타) 미반영(과소·근사) — bossExtra·requireState 처리 필요."));
             src = Json.asMap(dmgArr.get(0));
         } else {
             Object sm = s.get("summon");
@@ -205,8 +206,30 @@ public final class SkillEngine2 {
         double up = summonUptime(s, st, cl);
         double bossB = masteryStatAdd(s, cl, "BOSS_DMG") + Json.num(src, "bossDmg", 0);
         double normB = masteryStatAdd(s, cl, "NORMAL_DMG") + Json.num(src, "normalDmg", 0);
-        return new Cast2(coeffPct / 100.0 * (1 + boostPct / 100.0) * up, hits, targets, tag,
-                dmgMasteryPct, bossB, normB, dot);
+        // 다중 damage 합산(§3): 첫것 조건 없으면, 조건 없는 추가 엔트리를 계수×타수로 합산(주+부 타격, 디바인스티그마 460×6+400×4).
+        // 조건부(bossOnly/requireState/requireStateNot)는 별도 처리 필요 → 이번 합산 대상 아님(Warn 유지).
+        double prod = coeffPct / 100.0 * hits;
+        int finalHits = hits;
+        if (dmgArr != null && dmgArr.size() > 1 && !hasDmgCond(src)) {
+            for (int i = 1; i < dmgArr.size(); i++) {
+                Map<String, Object> e = Json.asMap(dmgArr.get(i));
+                if (hasDmgCond(e)) continue;
+                double eb = parseNum(String.valueOf(e.get("coeff")));
+                if (Double.isNaN(eb)) continue;
+                double eh = parseNum(Json.str(e, "hits", "1"));
+                prod += SkillDpsModel.coefficient(eb, Json.num(e, "growth", 0), lv) / 100.0
+                        * (Double.isNaN(eh) ? 1 : (int) eh);
+                finalHits = 1;   // 합산 발생 → coeffFrac에 전부 담고 hitCount=1
+            }
+        }
+        // 합산(finalHits=1): frac=계수분율×타수 합(hitCount=1). 단일: frac=계수분율만(hitCount=hits가 hitDamage서 곱).
+        double frac = (finalHits == 1 ? prod : coeffPct / 100.0) * (1 + boostPct / 100.0) * up;
+        return new Cast2(frac, finalHits, targets, tag, dmgMasteryPct, bossB, normB, dot);
+    }
+
+    /** damage 엔트리에 발동 조건(bossOnly/requireState/requireStateNot)이 있으면 true(합산 대상 아님). */
+    private static boolean hasDmgCond(Map<String, Object> m) {
+        return m.get("bossOnly") != null || m.get("requireState") != null || m.get("requireStateNot") != null;
     }
 
     /** 버프/디버프 → BuffSpec2(스택·배타그룹 보존). 함수형 값은 Warn. */
