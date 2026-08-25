@@ -1,0 +1,4836 @@
+{
+ "job": "hero",
+ "nodes": {
+  "11010": {
+   "id": "11010",
+   "name": "슬래시 블러스트",
+   "desc": "[기본 공격 효과] 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "11010",
+    "iconPath": null,
+    "maxRangeMm": [
+     "2000",
+     "2000",
+     "1300",
+     "300"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 15.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "260",
+      "None",
+      "2"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "3",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10010",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "11010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "10020",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "11010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "10030",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "11010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "10040",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "11010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "10050",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "11010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10010",
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +15%",
+     "requireLevel": "12",
+     "requires": null,
+     "kind": "skill",
+     "effect": {
+      "skill": "10010",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "11010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10020",
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "requireLevel": "15",
+     "requires": "10010",
+     "kind": "skill",
+     "effect": {
+      "skill": "10020",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "11010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10030",
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "requireLevel": "19",
+     "requires": "10020",
+     "kind": "skill",
+     "effect": {
+      "skill": "10030",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "11010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10040",
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1",
+     "requireLevel": "22",
+     "requires": "10030",
+     "kind": "skill",
+     "effect": {
+      "skill": "10040",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "11010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10050",
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%",
+     "requireLevel": "26",
+     "requires": "10040",
+     "kind": "skill",
+     "effect": {
+      "skill": "10050",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "11010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "11020": {
+   "id": "11020",
+   "name": "워리어 리프",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "EnableDoubleJump",
+     "target": "Myself",
+     "values": null,
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "11030": {
+   "id": "11030",
+   "name": "아이언 바디",
+   "desc": "STR이 30 증가하고, 방어력이 15% 증가합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Defence",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "Str",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "10035",
+     "name": "아이언 바디 - 방어력",
+     "desc": "아이언 바디 방어력 증가량 10%p 추가 증가",
+     "requireLevel": "21",
+     "requires": "10030",
+     "kind": "skill",
+     "effect": {
+      "skill": "10035",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStatR",
+        "target": "Myself",
+        "values": [
+         "Defence",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "11040": {
+   "id": "11040",
+   "name": "워리어 마스터리",
+   "desc": "최대 HP가 10% 이동 속도가 10% 증가합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "MaxHp",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "RunSpeedMms",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "10045",
+     "name": "워리어 마스터리 - 속도",
+     "desc": "워리어 마스터리 이동 속도 증가량 5%p 추가 증가",
+     "requireLevel": "24",
+     "requires": "10040",
+     "kind": "skill",
+     "effect": {
+      "skill": "10045",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStatR",
+        "target": "Myself",
+        "values": [
+         "RunSpeedMms",
+         "50"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12010": {
+   "id": "12010",
+   "name": "브랜디쉬",
+   "desc": "[기본 공격 효과] 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "12010",
+    "iconPath": null,
+    "maxRangeMm": [
+     "2600",
+     "2600",
+     "1500",
+     "500"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 25.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "400",
+      "None",
+      "3"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "5",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10060",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "10070",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "12010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "10080",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "10090",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "12010",
+      "1",
+      "ModStatAddValue",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "10100",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "10110",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "12010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10060",
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +15%",
+     "requireLevel": "32",
+     "requires": "10050",
+     "kind": "skill",
+     "effect": {
+      "skill": "10060",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10070",
+     "name": "브랜디쉬 - 대상",
+     "desc": "브랜디쉬 최대 대상 수 +1",
+     "requireLevel": "37",
+     "requires": "10060",
+     "kind": "skill",
+     "effect": {
+      "skill": "10070",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10080",
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +20%",
+     "requireLevel": "42",
+     "requires": "10070",
+     "kind": "skill",
+     "effect": {
+      "skill": "10080",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10090",
+     "name": "브랜디쉬 - 보스 몬스터 피해",
+     "desc": "브랜디쉬에 보스 몬스터 데미지 15% 추가 적용",
+     "requireLevel": "47",
+     "requires": "10080",
+     "kind": "skill",
+     "effect": {
+      "skill": "10090",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "ModStatAddValue",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10100",
+     "name": "브랜디쉬 - 피해",
+     "desc": "브랜디쉬 피해량 +20%",
+     "requireLevel": "52",
+     "requires": "10090",
+     "kind": "skill",
+     "effect": {
+      "skill": "10100",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10110",
+     "name": "브랜디쉬 - 타격",
+     "desc": "브랜디쉬 적 타격 횟수 +1",
+     "requireLevel": "56",
+     "requires": "10100",
+     "kind": "skill",
+     "effect": {
+      "skill": "10110",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "12010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12020": {
+   "id": "12020",
+   "name": "플래시 슬래시",
+   "desc": "전방의 적 7명에게 «350»% 피해를 입힙니다. 자신의 콤보 중첩이 3 이상이라면 피해량이 50% 증가합니다.",
+   "jobStep": "2",
+   "type": "active",
+   "cooldownMs": 16000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "12020",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4500",
+     "4500",
+     "500",
+     "200"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 40.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "#FlashSlash(3500)",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "7",
+     "growthSlot": 12,
+     "func": {
+      "func": "FlashSlash",
+      "coeff": 3500,
+      "args": [
+       "3500"
+      ]
+     }
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "14100",
+     "opNo": 3,
+     "type": "ModSkillStat",
+     "values": [
+      "12020",
+      "0",
+      "FinalDamage",
+      "800"
+     ],
+     "growthSlot": 23
+    },
+    {
+     "fromSkill": "10075",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12020",
+      "0",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10075",
+     "name": "플래시 슬래시 - 피해",
+     "desc": "플래시 슬래시 피해량 +50%",
+     "requireLevel": "39",
+     "requires": "10070",
+     "kind": "skill",
+     "effect": {
+      "skill": "10075",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "12020",
+         "0",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12030": {
+   "id": "12030",
+   "name": "콤보 어택",
+   "desc": "공격 시 40% 확률로 10초간 공격력이 4% 증가하는 콤보를 획득합니다. 콤보는 최대 5회 중첩됩니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnAttack",
+    "ratio": 400.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "ComboAttack",
+     "durationMs": "10000",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Parent",
+     "values": [
+      "PiercePower",
+      "$CreatureStateCount(FiredCreature;ComboAttack) * 10"
+     ],
+     "state": "ComboAttack3",
+     "flag": "Disabled",
+     "parentOpNo": "1",
+     "watchOpNo": "1",
+     "dyn": {
+      "fn": "CreatureStateCount",
+      "args": [
+       "FiredCreature",
+       "ComboAttack"
+      ],
+      "mul": 10
+     }
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "13050",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "12030",
+      "0",
+      "SkillTriggerRatio",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10095",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "12030",
+      "1",
+      "Value",
+      "15",
+      "1"
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "ComboAttack",
+     "ComboAttack3"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10095",
+     "name": "콤보 어택 - 공격력",
+     "desc": "콤보 어택 공격력 증가량 1.5%p 추가 증가",
+     "requireLevel": "49",
+     "requires": "10090",
+     "kind": "skill",
+     "effect": {
+      "skill": "10095",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "12030",
+         "1",
+         "Value",
+         "15",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12040": {
+   "id": "12040",
+   "name": "스피릿 블레이드",
+   "desc": "20초간 받는 피해가 8% 감소하고, 아군 플레이어의 공격력을 10% 증가시킵니다.",
+   "jobStep": "2",
+   "type": "active",
+   "cooldownMs": 45000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Ally",
+   "meta": {
+    "actionName": "12040",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 60.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "0",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Target",
+     "values": [
+      "Attack",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ],
+     "state": "SpiritBladeAttack",
+     "durationMs": "20000",
+     "growthSlot": 21
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "Toughness",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ],
+     "state": "SpiritBladeToughness",
+     "watchOpNo": "1",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10085",
+     "opNo": 1,
+     "type": "ModSkillR",
+     "values": [
+      "12040",
+      "0",
+      "SkillCoolTimeMs",
+      "-300"
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "SpiritBladeAttack",
+     "SpiritBladeToughness"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10085",
+     "name": "스피릿 블레이드 - 재사용",
+     "desc": "스피릿 블레이드 재사용 대기시간 30% 감소",
+     "requireLevel": "44",
+     "requires": "10080",
+     "kind": "skill",
+     "effect": {
+      "skill": "10085",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillR",
+        "target": "Myself",
+        "values": [
+         "12040",
+         "0",
+         "SkillCoolTimeMs",
+         "-300"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12050": {
+   "id": "12050",
+   "name": "웨폰 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "MinDamageRatio",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "12060": {
+   "id": "12060",
+   "name": "웨폰 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackSpeed",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "12070": {
+   "id": "12070",
+   "name": "파이널 어택",
+   "desc": "공격 시 25% 확률로 파이널 어택이 발동하여 «35»% 추가 피해를 입힙니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "TriggerTarget",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnAttack",
+    "ratio": 250.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Target",
+     "values": [
+      "350",
+      "Dot",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "14080",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12070",
+      "1",
+      "FinalDamage",
+      "5000"
+     ],
+     "growthSlot": 21
+    },
+    {
+     "fromSkill": "10105",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "12070",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10105",
+     "name": "파이널 어택 - 피해",
+     "desc": "파이널 어택 피해량 +50%",
+     "requireLevel": "54",
+     "requires": "10100",
+     "kind": "skill",
+     "effect": {
+      "skill": "10105",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "12070",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "12080": {
+   "id": "12080",
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "BaseAttackPower",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "13010": {
+   "id": "13010",
+   "name": "브레이브 슬래시",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "13010",
+    "iconPath": null,
+    "maxRangeMm": [
+     "2900",
+     "2900",
+     "2200",
+     "900"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 50.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "800",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10120",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10130",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "110"
+     ]
+    },
+    {
+     "fromSkill": "10140",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "13010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10150",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "120"
+     ]
+    },
+    {
+     "fromSkill": "10160",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "130"
+     ]
+    },
+    {
+     "fromSkill": "10170",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "13010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10180",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "140"
+     ]
+    },
+    {
+     "fromSkill": "10190",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "10200",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "13010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10120",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +10%",
+     "requireLevel": "62",
+     "requires": "10110",
+     "kind": "skill",
+     "effect": {
+      "skill": "10120",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10130",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +11%",
+     "requireLevel": "66",
+     "requires": "10120",
+     "kind": "skill",
+     "effect": {
+      "skill": "10130",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "110"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10140",
+     "name": "브레이브 슬래시 - 보스 몬스터 피해",
+     "desc": "브레이브 슬래시에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "71",
+     "requires": "10130",
+     "kind": "skill",
+     "effect": {
+      "skill": "10140",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10150",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +12%",
+     "requireLevel": "76",
+     "requires": "10140",
+     "kind": "skill",
+     "effect": {
+      "skill": "10150",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "120"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": null,
+        "target": null,
+        "values": null,
+        "flag": "IsSticky"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10160",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +13%",
+     "requireLevel": "80",
+     "requires": "10150",
+     "kind": "skill",
+     "effect": {
+      "skill": "10160",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "130"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10170",
+     "name": "브레이브 슬래시 - 보스 몬스터 피해",
+     "desc": "브레이브 슬래시에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "84",
+     "requires": "10160",
+     "kind": "skill",
+     "effect": {
+      "skill": "10170",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10180",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +14%",
+     "requireLevel": "88",
+     "requires": "10170",
+     "kind": "skill",
+     "effect": {
+      "skill": "10180",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "140"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10190",
+     "name": "브레이브 슬래시 - 피해",
+     "desc": "브레이브 슬래시 피해량 +15%",
+     "requireLevel": "92",
+     "requires": "10180",
+     "kind": "skill",
+     "effect": {
+      "skill": "10190",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": null,
+        "target": null,
+        "values": null,
+        "flag": "IsSticky"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10200",
+     "name": "브레이브 슬래시 - 타격",
+     "desc": "브레이브 슬래시 적 타격 횟수 +1",
+     "requireLevel": "96",
+     "requires": "10190",
+     "kind": "skill",
+     "effect": {
+      "skill": "10200",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13020": {
+   "id": "13020",
+   "name": "오라 블레이드",
+   "desc": "전방으로 검기를 날려 8명에게 «250»% 피해를 4회 입힙니다.",
+   "jobStep": "3",
+   "type": "active",
+   "cooldownMs": 16000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "13020",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4500",
+     "4500",
+     "1300",
+     "900"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 60.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 400.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "2500",
+      "None",
+      "4"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "8",
+     "growthSlot": 12
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "14100",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13020",
+      "1",
+      "FinalDamage",
+      "200"
+     ],
+     "growthSlot": 23
+    },
+    {
+     "fromSkill": "10145",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13020",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    },
+    {
+     "fromSkill": "10195",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "13020",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    },
+    {
+     "fromSkill": "10215",
+     "opNo": 1,
+     "type": "ModSkillR",
+     "values": [
+      "13020",
+      "0",
+      "SkillCoolTimeMs",
+      "-300"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10145",
+     "name": "오라 블레이드 - 피해",
+     "desc": "오라 블레이드 피해량 +50%",
+     "requireLevel": "73",
+     "requires": "10140",
+     "kind": "skill",
+     "effect": {
+      "skill": "10145",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13020",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10195",
+     "name": "오라 블레이드 - 타격",
+     "desc": "오라 블레이드 적 타격 횟수 +1",
+     "requireLevel": "94",
+     "requires": "10190",
+     "kind": "skill",
+     "effect": {
+      "skill": "10195",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13020",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10215",
+     "name": "오라 블레이드 - 재사용",
+     "desc": "오라 블레이드 재사용 대기시간 30% 감소",
+     "requireLevel": "104",
+     "requires": "10210",
+     "kind": "skill",
+     "effect": {
+      "skill": "10215",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillR",
+        "target": "Myself",
+        "values": [
+         "13020",
+         "0",
+         "SkillCoolTimeMs",
+         "-300"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13030": {
+   "id": "13030",
+   "name": "돌진",
+   "desc": "전방으로 돌격하며 12명에게 «600»% 피해를 입히고 2.5초간 기절시킵니다.",
+   "jobStep": "3",
+   "type": "active",
+   "cooldownMs": 22000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "13030",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3600",
+     "3600",
+     "700",
+     "200"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 55.0,
+   "durationTimeMs": 900.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "6000",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "12",
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "DashFromMyself",
+     "target": "Myself",
+     "values": [
+      "3600",
+      "0",
+      "300",
+      "SamePlatform"
+     ],
+     "enableCondition": "$CreatureIsGround(FiredCreature) == 1",
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureIsGround",
+       "args": [
+        "FiredCreature"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    },
+    {
+     "no": 3,
+     "type": "Stun",
+     "target": "Parent",
+     "values": null,
+     "parentOpNo": "1",
+     "durationMs": "2500"
+    },
+    {
+     "no": 4,
+     "type": "DashFromMyself",
+     "target": "Myself",
+     "values": [
+      "3600",
+      "0",
+      "300"
+     ],
+     "enableCondition": "$CreatureIsAir(FiredCreature) == 1",
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureIsAir",
+       "args": [
+        "FiredCreature"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "14100",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "13030",
+      "1",
+      "FinalDamage",
+      "300"
+     ],
+     "growthSlot": 23
+    },
+    {
+     "fromSkill": "10135",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "13030",
+      "1",
+      "GiveDamagePower1",
+      "800"
+     ]
+    },
+    {
+     "fromSkill": "10185",
+     "opNo": 1,
+     "type": "ModSkillR",
+     "values": [
+      "13030",
+      "0",
+      "SkillCoolTimeMs",
+      "-300"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10135",
+     "name": "돌진 - 피해",
+     "desc": "돌진 피해량 +80%",
+     "requireLevel": "68",
+     "requires": "10130",
+     "kind": "skill",
+     "effect": {
+      "skill": "10135",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "13030",
+         "1",
+         "GiveDamagePower1",
+         "800"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10185",
+     "name": "돌진 - 재사용",
+     "desc": "돌진 재사용 대기시간 30% 감소",
+     "requireLevel": "90",
+     "requires": "10180",
+     "kind": "skill",
+     "effect": {
+      "skill": "10185",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillR",
+        "target": "Myself",
+        "values": [
+         "13030",
+         "0",
+         "SkillCoolTimeMs",
+         "-300"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13040": {
+   "id": "13040",
+   "name": "스카링 소드",
+   "desc": "15초간 검에 예기가 더해져 공격 시 35% 확률로 10초간 대상의 공격력을 «10»% 감소시키고, 받는 피해를 «20»% 증가시킵니다.",
+   "jobStep": "3",
+   "type": "active",
+   "cooldownMs": 30000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": "13040",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 45.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "UsePassiveSkill",
+     "target": "Myself",
+     "values": [
+      "13041"
+     ],
+     "state": "ScaringSword",
+     "durationMs": "15000"
+    }
+   ],
+   "summon": [],
+   "children": [
+    {
+     "id": "13041",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "TriggerTarget",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnAttack",
+      "ratio": 350.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "ModStat",
+       "target": "Target",
+       "values": [
+        "Weakness",
+        "200"
+       ],
+       "valueLevelFactors": [
+        "1",
+        "21"
+       ],
+       "state": "ScaringSword_Weakness",
+       "durationMs": "10000",
+       "growthSlot": 21
+      },
+      {
+       "no": 2,
+       "type": "ModStatR",
+       "target": "Parent",
+       "values": [
+        "Attack",
+        "-100"
+       ],
+       "valueLevelFactors": [
+        "1",
+        "21"
+       ],
+       "state": "ScaringSword_AttackDown",
+       "parentOpNo": "1",
+       "watchOpNo": "1",
+       "growthSlot": 21
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "10155",
+       "opNo": 1,
+       "type": "ModSkill",
+       "values": [
+        "13041",
+        "1",
+        "Value",
+        "80",
+        "1"
+       ]
+      }
+     ],
+     "states": {
+      "grant": [
+       "ScaringSword_AttackDown",
+       "ScaringSword_Weakness"
+      ]
+     }
+    }
+   ],
+   "states": {
+    "grant": [
+     "ScaringSword"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10155",
+     "name": "스카링 소드 - 약화",
+     "desc": "스카링 소드 받는 피해 증가량 8%p 추가 증가",
+     "requireLevel": "78",
+     "requires": "10150",
+     "kind": "skill",
+     "effect": {
+      "skill": "10155",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13041",
+         "1",
+         "Value",
+         "80",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13050": {
+   "id": "13050",
+   "name": "콤보 시너지",
+   "desc": "콤보가 중첩될 확률이 10%p 증가하고, 콤보 중첩마다 최종 데미지가 5% 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkill",
+     "target": "Myself",
+     "values": [
+      "12030",
+      "0",
+      "SkillTriggerRatio",
+      "100"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    },
+    {
+     "no": 2,
+     "type": "UsePassiveSkill",
+     "target": "Myself",
+     "values": [
+      "13051"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    }
+   ],
+   "summon": [],
+   "children": [
+    {
+     "id": "13051",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnState",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": {
+       "cmp": "==",
+       "left": {
+        "trigger": "StateName"
+       },
+       "right": {
+        "str": "ComboAttack"
+       }
+      }
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "ModStat",
+       "target": "Myself",
+       "values": [
+        "FinalDamage",
+        "50"
+       ],
+       "valueLevelFactors": [
+        "1",
+        "22"
+       ],
+       "state": "ComboAttack2",
+       "flag": "WatchCondition,ExpireOnConditionFail",
+       "enableCondition": "$CreatureStateCount(FiredCreature;ComboAttack) >= 1",
+       "durationMs": "10000",
+       "growthSlot": 22,
+       "condTree": {
+        "cmp": ">=",
+        "left": {
+         "fn": "CreatureStateCount",
+         "args": [
+          "FiredCreature",
+          "ComboAttack"
+         ]
+        },
+        "right": {
+         "int": 1
+        }
+       }
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "10165",
+       "opNo": 1,
+       "type": "ModSkill",
+       "values": [
+        "13051",
+        "1",
+        "Value",
+        "10",
+        "1"
+       ]
+      }
+     ],
+     "states": {
+      "grant": [
+       "ComboAttack2"
+      ],
+      "require": [
+       "ComboAttack"
+      ]
+     }
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10165",
+     "name": "콤보 시너지 - 최종 데미지",
+     "desc": "콤보 시너지 최종 데미지 증가량 1%p 추가 증가",
+     "requireLevel": "82",
+     "requires": "10160",
+     "kind": "skill",
+     "effect": {
+      "skill": "10165",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "13051",
+         "1",
+         "Value",
+         "10",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13060": {
+   "id": "13060",
+   "name": "셀프 리커버리",
+   "desc": "매초 HP를 1%, MP를 0.5% 회복합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "HpRegenRatio",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "MpRegenRatio",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "10205",
+     "name": "셀프 리커버리 - 공격력",
+     "desc": "HP가 50% 이상일 때 최종 데미지 5% 증가",
+     "requireLevel": "98",
+     "requires": "10200",
+     "kind": "skill",
+     "effect": {
+      "skill": "10205",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStat",
+        "target": "Myself",
+        "values": [
+         "FinalDamage",
+         "50"
+        ],
+        "flag": "IsSticky,WatchCondition",
+        "enableCondition": "$CreatureFinalStat(FiredCreature;HpRatio) > 500",
+        "durationMs": "99999999",
+        "condTree": {
+         "cmp": ">",
+         "left": {
+          "fn": "CreatureFinalStat",
+          "args": [
+           "FiredCreature",
+           "HpRatio"
+          ]
+         },
+         "right": {
+          "int": 500
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "13070": {
+   "id": "13070",
+   "name": "찬스 어택",
+   "desc": "크리티컬 확률이 8% 증가하고, 상태이상 데미지가 12% 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "CriticalChance",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackPowerInCc",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "13080": {
+   "id": "13080",
+   "name": "인듀어",
+   "desc": "디버프 내성이 15 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "DebuffResist",
+      "15"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "14010": {
+   "id": "14010",
+   "name": "레이징 블로우",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "RagingBlow",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3400",
+     "3400",
+     "1700",
+     "200"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 130.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 400.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "2900",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10210",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10220",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "110"
+     ]
+    },
+    {
+     "fromSkill": "10230",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "14010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10240",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "120"
+     ]
+    },
+    {
+     "fromSkill": "10250",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "130"
+     ]
+    },
+    {
+     "fromSkill": "10260",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "14010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "10270",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "140"
+     ]
+    },
+    {
+     "fromSkill": "10280",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "10290",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "14010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10210",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +10%",
+     "requireLevel": "102",
+     "requires": "10200",
+     "kind": "skill",
+     "effect": {
+      "skill": "10210",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10220",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +11%",
+     "requireLevel": "106",
+     "requires": "10210",
+     "kind": "skill",
+     "effect": {
+      "skill": "10220",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "110"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10230",
+     "name": "레이징 블로우 - 보스 몬스터 피해",
+     "desc": "레이징 블로우에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "111",
+     "requires": "10220",
+     "kind": "skill",
+     "effect": {
+      "skill": "10230",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10240",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +12%",
+     "requireLevel": "116",
+     "requires": "10230",
+     "kind": "skill",
+     "effect": {
+      "skill": "10240",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "120"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": null,
+        "target": null,
+        "values": null,
+        "flag": "IsSticky"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10250",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +13%",
+     "requireLevel": "120",
+     "requires": "10240",
+     "kind": "skill",
+     "effect": {
+      "skill": "10250",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "130"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10260",
+     "name": "레이징 블로우 - 보스 몬스터 피해",
+     "desc": "레이징 블로우에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "124",
+     "requires": "10250",
+     "kind": "skill",
+     "effect": {
+      "skill": "10260",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10270",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +14%",
+     "requireLevel": "128",
+     "requires": "10260",
+     "kind": "skill",
+     "effect": {
+      "skill": "10270",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "140"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10280",
+     "name": "레이징 블로우 - 피해",
+     "desc": "레이징 블로우 피해량 +15%",
+     "requireLevel": "132",
+     "requires": "10270",
+     "kind": "skill",
+     "effect": {
+      "skill": "10280",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": null,
+        "target": null,
+        "values": null,
+        "flag": "IsSticky"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10290",
+     "name": "레이징 블로우 - 타격",
+     "desc": "레이징 블로우 적 타격 횟수 +1",
+     "requireLevel": "136",
+     "requires": "10280",
+     "kind": "skill",
+     "effect": {
+      "skill": "10290",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "14010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14020": {
+   "id": "14020",
+   "name": "인핸스 레이징 블로우",
+   "desc": "전방의 적 9명을 순식간에 여러 번 베어 «550»% 피해를 6회 입힙니다. 이 스킬은 보스 몬스터 데미지가 100% 추가로 적용되며, 콤보 중첩이 5 이상일 때 사용할 수 있습니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 19000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "EnhanceRagingBlow",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3400",
+     "3400",
+     "1700",
+     "200"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 180.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 400.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": {
+     "cmp": ">=",
+     "left": {
+      "fn": "CreatureStateCount",
+      "args": [
+       "FiredCreature",
+       "ComboAttack"
+      ]
+     },
+     "right": {
+      "int": 5
+     }
+    }
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "5500",
+      "None",
+      "6"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "9",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "1000"
+      }
+     ],
+     "growthSlot": 12
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10225",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14020",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "states": {
+    "require": [
+     "ComboAttack"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10255",
+     "name": "인핸스 레이징 블로우 - 피해",
+     "desc": "인핸스 레이징 블로우 피해량 +50%",
+     "requireLevel": "122",
+     "requires": "10250",
+     "kind": "skill",
+     "effect": {
+      "skill": "10225",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14020",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10295",
+     "name": "인핸스 레이징 블로우 - 피해",
+     "desc": "인핸스 레이징 블로우 콤보 초과 중첩 당 최종 데미지 +20%",
+     "requireLevel": "138",
+     "requires": "10290",
+     "kind": "skill",
+     "effect": {
+      "skill": "10285",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModDamagePipelineStat",
+        "target": "Myself",
+        "values": [
+         "14020",
+         "1",
+         "FinalDamage",
+         "#EnhanceRagingBlow_Mastery(200)"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999",
+        "func": {
+         "func": "EnhanceRagingBlow_Mastery",
+         "coeff": 200,
+         "args": [
+          "200"
+         ]
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14030": {
+   "id": "14030",
+   "name": "인사이징",
+   "desc": "대상의 위치에 거대한 검을 내리꽂아 대상 주변 적 5명에게 «900»% 피해를 3회 입히고, 10초 동안 상처를 남겨 1초마다 «150»% 피해를 입힙니다. 대상이 보스라면 상처 지속시간 동안 받는 피해가 «10»% 증가합니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 19000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "Incising",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4000",
+     "4000",
+     "1700",
+     "500"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 150.0,
+   "durationTimeMs": 1400.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "FiredTargetGround",
+     "values": [
+      "9000",
+      "None",
+      "3"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "5",
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "GetDotR",
+     "target": "Parent",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "state": "Incising_Dot",
+     "parentOpNo": "1",
+     "durationMs": "10000",
+     "opTickMs": "1000",
+     "growthSlot": 12
+    },
+    {
+     "no": 3,
+     "type": "ModStat",
+     "target": "Parent",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ],
+     "parentOpNo": "2",
+     "watchOpNo": "2",
+     "enableCondition": "$CreatureIsBoss(TargetCreature) == 1",
+     "growthSlot": 21,
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureIsBoss",
+       "args": [
+        "TargetCreature"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10255",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "14030",
+      "0",
+      "GiveDamagePower1",
+      "500"
+     ]
+    },
+    {
+     "fromSkill": "10295",
+     "opNo": 1,
+     "type": "ModSkillR",
+     "values": [
+      "14030",
+      "3",
+      "Value",
+      "500",
+      "1"
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "Incising_Dot"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10225",
+     "name": "인사이징 - 피해",
+     "desc": "인사이징 피해량 +50%",
+     "requireLevel": "108",
+     "requires": "10220",
+     "kind": "skill",
+     "effect": {
+      "skill": "10255",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "14030",
+         "0",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10285",
+     "name": "인사이징 - 약화",
+     "desc": "인사이징 받는 피해 증가량 +50%",
+     "requireLevel": "134",
+     "requires": "10280",
+     "kind": "skill",
+     "effect": {
+      "skill": "10295",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillR",
+        "target": "Myself",
+        "values": [
+         "14030",
+         "3",
+         "Value",
+         "500",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14040": {
+   "id": "14040",
+   "name": "매직 크래쉬",
+   "desc": "대상의 지면에 바위를 소환하여 폭발시켜 대상의 버프를 1개 제거하고, 대상 주변 적 5명에게 «4800»% 피해를 1회 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 28000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "MagicCrash",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4000",
+     "4000",
+     "1700",
+     "500"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 120.0,
+   "durationTimeMs": 1400.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "FiredTargetPlatform",
+     "values": [
+      "48000",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "5",
+     "queueDelayMs": [
+      "900"
+     ],
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "Dispel",
+     "target": "Target",
+     "values": [
+      "Random",
+      "1"
+     ],
+     "queueDelayMs": [
+      "900"
+     ]
+    },
+    {
+     "no": 3,
+     "type": "ModStat",
+     "target": "Parent",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "state": "MagicCrash",
+     "flag": "Disabled",
+     "parentOpNo": "1",
+     "durationMs": "15000"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "states": {
+    "grant": [
+     "MagicCrash"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "10265",
+     "name": "매직 크래쉬 - 약화",
+     "desc": "매직 크래쉬에 피해입은 적 15초간 받는 피해 10% 증가",
+     "requireLevel": "126",
+     "requires": "10260",
+     "kind": "skill",
+     "effect": {
+      "skill": "10265",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "14040",
+         "3"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14050": {
+   "id": "14050",
+   "name": "인레이지",
+   "desc": "10초마다 힘을 폭발시켜 5초간 최종 데미지가 12%, 크리티컬 데미지가 15% 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnTimer",
+    "ratio": 1000.0,
+    "periodMs": 10000.0,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "FinalDamage",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "Enrage",
+     "durationMs": "5000",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "CriticalPower",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "watchOpNo": "1",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "states": {
+    "grant": [
+     "Enrage"
+    ]
+   },
+   "masteries": []
+  },
+  "14060": {
+   "id": "14060",
+   "name": "어드밴스드 콤보",
+   "desc": "콤보 어택의 최대 중첩 수가 2개 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStateMaxStack",
+     "target": "Myself",
+     "values": [
+      "ComboAttack",
+      "2"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    },
+    {
+     "no": 2,
+     "type": "ModStateMaxStack",
+     "target": "Myself",
+     "values": [
+      "ComboAttack2",
+      "2"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "10245",
+     "name": "어드밴스드 콤보 - 최대 중첩",
+     "desc": "콤보 어택 최대 중첩 수 +1",
+     "requireLevel": "118",
+     "requires": "10240",
+     "kind": "skill",
+     "effect": {
+      "skill": "10245",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStateMaxStack",
+        "target": "Myself",
+        "values": [
+         "ComboAttack",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModStateMaxStack",
+        "target": "Myself",
+        "values": [
+         "ComboAttack2",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "10275",
+     "name": "어드밴스드 콤보 - 방어 관통력",
+     "desc": "콤보 중첩 당 방어 관통력 1% 증가",
+     "requireLevel": "130",
+     "requires": "10270",
+     "kind": "skill",
+     "effect": {
+      "skill": "10275",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "12030",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14070": {
+   "id": "14070",
+   "name": "스탠스",
+   "desc": "받는 피해가 5% 감소하고, 최종 데미지가 15% 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "14080": {
+   "id": "14080",
+   "name": "어드밴스드 파이널 어택",
+   "desc": "파이널 어택 최종 데미지가 500% 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "12070",
+      "1",
+      "FinalDamage",
+      "5000"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "21"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "10235",
+     "opNo": 1,
+     "type": "ModSkillR",
+     "values": [
+      "14080",
+      "1",
+      "Value",
+      "500",
+      "3"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "10235",
+     "name": "어드밴스드 파이널 어택 - 강화",
+     "desc": "어드밴스드 파이널 어택 최종 데미지 증가량 +50%",
+     "requireLevel": "113",
+     "requires": "10230",
+     "kind": "skill",
+     "effect": {
+      "skill": "10235",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillR",
+        "target": "Myself",
+        "values": [
+         "14080",
+         "1",
+         "Value",
+         "500",
+         "3"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "14090": {
+   "id": "14090",
+   "name": "컴뱃 마스터리",
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "SkillPower",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "MaxDamageRatio",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "14100": {
+   "id": "14100",
+   "name": "메이플 용사",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 오라 블레이드 20% 돌진 30% 플래시 슬래시 80%",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "13020",
+      "1",
+      "FinalDamage",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    },
+    {
+     "no": 2,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "13030",
+      "1",
+      "FinalDamage",
+      "300"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    },
+    {
+     "no": 3,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "12020",
+      "0",
+      "FinalDamage",
+      "800"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "9000": {
+   "id": "9000",
+   "name": "민첩한 몸놀림",
+   "desc": null,
+   "jobStep": "0",
+   "type": "active",
+   "cooldownMs": 60000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": "SkillIcon:ICON_QUICKNESS",
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 80.0,
+   "durationTimeMs": 1.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackSpeed",
+      "150"
+     ],
+     "state": "10070",
+     "durationMs": "15000"
+    },
+    {
+     "no": 2,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "RunSpeedMms",
+      "100"
+     ],
+     "state": "10070_2",
+     "watchOpNo": "1"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "states": {
+    "grant": [
+     "10070",
+     "10070_2"
+    ]
+   },
+   "masteries": []
+  }
+ },
+ "statMasteries": [
+  {
+   "idx": "10015",
+   "name": "MainStat +30",
+   "desc": "MainStat +30",
+   "requireLevel": "14",
+   "requires": "10010",
+   "kind": "stat",
+   "effect": {
+    "type": "MainStat",
+    "value": "30"
+   }
+  },
+  {
+   "idx": "10025",
+   "name": "CriticalChance +50",
+   "desc": "CriticalChance +50",
+   "requireLevel": "17",
+   "requires": "10020",
+   "kind": "stat",
+   "effect": {
+    "type": "CriticalChance",
+    "value": "50"
+   }
+  },
+  {
+   "idx": "10055",
+   "name": "BaseAttackPower +150",
+   "desc": "BaseAttackPower +150",
+   "requireLevel": "28",
+   "requires": "10050",
+   "kind": "stat",
+   "effect": {
+    "type": "BaseAttackPower",
+    "value": "150"
+   }
+  },
+  {
+   "idx": "10065",
+   "name": "HitChance +5",
+   "desc": "HitChance +5",
+   "requireLevel": "34",
+   "requires": "10060",
+   "kind": "stat",
+   "effect": {
+    "type": "HitChance",
+    "value": "5"
+   }
+  },
+  {
+   "idx": "10115",
+   "name": "MaxDamageRatio +100",
+   "desc": "MaxDamageRatio +100",
+   "requireLevel": "58",
+   "requires": "10110",
+   "kind": "stat",
+   "effect": {
+    "type": "MaxDamageRatio",
+    "value": "100"
+   }
+  },
+  {
+   "idx": "10125",
+   "name": "BaseAttackMaxHitCount +1",
+   "desc": "BaseAttackMaxHitCount +1",
+   "requireLevel": "64",
+   "requires": "10120",
+   "kind": "stat",
+   "effect": {
+    "type": "BaseAttackMaxHitCount",
+    "value": "1"
+   }
+  },
+  {
+   "idx": "10175",
+   "name": "SkillPower +150",
+   "desc": "SkillPower +150",
+   "requireLevel": "86",
+   "requires": "10170",
+   "kind": "stat",
+   "effect": {
+    "type": "SkillPower",
+    "value": "150"
+   }
+  }
+ ]
+}

@@ -1,0 +1,5191 @@
+{
+ "state_defs": {
+  "Infinity": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "54050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "64050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "44050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "54050.1",
+    "64050.1",
+    "44050.1"
+   ],
+   "clearedBy": []
+  },
+  "InfinityStack": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "54050",
+     "opNo": 2,
+     "type": "ModStatOnTick",
+     "values": [
+      "FinalDamage",
+      "10",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "64050",
+     "opNo": 2,
+     "type": "ModStatOnTick",
+     "values": [
+      "FinalDamage",
+      "10",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "44050",
+     "opNo": 2,
+     "type": "ModStatOnTick",
+     "values": [
+      "FinalDamage",
+      "10",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "54050.2",
+    "64050.2",
+    "44050.2"
+   ],
+   "clearedBy": []
+  },
+  "Assassination": {
+   "maxStack": 2,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "104020.1"
+   ],
+   "clearedBy": [
+    "104021.3",
+    "104022.3"
+   ]
+  },
+  "CrossOverChain_Icon": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "33030.1"
+   ],
+   "clearedBy": []
+  },
+  "CrossOverChain": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "33030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "33030.2"
+   ],
+   "clearedBy": []
+  },
+  "CrossOverChain_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "33030",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "33030.3"
+   ],
+   "clearedBy": []
+  },
+  "HolySymbol_Ally": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63061",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AttackPowerExcludeBoss",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "63060",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AttackPowerExcludeBoss",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "63061.1",
+    "63060.1"
+   ],
+   "clearedBy": []
+  },
+  "HolySymbol_Ally2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63061",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "DebuffResist",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "63060",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "DebuffResist",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "63061.2",
+    "63060.2"
+   ],
+   "clearedBy": []
+  },
+  "HolySymbol_Self": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63061",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "AttackPower",
+      "250"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "63060",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "AttackPower",
+      "250"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "63061.3",
+    "63060.3"
+   ],
+   "clearedBy": []
+  },
+  "ElementalAdapting_IL": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "43040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "43041",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "43040.1",
+    "43041.1"
+   ],
+   "clearedBy": []
+  },
+  "ImmuneDebuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "43040.2",
+    "63040.2",
+    "53041.2",
+    "53040.2",
+    "43041.2",
+    "63041.2"
+   ],
+   "clearedBy": []
+  },
+  "CheckDamaged": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "34064.2"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_1": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 1,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "0"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "113060",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "0"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "123060.1",
+    "113060.1"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "113060",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "123060.2",
+    "113060.2"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_3": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 3,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "20"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "113060",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "20"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "123060.3",
+    "113060.3"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_4": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 4,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 4,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "113060",
+     "opNo": 4,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "123060.4",
+    "113060.4"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_5": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 5,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 5,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "113060",
+     "opNo": 5,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "123060.5",
+    "113060.5"
+   ],
+   "clearedBy": []
+  },
+  "LuckyDice_6": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 6,
+   "effects": [
+    {
+     "skill": "123060",
+     "opNo": 6,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "113060",
+     "opNo": 6,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "123060.6",
+    "113060.6"
+   ],
+   "clearedBy": []
+  },
+  "Meditation": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "42040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "52040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "42040.1",
+    "52040.1"
+   ],
+   "clearedBy": []
+  },
+  "ShadowMomentum": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "133040.1"
+   ],
+   "clearedBy": []
+  },
+  "Shield": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23080",
+     "opNo": 1,
+     "type": "CreateShieldByMaxHpR",
+     "values": [
+      "60"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "22"
+     ]
+    },
+    {
+     "skill": "82080",
+     "opNo": 1,
+     "type": "CreateShieldByMaxHpR",
+     "values": [
+      "150"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23080.1",
+    "82080.1"
+   ],
+   "clearedBy": []
+  },
+  "BlessingArmor": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23080",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23080.2"
+   ],
+   "clearedBy": []
+  },
+  "92040": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "92040.1"
+   ],
+   "clearedBy": [
+    "92041.1"
+   ]
+  },
+  "Reincarnation": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "34052",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "MinHpRatio",
+      "1"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "34050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "MinHpRatio",
+      "1"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "34052.1",
+    "34050.1"
+   ],
+   "clearedBy": [
+    "34051.1"
+   ]
+  },
+  "IgnoreDamage": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "34051.2"
+   ],
+   "clearedBy": []
+  },
+  "EmeraldFlower_MoveSpeedDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "143031",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "-100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "143031.1"
+   ],
+   "clearedBy": []
+  },
+  "EmeraldFlower_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "143031",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "143031.2"
+   ],
+   "clearedBy": []
+  },
+  "ArrowIllusion_Bind": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {
+    "CanMove": "FALSE"
+   },
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "84042.1",
+    "84040.2"
+   ],
+   "clearedBy": []
+  },
+  "102020": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "102020",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "-100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "102020.1"
+   ],
+   "clearedBy": []
+  },
+  "102020_2": {
+   "maxStack": 3,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "102020",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "102020.2"
+   ],
+   "clearedBy": []
+  },
+  "93060": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "93060",
+     "opNo": 1,
+     "type": "GetDotR",
+     "values": [
+      "450"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "93060.1"
+   ],
+   "clearedBy": []
+  },
+  "93060_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "93060",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "120"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "93060.2"
+   ],
+   "clearedBy": []
+  },
+  "TriumphFeather_Check": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "63051.1"
+   ],
+   "clearedBy": []
+  },
+  "AdvancedDash_Toughness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "112020",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "112020.3"
+   ],
+   "clearedBy": []
+  },
+  "10070": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "9000",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AttackSpeed",
+      "150"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "9000.1"
+   ],
+   "clearedBy": []
+  },
+  "10070_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "9000",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "9000.2"
+   ],
+   "clearedBy": []
+  },
+  "BattleShip_2": {
+   "maxStack": 2,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [],
+   "grantedBy": [
+    "124056.2"
+   ],
+   "clearedBy": [
+    "124057.4"
+   ]
+  },
+  "WindWalk_Mastery": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "142030",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "500"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "142030.3"
+   ],
+   "clearedBy": []
+  },
+  "SpiritBladeAttack": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "12040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "12040.1"
+   ],
+   "clearedBy": []
+  },
+  "SpiritBladeToughness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "12040",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "12040.2"
+   ],
+   "clearedBy": []
+  },
+  "PirateStyle": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "124060",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "180"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "124060.1"
+   ],
+   "clearedBy": []
+  },
+  "Reincarnation_FinalDamage": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "34052",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "34050",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "34052.2",
+    "34050.2"
+   ],
+   "clearedBy": []
+  },
+  "Reincarnation_Check": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "34052",
+     "opNo": 3,
+     "type": "UsePassiveSkill",
+     "values": [
+      "34051"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "34050",
+     "opNo": 3,
+     "type": "UsePassiveSkill",
+     "values": [
+      "34051"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "34052.3",
+    "34050.3"
+   ],
+   "clearedBy": []
+  },
+  "NobleDemand": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23041",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23041.2"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_HitchanceDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104041",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Hitchance",
+      "-10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104041.1"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_AvoidchanceDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104041",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "-10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104041.2"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_CriticalResistDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104041",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalResist",
+      "-100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "104041.3"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_DefenceDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104041",
+     "opNo": 4,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "-70"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104041.4"
+   ],
+   "clearedBy": []
+  },
+  "HolyMagicShell_Ally": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63030",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "63030.1"
+   ],
+   "clearedBy": []
+  },
+  "HolyMagicShell_Self": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63030",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "63030.3"
+   ],
+   "clearedBy": []
+  },
+  "101030": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "101030",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "101031"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "101030.1"
+   ],
+   "clearedBy": [
+    "101031.1"
+   ]
+  },
+  "SuddenRaid_Dot": {
+   "maxStack": 99,
+   "stackRule": "FollowOperation",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104030",
+     "opNo": 2,
+     "type": "GetDotR",
+     "values": [
+      "3600"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "94030",
+     "opNo": 2,
+     "type": "GetDotR",
+     "values": [
+      "3600"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104030.2",
+    "94030.2"
+   ],
+   "clearedBy": []
+  },
+  "TriflingWhim_Damaged": {
+   "maxStack": 4,
+   "stackRule": "FollowOperationByFiredCreature",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "142052.3",
+    "142052.4",
+    "142051.2"
+   ],
+   "clearedBy": []
+  },
+  "Bloody_Assassination": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "104051.5"
+   ],
+   "clearedBy": [
+    "104022.4"
+   ]
+  },
+  "ArchMageBurn": {
+   "maxStack": 5,
+   "stackRule": "FollowOperation",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "54042",
+     "opNo": 1,
+     "type": "GetDotR",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "54042",
+     "opNo": 2,
+     "type": "GetDotR",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "54041",
+     "opNo": 2,
+     "type": "GetDotR",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "54041",
+     "opNo": 3,
+     "type": "GetDotR",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "54042.1",
+    "54042.2",
+    "54041.2",
+    "54041.3"
+   ],
+   "clearedBy": []
+  },
+  "HolyCharge": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "22030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "22030.1"
+   ],
+   "clearedBy": []
+  },
+  "ArcaneAim": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "44080",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "54080",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "64080",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "44080.1",
+    "54080.1",
+    "64080.1"
+   ],
+   "clearedBy": []
+  },
+  "Heal": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "62020",
+     "opNo": 1,
+     "type": "GetHotByMaxHpR",
+     "values": [
+      "10"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "62020.1"
+   ],
+   "clearedBy": []
+  },
+  "Heal_Buff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "62020",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "62020.2"
+   ],
+   "clearedBy": []
+  },
+  "DarknessEvasion_OnCc": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "134032",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "134032.1"
+   ],
+   "clearedBy": []
+  },
+  "Meso": {
+   "maxStack": 10,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "103031.1"
+   ],
+   "clearedBy": [
+    "103030.2"
+   ]
+  },
+  "Greed": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "103031",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "103031.2"
+   ],
+   "clearedBy": []
+  },
+  "73060": {
+   "maxStack": 40,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "73060.1"
+   ],
+   "clearedBy": [
+    "73060.3"
+   ]
+  },
+  "73060_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "73060",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "73060.2"
+   ],
+   "clearedBy": []
+  },
+  "LordOfDarkness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "33070",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "CriticalChance",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "33070.1"
+   ],
+   "clearedBy": []
+  },
+  "LordOfDarkness_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "33070",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "300"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "33070.3"
+   ],
+   "clearedBy": []
+  },
+  "SharpEyes": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "74030",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "74030",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "84030",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "84030",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "144030",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "144030",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "74030.3",
+    "74030.4",
+    "84030.3",
+    "84030.4",
+    "144030.3",
+    "144030.4"
+   ],
+   "clearedBy": [
+    "74030.1",
+    "84030.1",
+    "144030.1"
+   ]
+  },
+  "SharpEyes_Self": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "74030",
+     "opNo": 5,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "400"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "84030",
+     "opNo": 5,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "400"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "144030",
+     "opNo": 5,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "400"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "74030.5",
+    "84030.5",
+    "144030.5"
+   ],
+   "clearedBy": [
+    "74030.2",
+    "84030.2",
+    "144030.2"
+   ]
+  },
+  "BoltFlow_Buff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "83041",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "83041.1"
+   ],
+   "clearedBy": [
+    "83042.3"
+   ]
+  },
+  "BoltFlow_Spot": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "83041",
+     "opNo": 2,
+     "type": "SaveWarpSpot",
+     "values": null,
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "83041.2"
+   ],
+   "clearedBy": [
+    "83042.2"
+   ]
+  },
+  "BoltFlow_Change": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "83041",
+     "opNo": 3,
+     "type": "ChangeSkill",
+     "values": [
+      "83040",
+      "83042"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "83041.3"
+   ],
+   "clearedBy": [
+    "83042.4"
+   ]
+  },
+  "91030": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "91030",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "91031"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "91030.1"
+   ],
+   "clearedBy": [
+    "91031.1"
+   ]
+  },
+  "DarkSight": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "91031",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "CriticalChance",
+      "60"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "101031",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "CriticalChance",
+      "60"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "91031.2",
+    "101031.2"
+   ],
+   "clearedBy": []
+  },
+  "DarkSight_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "91031",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "101031",
+     "opNo": 3,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "91031.3",
+    "101031.3"
+   ],
+   "clearedBy": []
+  },
+  "Block_TimeLeap": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "114060.3"
+   ],
+   "clearedBy": []
+  },
+  "TimeLeap": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "114060",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "300"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "114060.4"
+   ],
+   "clearedBy": []
+  },
+  "Element_Storm": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "141030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "141030.1"
+   ],
+   "clearedBy": []
+  },
+  "Element_Storm_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "141030",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AttackPower",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "141030.2"
+   ],
+   "clearedBy": []
+  },
+  "Fake_AvoidChanceUp": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "94070",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "20"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "104070",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "20"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "94070.2",
+    "104070.2"
+   ],
+   "clearedBy": []
+  },
+  "Fake_Off": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "94070.3",
+    "104070.3"
+   ],
+   "clearedBy": []
+  },
+  "Restoration": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23030.2"
+   ],
+   "clearedBy": []
+  },
+  "ScaringSword": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "13040",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "13041"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "13040.1"
+   ],
+   "clearedBy": []
+  },
+  "ElementalReset_FP": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "53060",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "53060.1"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_Toughness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104042",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104042.1"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_CriticalPowerUp": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104042",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "300"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "104042.2"
+   ],
+   "clearedBy": []
+  },
+  "PurgeArea_SelfBuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "94040",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "130"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "94040.2"
+   ],
+   "clearedBy": []
+  },
+  "IntoDarkness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "103070",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "103070.2"
+   ],
+   "clearedBy": []
+  },
+  "IgnoreBaseAttackDamage": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "103070.3"
+   ],
+   "clearedBy": []
+  },
+  "ShadowServant": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "133020",
+     "opNo": 1,
+     "type": "SpawnServant",
+     "values": [
+      "1",
+      "Follow",
+      "200"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "133020.1"
+   ],
+   "clearedBy": []
+  },
+  "MagicCrash": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "34040",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": null
+    },
+    {
+     "skill": "14040",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "34040.3",
+    "14040.3"
+   ],
+   "clearedBy": []
+  },
+  "AdvancedHolyCharge": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24090",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "180"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "24090.1"
+   ],
+   "clearedBy": []
+  },
+  "BattleShip_1": {
+   "maxStack": 2,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 1,
+   "effects": [],
+   "grantedBy": [
+    "124054.2"
+   ],
+   "clearedBy": [
+    "124055.4"
+   ]
+  },
+  "BloodyPocket": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "104052.2"
+   ],
+   "clearedBy": [
+    "104051.2"
+   ]
+  },
+  "Sniping": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "84021.2"
+   ],
+   "clearedBy": [
+    "84022.2"
+   ]
+  },
+  "PoisonRegion": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "53030",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "53031"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "53030.1"
+   ],
+   "clearedBy": []
+  },
+  "ArchMagePoison": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "53033",
+     "opNo": 1,
+     "type": "GetDotR",
+     "values": [
+      "80"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    },
+    {
+     "skill": "52020",
+     "opNo": 1,
+     "type": "GetDotR",
+     "values": [
+      "120"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "53033.1",
+    "52020.1"
+   ],
+   "clearedBy": []
+  },
+  "SerpentStone": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "113032",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "20"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "113032.1"
+   ],
+   "clearedBy": [
+    "113030.2"
+   ]
+  },
+  "73070": {
+   "maxStack": 10,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "73070",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "HitChance",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "73070.1"
+   ],
+   "clearedBy": []
+  },
+  "73070_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "73070",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "CriticalPower",
+      "$CreatureStateCount(FiredCreature;73070) * 30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "73070.2"
+   ],
+   "clearedBy": []
+  },
+  "SecondWind_Count": {
+   "maxStack": 8,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "143071.1"
+   ],
+   "clearedBy": [
+    "143071.3"
+   ]
+  },
+  "SecondWind_Active": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "143071",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AttackSpeed",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "143071.2"
+   ],
+   "clearedBy": []
+  },
+  "Incising_Dot": {
+   "maxStack": 99,
+   "stackRule": "FollowOperation",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "14030",
+     "opNo": 2,
+     "type": "GetDotR",
+     "values": [
+      "1500"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "14030.2"
+   ],
+   "clearedBy": []
+  },
+  "DivineProtection": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "63041",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "63040.1",
+    "63041.1"
+   ],
+   "clearedBy": []
+  },
+  "BigbangEffect": {
+   "maxStack": 10,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "64010.6"
+   ],
+   "clearedBy": [
+    "64010.7"
+   ]
+  },
+  "DarknessAscension": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "133030",
+     "opNo": 1,
+     "type": "GetHotByMaxHpR",
+     "values": [
+      "40"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "133030.1"
+   ],
+   "clearedBy": []
+  },
+  "SerpentEnhancement_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "114070",
+     "opNo": 1,
+     "type": "ModSkillEnabled",
+     "values": [
+      "112031",
+      "3"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "114070.1"
+   ],
+   "clearedBy": []
+  },
+  "SerpentEnhancement_1": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 1,
+   "effects": [
+    {
+     "skill": "113040",
+     "opNo": 1,
+     "type": "ModSkillEnabled",
+     "values": [
+      "112031",
+      "2"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "113040.1"
+   ],
+   "clearedBy": [
+    "114070.2"
+   ]
+  },
+  "103060": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "103060",
+     "opNo": 1,
+     "type": "GetDotR",
+     "values": [
+      "450"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "103060.1"
+   ],
+   "clearedBy": []
+  },
+  "103060_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "103060",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "120"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "103060.2"
+   ],
+   "clearedBy": []
+  },
+  "PinPointPierce_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "143020",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "143020.3"
+   ],
+   "clearedBy": []
+  },
+  "Ice": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "42021",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "-50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "42021.1"
+   ],
+   "clearedBy": []
+  },
+  "Ice_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "42021",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "$CreatureStateCount(TargetCreature;Ice) * (0-1)"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "42021.2"
+   ],
+   "clearedBy": []
+  },
+  "Ice_3": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 3,
+   "effects": [
+    {
+     "skill": "42021",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "$CreatureStateCount(TargetCreature;Ice) * 20"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "42021.3"
+   ],
+   "clearedBy": []
+  },
+  "SwiftFire_Weakness": {
+   "maxStack": 3,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "122020",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "30"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "122020.2"
+   ],
+   "clearedBy": []
+  },
+  "AssaultMode": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "113030",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "113030.1"
+   ],
+   "clearedBy": []
+  },
+  "MagicGuard": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "41030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "61030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "51030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "41030.1",
+    "61030.1",
+    "51030.1"
+   ],
+   "clearedBy": []
+  },
+  "MagicGuard_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "41030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "61030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    },
+    {
+     "skill": "51030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "41030.2",
+    "61030.2",
+    "51030.2"
+   ],
+   "clearedBy": []
+  },
+  "ElementalAdapting_FP": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "53041",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "53040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "53041.1",
+    "53040.1"
+   ],
+   "clearedBy": []
+  },
+  "DarkResonance": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "34030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "300"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "34030.1"
+   ],
+   "clearedBy": []
+  },
+  "GuardianSpirit_ToughnessSelf": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24061",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "24061.1"
+   ],
+   "clearedBy": []
+  },
+  "GuardianSpirit_ToughnessAlly": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24061",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "24061.2"
+   ],
+   "clearedBy": []
+  },
+  "PurgeArea_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "94041",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "180"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "94041.1"
+   ],
+   "clearedBy": []
+  },
+  "PurgeArea_MoveSpeedDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "94041",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "-100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "94041.2"
+   ],
+   "clearedBy": []
+  },
+  "PurgeArea_CriticalResistDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "94041",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "CriticalResist",
+      "-100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "94041.3"
+   ],
+   "clearedBy": []
+  },
+  "Beholder": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "32022",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "32022.1"
+   ],
+   "clearedBy": []
+  },
+  "BeholdersBuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "33061",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "33061.1"
+   ],
+   "clearedBy": []
+  },
+  "BeholdersBuff_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "33061",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AttackPowerToBoss",
+      "200"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "33061.2"
+   ],
+   "clearedBy": []
+  },
+  "QuickDraw_FusilladeBuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [],
+   "clearedBy": [
+    "124010.3"
+   ]
+  },
+  "Element_Darkness_Mark": {
+   "maxStack": 1,
+   "stackRule": "FollowOperationByFiredCreature",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "131032.1",
+    "131033.1",
+    "131031.1"
+   ],
+   "clearedBy": []
+  },
+  "Element_Darkness_Dot": {
+   "maxStack": 1,
+   "stackRule": "FollowOperationByFiredCreature",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "131032",
+     "opNo": 3,
+     "type": "GetDotR",
+     "values": [
+      "#Element_Darkness_Dot(750)"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "131033",
+     "opNo": 3,
+     "type": "GetDotR",
+     "values": [
+      "#Element_Darkness_Dot(1450)"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    },
+    {
+     "skill": "131031",
+     "opNo": 3,
+     "type": "GetDotR",
+     "values": [
+      "#Element_Darkness_Dot(380)"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "131032.3",
+    "131033.3",
+    "131031.3"
+   ],
+   "clearedBy": []
+  },
+  "DarknessEvasion": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "134030",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "134030.1"
+   ],
+   "clearedBy": []
+  },
+  "ElementalReset_IL": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "43060",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "43060.1"
+   ],
+   "clearedBy": []
+  },
+  "IllusionStep": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "84070",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "15"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "74070",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AvoidChance",
+      "15"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "84070.1",
+    "74070.1"
+   ],
+   "clearedBy": []
+  },
+  "Enrage": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "14050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "14050.1"
+   ],
+   "clearedBy": []
+  },
+  "StormBringer": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "144040",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "144041"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "144040.1"
+   ],
+   "clearedBy": []
+  },
+  "BattleShip_Summon": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "124051.2"
+   ],
+   "clearedBy": [
+    "124052.2"
+   ]
+  },
+  "FreezingBreath_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "44021",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "150"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "44021.2"
+   ],
+   "clearedBy": []
+  },
+  "ScaringSword_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "13041",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "13041.1"
+   ],
+   "clearedBy": []
+  },
+  "ScaringSword_AttackDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "13041",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "-100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "13041.2"
+   ],
+   "clearedBy": []
+  },
+  "HolyFountain_Buff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63021",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "AttackPowerToBoss",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "63021.2"
+   ],
+   "clearedBy": []
+  },
+  "HolyFountain_Check": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "63021.3"
+   ],
+   "clearedBy": []
+  },
+  "Bless": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "62030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "160"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "62030.1"
+   ],
+   "clearedBy": []
+  },
+  "BeholdersRevenge_Off": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "34062.2"
+   ],
+   "clearedBy": []
+  },
+  "DivineBlessing": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24050",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "24050.2"
+   ],
+   "clearedBy": []
+  },
+  "ComboAttack2": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "13051",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "13051.1"
+   ],
+   "clearedBy": []
+  },
+  "EmeraldDust_Weakness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "144081",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "144081.1"
+   ],
+   "clearedBy": []
+  },
+  "BeholdersRevenge": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "34060.2"
+   ],
+   "clearedBy": []
+  },
+  "ParashockGuard": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23061",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "Toughness",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23061.1"
+   ],
+   "clearedBy": []
+  },
+  "ShadowRush_Mastery": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "92030",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "500"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "92030.2"
+   ],
+   "clearedBy": []
+  },
+  "83070": {
+   "maxStack": 40,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "83070.1"
+   ],
+   "clearedBy": [
+    "83070.3"
+   ]
+  },
+  "83070_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "83070",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "83070.2"
+   ],
+   "clearedBy": []
+  },
+  "CombatOrders": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23050",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Jobstep3SkillLevel",
+      "18"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "23050.2"
+   ],
+   "clearedBy": []
+  },
+  "CombatOrders_Self": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23050",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "AttackPower",
+      "250"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "23050.3"
+   ],
+   "clearedBy": []
+  },
+  "CombatOrders_4th": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23050",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "Jobstep4SkillLevel",
+      "18"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "23050.4"
+   ],
+   "clearedBy": []
+  },
+  "CombatOrders_MpConsumeRatioDown": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "23050",
+     "opNo": 5,
+     "type": "ModStat",
+     "values": [
+      "MpConsumeRatio",
+      "-200"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "23050.5"
+   ],
+   "clearedBy": []
+  },
+  "SmokeShell_SelfBuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104040",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "130"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104040.2"
+   ],
+   "clearedBy": []
+  },
+  "PageOrder": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "22020",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "22020.2"
+   ],
+   "clearedBy": []
+  },
+  "Element_Darkness_Weakness": {
+   "maxStack": 1,
+   "stackRule": "FollowOperation",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "131033",
+     "opNo": 4,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "50"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "131033.4"
+   ],
+   "clearedBy": []
+  },
+  "PoisonRegion_Attack": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "53032.2"
+   ],
+   "clearedBy": []
+  },
+  "ElementalHarmony": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "9001",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AttackSpeed",
+      "150"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "9001.1"
+   ],
+   "clearedBy": []
+  },
+  "ElementalHarmony_2": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": 2,
+   "effects": [
+    {
+     "skill": "9001",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "RunSpeedMms",
+      "100"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "9001.2"
+   ],
+   "clearedBy": []
+  },
+  "TriumphFeather": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "63050",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "63051"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "63050.1"
+   ],
+   "clearedBy": []
+  },
+  "SerpentMark": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "114080",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "114080.2"
+   ],
+   "clearedBy": []
+  },
+  "Fake_On": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "104071",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    },
+    {
+     "skill": "94071",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "104071.1",
+    "94071.1"
+   ],
+   "clearedBy": []
+  },
+  "EmeraldDust_SelfBuff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "144082",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "144082.1"
+   ],
+   "clearedBy": []
+  },
+  "WindBooster": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "114050",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "AttackSpeed",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "114050.1"
+   ],
+   "clearedBy": []
+  },
+  "HyperBody": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "32040",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Defence",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "32040.1"
+   ],
+   "clearedBy": []
+  },
+  "HyperBody_AttackUp": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "32040",
+     "opNo": 2,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "32040.2"
+   ],
+   "clearedBy": []
+  },
+  "Element_Darkness": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "131030",
+     "opNo": 1,
+     "type": "UsePassiveSkill",
+     "values": [
+      "131031"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "131030.1"
+   ],
+   "clearedBy": []
+  },
+  "DivineStigma": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "debuff",
+   "hostile": "Negative",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24020",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "Weakness",
+      "200"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "24020.3"
+   ],
+   "clearedBy": []
+  },
+  "GuardianSpirit_Self": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24060",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "24060.1"
+   ],
+   "clearedBy": []
+  },
+  "GuardianSpirit_Ally": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24060",
+     "opNo": 3,
+     "type": "GetHotByMaxHpR",
+     "values": [
+      "8"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "24060.3"
+   ],
+   "clearedBy": []
+  },
+  "AdvancedBless": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "64040",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "70"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "64040.1"
+   ],
+   "clearedBy": []
+  },
+  "AdvancedBless_Myself": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "64040",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "40"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "64040.3"
+   ],
+   "clearedBy": []
+  },
+  "Vipersition": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "114040",
+     "opNo": 1,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "114040.1"
+   ],
+   "clearedBy": []
+  },
+  "PainKiller": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "83050.4"
+   ],
+   "clearedBy": []
+  },
+  "ComboAttack": {
+   "maxStack": 5,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "12030",
+     "opNo": 1,
+     "type": "ModStatR",
+     "values": [
+      "Attack",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "12030.1"
+   ],
+   "clearedBy": []
+  },
+  "ComboAttack3": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "12030",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "PiercePower",
+      "$CreatureStateCount(FiredCreature;ComboAttack) * 10"
+     ],
+     "valueLevelFactors": null
+    }
+   ],
+   "grantedBy": [
+    "12030.2"
+   ],
+   "clearedBy": []
+  },
+  "93080": {
+   "maxStack": 7,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "93080.1"
+   ],
+   "clearedBy": [
+    "93080.4"
+   ]
+  },
+  "93080_Attack": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "93080",
+     "opNo": 2,
+     "type": "ModStat",
+     "values": [
+      "FinalDamage",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "93080.2"
+   ],
+   "clearedBy": []
+  },
+  "93080_Speed": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "93080",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "AttackSpeed",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "93080.3"
+   ],
+   "clearedBy": []
+  },
+  "DivineJudgement": {
+   "maxStack": 10,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": null,
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [],
+   "grantedBy": [
+    "24070.1"
+   ],
+   "clearedBy": [
+    "24070.4"
+   ]
+  },
+  "DivineJudgement_Buff": {
+   "maxStack": 1,
+   "stackRule": "Override",
+   "kind": "buff",
+   "hostile": "Positive",
+   "restrictions": {},
+   "ccPower": null,
+   "stackLevel": null,
+   "effects": [
+    {
+     "skill": "24070",
+     "opNo": 3,
+     "type": "ModStat",
+     "values": [
+      "BaseAttackPower",
+      "300"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ]
+    }
+   ],
+   "grantedBy": [
+    "24070.3"
+   ],
+   "clearedBy": []
+  }
+ }
+}

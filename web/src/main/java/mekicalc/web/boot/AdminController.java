@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Map;
 import mekicalc.web.BotBridge;
 import mekicalc.web.BotOutbox;
+import mekicalc.web.DiscordNotifier;
+import mekicalc.web.DiscordStore;
 import mekicalc.web.RoomStore;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,11 +34,16 @@ public class AdminController {
     private final RoomStore rooms;
     private final BotBridge bridge;
     private final BotOutbox outbox;
+    private final DiscordStore discord;
+    private final DiscordNotifier discordNotifier;
 
-    public AdminController(RoomStore rooms, BotBridge bridge, BotOutbox outbox) {
+    public AdminController(RoomStore rooms, BotBridge bridge, BotOutbox outbox,
+                           DiscordStore discord, DiscordNotifier discordNotifier) {
         this.rooms = rooms;
         this.bridge = bridge;
         this.outbox = outbox;
+        this.discord = discord;
+        this.discordNotifier = discordNotifier;
     }
 
     /** 방 목록(+권한). */
@@ -98,6 +106,56 @@ public class AdminController {
         out.put("ok", id > 0);
         out.put("id", (double) id);
         out.put("rooms", (double) target.size());
+        return out;
+    }
+
+    // ──────────────── 디스코드 웹훅 ────────────────
+
+    /** 웹훅 목록(URL은 토큰 마스킹). */
+    @GetMapping("/discord/hooks")
+    public Object listHooks() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("hooks", discord.listSafe());
+        return out;
+    }
+
+    /** 웹훅 등록. body: {url, label?}. URL 형식이 아니면 400. */
+    @PostMapping("/discord/hooks")
+    public Object addHook(@RequestBody Map<String, Object> req) {
+        String url = strOpt(req, "url");
+        if (url == null || url.isBlank()) throw new IllegalArgumentException("웹훅 URL이 필요합니다.");
+        return discord.add(url.trim(), strOpt(req, "label")).toSafeMap();
+    }
+
+    /** 웹훅 라벨/활성 수정. body: {label?, enabled}. */
+    @PutMapping("/discord/hooks/{id}")
+    public Object updateHook(@PathVariable long id, @RequestBody Map<String, Object> req) {
+        DiscordStore.Hook h = discord.update(id, strOpt(req, "label"), bool(req, "enabled", true));
+        if (h == null) throw new IllegalArgumentException("존재하지 않는 웹훅: " + id);
+        return h.toSafeMap();
+    }
+
+    /** 웹훅 삭제. */
+    @DeleteMapping("/discord/hooks/{id}")
+    public Object deleteHook(@PathVariable long id) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", discord.remove(id));
+        return out;
+    }
+
+    /** 웹훅 테스트 발송(지정 채널에 즉시 1건). 실패하면 사유를 담아 반환. */
+    @PostMapping("/discord/hooks/{id}/test")
+    public Object testHook(@PathVariable long id) {
+        DiscordStore.Hook h = discord.get(id);
+        if (h == null) throw new IllegalArgumentException("존재하지 않는 웹훅: " + id);
+        Map<String, Object> out = new LinkedHashMap<>();
+        try {
+            discordNotifier.sendTest(h, "✅ 메키칼크 공지 봇 연결 테스트입니다. 이 채널로 신규 공지와 종료 임박 안내가 전송됩니다.");
+            out.put("ok", true);
+        } catch (Exception ex) {
+            out.put("ok", false);
+            out.put("error", ex.getMessage());
+        }
         return out;
     }
 }

@@ -47,7 +47,10 @@
         <p class="sub">메키칼크 · 메이플 키우기 스탯 효율 계산기</p>
       </div>
     </div>
-    <div id="header-account" class="header-account"></div>
+    <div class="header-right">
+      <div id="header-account" class="header-account"></div>
+      <button id="header-settings" class="header-settings" type="button" aria-label="설정" title="설정"><span class="hs-gear" aria-hidden="true">⚙️</span> 설정</button>
+    </div>
   </header>
 
   <div id="inapp-banner" class="inapp-banner" hidden>
@@ -124,6 +127,111 @@
       <p class="status home-foot">숫자는 현재 프리셋 기준의 상대 비교용이에요. 위 토글로 일반몹/보스·동료 미소환/소환을, 우하단 ⚡에서 챕터·프리셋을 바꿉니다.</p>
     </section>
 
+    <!-- 정밀 타임라인 (나이트로드 · 베타) -->
+    <section id="panel-timeline" class="panel" hidden>
+      <details class="panel-about">
+        <summary>정밀 타임라인이란?</summary>
+        <div class="about-body">
+          <p>나이트로드 스킬을 시간축에 배치해 <b>이벤트 기반</b>으로 시뮬레이션합니다. 아드레날린·퍼지·다크사이트 같은 <b>버프 윈도우가 어떤 딜과 겹치는지</b>까지 반영한 정밀 DPS예요. <b>자동</b>은 최적 로테이션, <b>수동</b>은 시간표대로 배치(빈 시간은 평타·쿨 안 돌면 지연)합니다. 대상 챕터는 데미지 분석 탭과 동일하게 우하단 ⚡에서 바꿉니다.</p>
+        </div>
+      </details>
+      <div class="deal-warning" role="note">
+        <span class="dw-icon" aria-hidden="true">⚠️</span>
+        <span><b>나이트로드 전용 · 베타.</b> 스킬 + <b>유물(잠재 포함)</b>을 계산하며 <b>동료는 미포함</b>입니다. 절대 수치가 아니라 세팅·배치 간 상대 비교용이에요.</span>
+      </div>
+
+      <!-- 빌드 프리셋(타임라인 전용): 스킬 배치(로테이션)+자동채움+스탯·동료·유물 로드아웃을 빌드로 저장. 저장 버튼으로만 반영(미저장 유실). -->
+      <div class="card tl-build-bar">
+        <div class="card-head">
+          <h2>빌드</h2>
+          <div class="preset-ctrls">
+            <select id="tb-sel"></select>
+            <button id="tb-save" class="mini-btn" type="button" disabled>저장</button>
+            <button id="tb-new" class="mini-btn ghost" type="button">추가</button>
+            <button id="tb-rename" class="mini-btn ghost" type="button">이름변경</button>
+            <button id="tb-del" class="mini-btn ghost" type="button">삭제</button>
+            <button id="tb-reset" class="mini-btn ghost" type="button">초기화</button>
+          </div>
+        </div>
+        <div class="tl-build-presets">
+          <label>스탯 <select id="tb-stat"></select></label>
+          <label>동료 <select id="tb-ally"></select></label>
+          <label>유물 <select id="tb-relic"></select></label>
+        </div>
+        <div class="tl-build-hint">빌드 = <b>스킬 배치 + 스탯·동료·유물 프리셋</b> 한 벌. 빌드를 고르면 그 프리셋이 전역에 적용돼요. 변경 후 <b>저장</b>을 눌러야 반영됩니다(미저장 시 유실).</div>
+        <div id="tl-build-warn" class="tl-build-warn" hidden></div>
+      </div>
+
+      <div class="tl-bar">
+        <div class="ds-seg" id="tl-mode" role="group" aria-label="배치 모드">
+          <button type="button" class="ds-seg-btn" data-v="auto">⚙️ 자동</button>
+          <button type="button" class="ds-seg-btn" data-v="manual">✍️ 수동</button>
+        </div>
+        <label class="tl-sim">시뮬 <input id="tl-simsec" type="number" min="10" max="600" value="90"> 초</label>
+        <button type="button" id="tl-run" class="tl-run-btn">계산</button>
+      </div>
+
+      <div class="card tl-relic-opts">
+        <div class="dash-head"><h2>유물 계산 설정</h2><span class="dash-sub">마리수·처치수·컨텐츠·시간 의존 유물 반영</span></div>
+        <div class="tl-ro-grid">
+          <label>마리수(적)<input id="tl-enemies" type="number" min="1" placeholder="미지정"><span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></label>
+          <label>분당 처치수<input id="tl-kills" type="number" min="0" placeholder="미지정"><span class="tl-ro-hint">성배</span></label>
+          <label>컨텐츠<select id="tl-content">
+            <option value="">자동(대상 기준)</option>
+            <option value="성장던전">성장 던전</option>
+            <option value="레이드-자쿰">레이드-자쿰</option>
+            <option value="레이드-혼테일">레이드-혼테일</option>
+            <option value="월드보스">월드보스</option>
+            <option value="아레나">아레나</option>
+            <option value="월드아레나">월드 아레나</option>
+            <option value="길드토벌전">길드 토벌전</option>
+          </select><span class="tl-ro-hint">자쿰·혼테일·월드보스·아레나 등</span></label>
+          <label>유물 사전활성(초)<input id="tl-artoffset" type="number" min="0" value="0"><span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></label>
+        </div>
+        <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
+      </div>
+
+      <!-- 사용 스킬(액티브): 체크 해제 시 자동 로테이션·수동 스킬 자동채움에서 제외. 수동 직접 배치는 가능. 빌드에 저장. -->
+      <details class="card tl-skillsel">
+        <summary>사용 스킬 <span class="tl-ro-hint">체크 해제하면 자동·수동 자동채움에서 제외돼요(수동 직접 배치는 가능)</span></summary>
+        <div class="tl-skillsel-bar"><button type="button" id="tl-skill-all" class="mini-btn ghost">전체 선택</button><button type="button" id="tl-skill-none" class="mini-btn ghost">전체 해제</button></div>
+        <div id="tl-skill-list" class="tl-skill-list"></div>
+      </details>
+
+      <details id="tl-manual" class="card tl-skillsel" hidden open>
+        <summary>스킬 배치표 <span class="tl-ro-hint">지정 시각에 시전 · 쿨 안 돌면 지연 · 드래그로 순서 변경</span></summary>
+        <label class="tl-ro-check tl-autofill"><input type="checkbox" id="tl-fillskills" checked> 스킬 자동 채움 <span class="tl-ro-hint">배치한 스킬은 그대로 두고, 빈 칸을 <b>사용 중인 스킬로 쿨 맞춰 자동 배치</b>(핵심만 배치하고 나머지는 자동)</span></label>
+        <label class="tl-ro-check tl-autofill"><input type="checkbox" id="tl-autofill" checked> 기본 공격 자동 채움 <span class="tl-ro-hint">끄면 배치표에 놓은 액션만 시전 · 평타도 직접 배치 가능</span></label>
+        <label class="tl-ro-check tl-autofill"><input type="checkbox" id="tl-optimize" checked> 스킬 사용 최적화 <span class="tl-ro-hint">스킬 사이 <b>애매한 잔틈</b>을 평타 간격 기준으로 스냅(잔틈이 절반↓이면 당기고 절반↑이면 밀어 평타 삽입, 당길 때 쿨 안 되면 밀기). <b>저장값은 보존</b> · 해제하면 원래 시각 복원</span></label>
+        <table id="tl-table" class="tl-table">
+          <thead><tr><th class="tl-th-drag"></th><th>시각(초)</th><th>스킬</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" id="tl-addrow" class="tl-addrow-btn">+ 행 추가</button>
+      </details>
+
+      <!-- 변경 실험: 스탯을 얼마나 더/덜 얻으면 딜이 어떻게 변하는지. 프리셋 원본 불변, 이 빌드 계산에서만 옵션식대로 가산. -->
+      <details id="tl-exp" class="card tl-skillsel">
+        <summary>실험실 <span class="tl-ro-hint">스탯·유물을 바꿔봤을 때 딜 변화를 즉시 관측 — 프리셋 원본은 그대로, 이 빌드 계산에서만 반영. 스탯은 <b>옵션 계산식대로 가산</b>(공속·방관·쿨감%는 체감누적, 최종뎀은 곱연산). ± 모두 지원. <b>실험값 전체 적용</b> 토글은 타임라인 박스 안에 있어요(변경이 있을 때 표시).</span></summary>
+        <table id="tl-exp-table" class="tl-table">
+          <thead><tr><th>스탯</th><th>증감(내가 얻는 양)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" id="tl-exp-addrow" class="tl-addrow-btn">+ 스탯 추가</button>
+
+        <!-- 유물 실험: 현재 장착 유물로 초기 채움. 유물·각성·잠재 자유 편집. ✕=해제, 초기화=프리셋 복원. -->
+        <div class="tl-exp-relic-head">
+          <span>유물</span>
+          <button type="button" id="tl-exp-relic-reset" class="tl-mini-btn" title="현재 프리셋의 장착 유물 상태로 되돌리기">↺ 초기화</button>
+        </div>
+        <div id="tl-exp-relic-list"></div>
+        <button type="button" id="tl-exp-relic-addrow" class="tl-addrow-btn">+ 유물 추가</button>
+        <div id="tl-exp-result"></div>
+      </details>
+
+      <div id="tl-result"></div>
+    </section>
+
     <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->
     <section id="panel-presets" class="panel" hidden>
 
@@ -131,9 +239,8 @@
       <div class="subtabs" role="tablist">
         <button class="subtab" type="button" data-sub="build" role="tab">캐릭터</button>
         <button class="subtab" type="button" data-sub="ally" role="tab">동료</button>
-        <button class="subtab" type="button" data-sub="cube" role="tab">큐브</button>
         <button class="subtab" type="button" data-sub="relic" role="tab">유물</button>
-        <button class="subtab subtab-right" type="button" data-sub="settings" role="tab">설정</button>
+        <button class="subtab" type="button" data-sub="cube" role="tab">큐브</button>
       </div>
 
       <!-- 빌드 (스탯 + 스킬 통합) -->
@@ -148,18 +255,19 @@
             <h2>캐릭터 프리셋</h2>
             <div class="preset-ctrls">
               <select id="sp-sel"></select>
-              <button id="sp-save" class="mini-btn" type="button">저장</button>
+              <button id="sp-save" class="mini-btn" type="button" disabled>저장</button>
               <button id="sp-new" class="mini-btn ghost" type="button">추가</button>
               <button id="sp-rename" class="mini-btn ghost" type="button">이름변경</button>
               <button id="sp-del" class="mini-btn ghost" type="button">삭제</button>
             </div>
           </div>
+          <div class="relic-notice">📌 스탯은 <b>유물을 모두 해제한 값</b>으로 입력하세요. 유물의 옵션·잠재 효과는 <b>유물 탭</b>에서 별도로 계산됩니다(이중 반영 방지).</div>
         </div>
         <!-- 직업·레벨·챕터: 프리셋 바와 별도 박스(스탯·스킬 계산 기준) -->
         <div class="card">
           <div class="bh-row">
             <label class="ctl inline bh-job">직업
-              <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option><option value="4">히어로</option></select>
+              <select id="job-sel"><option value="0">공용</option><option value="1">나이트로드</option><option value="2">다크나이트</option><option value="3">비숍</option><option value="4">히어로</option><option value="5">보우마스터</option></select>
             </label>
             <span id="build-level-slot"></span>
             <label class="ctl inline">챕터
@@ -200,7 +308,7 @@
             <h2>큐브 입력</h2>
             <div class="preset-ctrls">
               <select id="cp-sel"></select>
-              <button id="cp-save" class="mini-btn" type="button">저장</button>
+              <button id="cp-save" class="mini-btn" type="button" disabled>저장</button>
               <button id="cp-new" class="mini-btn ghost" type="button">추가</button>
               <button id="cp-rename" class="mini-btn ghost" type="button">이름변경</button>
               <button id="cp-del" class="mini-btn ghost" type="button">삭제</button>
@@ -229,7 +337,7 @@
             <h2>동료 (메인)</h2>
             <div class="preset-ctrls">
               <select id="ap-sel"></select>
-              <button id="ap-save" class="mini-btn" type="button">저장</button>
+              <button id="ap-save" class="mini-btn" type="button" disabled>저장</button>
               <button id="ap-new" class="mini-btn ghost" type="button">추가</button>
               <button id="ap-rename" class="mini-btn ghost" type="button">이름변경</button>
               <button id="ap-del" class="mini-btn ghost" type="button">삭제</button>
@@ -244,19 +352,20 @@
       <div id="sub-relic" class="subpanel" hidden>
         <details class="panel-about">
           <summary>유물 입력은 무엇인가요?</summary>
-          <div class="about-body"><p>보유 유물의 각성도를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위쪽 장착에서 고른 유물만 예상 데미지에 반영됩니다. 뱃지로 계산 방식이 구분됩니다 — 딜 반영(조건/트리거 유물), 선반영·컨텐츠 전용·생존(딜 기여 0, 스탯 프리셋에 이미 포함).</p></div>
+          <div class="about-body"><p>보유 유물의 각성도를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위쪽 장착에서 고른 유물만 예상 데미지에 반영됩니다. 대부분의 유물은 딜에 반영되며 뱃지가 없습니다. 주의가 필요한 유물만 뱃지로 표시돼요 — 컨텐츠 전용(해당 컨텐츠 선택 시 반영), 딜 미반영(생존·유틸형), 지원 예정(상태·동료 유물, 아직 미구현).</p></div>
         </details>
         <div class="card">
           <div class="card-head">
             <h2>유물</h2>
             <div class="preset-ctrls">
               <select id="rp-sel"></select>
-              <button id="rp-save" class="mini-btn" type="button">저장</button>
+              <button id="rp-save" class="mini-btn" type="button" disabled>저장</button>
               <button id="rp-new" class="mini-btn ghost" type="button">추가</button>
               <button id="rp-rename" class="mini-btn ghost" type="button">이름변경</button>
               <button id="rp-del" class="mini-btn ghost" type="button">삭제</button>
             </div>
           </div>
+          <div class="relic-notice">📌 <b>스탯 프리셋은 유물을 모두 해제한 값</b>으로 입력하세요. 유물의 옵션·잠재 효과는 여기서 별도로 계산돼 <b>이중 반영을 막습니다</b>. (유물을 바꿔도 스탯 프리셋은 그대로 두면 됩니다.)</div>
           <div class="relic-layout">
             <div class="relic-equip">
               <div class="relic-equip-head">장착 유물 <span id="rl-slots-badge"></span></div>
@@ -264,16 +373,18 @@
               <div class="relic-sum" id="rl-suminfo"></div>
             </div>
             <div class="relic-grid-wrap">
-              <div class="relic-grid-head">보유 현황 · 각성도 <span class="hint">유물별 각성을 입력하면 총합으로 슬롯 수가 정해져요</span></div>
+              <div class="relic-grid-head">보유 현황 · 각성도 <span class="hint">각성을 입력하면 총합으로 슬롯 수가, 등급·각성으로 유물별 잠재 줄이 열려요</span></div>
               <div id="relic-grid" class="relic-grid"></div>
             </div>
           </div>
-          <p class="status">그리드에 보유 유물의 각성도를 입력하세요 — <b>미보유</b>(보유 X) / <b>0각</b>(보유·각성 X) / 1~5각. 각성 총합으로 장착 슬롯 수(10미만 1칸·30미만 2칸·50미만 3칸·50이상 4칸)가 정해지고, 위쪽 장착에서 슬롯 수만큼 고른 유물만 예상 데미지에 반영됩니다. 뱃지 — <b>딜 반영</b>(조건/트리거 유물만 계산) / <b>선반영·컨텐츠 전용·생존</b>(딜 기여 0, 스탯 프리셋에 이미 포함).</p>
+          <p class="status">그리드에 보유 유물의 각성도를 입력하세요 — <b>미보유</b>(보유 X) / <b>0각</b>(보유·각성 X) / 1~5각. 각성 총합으로 장착 슬롯 수(10미만 1칸·30미만 2칸·50미만 3칸·50이상 4칸)가 정해지고, 위쪽 장착에서 슬롯 수만큼 고른 유물만 예상 데미지에 반영됩니다. 대부분 유물은 딜에 반영돼 뱃지가 없고, 주의가 필요한 것만 표시돼요 — <b>컨텐츠 전용</b>(해당 컨텐츠 선택 시 반영) / <b>딜 미반영</b>(생존·유틸형) / <b>지원 예정</b>(상태·동료 유물, 아직 미구현).</p>
         </div>
       </div>
 
-      <!-- 설정 -->
-      <div id="sub-settings" class="subpanel" hidden>
+    </section>
+
+    <!-- 설정: 상단 톱니(로그인 우측 · 모바일 드로어 첫 줄)로 진입하는 독립 패널 -->
+    <section id="panel-settings" class="panel" hidden>
         <details class="panel-about">
           <summary>설정에는 무엇이 있나요?</summary>
           <div class="about-body"><p>프리셋 내보내기/불러오기(다른 기기로 세팅 이동), 계산이 안 되는 스탯(방어 관통력·쿨감 등)의 딜 환산율 직접 지정, 우선순위 추천에서 고려할 옵션과 허용 범위 설정을 모아둔 화면입니다.</p></div>
@@ -283,18 +394,18 @@
           <div id="account-body"></div>
         </div>
         <div class="card">
-          <h2>프리셋 내보내기 / 불러오기</h2>
-          <p class="status set-desc">로그인 없이 다른 기기·브라우저로 프리셋(스탯·큐브·딜 환산·추천 범위)을 옮길 때 사용합니다. <b>계정 로그인은 추후 추가 예정.</b></p>
+          <h2>내보내기 / 불러오기</h2>
+          <p class="status set-desc">다른 기기·브라우저로 세팅을 옮길 때 사용합니다. <b>프리셋 내보내기</b>(원하는 프리셋만) 또는 <b>빌드 내보내기</b>(빌드+스탯·동료·유물 묶음). 불러오기는 둘 다 처리합니다.</p>
           <div class="backup-grid">
             <div class="backup-col">
               <div class="backup-col-title">📤 내보내기</div>
-              <p class="hint">백업을 만들어 다른 기기로 옮깁니다.</p>
-              <button id="export-btn" class="mini-btn" type="button">파일로 저장</button>
-              <button id="export-text-btn" class="mini-btn ghost" type="button">텍스트로 복사</button>
+              <p class="hint"><b>프리셋</b>은 원하는 것만 골라, <b>빌드</b>는 빌드+스탯·동료·유물을 묶어 내보냅니다.</p>
+              <button id="export-btn" class="mini-btn" type="button">프리셋 내보내기…</button>
+              <button id="build-export-btn" class="mini-btn" type="button">빌드 내보내기…</button>
             </div>
             <div class="backup-col">
               <div class="backup-col-title">📥 불러오기</div>
-              <p class="hint">백업에서 <b>고른 프리셋만</b> 불러옵니다. 기존에 <b>추가</b>하거나 <b>기존 삭제 후 교체</b>를 고를 수 있어요.</p>
+              <p class="hint">백업/빌드 번들에서 <b>고른 항목만</b> 불러옵니다. 기존에 <b>추가</b>하거나 <b>기존 삭제 후 교체</b>를 고를 수 있어요.</p>
               <button id="import-btn" class="mini-btn" type="button">파일에서 불러오기</button>
               <button id="import-text-btn" class="mini-btn ghost" type="button">텍스트로 불러오기</button>
               <input type="file" id="import-file" accept=".mkbak,.json" hidden />
@@ -311,7 +422,6 @@
           <p class="status set-desc">우선순위 추천에서 고려할 스탯과 <b>현재값 기준</b> 허용 범위(하한 ~ 상한). 음수=그만큼 잃어도 허용, 양수=그만큼 얻는 것까지 허용.</p>
           <div id="range-list"></div>
         </div>
-      </div>
     </section>
 
     <!-- 큐브 기댓값 -->
@@ -570,6 +680,7 @@
   </footer>
 
   <div id="toast" class="toast"></div>
+  <div id="tl-tip" class="tl-tip" hidden></div>
 
   <!-- 내보내기: 백업 텍스트 팝업(열면 자동 복사, 우상단 복사 버튼) -->
   <div id="modal-export" class="modal-overlay" hidden>
@@ -601,6 +712,28 @@
       </div>
       <div class="modal-foot">
         <button id="import-text-load" class="mini-btn" type="button">불러오기</button>
+        <button class="mini-btn ghost" type="button" data-close>취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내보내기: 내보낼 항목 선택 팝업 -->
+  <div id="modal-export-select" class="modal-overlay" hidden>
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="modal-export-select-title">
+      <div class="modal-head">
+        <h3 id="modal-export-select-title">내보낼 항목 선택</h3>
+        <div class="modal-head-actions">
+          <label class="imp-all"><input type="checkbox" id="exp-all" checked /> 전체 선택</label>
+          <button class="modal-x" type="button" data-close aria-label="닫기">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="export-select-list" class="import-select-list"></div>
+        <p id="export-select-status" class="status"></p>
+      </div>
+      <div class="modal-foot">
+        <button id="exp-file-btn" class="mini-btn" type="button">파일로 저장</button>
+        <button id="exp-text-btn" class="mini-btn ghost" type="button">텍스트로 복사</button>
         <button class="mini-btn ghost" type="button" data-close>취소</button>
       </div>
     </div>

@@ -1,0 +1,6811 @@
+{
+ "job": "captain",
+ "nodes": {
+  "121010": {
+   "id": "121010",
+   "name": "더블 파이어",
+   "desc": "[기본 공격 효과] 탄환을 연속 발사하여 전방의 적 3명에게 «26»% 피해를 2회 입힙니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "DoubleFire",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3100",
+     "3100",
+     "600",
+     "100"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 15.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 200.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "260",
+      "None",
+      "2"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "3",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120010",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "121010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120020",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "121010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "120030",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "121010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "120040",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "121010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "120050",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "121010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120010",
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +15%",
+     "requireLevel": "12",
+     "requires": null,
+     "kind": "skill",
+     "effect": {
+      "skill": "120010",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "121010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120020",
+     "name": "더블 파이어 - 대상",
+     "desc": "더블 파이어 최대 대상 수 +1",
+     "requireLevel": "15",
+     "requires": "120010",
+     "kind": "skill",
+     "effect": {
+      "skill": "120020",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "121010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120030",
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +20%",
+     "requireLevel": "19",
+     "requires": "120020",
+     "kind": "skill",
+     "effect": {
+      "skill": "120030",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "121010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120040",
+     "name": "더블 파이어 - 대상",
+     "desc": "더블 파이어 최대 대상 수 +1",
+     "requireLevel": "22",
+     "requires": "120030",
+     "kind": "skill",
+     "effect": {
+      "skill": "120040",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "121010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120050",
+     "name": "더블 파이어 - 피해",
+     "desc": "더블 파이어 피해량 +20%",
+     "requireLevel": "26",
+     "requires": "120040",
+     "kind": "skill",
+     "effect": {
+      "skill": "120050",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "121010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "121020": {
+   "id": "121020",
+   "name": "크리티컬 로어",
+   "desc": "크리티컬 확률이 5% 증가합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "CriticalChance",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "120035",
+     "name": "크리티컬 로어 - 크리티컬 데미지",
+     "desc": "크리티컬 로어 크리티컬 데미지 5% 증가",
+     "requireLevel": "21",
+     "requires": "120030",
+     "kind": "skill",
+     "effect": {
+      "skill": "120035",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStat",
+        "target": "Myself",
+        "values": [
+         "CriticalPower",
+         "50"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "121030": {
+   "id": "121030",
+   "name": "퀵모션",
+   "desc": "공격 속도가 6%, 이동 속도가 8% 증가합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackSpeed",
+      "60"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "RunSpeedMms",
+      "80"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120045",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "121030",
+      "1",
+      "Value",
+      "50",
+      "1"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120045",
+     "name": "퀵 모션 - 속도",
+     "desc": "퀵 모션 공격 속도 증가량 5%p 추가 증가",
+     "requireLevel": "24",
+     "requires": "120040",
+     "kind": "skill",
+     "effect": {
+      "skill": "120045",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "121030",
+         "1",
+         "Value",
+         "50",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "121040": {
+   "id": "121040",
+   "name": "파이렛 리프",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다.",
+   "jobStep": "1",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "EnableDoubleJump",
+     "target": "Myself",
+     "values": null,
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "122010": {
+   "id": "122010",
+   "name": "매그넘 샷",
+   "desc": "[기본 공격 효과] 탄환을 매우 빠른 속도로 발사하여 전방의 적 5명에게 «40»% 피해를 3회 입힙니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "MagnumShot",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3500",
+     "3500",
+     "1000",
+     "700"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 25.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 200.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "400",
+      "None",
+      "3"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "5",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120060",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "122010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120070",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "122010",
+      "1",
+      "MaxHitCount",
+      "1"
+     ]
+    },
+    {
+     "fromSkill": "120080",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "122010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "120090",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "122010",
+      "1",
+      "ModStatAddValue",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120100",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "122010",
+      "1",
+      "GiveDamagePower1",
+      "200"
+     ]
+    },
+    {
+     "fromSkill": "120110",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "122010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120060",
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +15%",
+     "requireLevel": "32",
+     "requires": "120050",
+     "kind": "skill",
+     "effect": {
+      "skill": "120060",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120070",
+     "name": "매그넘 샷 - 대상",
+     "desc": "매그넘 샷 최대 대상 수 +1",
+     "requireLevel": "37",
+     "requires": "120060",
+     "kind": "skill",
+     "effect": {
+      "skill": "120070",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "MaxHitCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120080",
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +20%",
+     "requireLevel": "42",
+     "requires": "120070",
+     "kind": "skill",
+     "effect": {
+      "skill": "120080",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120090",
+     "name": "매그넘 샷 - 보스 몬스터 피해",
+     "desc": "매그넘 샷에 보스 몬스터 데미지 15% 추가 적용",
+     "requireLevel": "47",
+     "requires": "120080",
+     "kind": "skill",
+     "effect": {
+      "skill": "120090",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "ModStatAddValue",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120100",
+     "name": "매그넘 샷 - 피해",
+     "desc": "매그넘 샷 피해량 +20%",
+     "requireLevel": "52",
+     "requires": "120090",
+     "kind": "skill",
+     "effect": {
+      "skill": "120100",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "GiveDamagePower1",
+         "200"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120110",
+     "name": "매그넘 샷 - 타격",
+     "desc": "매그넘 샷 적 타격 횟수 +1",
+     "requireLevel": "56",
+     "requires": "120100",
+     "kind": "skill",
+     "effect": {
+      "skill": "120110",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "122010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "122020": {
+   "id": "122020",
+   "name": "스위프트 파이어",
+   "desc": "대상에게 세 발의 탄환을 연속 발사하여 각각 «180»% 피해를 입힙니다.",
+   "jobStep": "2",
+   "type": "active",
+   "cooldownMs": 17000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "SwiftFire",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3500",
+     "3500",
+     "1000",
+     "700"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 30.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 200.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "1800",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "8",
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Parent",
+     "values": [
+      "Weakness",
+      "30"
+     ],
+     "state": "SwiftFire_Weakness",
+     "flag": "Disabled",
+     "parentOpNo": "1",
+     "durationMs": "8000"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "124100",
+     "opNo": 4,
+     "type": "ModSkillStat",
+     "values": [
+      "122020",
+      "1",
+      "FinalDamage",
+      "800"
+     ],
+     "growthSlot": 23
+    },
+    {
+     "fromSkill": "120075",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "122020",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "SwiftFire_Weakness"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "120075",
+     "name": "스위프트 파이어 - 피해",
+     "desc": "스위프트 파이어 피해량 +50%",
+     "requireLevel": "39",
+     "requires": "120070",
+     "kind": "skill",
+     "effect": {
+      "skill": "120075",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "122020",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120105",
+     "name": "스위프트 파이어 - 약화",
+     "desc": "스위프트 파이어 타격마다 대상의 받는 피해 3% 증가 (최대 3회 중첩 가능)",
+     "requireLevel": "54",
+     "requires": "120100",
+     "kind": "skill",
+     "effect": {
+      "skill": "120105",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "122020",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "122030": {
+   "id": "122030",
+   "name": "서먼 크루",
+   "desc": "노틸러스의 쌍권총 크루를 20초간 소환합니다. 쌍권총 크루는 3초마다 대상에게 «95»% 피해를 2회 입힙니다.",
+   "jobStep": "2",
+   "type": "active",
+   "cooldownMs": 35000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": "SummonCrew",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanUseIfGround",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 35.0,
+   "durationTimeMs": 900.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "CreateProjectile",
+     "target": "Myself",
+     "values": [
+      "122030"
+     ]
+    },
+    {
+     "no": 2,
+     "type": "CreateProjectile",
+     "target": "Myself",
+     "values": [
+      "123040"
+     ],
+     "flag": "Disabled"
+    }
+   ],
+   "summon": [
+    {
+     "projIndex": "122030",
+     "projDurationMs": 1000.0,
+     "projTickMs": 700.0,
+     "projMaxTargetCount": 1.0,
+     "projCount": 1.0,
+     "projFlag": "ExpireOnCreatureDie",
+     "followTargetType": "MoveInSamePlatform",
+     "dealSkill": "122031"
+    },
+    {
+     "projIndex": "123040",
+     "projDurationMs": 1000.0,
+     "projTickMs": 800.0,
+     "projMaxTargetCount": 1.0,
+     "projCount": 1.0,
+     "projFlag": "ExpireOnCreatureDie",
+     "followTargetType": "MoveInSamePlatform",
+     "dealSkill": "123041"
+    }
+   ],
+   "children": [
+    {
+     "id": "122031",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "CreateProjectile",
+       "target": "ProjectilePosition",
+       "values": [
+        "122031"
+       ]
+      }
+     ],
+     "summon": [
+      {
+       "projIndex": "122031",
+       "projDurationMs": 20000.0,
+       "projTickMs": 1500.0,
+       "projMaxTargetCount": 1.0,
+       "projCount": 1.0,
+       "projFlag": "ChangeEffectOnFire,ExpireOnCreatureDie,StopOnTargetInArea,LookTargetOnFire,ChangeEffectOnMove",
+       "followTargetType": "MoveInSamePlatform",
+       "dealSkill": "122032"
+      }
+     ],
+     "children": [
+      {
+       "id": "122032",
+       "name": null,
+       "desc": null,
+       "jobStep": null,
+       "type": "passive",
+       "cooldownMs": null,
+       "initialCoolMs": null,
+       "attrFlag": null,
+       "replaceBaseAttack": false,
+       "autoTriggerCondition": null,
+       "targetType": "Enemy",
+       "meta": {
+        "actionName": null,
+        "iconPath": null,
+        "maxRangeMm": [
+         "3000"
+        ],
+        "rangeType": null,
+        "triggerFlag": null,
+        "ignoreCc": null,
+        "maxFireRangeMm": null,
+        "retargetOnFire": null,
+        "retargetOnDead": null,
+        "skillTargetValue": null,
+        "initialMaxCoolMs": null
+       },
+       "mp": null,
+       "durationTimeMs": null,
+       "tickTimeMs": null,
+       "trigger": {
+        "type": "None",
+        "ratio": 1000.0,
+        "periodMs": null,
+        "fastByAtkSpeed": false,
+        "condition": null
+       },
+       "targetCount": "1",
+       "ops": [
+        {
+         "no": 0,
+         "type": null
+        },
+        {
+         "no": 1,
+         "type": "GetDamageR",
+         "target": "Target",
+         "values": [
+          "950",
+          "None",
+          "2"
+         ],
+         "valueLevelFactors": [
+          "0",
+          "12"
+         ],
+         "maxHitCount": "3",
+         "growthSlot": 12
+        },
+        {
+         "no": 2,
+         "type": "LockProjectileDirection",
+         "target": "Myself",
+         "values": [
+          "TRUE"
+         ],
+         "durationMs": "1300"
+        },
+        {
+         "no": 3,
+         "type": "LockProjectilePosition",
+         "target": "Myself",
+         "values": [
+          "TRUE"
+         ],
+         "durationMs": "1300"
+        }
+       ],
+       "summon": [],
+       "children": [],
+       "boosts_in": [
+        {
+         "fromSkill": "124080",
+         "opNo": 1,
+         "type": "ModSkillStat",
+         "values": [
+          "122032",
+          "1",
+          "FinalDamage",
+          "2500"
+         ],
+         "growthSlot": 21
+        },
+        {
+         "fromSkill": "120095",
+         "opNo": 1,
+         "type": "ModSkillStat",
+         "values": [
+          "122032",
+          "1",
+          "GiveDamagePower1",
+          "500"
+         ]
+        }
+       ]
+      }
+     ],
+     "boosts_in": [
+      {
+       "fromSkill": "120195",
+       "opNo": 1,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "122031",
+        "TickTimeMs",
+        "-300",
+        "0"
+       ]
+      },
+      {
+       "fromSkill": "120195",
+       "opNo": 3,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "122031",
+        "TickTimeMs",
+        "-300",
+        "1"
+       ]
+      },
+      {
+       "fromSkill": "120215",
+       "opNo": 1,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "122031",
+        "DurationTimeMs",
+        "$CreatureFinalStat(UsedCreature;BuffDurationRatio)"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "123041",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "CreateProjectile",
+       "target": "ProjectilePosition",
+       "values": [
+        "123041"
+       ]
+      }
+     ],
+     "summon": [
+      {
+       "projIndex": "123041",
+       "projDurationMs": 20000.0,
+       "projTickMs": 2000.0,
+       "projMaxTargetCount": 1.0,
+       "projCount": 1.0,
+       "projFlag": "ChangeEffectOnFire,ExpireOnCreatureDie,StopOnTargetInArea,LookTargetOnFire,ChangeEffectOnMove",
+       "followTargetType": "MoveInSamePlatform",
+       "dealSkill": "123042"
+      }
+     ],
+     "children": [
+      {
+       "id": "123042",
+       "name": null,
+       "desc": null,
+       "jobStep": null,
+       "type": "passive",
+       "cooldownMs": null,
+       "initialCoolMs": null,
+       "attrFlag": null,
+       "replaceBaseAttack": false,
+       "autoTriggerCondition": null,
+       "targetType": "Enemy",
+       "meta": {
+        "actionName": null,
+        "iconPath": null,
+        "maxRangeMm": [
+         "3000"
+        ],
+        "rangeType": null,
+        "triggerFlag": null,
+        "ignoreCc": null,
+        "maxFireRangeMm": null,
+        "retargetOnFire": null,
+        "retargetOnDead": null,
+        "skillTargetValue": null,
+        "initialMaxCoolMs": null
+       },
+       "mp": null,
+       "durationTimeMs": null,
+       "tickTimeMs": null,
+       "trigger": {
+        "type": "None",
+        "ratio": 1000.0,
+        "periodMs": null,
+        "fastByAtkSpeed": false,
+        "condition": null
+       },
+       "targetCount": "1",
+       "ops": [
+        {
+         "no": 0,
+         "type": null
+        },
+        {
+         "no": 1,
+         "type": "EffectOnly",
+         "target": "Target",
+         "values": null,
+         "flag": "FiredFromProjectile,CanUseToDeadTarget",
+         "queueDelayMs": [
+          "400"
+         ]
+        },
+        {
+         "no": 2,
+         "type": "CreateProjectile",
+         "target": "FiredTargetGround",
+         "values": [
+          "123042"
+         ],
+         "flag": "FiredFromProjectile,CanUseToDeadTarget",
+         "queueDelayMs": [
+          "400",
+          "50"
+         ]
+        },
+        {
+         "no": 3,
+         "type": "LockProjectileDirection",
+         "target": "Myself",
+         "values": [
+          "TRUE"
+         ],
+         "durationMs": "1500"
+        },
+        {
+         "no": 4,
+         "type": "LockProjectilePosition",
+         "target": "Myself",
+         "values": [
+          "TRUE"
+         ],
+         "durationMs": "1500"
+        }
+       ],
+       "summon": [
+        {
+         "projIndex": "123042",
+         "projDurationMs": 300.0,
+         "projTickMs": 200.0,
+         "projMaxTargetCount": 8.0,
+         "projCount": null,
+         "projFlag": null,
+         "followTargetType": null,
+         "dealSkill": "123043"
+        }
+       ],
+       "children": [
+        {
+         "id": "123043",
+         "name": null,
+         "desc": null,
+         "jobStep": null,
+         "type": "passive",
+         "cooldownMs": null,
+         "initialCoolMs": null,
+         "attrFlag": null,
+         "replaceBaseAttack": false,
+         "autoTriggerCondition": null,
+         "targetType": "Enemy",
+         "meta": {
+          "actionName": null,
+          "iconPath": null,
+          "maxRangeMm": null,
+          "rangeType": null,
+          "triggerFlag": null,
+          "ignoreCc": null,
+          "maxFireRangeMm": null,
+          "retargetOnFire": null,
+          "retargetOnDead": null,
+          "skillTargetValue": null,
+          "initialMaxCoolMs": null
+         },
+         "mp": null,
+         "durationTimeMs": null,
+         "tickTimeMs": null,
+         "trigger": {
+          "type": "None",
+          "ratio": 1000.0,
+          "periodMs": null,
+          "fastByAtkSpeed": false,
+          "condition": null
+         },
+         "targetCount": "1",
+         "ops": [
+          {
+           "no": 0,
+           "type": null
+          },
+          {
+           "no": 1,
+           "type": "GetDamageR",
+           "target": "Target",
+           "values": [
+            "1100",
+            "None",
+            "3"
+           ],
+           "valueLevelFactors": [
+            "0",
+            "12"
+           ],
+           "growthSlot": 12
+          }
+         ],
+         "summon": [],
+         "children": [],
+         "boosts_in": [
+          {
+           "fromSkill": "124080",
+           "opNo": 2,
+           "type": "ModSkillStat",
+           "values": [
+            "123043",
+            "1",
+            "FinalDamage",
+            "1000"
+           ],
+           "growthSlot": 21
+          },
+          {
+           "fromSkill": "120155",
+           "opNo": 1,
+           "type": "ModSkillStat",
+           "values": [
+            "123043",
+            "1",
+            "GiveDamagePower1",
+            "500"
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "boosts_in": [
+      {
+       "fromSkill": "120195",
+       "opNo": 2,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "123041",
+        "TickTimeMs",
+        "-300",
+        "0"
+       ]
+      },
+      {
+       "fromSkill": "120195",
+       "opNo": 4,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "123041",
+        "TickTimeMs",
+        "-300",
+        "1"
+       ]
+      },
+      {
+       "fromSkill": "120215",
+       "opNo": 2,
+       "type": "ModSkillProjectileR",
+       "values": [
+        "123041",
+        "DurationTimeMs",
+        "$CreatureFinalStat(UsedCreature;BuffDurationRatio)"
+       ]
+      }
+     ]
+    }
+   ],
+   "invokes": [
+    {
+     "skill": "123040",
+     "via": "CreateProjectile"
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120095",
+     "name": "서먼 크루 - 피해",
+     "desc": "쌍권총 크루 피해량 +50%",
+     "requireLevel": "49",
+     "requires": "120090",
+     "kind": "skill",
+     "effect": {
+      "skill": "120095",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "122032",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "122040": {
+   "id": "122040",
+   "name": "백스텝샷",
+   "desc": "후방으로 긴급 회피하며 총을 발사하여 전방의 적에게 «60»% 피해를 입힙니다. 이 스킬은 자동으로 사용하지 않습니다.",
+   "jobStep": "2",
+   "type": "active",
+   "cooldownMs": 3000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "BackStepShot",
+    "iconPath": null,
+    "maxRangeMm": [
+     "1"
+    ],
+    "rangeType": null,
+    "triggerFlag": "CancelUsingSkill,NoAutoUse,NoLookTarget",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 5.0,
+   "durationTimeMs": 500.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "600",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "1",
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "DashFromMyself",
+     "target": "Myself",
+     "values": [
+      "-1400",
+      "0",
+      "400",
+      "AttachToFloor",
+      "Linear",
+      "400"
+     ],
+     "durationMs": "400"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "122050": {
+   "id": "122050",
+   "name": "건 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackSpeed",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120085",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "122050",
+      "1",
+      "Value",
+      "70",
+      "1"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120085",
+     "name": "건 액셀레이션 - 속도",
+     "desc": "건 액셀레이션 공격 속도 증가량 7%p 추가 증가",
+     "requireLevel": "44",
+     "requires": "120080",
+     "kind": "skill",
+     "effect": {
+      "skill": "120085",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "122050",
+         "1",
+         "Value",
+         "70",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "122060": {
+   "id": "122060",
+   "name": "건 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "MinDamageRatio",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "122070": {
+   "id": "122070",
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "BaseAttackPower",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "122080": {
+   "id": "122080",
+   "name": "인피닛 불릿",
+   "desc": "공격력이 10% 증가합니다.",
+   "jobStep": "2",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "123010": {
+   "id": "123010",
+   "name": "더블 배럴 샷",
+   "desc": "[기본 공격 효과] 강력한 화기를 발사하여 전방의 적 6명에게 «80»% 피해를 5회 입힙니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "DoubleBarrelShot",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4700",
+     "4700",
+     "1500",
+     "800"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 50.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 500.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "800",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120120",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120130",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "110"
+     ]
+    },
+    {
+     "fromSkill": "120140",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "123010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120150",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "120"
+     ]
+    },
+    {
+     "fromSkill": "120160",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "130"
+     ]
+    },
+    {
+     "fromSkill": "120170",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "123010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120180",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "140"
+     ]
+    },
+    {
+     "fromSkill": "120190",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120200",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "123010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120120",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +10%",
+     "requireLevel": "62",
+     "requires": "120110",
+     "kind": "skill",
+     "effect": {
+      "skill": "120120",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120130",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +11%",
+     "requireLevel": "66",
+     "requires": "120120",
+     "kind": "skill",
+     "effect": {
+      "skill": "120130",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "110"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120140",
+     "name": "더블 배럴 샷 - 보스 몬스터 피해",
+     "desc": "더블 배럴 샷에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "71",
+     "requires": "120130",
+     "kind": "skill",
+     "effect": {
+      "skill": "120140",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120150",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +12%",
+     "requireLevel": "76",
+     "requires": "120140",
+     "kind": "skill",
+     "effect": {
+      "skill": "120150",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "120"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120160",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +13%",
+     "requireLevel": "80",
+     "requires": "120150",
+     "kind": "skill",
+     "effect": {
+      "skill": "120160",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "130"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120170",
+     "name": "더블 배럴 샷 - 보스 몬스터 피해",
+     "desc": "더블 배럴 샷에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "84",
+     "requires": "120160",
+     "kind": "skill",
+     "effect": {
+      "skill": "120170",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120180",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +14%",
+     "requireLevel": "88",
+     "requires": "120170",
+     "kind": "skill",
+     "effect": {
+      "skill": "120180",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "140"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120190",
+     "name": "더블 배럴 샷 - 피해",
+     "desc": "더블 배럴 샷 피해량 +15%",
+     "requireLevel": "92",
+     "requires": "120180",
+     "kind": "skill",
+     "effect": {
+      "skill": "120190",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120200",
+     "name": "더블 배럴 샷 - 타격",
+     "desc": "더블 배럴 샷 적 타격 횟수 +1",
+     "requireLevel": "96",
+     "requires": "120190",
+     "kind": "skill",
+     "effect": {
+      "skill": "120200",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "123010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123020": {
+   "id": "123020",
+   "name": "불릿 스매시",
+   "desc": "거대한 탄환을 발사하여 전방의 적 6명에게 «170»% 피해를 4회 입히고 2초간 기절시킵니다.",
+   "jobStep": "3",
+   "type": "active",
+   "cooldownMs": 23000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "BulletSmash",
+    "iconPath": null,
+    "maxRangeMm": [
+     "3700",
+     "3700",
+     "1700",
+     "500"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 60.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 800.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "1700",
+      "None",
+      "4"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "9",
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "Stun",
+     "target": "Parent",
+     "values": null,
+     "parentOpNo": "1",
+     "durationMs": "2000"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "124100",
+     "opNo": 3,
+     "type": "ModSkillStat",
+     "values": [
+      "123020",
+      "1",
+      "FinalDamage",
+      "400"
+     ],
+     "growthSlot": 23
+    },
+    {
+     "fromSkill": "120145",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "123020",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120145",
+     "name": "불릿 스매시 - 피해",
+     "desc": "불릿 스매시 피해량 +50%",
+     "requireLevel": "73",
+     "requires": "120140",
+     "kind": "skill",
+     "effect": {
+      "skill": "120145",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123020",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123030": {
+   "id": "123030",
+   "name": "시즈 봄버",
+   "desc": "고정형 대포를 30초간 설치하여 2.5초마다 대상 주변 적 4명에게 «290»% 피해를 입힙니다.",
+   "jobStep": "3",
+   "type": "active",
+   "cooldownMs": 22000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": "SiegeBomber",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanUseIfGround",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 40.0,
+   "durationTimeMs": 600.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "CreateProjectile",
+     "target": "Myself",
+     "values": [
+      "123030"
+     ]
+    },
+    {
+     "no": 2,
+     "type": "ModCoolTime",
+     "target": "Myself",
+     "values": [
+      "123030",
+      "-15000"
+     ],
+     "flag": "Disabled",
+     "enableCondition": "$CreatureStateCount(UsedCreature;SiegeBomber_FirstDrop) == 0",
+     "queueDelayMs": [
+      "700"
+     ],
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "SiegeBomber_FirstDrop"
+       ]
+      },
+      "right": {
+       "int": 0
+      }
+     }
+    },
+    {
+     "no": 3,
+     "type": "State",
+     "target": "Myself",
+     "values": null,
+     "state": "SiegeBomber_FirstDrop",
+     "flag": "IsSticky,Disabled",
+     "durationMs": "99999999",
+     "queueDelayMs": [
+      "800"
+     ]
+    }
+   ],
+   "summon": [
+    {
+     "projIndex": "123030",
+     "projDurationMs": 30000.0,
+     "projTickMs": 1500.0,
+     "projMaxTargetCount": 1.0,
+     "projCount": 1.0,
+     "projFlag": "ChangeEffectOnFire,ExpireOnCreatureDie",
+     "followTargetType": null,
+     "dealSkill": "123031"
+    }
+   ],
+   "children": [
+    {
+     "id": "123031",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Enemy",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": {
+       "cmp": ">=",
+       "left": {
+        "fn": "ProjectilePosition",
+        "args": [
+         "TRUE",
+         "None",
+         "123030",
+         "x"
+        ]
+       },
+       "right": {
+        "fn": "CreaturePosition",
+        "args": [
+         "TargetCreature",
+         "x"
+        ]
+       }
+      }
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "1900",
+        "None",
+        "1"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "6",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "124100",
+       "opNo": 1,
+       "type": "ModSkillStat",
+       "values": [
+        "123031",
+        "1",
+        "FinalDamage",
+        "200"
+       ],
+       "growthSlot": 23
+      },
+      {
+       "fromSkill": "120165",
+       "opNo": 1,
+       "type": "ModSkillStat",
+       "values": [
+        "123031",
+        "1",
+        "GiveDamagePower1",
+        "500"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "123032",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Enemy",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": {
+       "cmp": "<",
+       "left": {
+        "fn": "ProjectilePosition",
+        "args": [
+         "TRUE",
+         "None",
+         "123030",
+         "x"
+        ]
+       },
+       "right": {
+        "fn": "CreaturePosition",
+        "args": [
+         "TargetCreature",
+         "x"
+        ]
+       }
+      }
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "1900",
+        "None",
+        "1"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "6",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "124100",
+       "opNo": 2,
+       "type": "ModSkillStat",
+       "values": [
+        "123032",
+        "1",
+        "FinalDamage",
+        "200"
+       ],
+       "growthSlot": 23
+      },
+      {
+       "fromSkill": "120165",
+       "opNo": 2,
+       "type": "ModSkillStat",
+       "values": [
+        "123032",
+        "1",
+        "GiveDamagePower1",
+        "500"
+       ]
+      }
+     ]
+    }
+   ],
+   "boosts_in": [
+    {
+     "fromSkill": "120135",
+     "opNo": 1,
+     "type": "ModSkillProjectile",
+     "values": [
+      "123030",
+      "MaxProjectileCount",
+      "1"
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "SiegeBomber_FirstDrop"
+    ],
+    "require": [
+     "SiegeBomber_FirstDrop"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "120135",
+     "name": "시즈 봄버 - 설치",
+     "desc": "시즈 봄버 최대 설치 수 +1",
+     "requireLevel": "68",
+     "requires": "120130",
+     "kind": "skill",
+     "effect": {
+      "skill": "120135",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillProjectile",
+        "target": "Myself",
+        "values": [
+         "123030",
+         "MaxProjectileCount",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "123030",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 3,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "123030",
+         "3"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120165",
+     "name": "시즈 봄버 - 피해",
+     "desc": "시즈 봄버 피해량 +50%",
+     "requireLevel": "82",
+     "requires": "120160",
+     "kind": "skill",
+     "effect": {
+      "skill": "120165",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123031",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123032",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123040": {
+   "id": "123040",
+   "name": "어셈블 크루",
+   "desc": "서먼 크루 사용 시 명사수 크루를 함께 소환합니다. 명사수 크루는 4초마다 탄환을 발사하여 대상 주변 적 3명에게 «190»% 피해를 3회 입힙니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkillEnabled",
+     "target": "Myself",
+     "values": [
+      "122030",
+      "2"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999"
+    }
+   ],
+   "summon": [],
+   "children": [
+    {
+     "id": "123043",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Enemy",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "1100",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "growthSlot": 12
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "124080",
+       "opNo": 2,
+       "type": "ModSkillStat",
+       "values": [
+        "123043",
+        "1",
+        "FinalDamage",
+        "1000"
+       ],
+       "growthSlot": 21
+      },
+      {
+       "fromSkill": "120155",
+       "opNo": 1,
+       "type": "ModSkillStat",
+       "values": [
+        "123043",
+        "1",
+        "GiveDamagePower1",
+        "500"
+       ]
+      }
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120155",
+     "name": "어셈블 크루 - 피해",
+     "desc": "명사수 크루 피해량 +50%",
+     "requireLevel": "78",
+     "requires": "120150",
+     "kind": "skill",
+     "effect": {
+      "skill": "120155",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "123043",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120195",
+     "name": "어셈블 크루 - 타격 주기",
+     "desc": "쌍권총 크루와 명사수 크루의 타격 주기 30% 감소",
+     "requireLevel": "94",
+     "requires": "120190",
+     "kind": "skill",
+     "effect": {
+      "skill": "120195",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "122031",
+         "TickTimeMs",
+         "-300",
+         "0"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "123041",
+         "TickTimeMs",
+         "-300",
+         "0"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 3,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "122031",
+         "TickTimeMs",
+         "-300",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 4,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "123041",
+         "TickTimeMs",
+         "-300",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120215",
+     "name": "어셈블 크루 - 지속",
+     "desc": "버프 지속시간 증가 능력치에 의해 쌍권총 크루와 명사수 크루의 지속시간이 증가",
+     "requireLevel": "104",
+     "requires": "120210",
+     "kind": "skill",
+     "effect": {
+      "skill": "120215",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "122031",
+         "DurationTimeMs",
+         "$CreatureFinalStat(UsedCreature;BuffDurationRatio)"
+        ],
+        "flag": "IsSticky,ReCalculateValueOnTick",
+        "durationMs": "99999999",
+        "opTickMs": "200",
+        "dyn": {
+         "fn": "CreatureFinalStat",
+         "args": [
+          "UsedCreature",
+          "BuffDurationRatio"
+         ]
+        }
+       },
+       {
+        "no": 2,
+        "type": "ModSkillProjectileR",
+        "target": "Myself",
+        "values": [
+         "123041",
+         "DurationTimeMs",
+         "$CreatureFinalStat(UsedCreature;BuffDurationRatio)"
+        ],
+        "flag": "IsSticky,RecalculateValueOnTick",
+        "durationMs": "99999999",
+        "opTickMs": "200",
+        "dyn": {
+         "fn": "CreatureFinalStat",
+         "args": [
+          "UsedCreature",
+          "BuffDurationRatio"
+         ]
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123050": {
+   "id": "123050",
+   "name": "풀메탈 자켓",
+   "desc": "크리티컬 데미지가 10% 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "CriticalPower",
+      "100"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "PiercePower",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky,Disabled",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "120205",
+     "name": "풀메탈 자켓 - 방어 관통력",
+     "desc": "풀메탈 자켓 크리티컬 데미지 증가량의 절반만큼 방어 관통력 증가",
+     "requireLevel": "98",
+     "requires": "120200",
+     "kind": "skill",
+     "effect": {
+      "skill": "120205",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "123050",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123060": {
+   "id": "123060",
+   "name": "럭키 다이스",
+   "desc": "공격력이 20% 증가합니다. 7초마다 정육면체 주사위를 굴려 5초간 등장한 주사위 숫자에 비례하여 공격력이 0 ~ 5% 추가로 증가합니다. 한번 등장한 숫자는 30초간 다시 등장하지 않습니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": "TRUE",
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnTimer",
+    "ratio": 1000.0,
+    "periodMs": 7000.0,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "0"
+     ],
+     "state": "LuckyDice_1",
+     "durationMs": "5000",
+     "fireRatio": "1"
+    },
+    {
+     "no": 2,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "10"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "LuckyDice_2",
+     "durationMs": "5000",
+     "fireRatio": "1",
+     "growthSlot": 22
+    },
+    {
+     "no": 3,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "20"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "LuckyDice_3",
+     "durationMs": "5000",
+     "fireRatio": "1",
+     "growthSlot": 22
+    },
+    {
+     "no": 4,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "30"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "LuckyDice_4",
+     "durationMs": "5000",
+     "fireRatio": "1",
+     "growthSlot": 22
+    },
+    {
+     "no": 5,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "40"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "LuckyDice_5",
+     "durationMs": "5000",
+     "fireRatio": "1",
+     "growthSlot": 22
+    },
+    {
+     "no": 6,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Attack",
+      "50"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "state": "LuckyDice_6",
+     "durationMs": "5000",
+     "fireRatio": "1",
+     "growthSlot": 22
+    },
+    {
+     "no": 7,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "1"
+     ],
+     "parentOpNo": "1",
+     "durationMs": "30000"
+    },
+    {
+     "no": 8,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "2"
+     ],
+     "parentOpNo": "2",
+     "durationMs": "30000"
+    },
+    {
+     "no": 9,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "3"
+     ],
+     "parentOpNo": "3",
+     "durationMs": "30000"
+    },
+    {
+     "no": 10,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "4"
+     ],
+     "parentOpNo": "4",
+     "durationMs": "30000"
+    },
+    {
+     "no": 11,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "5"
+     ],
+     "parentOpNo": "5",
+     "durationMs": "30000"
+    },
+    {
+     "no": 12,
+     "type": "ModSkillDisabled",
+     "target": "Parent",
+     "values": [
+      "123060",
+      "6"
+     ],
+     "parentOpNo": "6",
+     "durationMs": "30000"
+    }
+   ],
+   "summon": [],
+   "children": [
+    {
+     "id": "123061",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnStart",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "ModStatR",
+       "target": "Myself",
+       "values": [
+        "Attack",
+        "200"
+       ],
+       "valueLevelFactors": [
+        "1",
+        "22"
+       ],
+       "durationMs": "99999999",
+       "growthSlot": 22
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "120185",
+       "opNo": 1,
+       "type": "ModSkill",
+       "values": [
+        "123061",
+        "1",
+        "Value",
+        "50",
+        "1"
+       ]
+      }
+     ]
+    }
+   ],
+   "states": {
+    "grant": [
+     "LuckyDice_1",
+     "LuckyDice_2",
+     "LuckyDice_3",
+     "LuckyDice_4",
+     "LuckyDice_5",
+     "LuckyDice_6"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "120185",
+     "name": "럭키 다이스 - 공격력",
+     "desc": "럭키 다이스 기본 공격력 증가량 +5%p 추가 증가",
+     "requireLevel": "90",
+     "requires": "120180",
+     "kind": "skill",
+     "effect": {
+      "skill": "120185",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "123061",
+         "1",
+         "Value",
+         "50",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "123070": {
+   "id": "123070",
+   "name": "발키리 페이션트",
+   "desc": "방어력이 18%, 디버프 내성이 8 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "Defence",
+      "180"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "DebuffResist",
+      "8"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "123080": {
+   "id": "123080",
+   "name": "할로포인트 불릿",
+   "desc": "최종 데미지가 10% 증가합니다.",
+   "jobStep": "3",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "FinalDamage",
+      "120"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "124010": {
+   "id": "124010",
+   "name": "퍼실레이드",
+   "desc": "[기본 공격 효과] 일제 사격을 퍼부어 전방의 적 6명에게 «290»% 피해를 5회 입힙니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": true,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "Fusillade",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4800",
+     "4800",
+     "1900",
+     "800"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": "ReplaceBaseAttack,CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 130.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 200.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "2900",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "enableCondition": "$CreatureStateCount(UsedCreature;QuickDraw_FusilladeBuff) == 0",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21,
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "QuickDraw_FusilladeBuff"
+       ]
+      },
+      "right": {
+       "int": 0
+      }
+     }
+    },
+    {
+     "no": 2,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "5800",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "enableCondition": "$CreatureStateCount(UsedCreature;QuickDraw_FusilladeBuff) == 1",
+     "modStats": [
+      {
+       "StatType": "AttackPowerToBoss",
+       "StatValue": "0"
+      }
+     ],
+     "growthSlot": 21,
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "QuickDraw_FusilladeBuff"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    },
+    {
+     "no": 3,
+     "type": "ClearState",
+     "target": "Myself",
+     "values": [
+      "QuickDraw_FusilladeBuff"
+     ],
+     "enableCondition": "$CreatureStateCount(UsedCreature;QuickDraw_FusilladeBuff) == 1",
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "QuickDraw_FusilladeBuff"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120210",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120210",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120220",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "110"
+     ]
+    },
+    {
+     "fromSkill": "120220",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "110"
+     ]
+    },
+    {
+     "fromSkill": "120230",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120230",
+     "opNo": 2,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "2",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120240",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "120"
+     ]
+    },
+    {
+     "fromSkill": "120240",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "120"
+     ]
+    },
+    {
+     "fromSkill": "120250",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "130"
+     ]
+    },
+    {
+     "fromSkill": "120250",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "130"
+     ]
+    },
+    {
+     "fromSkill": "120260",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "1",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120260",
+     "opNo": 2,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "2",
+      "ModStatAddValue",
+      "100"
+     ]
+    },
+    {
+     "fromSkill": "120270",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "140"
+     ]
+    },
+    {
+     "fromSkill": "120270",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "140"
+     ]
+    },
+    {
+     "fromSkill": "120280",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "1",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120280",
+     "opNo": 2,
+     "type": "ModSkillStat",
+     "values": [
+      "124010",
+      "2",
+      "GiveDamagePower1",
+      "150"
+     ]
+    },
+    {
+     "fromSkill": "120290",
+     "opNo": 1,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "1",
+      "Value",
+      "1",
+      "2"
+     ]
+    },
+    {
+     "fromSkill": "120290",
+     "opNo": 2,
+     "type": "ModSkill",
+     "values": [
+      "124010",
+      "2",
+      "Value",
+      "1",
+      "2"
+     ]
+    }
+   ],
+   "states": {
+    "require": [
+     "QuickDraw_FusilladeBuff"
+    ],
+    "consume": [
+     "QuickDraw_FusilladeBuff"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "120210",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +10%",
+     "requireLevel": "102",
+     "requires": "120200",
+     "kind": "skill",
+     "effect": {
+      "skill": "120210",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120220",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +11%",
+     "requireLevel": "106",
+     "requires": "120210",
+     "kind": "skill",
+     "effect": {
+      "skill": "120220",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "110"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "110"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120230",
+     "name": "퍼실레이드 - 보스 몬스터 피해",
+     "desc": "퍼실레이드에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "111",
+     "requires": "120220",
+     "kind": "skill",
+     "effect": {
+      "skill": "120230",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120240",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +12%",
+     "requireLevel": "116",
+     "requires": "120230",
+     "kind": "skill",
+     "effect": {
+      "skill": "120240",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "120"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "120"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120250",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +13%",
+     "requireLevel": "120",
+     "requires": "120240",
+     "kind": "skill",
+     "effect": {
+      "skill": "120250",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "130"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "130"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120260",
+     "name": "퍼실레이드 - 보스 몬스터 피해",
+     "desc": "퍼실레이드에 보스 몬스터 데미지 10% 추가 적용",
+     "requireLevel": "124",
+     "requires": "120250",
+     "kind": "skill",
+     "effect": {
+      "skill": "120260",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "ModStatAddValue",
+         "100"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120270",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +14%",
+     "requireLevel": "128",
+     "requires": "120260",
+     "kind": "skill",
+     "effect": {
+      "skill": "120270",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "140"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "140"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120280",
+     "name": "퍼실레이드 - 피해",
+     "desc": "퍼실레이드 피해량 +15%",
+     "requireLevel": "132",
+     "requires": "120270",
+     "kind": "skill",
+     "effect": {
+      "skill": "120280",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "GiveDamagePower1",
+         "150"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120290",
+     "name": "퍼실레이드 - 타격",
+     "desc": "퍼실레이드 적 타격 횟수 +1",
+     "requireLevel": "136",
+     "requires": "120280",
+     "kind": "skill",
+     "effect": {
+      "skill": "120290",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "1",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkill",
+        "target": "Myself",
+        "values": [
+         "124010",
+         "2",
+         "Value",
+         "1",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124020": {
+   "id": "124020",
+   "name": "헤드 샷",
+   "desc": "대상의 머리를 맞혀 «2900»% 피해를 2회 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 18000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "HeadShot",
+    "iconPath": null,
+    "maxRangeMm": [
+     "5500",
+     "5500",
+     "2000",
+     "1500"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 90.0,
+   "durationTimeMs": 1000.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "EffectOnly",
+     "target": "Target",
+     "values": null
+    },
+    {
+     "no": 2,
+     "type": "GetDamageR",
+     "target": "Parent",
+     "values": [
+      "29000",
+      "None",
+      "2"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "flag": "SyncQueueDelayBySkillSpeed",
+     "parentOpNo": "1",
+     "growthSlot": 12
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120225",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124020",
+      "2",
+      "GiveDamagePower1",
+      "1000"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120225",
+     "name": "헤드 샷 - 피해",
+     "desc": "헤드 샷 피해량 +100%",
+     "requireLevel": "108",
+     "requires": "120220",
+     "kind": "skill",
+     "effect": {
+      "skill": "120225",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124020",
+         "2",
+         "GiveDamagePower1",
+         "1000"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124030": {
+   "id": "124030",
+   "name": "전함 노틸러스",
+   "desc": "전함 노틸러스호에 공격 명령을 내려 주변의 적 15명에게 «1950»% 피해를 5회 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 33000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "NautilusStrike",
+    "iconPath": null,
+    "maxRangeMm": [
+     "4100",
+     "4100",
+     "3200",
+     "1800"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 160.0,
+   "durationTimeMs": 900.0,
+   "tickTimeMs": 700.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "19500",
+      "None",
+      "5"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "15",
+     "flag": "ClampAreaIntoBoundary",
+     "queueDelayMs": [
+      "2000"
+     ],
+     "growthSlot": 12
+    },
+    {
+     "no": 2,
+     "type": "EffectOnly",
+     "target": "Myself",
+     "values": null
+    }
+   ],
+   "summon": [],
+   "children": [
+    {
+     "id": "120235",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnStart",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "ModSkillEnabled",
+       "target": "Myself",
+       "values": [
+        "124031",
+        "1"
+       ],
+       "flag": "IsSticky",
+       "durationMs": "99999999"
+      }
+     ],
+     "summon": [],
+     "children": []
+    },
+    {
+     "id": "124031",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "active",
+     "cooldownMs": 1000.0,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "TriggerTarget",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnAttack",
+      "ratio": 300.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": {
+       "cmp": "!=",
+       "left": {
+        "trigger": "SkillIndex"
+       },
+       "right": {
+        "int": 124031
+       }
+      }
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "8500",
+        "Dot",
+        "1"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "21"
+       ],
+       "flag": "Disabled",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 21
+      }
+     ],
+     "summon": [],
+     "children": [],
+     "boosts_in": [
+      {
+       "fromSkill": "120265",
+       "opNo": 2,
+       "type": "ModSkillStat",
+       "values": [
+        "124031",
+        "1",
+        "GiveDamagePower1",
+        "500"
+       ]
+      }
+     ]
+    }
+   ],
+   "boosts_in": [
+    {
+     "fromSkill": "120265",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124030",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120235",
+     "name": "전함 노틸러스 - 파이널 어택",
+     "desc": "[전함 노틸러스 스킬 장착 중] 공격 시 15% 확률로 «850»% 추가 피해 (전함 노틸러스 스킬 레벨에 비례하여 피해량 증가)",
+     "requireLevel": "113",
+     "requires": "120230",
+     "kind": "skill",
+     "effect": {
+      "skill": "120235",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "124031",
+         "1"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120265",
+     "name": "전함 노틸러스 - 피해",
+     "desc": "전함 노틸러스 피해량 +50%",
+     "requireLevel": "126",
+     "requires": "120260",
+     "kind": "skill",
+     "effect": {
+      "skill": "120265",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124030",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124031",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124040": {
+   "id": "124040",
+   "name": "래피드 파이어",
+   "desc": "아주 빠른 속도로 탄을 7회 발사하여 각각 «1350»% 피해를 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 17000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Enemy",
+   "meta": {
+    "actionName": "RapidFire",
+    "iconPath": null,
+    "maxRangeMm": [
+     "5000",
+     "5000",
+     "900",
+     "300"
+    ],
+    "rangeType": "Rect",
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 95.0,
+   "durationTimeMs": 1800.0,
+   "tickTimeMs": 400.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Myself",
+     "values": [
+      "18000",
+      "None",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "12"
+     ],
+     "maxHitCount": "9",
+     "growthSlot": 12
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120275",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124040",
+      "1",
+      "GiveDamagePower1",
+      "700"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120275",
+     "name": "래피드 파이어 - 피해",
+     "desc": "래피드 파이어 피해량 +70%",
+     "requireLevel": "130",
+     "requires": "120270",
+     "kind": "skill",
+     "effect": {
+      "skill": "120275",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124040",
+         "1",
+         "GiveDamagePower1",
+         "700"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124050": {
+   "id": "124050",
+   "name": "배틀쉽 봄버",
+   "desc": "노틸러스 호의 배틀쉽을 소환합니다. 배틀쉽은 3초 후 자신의 후방에 도착하며 주변 적 5명에게 «3800»% 피해를 2회 입힙니다. 이후 30초간 머무르며 2초마다 배틀쉽 전방의 적에게 «3300»% 피해를 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 20000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": "BattleShipBomber",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanUseIfGround",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 155.0,
+   "durationTimeMs": 700.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "CreateProjectile",
+     "target": "Myself",
+     "values": [
+      "124050"
+     ],
+     "enableCondition": "$CreatureStateCount(UsedCreature;BattleShip_Summon) == 0",
+     "queueDelayMs": [
+      "3000"
+     ],
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "BattleShip_Summon"
+       ]
+      },
+      "right": {
+       "int": 0
+      }
+     }
+    },
+    {
+     "no": 2,
+     "type": "CreateProjectile",
+     "target": "Myself",
+     "values": [
+      "124050"
+     ],
+     "enableCondition": "$CreatureStateCount(UsedCreature;BattleShip_Summon) == 1",
+     "queueDelayMs": [
+      "3000"
+     ],
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "BattleShip_Summon"
+       ]
+      },
+      "right": {
+       "int": 1
+      }
+     }
+    },
+    {
+     "no": 3,
+     "type": "ModCoolTime",
+     "target": "Myself",
+     "values": [
+      "124050",
+      "-15000"
+     ],
+     "flag": "Disabled",
+     "enableCondition": "$CreatureStateCount(UsedCreature;BattleShip_FirstDrop) == 0",
+     "queueDelayMs": [
+      "700"
+     ],
+     "condTree": {
+      "cmp": "==",
+      "left": {
+       "fn": "CreatureStateCount",
+       "args": [
+        "UsedCreature",
+        "BattleShip_FirstDrop"
+       ]
+      },
+      "right": {
+       "int": 0
+      }
+     }
+    },
+    {
+     "no": 4,
+     "type": "State",
+     "target": "Myself",
+     "values": null,
+     "state": "BattleShip_FirstDrop",
+     "flag": "IsSticky,Disabled",
+     "durationMs": "99999999",
+     "queueDelayMs": [
+      "800"
+     ]
+    }
+   ],
+   "summon": [
+    {
+     "projIndex": "124050",
+     "projDurationMs": 900.0,
+     "projTickMs": 800.0,
+     "projMaxTargetCount": 1.0,
+     "projCount": null,
+     "projFlag": "ExpireOnCreatureDie",
+     "followTargetType": null,
+     "dealSkill": "124051"
+    },
+    {
+     "projIndex": "124050",
+     "projDurationMs": 900.0,
+     "projTickMs": 800.0,
+     "projMaxTargetCount": 1.0,
+     "projCount": null,
+     "projFlag": "ExpireOnCreatureDie",
+     "followTargetType": null,
+     "dealSkill": "124051"
+    }
+   ],
+   "children": [
+    {
+     "id": "120245",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "OnStart",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "SetSkill",
+       "target": "Myself",
+       "values": [
+        "124051",
+        "1",
+        "Value",
+        "124054",
+        "0"
+       ],
+       "flag": "IsSticky",
+       "durationMs": "99999999"
+      },
+      {
+       "no": 2,
+       "type": "SetSkill",
+       "target": "Myself",
+       "values": [
+        "124052",
+        "1",
+        "Value",
+        "124055",
+        "0"
+       ],
+       "flag": "IsSticky",
+       "durationMs": "99999999"
+      }
+     ],
+     "summon": [],
+     "children": []
+    },
+    {
+     "id": "124051",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Myself",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": {
+       "cmp": "==",
+       "left": {
+        "fn": "CreatureStateCount",
+        "args": [
+         "UsedCreature",
+         "BattleShip_Summon"
+        ]
+       },
+       "right": {
+        "int": 0
+       }
+      }
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "CreateProjectile",
+       "target": "ProjectilePosition",
+       "values": [
+        "124052"
+       ]
+      },
+      {
+       "no": 2,
+       "type": "State",
+       "target": "Myself",
+       "values": null,
+       "state": "BattleShip_Summon",
+       "flag": "Disabled",
+       "durationMs": "99999999"
+      }
+     ],
+     "summon": [
+      {
+       "projIndex": "124052",
+       "projDurationMs": 30000.0,
+       "projTickMs": 2000.0,
+       "projMaxTargetCount": 1.0,
+       "projCount": 1.0,
+       "projFlag": "ChangeEffectOnFire,ExpireOnCreatureDie",
+       "followTargetType": null,
+       "dealSkill": "124054"
+      }
+     ],
+     "children": [
+      {
+       "id": "124052",
+       "name": null,
+       "desc": null,
+       "jobStep": null,
+       "type": "passive",
+       "cooldownMs": null,
+       "initialCoolMs": null,
+       "attrFlag": null,
+       "replaceBaseAttack": false,
+       "autoTriggerCondition": null,
+       "targetType": "Myself",
+       "meta": {
+        "actionName": null,
+        "iconPath": null,
+        "maxRangeMm": null,
+        "rangeType": null,
+        "triggerFlag": null,
+        "ignoreCc": null,
+        "maxFireRangeMm": null,
+        "retargetOnFire": null,
+        "retargetOnDead": null,
+        "skillTargetValue": null,
+        "initialMaxCoolMs": null
+       },
+       "mp": null,
+       "durationTimeMs": null,
+       "tickTimeMs": null,
+       "trigger": {
+        "type": "None",
+        "ratio": 1000.0,
+        "periodMs": null,
+        "fastByAtkSpeed": false,
+        "condition": {
+         "cmp": "==",
+         "left": {
+          "fn": "CreatureStateCount",
+          "args": [
+           "UsedCreature",
+           "BattleShip_Summon"
+          ]
+         },
+         "right": {
+          "int": 1
+         }
+        }
+       },
+       "targetCount": "1",
+       "ops": [
+        {
+         "no": 0,
+         "type": null
+        },
+        {
+         "no": 1,
+         "type": "CreateProjectile",
+         "target": "ProjectilePosition",
+         "values": [
+          "124053"
+         ]
+        },
+        {
+         "no": 2,
+         "type": "ClearState",
+         "target": "Myself",
+         "values": [
+          "BattleShip_Summon"
+         ]
+        }
+       ],
+       "summon": [
+        {
+         "projIndex": "124053",
+         "projDurationMs": 30000.0,
+         "projTickMs": 2000.0,
+         "projMaxTargetCount": 1.0,
+         "projCount": 1.0,
+         "projFlag": "ChangeEffectOnFire,ExpireOnCreatureDie",
+         "followTargetType": null,
+         "dealSkill": "124056"
+        }
+       ],
+       "children": [
+        {
+         "id": "124053",
+         "name": null,
+         "desc": null,
+         "jobStep": null,
+         "type": "passive",
+         "cooldownMs": null,
+         "initialCoolMs": null,
+         "attrFlag": null,
+         "replaceBaseAttack": false,
+         "autoTriggerCondition": null,
+         "targetType": "Enemy",
+         "meta": {
+          "actionName": null,
+          "iconPath": null,
+          "maxRangeMm": null,
+          "rangeType": null,
+          "triggerFlag": null,
+          "ignoreCc": null,
+          "maxFireRangeMm": null,
+          "retargetOnFire": null,
+          "retargetOnDead": null,
+          "skillTargetValue": null,
+          "initialMaxCoolMs": null
+         },
+         "mp": null,
+         "durationTimeMs": null,
+         "tickTimeMs": null,
+         "trigger": {
+          "type": "None",
+          "ratio": 1000.0,
+          "periodMs": null,
+          "fastByAtkSpeed": false,
+          "condition": null
+         },
+         "targetCount": "1",
+         "ops": [
+          {
+           "no": 0,
+           "type": null
+          },
+          {
+           "no": 1,
+           "type": "GetDamageR",
+           "target": "Target",
+           "values": [
+            "50000",
+            "None",
+            "2"
+           ],
+           "valueLevelFactors": [
+            "0",
+            "12"
+           ],
+           "growthSlot": 12
+          }
+         ],
+         "summon": [],
+         "children": []
+        },
+        {
+         "id": "124056",
+         "name": null,
+         "desc": null,
+         "jobStep": null,
+         "type": "passive",
+         "cooldownMs": null,
+         "initialCoolMs": null,
+         "attrFlag": null,
+         "replaceBaseAttack": false,
+         "autoTriggerCondition": null,
+         "targetType": "Enemy",
+         "meta": {
+          "actionName": null,
+          "iconPath": null,
+          "maxRangeMm": null,
+          "rangeType": null,
+          "triggerFlag": null,
+          "ignoreCc": null,
+          "maxFireRangeMm": null,
+          "retargetOnFire": null,
+          "retargetOnDead": null,
+          "skillTargetValue": null,
+          "initialMaxCoolMs": null
+         },
+         "mp": null,
+         "durationTimeMs": null,
+         "tickTimeMs": null,
+         "trigger": {
+          "type": "None",
+          "ratio": 1000.0,
+          "periodMs": null,
+          "fastByAtkSpeed": false,
+          "condition": null
+         },
+         "targetCount": "1",
+         "ops": [
+          {
+           "no": 0,
+           "type": null
+          },
+          {
+           "no": 1,
+           "type": "GetDamageR",
+           "target": "Target",
+           "values": [
+            "33000",
+            "None",
+            "1"
+           ],
+           "valueLevelFactors": [
+            "0",
+            "12"
+           ],
+           "flag": "FiredFromProjectile",
+           "queueDelayMs": [
+            "400"
+           ],
+           "growthSlot": 12
+          }
+         ],
+         "summon": [],
+         "children": []
+        }
+       ],
+       "states": {
+        "require": [
+         "BattleShip_Summon"
+        ],
+        "consume": [
+         "BattleShip_Summon"
+        ]
+       }
+      },
+      {
+       "id": "124054",
+       "name": null,
+       "desc": null,
+       "jobStep": null,
+       "type": "passive",
+       "cooldownMs": null,
+       "initialCoolMs": null,
+       "attrFlag": null,
+       "replaceBaseAttack": false,
+       "autoTriggerCondition": null,
+       "targetType": "Enemy",
+       "meta": {
+        "actionName": null,
+        "iconPath": null,
+        "maxRangeMm": null,
+        "rangeType": null,
+        "triggerFlag": null,
+        "ignoreCc": null,
+        "maxFireRangeMm": null,
+        "retargetOnFire": null,
+        "retargetOnDead": null,
+        "skillTargetValue": null,
+        "initialMaxCoolMs": null
+       },
+       "mp": null,
+       "durationTimeMs": null,
+       "tickTimeMs": null,
+       "trigger": {
+        "type": "None",
+        "ratio": 1000.0,
+        "periodMs": null,
+        "fastByAtkSpeed": false,
+        "condition": null
+       },
+       "targetCount": "1",
+       "ops": [
+        {
+         "no": 0,
+         "type": null
+        },
+        {
+         "no": 1,
+         "type": "GetDamageR",
+         "target": "Target",
+         "values": [
+          "33000",
+          "None",
+          "1"
+         ],
+         "valueLevelFactors": [
+          "0",
+          "12"
+         ],
+         "flag": "FiredFromProjectile",
+         "queueDelayMs": [
+          "400"
+         ],
+         "growthSlot": 12
+        }
+       ],
+       "summon": [],
+       "children": []
+      }
+     ],
+     "states": {
+      "grant": [
+       "BattleShip_Summon"
+      ],
+      "require": [
+       "BattleShip_Summon"
+      ]
+     }
+    },
+    {
+     "id": "124055",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Enemy",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      },
+      {
+       "no": 2,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      },
+      {
+       "no": 3,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      }
+     ],
+     "summon": [],
+     "children": []
+    },
+    {
+     "id": "124057",
+     "name": null,
+     "desc": null,
+     "jobStep": null,
+     "type": "passive",
+     "cooldownMs": null,
+     "initialCoolMs": null,
+     "attrFlag": null,
+     "replaceBaseAttack": false,
+     "autoTriggerCondition": null,
+     "targetType": "Enemy",
+     "meta": {
+      "actionName": null,
+      "iconPath": null,
+      "maxRangeMm": null,
+      "rangeType": null,
+      "triggerFlag": null,
+      "ignoreCc": null,
+      "maxFireRangeMm": null,
+      "retargetOnFire": null,
+      "retargetOnDead": null,
+      "skillTargetValue": null,
+      "initialMaxCoolMs": null
+     },
+     "mp": null,
+     "durationTimeMs": null,
+     "tickTimeMs": null,
+     "trigger": {
+      "type": "None",
+      "ratio": 1000.0,
+      "periodMs": null,
+      "fastByAtkSpeed": false,
+      "condition": null
+     },
+     "targetCount": "1",
+     "ops": [
+      {
+       "no": 0,
+       "type": null
+      },
+      {
+       "no": 1,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      },
+      {
+       "no": 2,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      },
+      {
+       "no": 3,
+       "type": "GetDamageR",
+       "target": "Target",
+       "values": [
+        "19000",
+        "None",
+        "3"
+       ],
+       "valueLevelFactors": [
+        "0",
+        "12"
+       ],
+       "maxHitCount": "8",
+       "fireRatio": "1",
+       "queueDelayMs": [
+        "500"
+       ],
+       "growthSlot": 12
+      }
+     ],
+     "summon": [],
+     "children": []
+    }
+   ],
+   "states": {
+    "grant": [
+     "BattleShip_FirstDrop"
+    ],
+    "require": [
+     "BattleShip_FirstDrop",
+     "BattleShip_Summon"
+    ]
+   },
+   "masteries": [
+    {
+     "idx": "120245",
+     "name": "배틀쉽 봄버 - 폭격",
+     "desc": "배틀쉽 봄버의 매 2회째 공격이 폭격으로 변경되어 대상 주변 적 8명에게 «1900»% 피해 3회 (배틀쉽 봄버 스킬 레벨에 비례하여 피해량 증가)",
+     "requireLevel": "118",
+     "requires": "120240",
+     "kind": "skill",
+     "effect": {
+      "skill": "120245",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "SetSkill",
+        "target": "Myself",
+        "values": [
+         "124051",
+         "1",
+         "Value",
+         "124054",
+         "0"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "SetSkill",
+        "target": "Myself",
+        "values": [
+         "124052",
+         "1",
+         "Value",
+         "124055",
+         "0"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    },
+    {
+     "idx": "120295",
+     "name": "배틀쉽 봄버 - 설치",
+     "desc": "배틀쉽 봄버 최대 설치 수 +1",
+     "requireLevel": "138",
+     "requires": "120290",
+     "kind": "skill",
+     "effect": {
+      "skill": "120295",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "124051",
+         "2"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 2,
+        "type": "State",
+        "target": "Myself",
+        "values": null,
+        "state": "BattleShip_Summon",
+        "enableCondition": "$CreatureProjectileCount(UsedCreature;124052) > 0 || $CreatureProjectileCount(UsedCreature;124054) > 0",
+        "durationMs": "99999999",
+        "condTree": {
+         "or": [
+          {
+           "cmp": ">",
+           "left": {
+            "fn": "CreatureProjectileCount",
+            "args": [
+             "UsedCreature",
+             "124052"
+            ]
+           },
+           "right": {
+            "int": 0
+           }
+          },
+          {
+           "cmp": ">",
+           "left": {
+            "fn": "CreatureProjectileCount",
+            "args": [
+             "UsedCreature",
+             "124054"
+            ]
+           },
+           "right": {
+            "int": 0
+           }
+          }
+         ]
+        }
+       },
+       {
+        "no": 3,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "124050",
+         "3"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       },
+       {
+        "no": 4,
+        "type": "ModSkillEnabled",
+        "target": "Myself",
+        "values": [
+         "124050",
+         "4"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124060": {
+   "id": "124060",
+   "name": "파이렛 스타일",
+   "desc": "18초간 최종 데미지가 18% 증가하지만, 회피가 «5» 감소합니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 42000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": "PirateStyle",
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 110.0,
+   "durationTimeMs": 700.0,
+   "tickTimeMs": 600.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "FinalDamage",
+      "150"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ],
+     "state": "PirateStyle",
+     "durationMs": "18000",
+     "growthSlot": 21
+    },
+    {
+     "no": 2,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AvoidChance",
+      "-5"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "21"
+     ],
+     "watchOpNo": "1",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "states": {
+    "grant": [
+     "PirateStyle"
+    ]
+   },
+   "masteries": []
+  },
+  "124070": {
+   "id": "124070",
+   "name": "퀵 드로우",
+   "desc": "기본 공격 데미지가 25% 증가합니다. 퍼실레이드를 3번째 사용할 때마다 피해량이 2배로 적용되고, 헤드 샷 혹은 래피드 파이어의 재사용 대기시간이 1.5초 감소합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "BaseAttackPower",
+      "250"
+     ],
+     "valueLevelFactors": [
+      "1",
+      "22"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 22
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "124080": {
+   "id": "124080",
+   "name": "크루 커맨더십",
+   "desc": "쌍권총 크루의 최종 데미지가 250%, 명사수 크루의 최종 데미지가 100% 증가합니다.",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "122032",
+      "1",
+      "FinalDamage",
+      "2500"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "21"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 21
+    },
+    {
+     "no": 2,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "123043",
+      "1",
+      "FinalDamage",
+      "1000"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "21"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": [
+    {
+     "idx": "120255",
+     "name": "크루 커맨더십 - 최종 데미지",
+     "desc": "서먼 크루 사용 시 20초간 최종 데미지 20% 증가",
+     "requireLevel": "122",
+     "requires": "120250",
+     "kind": "skill",
+     "effect": {
+      "skill": "120255",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModStat",
+        "target": "Myself",
+        "values": [
+         "FinalDamage",
+         "200"
+        ],
+        "state": "CrewCommandership",
+        "durationMs": "20000"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124090": {
+   "id": "124090",
+   "name": "캡틴 디그니티",
+   "desc": "기본 공격 및 헤드 샷과 래피드 파이어 공격 시 25% 확률로 대상에게 «1800»% 추가 피해를 입힙니다.",
+   "jobStep": "4",
+   "type": "active",
+   "cooldownMs": 500.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "TriggerTarget",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnAttack",
+    "ratio": 250.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": {
+     "or": [
+      {
+       "trigger": "DamageFlag",
+       "flag": "BaseAttack"
+      },
+      {
+       "cmp": "==",
+       "left": {
+        "trigger": "SkillIndex"
+       },
+       "right": {
+        "int": 124020
+       }
+      },
+      {
+       "cmp": "==",
+       "left": {
+        "trigger": "SkillIndex"
+       },
+       "right": {
+        "int": 124040
+       }
+      }
+     ]
+    }
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "GetDamageR",
+     "target": "Target",
+     "values": [
+      "18000",
+      "Dot",
+      "1"
+     ],
+     "valueLevelFactors": [
+      "0",
+      "21"
+     ],
+     "maxHitCount": "6",
+     "growthSlot": 21
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "boosts_in": [
+    {
+     "fromSkill": "120285",
+     "opNo": 1,
+     "type": "ModSkillStat",
+     "values": [
+      "124090",
+      "1",
+      "GiveDamagePower1",
+      "500"
+     ]
+    }
+   ],
+   "masteries": [
+    {
+     "idx": "120285",
+     "name": "캡틴 디그니티 - 피해",
+     "desc": "캡틴 디그니티 피해량 +50%",
+     "requireLevel": "134",
+     "requires": "120280",
+     "kind": "skill",
+     "effect": {
+      "skill": "120285",
+      "ops": [
+       {
+        "no": 0,
+        "type": null
+       },
+       {
+        "no": 1,
+        "type": "ModSkillStat",
+        "target": "Myself",
+        "values": [
+         "124090",
+         "1",
+         "GiveDamagePower1",
+         "500"
+        ],
+        "flag": "IsSticky",
+        "durationMs": "99999999"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "124100": {
+   "id": "124100",
+   "name": "메이플 용사",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 시즈 봄버 20% 불릿 스매시 40% 스위프트 파이어 80%",
+   "jobStep": "4",
+   "type": "passive",
+   "cooldownMs": null,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": null,
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": null,
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": null,
+   "durationTimeMs": null,
+   "tickTimeMs": null,
+   "trigger": {
+    "type": "OnStart",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "123031",
+      "1",
+      "FinalDamage",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    },
+    {
+     "no": 2,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "123032",
+      "1",
+      "FinalDamage",
+      "200"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    },
+    {
+     "no": 3,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "123020",
+      "1",
+      "FinalDamage",
+      "400"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    },
+    {
+     "no": 4,
+     "type": "ModSkillStat",
+     "target": "Myself",
+     "values": [
+      "122020",
+      "1",
+      "FinalDamage",
+      "800"
+     ],
+     "valueLevelFactors": [
+      "3",
+      "23"
+     ],
+     "flag": "IsSticky",
+     "durationMs": "99999999",
+     "growthSlot": 23
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "masteries": []
+  },
+  "9000": {
+   "id": "9000",
+   "name": "민첩한 몸놀림",
+   "desc": null,
+   "jobStep": "0",
+   "type": "active",
+   "cooldownMs": 60000.0,
+   "initialCoolMs": null,
+   "attrFlag": null,
+   "replaceBaseAttack": false,
+   "autoTriggerCondition": null,
+   "targetType": "Myself",
+   "meta": {
+    "actionName": null,
+    "iconPath": "SkillIcon:ICON_QUICKNESS",
+    "maxRangeMm": null,
+    "rangeType": null,
+    "triggerFlag": "CanMoveWhileUse",
+    "ignoreCc": null,
+    "maxFireRangeMm": null,
+    "retargetOnFire": null,
+    "retargetOnDead": null,
+    "skillTargetValue": null,
+    "initialMaxCoolMs": null
+   },
+   "mp": 80.0,
+   "durationTimeMs": 1.0,
+   "tickTimeMs": 0.0,
+   "trigger": {
+    "type": "None",
+    "ratio": 1000.0,
+    "periodMs": null,
+    "fastByAtkSpeed": false,
+    "condition": null
+   },
+   "targetCount": "1",
+   "ops": [
+    {
+     "no": 0,
+     "type": null
+    },
+    {
+     "no": 1,
+     "type": "ModStat",
+     "target": "Myself",
+     "values": [
+      "AttackSpeed",
+      "150"
+     ],
+     "state": "10070",
+     "durationMs": "15000"
+    },
+    {
+     "no": 2,
+     "type": "ModStatR",
+     "target": "Myself",
+     "values": [
+      "RunSpeedMms",
+      "100"
+     ],
+     "state": "10070_2",
+     "watchOpNo": "1"
+    }
+   ],
+   "summon": [],
+   "children": [],
+   "states": {
+    "grant": [
+     "10070",
+     "10070_2"
+    ]
+   },
+   "masteries": []
+  }
+ },
+ "statMasteries": [
+  {
+   "idx": "120015",
+   "name": "MainStat +30",
+   "desc": "MainStat +30",
+   "requireLevel": "14",
+   "requires": "120010",
+   "kind": "stat",
+   "effect": {
+    "type": "MainStat",
+    "value": "30"
+   }
+  },
+  {
+   "idx": "120025",
+   "name": "CriticalChance +50",
+   "desc": "CriticalChance +50",
+   "requireLevel": "17",
+   "requires": "120020",
+   "kind": "stat",
+   "effect": {
+    "type": "CriticalChance",
+    "value": "50"
+   }
+  },
+  {
+   "idx": "120055",
+   "name": "BaseAttackPower +150",
+   "desc": "BaseAttackPower +150",
+   "requireLevel": "28",
+   "requires": "120050",
+   "kind": "stat",
+   "effect": {
+    "type": "BaseAttackPower",
+    "value": "150"
+   }
+  },
+  {
+   "idx": "120065",
+   "name": "HitChance +5",
+   "desc": "HitChance +5",
+   "requireLevel": "34",
+   "requires": "120060",
+   "kind": "stat",
+   "effect": {
+    "type": "HitChance",
+    "value": "5"
+   }
+  },
+  {
+   "idx": "120115",
+   "name": "MaxDamageRatio +100",
+   "desc": "MaxDamageRatio +100",
+   "requireLevel": "58",
+   "requires": "120110",
+   "kind": "stat",
+   "effect": {
+    "type": "MaxDamageRatio",
+    "value": "100"
+   }
+  },
+  {
+   "idx": "120125",
+   "name": "BaseAttackMaxHitCount +1",
+   "desc": "BaseAttackMaxHitCount +1",
+   "requireLevel": "64",
+   "requires": "120120",
+   "kind": "stat",
+   "effect": {
+    "type": "BaseAttackMaxHitCount",
+    "value": "1"
+   }
+  },
+  {
+   "idx": "120175",
+   "name": "SkillPower +150",
+   "desc": "SkillPower +150",
+   "requireLevel": "86",
+   "requires": "120170",
+   "kind": "stat",
+   "effect": {
+    "type": "SkillPower",
+    "value": "150"
+   }
+  }
+ ]
+}

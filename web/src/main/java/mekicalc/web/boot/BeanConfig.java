@@ -7,6 +7,8 @@ import mekicalc.web.BotBridge;
 import mekicalc.web.BotOutbox;
 import mekicalc.web.CalcService;
 import mekicalc.web.Db;
+import mekicalc.web.DiscordNotifier;
+import mekicalc.web.DiscordStore;
 import mekicalc.web.EventLog;
 import mekicalc.web.GameContent;
 import mekicalc.web.GeminiConfig;
@@ -108,6 +110,18 @@ public class BeanConfig {
     @Bean
     public RoomStore roomStore(Path dataDir) {
         return new RoomStore(dataDir);
+    }
+
+    /** 디스코드 웹훅 레지스트리(data/discord_webhooks.json). */
+    @Bean
+    public DiscordStore discordStore(Path dataDir) {
+        return new DiscordStore(dataDir);
+    }
+
+    /** 디스코드 발송기(outbox를 카톡과 독립 폴링 → 웹훅 발송). 시작/종료는 {@link DiscordLifecycle}가 관리. */
+    @Bean
+    public DiscordNotifier discordNotifier(BotOutbox outbox, DiscordStore discordStore) {
+        return new DiscordNotifier(outbox, discordStore);
     }
 
     /** 카카오봇 브릿지(Iris) 클라이언트 — 방 목록 조회. dev(bot-mock)면 가짜 방으로 대체. */

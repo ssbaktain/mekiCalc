@@ -1,0 +1,1515 @@
+{
+ "creatureIndex": "12",
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "121010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "120010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     }
+    },
+    {
+     "open": "15",
+     "msi": "120020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "19",
+     "msi": "120030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     }
+    },
+    {
+     "open": "22",
+     "msi": "120040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "26",
+     "msi": "120050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "121020",
+   "open": "10",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalChance",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "120035",
+     "effect": {
+      "kind": "stat",
+      "stat": "CriticalPower",
+      "value": "50",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "121030",
+   "open": "15",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "60",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "RunSpeedMms",
+      "val": "80",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "120045",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "50",
+      "parentType": "ModStat",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "121040",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "122010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "120060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     }
+    },
+    {
+     "open": "37",
+     "msi": "120070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "42",
+     "msi": "120080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     }
+    },
+    {
+     "open": "47",
+     "msi": "120090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "52",
+     "msi": "120100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     }
+    },
+    {
+     "open": "56",
+     "msi": "120110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "122020",
+   "open": "33",
+   "type": "active",
+   "cooldownMs": "17000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 180.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "30",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "8000",
+      "state": "SwiftFire_Weakness",
+      "stateMax": 3
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "120075",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    },
+    {
+     "open": "54",
+     "msi": "120105",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "122020",
+       "2"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "index": "122030",
+   "open": "35",
+   "type": "active",
+   "cooldownMs": "35000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "49",
+     "msi": "120095",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "122040",
+   "open": "50",
+   "type": "active",
+   "cooldownMs": "3000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 60.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "122050",
+   "open": "40",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "44",
+     "msi": "120085",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "70",
+      "parentType": "ModStat",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "122060",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "122070",
+   "open": "38",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "122080",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "123010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "120120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     }
+    },
+    {
+     "open": "66",
+     "msi": "120130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     }
+    },
+    {
+     "open": "71",
+     "msi": "120140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "76",
+     "msi": "120150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     }
+    },
+    {
+     "open": "80",
+     "msi": "120160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     }
+    },
+    {
+     "open": "84",
+     "msi": "120170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "88",
+     "msi": "120180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     }
+    },
+    {
+     "open": "92",
+     "msi": "120190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     }
+    },
+    {
+     "open": "96",
+     "msi": "120200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "123020",
+   "open": "66",
+   "type": "active",
+   "cooldownMs": "23000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 170.0,
+      "hits": "4",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Stun",
+      "tgt": "Parent"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "120145",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "123030",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "22000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "123031",
+     "durationMs": "30000",
+     "tickMs": "2500",
+     "dmg": {
+      "coeff": 290.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     },
+     "maxTarget": "1"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "120135",
+     "effect": {
+      "kind": "projectile",
+      "key": "MaxProjectileCount",
+      "value": "1",
+      "growth": null
+     }
+    },
+    {
+     "open": "82",
+     "msi": "120165",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "123040",
+   "open": "69",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "78",
+     "msi": "120155",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    },
+    {
+     "open": "94",
+     "msi": "120195",
+     "effect": {
+      "kind": "ratio",
+      "key": "TickTimeMs",
+      "value": "-300"
+     }
+    },
+    {
+     "open": "104",
+     "msi": "120215",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationTimeMs",
+      "value": "$CreatureFinalStat(UsedCreature;BuffDurationRatio)"
+     }
+    }
+   ]
+  },
+  {
+   "index": "123050",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "PiercePower",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "98",
+     "msi": "120205",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "123050",
+       "2"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "index": "123060",
+   "open": "74",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnTimer",
+   "triggerRatio": "1000",
+   "triggerTimeMs": [
+    "7000",
+    "7000"
+   ],
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "0",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_1"
+     },
+     {
+      "stat": "Attack",
+      "val": "10",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_2"
+     },
+     {
+      "stat": "Attack",
+      "val": "20",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_3"
+     },
+     {
+      "stat": "Attack",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_4"
+     },
+     {
+      "stat": "Attack",
+      "val": "40",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_5"
+     },
+     {
+      "stat": "Attack",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "LuckyDice_6"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "90",
+     "msi": "120185",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "50",
+      "parentType": "ModStatR",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "123070",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Defence",
+      "val": "180",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "DebuffResist",
+      "val": "8",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "123080",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "124010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     },
+     {
+      "coeff": 580.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "120210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     }
+    },
+    {
+     "open": "106",
+     "msi": "120220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     }
+    },
+    {
+     "open": "111",
+     "msi": "120230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "116",
+     "msi": "120240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     }
+    },
+    {
+     "open": "120",
+     "msi": "120250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     }
+    },
+    {
+     "open": "124",
+     "msi": "120260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    },
+    {
+     "open": "128",
+     "msi": "120270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     }
+    },
+    {
+     "open": "132",
+     "msi": "120280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     }
+    },
+    {
+     "open": "136",
+     "msi": "120290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124020",
+   "open": "103",
+   "type": "active",
+   "cooldownMs": "18000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 2900.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "120225",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124030",
+   "open": "105",
+   "type": "active",
+   "cooldownMs": "33000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1950.0,
+      "hits": "5",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "120235",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "124031",
+       "1"
+      ]
+     }
+    },
+    {
+     "open": "126",
+     "msi": "120265",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124040",
+   "open": "117",
+   "type": "active",
+   "cooldownMs": "21000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1350.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "130",
+     "msi": "120275",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "700",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124050",
+   "open": "110",
+   "type": "active",
+   "cooldownMs": "20000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "120245",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "124054",
+       "2"
+      ]
+     }
+    },
+    {
+     "open": "138",
+     "msi": "120295",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "124051",
+       "2"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "index": "124060",
+   "open": "115",
+   "type": "active",
+   "cooldownMs": "42000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "180",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "18000",
+      "state": "PirateStyle"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "AvoidChance",
+      "val": "-5",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "18000",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "124070",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "250",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": []
+  },
+  {
+   "index": "124080",
+   "open": "107",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "122032",
+      "stat": "FinalDamage",
+      "value": "2500",
+      "growth": 0.4
+     },
+     {
+      "targetSkill": "123043",
+      "stat": "FinalDamage",
+      "value": "1000",
+      "growth": 0.4
+     }
+    ]
+   },
+   "masteries": [
+    {
+     "open": "122",
+     "msi": "120255",
+     "effect": {
+      "kind": "stat",
+      "stat": "FinalDamage",
+      "value": "200",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124090",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": "500",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "250",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1800.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "134",
+     "msi": "120285",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     }
+    }
+   ]
+  },
+  {
+   "index": "124100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "123031",
+      "stat": "FinalDamage",
+      "value": "200",
+      "growth": null
+     },
+     {
+      "targetSkill": "123032",
+      "stat": "FinalDamage",
+      "value": "200",
+      "growth": null
+     },
+     {
+      "targetSkill": "123020",
+      "stat": "FinalDamage",
+      "value": "400",
+      "growth": null
+     },
+     {
+      "targetSkill": "122020",
+      "stat": "FinalDamage",
+      "value": "800",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": []
+  }
+ ]
+}

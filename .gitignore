@@ -81,6 +81,7 @@ textAsset/
 bot/
 data/bot_outbox.json
 data/bot_rooms.json
+data/discord_webhooks.json
 
 ### 공지 백업·마이그레이션 작업 산출물 (커밋 제외) ###
 data/notices.json.bak-*
@@ -98,3 +99,9 @@ dev/golden/
 # Gradle
 .gradle/
 build/
+
+# dev 임시 산출물(캐시·로그·감사출력 — 커밋 제외)
+dev/__pycache__/
+dev/*.log
+dev/_audit_out.txt
+dev/_bootrun.log

@@ -1,0 +1,1693 @@
+{
+ "creatureIndex": "13",
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "9001",
+   "open": null,
+   "type": "active",
+   "cooldownMs": "60000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "150",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalHarmony"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "RunSpeedMms",
+      "val": "100",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalHarmony_2"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "엘리멘탈 하모니",
+   "desc": "15초간 공격 속도가 15%, 이동 속도가 10% 증가합니다."
+  },
+  {
+   "index": "131010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "131011",
+     "durationMs": "100",
+     "tickMs": "0",
+     "dmg": {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     },
+     "maxTarget": "1"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "130010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "럭키 세븐 - 피해",
+     "desc": "럭키 세븐 피해량 +15%"
+    },
+    {
+     "open": "15",
+     "msi": "130020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "럭키 세븐 - 대상",
+     "desc": "럭키 세븐 최대 대상 수 +1"
+    },
+    {
+     "open": "19",
+     "msi": "130030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "럭키 세븐 - 피해",
+     "desc": "럭키 세븐 피해량 +20%"
+    },
+    {
+     "open": "22",
+     "msi": "130040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "럭키 세븐 - 대상",
+     "desc": "럭키 세븐 최대 대상 수 +1"
+    },
+    {
+     "open": "26",
+     "msi": "130050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "럭키 세븐 - 피해",
+     "desc": "럭키 세븐 피해량 +20%"
+    }
+   ],
+   "name": "럭키 세븐",
+   "desc": "[기본 공격 효과] 전방에 표창을 던져 적 3명에게 «26»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "131020",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "쉐도우 점프",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다."
+  },
+  {
+   "index": "131030",
+   "open": "10",
+   "type": "active",
+   "cooldownMs": "28000",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "200",
+   "triggerTimeMs": null,
+   "dealChild": "131031",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": "#Element_Darkness_Dot(380)",
+      "hits": "1",
+      "growth": 0.5,
+      "dot": true,
+      "dotDurMs": "99999999",
+      "dotTickMs": "1000"
+     }
+    ],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "100",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "12000",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "OnAttack",
+     "triggerRatio": "200",
+     "triggerTimeMs": null
+    },
+    "dealChild": "131031"
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "130035",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "500"
+     },
+     "name": "엘리멘트 : 다크니스 - 지속",
+     "desc": "엘리멘트 : 다크니스 지속시간 +50%"
+    }
+   ],
+   "name": "엘리멘트 : 다크니스",
+   "desc": "12초간 어둠의 엘리멘트의 힘을 받아 공격력이 10% 증가하고, 지속시간 동안 공격 시 20% 확률로 대상에게 5초간 어둠의 표식을 남겨 1초마다 «38»% 지속 피해를 입힙니다."
+  },
+  {
+   "index": "131040",
+   "open": "15",
+   "type": "passive",
+   "cooldownMs": "1000",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "200",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "131041",
+     "durationMs": "99999999",
+     "tickMs": null,
+     "dmg": {
+      "coeff": "#ShadowBat(360;250)",
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     },
+     "maxTarget": null
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "130045",
+     "effect": {
+      "kind": "modSkill",
+      "key": "SkillTriggerRatio",
+      "value": "150",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "쉐도우 배트 - 확률",
+     "desc": "쉐도우 배트 발동 확률 +15%"
+    }
+   ],
+   "name": "쉐도우 배트",
+   "desc": "공격 시 20% 확률로 쉐도우 배트를 소환합니다. 쉐도우 배트는 주변 임의의 적에게 날아가 «36»% 추가 피해를 입히고, 다른 적에게 다시 날아갑니다. 최대 3회 공격하며, 공격할 때마다 피해량이 25%씩 최대 25%까지 감소합니다."
+  },
+  {
+   "index": "132010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "132011",
+     "durationMs": "100",
+     "tickMs": "0",
+     "dmg": {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     },
+     "maxTarget": "1"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "130060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 피해",
+     "desc": "트리플 스로우 피해량 +15%"
+    },
+    {
+     "open": "37",
+     "msi": "130070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 대상",
+     "desc": "트리플 스로우 최대 대상 수 +1"
+    },
+    {
+     "open": "42",
+     "msi": "130080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 피해",
+     "desc": "트리플 스로우 피해량 +20%"
+    },
+    {
+     "open": "47",
+     "msi": "130090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 보스 몬스터 피해",
+     "desc": "트리플 스로우에 보스 몬스터 데미지 15% 추가 적용"
+    },
+    {
+     "open": "52",
+     "msi": "130100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 피해",
+     "desc": "트리플 스로우 피해량 +20%"
+    },
+    {
+     "open": "56",
+     "msi": "130110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "트리플 스로우 - 타격",
+     "desc": "트리플 스로우 적 타격 횟수 +1"
+    }
+   ],
+   "name": "트리플 스로우",
+   "desc": "[기본 공격 효과] 전방의 적 5명에게 표창을 던져 «40»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "132020",
+   "open": "35",
+   "type": "active",
+   "cooldownMs": "19000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 220.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Stun",
+      "tgt": "Parent"
+     }
+    ],
+    "summon": {
+     "child": "132021",
+     "durationMs": "500",
+     "tickMs": "400",
+     "dmg": {
+      "coeff": 330.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     },
+     "maxTarget": "7"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "130075",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "800",
+      "growth": null
+     },
+     "name": "스타더스트 - 피해",
+     "desc": "스타더스트 피해량 +80%"
+    },
+    {
+     "open": "49",
+     "msi": "130095",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "132020",
+       "3"
+      ]
+     },
+     "name": "스타더스트 - 기절",
+     "desc": "스타더스트 타격 대상 1초간 기절"
+    }
+   ],
+   "name": "스타더스트",
+   "desc": "적을 관통하는 강력한 표창을 던져 전방의 적 7명에게 «220»% 피해를 입힙니다. 잠시 후 표창이 지나간 자리에 폭발이 발생하여 주변 적 7명에게 «330»% 피해를 입힙니다."
+  },
+  {
+   "index": "132030",
+   "open": "40",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "44",
+     "msi": "130085",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "배트 커뮤니온 - 피해",
+     "desc": "쉐도우 배트 피해량 +50%"
+    }
+   ],
+   "name": "배트 커뮤니온",
+   "desc": "쉐도우 배트의 최대 공격 횟수가 1회 증가하고, 피해량이 «90»%로 변경됩니다. (배트 커뮤니온 스킬 레벨에 비례하여 피해량 증가)"
+  },
+  {
+   "index": "132040",
+   "open": "33",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "스로잉 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다."
+  },
+  {
+   "index": "132050",
+   "open": "50",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "54",
+     "msi": "130105",
+     "effect": {
+      "kind": "unknown",
+      "op": "ModFiredStateMaxStack"
+     },
+     "name": "다크니스 어뎁팅 - 중첩",
+     "desc": "엘리멘트 : 다크니스 어둠의 표식 최대 중첩 수 +1"
+    }
+   ],
+   "name": "다크니스 어뎁팅",
+   "desc": "엘리멘트 : 다크니스의 어둠의 표식이 최대 1회 중첩되고, 피해량이 어둠의 표식 중첩 당 «75»%로 변경됩니다. 어둠의 표식 지속시간은 개별 적용됩니다. (다크니스 어뎁팅 스킬 레벨에 비례하여 피해량 증가)"
+  },
+  {
+   "index": "132060",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "스로잉 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다."
+  },
+  {
+   "index": "132070",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalChance",
+      "val": "60",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "CriticalPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "크리티컬 스로우",
+   "desc": "크리티컬 확률이 6%, 크리티컬 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "132080",
+   "open": "38",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "133010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "133011",
+     "durationMs": "100",
+     "tickMs": "0",
+     "dmg": {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     },
+     "maxTarget": "1"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "130120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +10%"
+    },
+    {
+     "open": "66",
+     "msi": "130130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +11%"
+    },
+    {
+     "open": "71",
+     "msi": "130140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 보스 몬스터 피해",
+     "desc": "쿼드러플 스로우에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "76",
+     "msi": "130150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +12%"
+    },
+    {
+     "open": "80",
+     "msi": "130160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +13%"
+    },
+    {
+     "open": "84",
+     "msi": "130170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 보스 몬스터 피해",
+     "desc": "쿼드러플 스로우에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "88",
+     "msi": "130180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +14%"
+    },
+    {
+     "open": "92",
+     "msi": "130190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 피해",
+     "desc": "쿼드러플 스로우 피해량 +15%"
+    },
+    {
+     "open": "96",
+     "msi": "130200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "쿼드러플 스로우 - 타격",
+     "desc": "쿼드러플 스로우 적 타격 횟수 +1"
+    }
+   ],
+   "name": "쿼드러플 스로우",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 표창을 던져 «80»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "133020",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "30000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "130135",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "133020",
+       "2"
+      ]
+     },
+     "name": "쉐도우 서번트 - 기본 공격 데미지",
+     "desc": "쉐도우 서번트 지속시간 동안 기본 공격 데미지 10% 증가"
+    },
+    {
+     "open": "104",
+     "msi": "130215",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "300"
+     },
+     "name": "쉐도우 서번트 - 지속",
+     "desc": "쉐도우 서번트 지속시간 +30%"
+    }
+   ],
+   "name": "쉐도우 서번트",
+   "desc": "15초간 기본 공격 효과 스킬을 시간차로 따라하는 그림자를 소환하여 원본 스킬 피해량의 20%만큼 추가 피해를 입힙니다."
+  },
+  {
+   "index": "133030",
+   "open": "69",
+   "type": "active",
+   "cooldownMs": "36000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "250",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "15000",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Heal",
+      "val": 4.0,
+      "growth": 0.3
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "78",
+     "msi": "130155",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "다크니스 어센션 - 재사용",
+     "desc": "다크니스 어센션 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "다크니스 어센션",
+   "desc": "15초간 공격력이 25% 증가하고, 5초마다 최대 HP의 4%를 회복합니다."
+  },
+  {
+   "index": "133040",
+   "open": "74",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnActiveSkill",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "$CreatureStateCount(UsedCreature;ShadowMomentum) * 40",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "2000",
+      "state": null
+     },
+     {
+      "stat": "Attack",
+      "val": "100",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "2000",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "90",
+     "msi": "130185",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "133040",
+       "3"
+      ]
+     },
+     "name": "쉐도우 모멘텀 - 공격력",
+     "desc": "쉐도우 모멘텀 지속시간 동안 공격력 10% 증가"
+    }
+   ],
+   "name": "쉐도우 모멘텀",
+   "desc": "스킬 발동 시 2초간 공격 속도가 4% 증가합니다. 최대 5회 중첩됩니다."
+  },
+  {
+   "index": "133050",
+   "open": "66",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "130145",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "배트 커뮤니온 II - 피해",
+     "desc": "배트 커뮤니온 II 피해량 +50%"
+    },
+    {
+     "open": "94",
+     "msi": "130195",
+     "effect": {
+      "kind": "projectile",
+      "key": "MaxTargetCount",
+      "value": "1",
+      "growth": null
+     },
+     "name": "배트 커뮤니온 II - 대상",
+     "desc": "배트 커뮤니온 II 최대 대상 수 +1"
+    }
+   ],
+   "name": "배트 커뮤니온 II",
+   "desc": "쉐도우 배트가 처음 공격 시 폭발이 발생하여 대상 주변 적 3명에게 «300»% 추가 피해를 입힙니다."
+  },
+  {
+   "index": "133060",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "82",
+     "msi": "130165",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "다크니스 어뎁팅 II - 피해",
+     "desc": "다크니스 어뎁팅 II 피해량 +50%"
+    }
+   ],
+   "name": "다크니스 어뎁팅 II",
+   "desc": "엘리멘트 : 다크니스의 어둠의 표식 최대 중첩 수가 1회 증가하고, 피해량이 중첩 당 «145»%로 변경됩니다. 대상이 보스 몬스터가 아니라면 어둠의 표식 발동 확률이 2배로 적용됩니다. (다크니스 어뎁팅 II 스킬 레벨에 비례하여 피해량 증가)"
+  },
+  {
+   "index": "133070",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "98",
+     "msi": "130205",
+     "effect": {
+      "kind": "stat",
+      "stat": "FinalDamage",
+      "value": "50",
+      "growth": null
+     },
+     "name": "스피릿 스로잉 - 최종 데미지",
+     "desc": "스피릿 스로잉 최종 데미지 5% 증가"
+    }
+   ],
+   "name": "스피릿 스로잉",
+   "desc": "공격력이 15% 증가합니다."
+  },
+  {
+   "index": "133080",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackPowerToBoss",
+      "val": "180",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "MaxHp",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "래디컬 다크니스",
+   "desc": "최대 HP가 10% 증가하고, 보스 몬스터 데미지가 18% 증가합니다."
+  },
+  {
+   "index": "134010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "134011",
+     "durationMs": "100",
+     "tickMs": "0",
+     "dmg": {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     },
+     "maxTarget": "1"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "130210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +10%"
+    },
+    {
+     "open": "106",
+     "msi": "130220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +11%"
+    },
+    {
+     "open": "111",
+     "msi": "130230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 보스 몬스터 피해",
+     "desc": "퀸터플 스로우에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "116",
+     "msi": "130240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +12%"
+    },
+    {
+     "open": "120",
+     "msi": "130250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +13%"
+    },
+    {
+     "open": "124",
+     "msi": "130260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 보스 몬스터 피해",
+     "desc": "퀸터플 스로우에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "128",
+     "msi": "130270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +14%"
+    },
+    {
+     "open": "132",
+     "msi": "130280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 피해",
+     "desc": "퀸터플 스로우 피해량 +15%"
+    },
+    {
+     "open": "136",
+     "msi": "130290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "퀸터플 스로우 - 타격",
+     "desc": "퀸터플 스로우 적 타격 횟수 +1"
+    }
+   ],
+   "name": "퀸터플 스로우",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 표창을 던져 «290»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "134020",
+   "open": "103",
+   "type": "active",
+   "cooldownMs": "38000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "130225",
+     "effect": {
+      "kind": "projectile",
+      "key": "TickTimeMs",
+      "value": "-200",
+      "growth": null
+     },
+     "name": "다크니스 오멘 - 소환 주기",
+     "desc": "다크니스 오멘 쉐도우 배트 소환 주기 0.2초 감소"
+    },
+    {
+     "open": "130",
+     "msi": "130275",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "134020",
+       "2"
+      ]
+     },
+     "name": "다크니스 오멘 - 추가 소환",
+     "desc": "다크니스 오멘 소환 시 쉐도우 배트 4개 소환"
+    }
+   ],
+   "name": "다크니스 오멘",
+   "desc": "자신의 위치에 5초간 지속되는 배트 무리를 소환하여 0.7초마다 쉐도우 배트를 소환합니다."
+  },
+  {
+   "index": "134030",
+   "open": "115",
+   "type": "active",
+   "cooldownMs": "40000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "200",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "DarknessEvasion"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Toughness",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "DarknessEvasion_OnCc"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "126",
+     "msi": "130265",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "500"
+     },
+     "name": "다크니스 이베이젼 - 지속",
+     "desc": "다크니스 이베이젼 지속시간 +50%"
+    }
+   ],
+   "name": "다크니스 이베이젼",
+   "desc": "15초간 최종 데미지가 20% 증가합니다. 지속시간 중 한 번, 자신이 상태이상에 걸리면 5초간 받는 피해가 20% 감소합니다."
+  },
+  {
+   "index": "134040",
+   "open": "105",
+   "type": "active",
+   "cooldownMs": "27000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 2850.0,
+      "hits": "4",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "130235",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "쉐도우 스티치 - 피해",
+     "desc": "쉐도우 스티치 피해량 +50%"
+    }
+   ],
+   "name": "쉐도우 스티치",
+   "desc": "잠시동안 힘을 모아 응집된 그림자를 폭발시켜 주변 적 15명에게 «2850»% 피해를 4회 입힙니다."
+  },
+  {
+   "index": "134050",
+   "open": "107",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "131043",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": 0.4
+     }
+    ]
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "130245",
+     "effect": {
+      "kind": "ratio",
+      "key": "Value",
+      "value": "500"
+     },
+     "name": "배트 커뮤니온 III - 강화",
+     "desc": "배트 커뮤니온 III 최종 데미지 증가량 +50%"
+    },
+    {
+     "open": "138",
+     "msi": "130295",
+     "effect": {
+      "kind": "projectile",
+      "key": "MaxFireCount",
+      "value": "2",
+      "growth": null
+     },
+     "name": "배트 커뮤니온 III - 추가 공격",
+     "desc": "쉐도우 배트 최대 공격 수 +2"
+    }
+   ],
+   "name": "배트 커뮤니온 III",
+   "desc": "배트 커뮤니온 II의 최종 데미지가 150% 증가합니다."
+  },
+  {
+   "index": "134060",
+   "open": "110",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "131033",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": 0.4
+     }
+    ]
+   },
+   "masteries": [
+    {
+     "open": "122",
+     "msi": "130255",
+     "effect": {
+      "kind": "ratio",
+      "key": "Value",
+      "value": "500"
+     },
+     "name": "다크니스 어뎁팅 III - 강화",
+     "desc": "다크니스 어뎁팅 III 최종 데미지 증가량 +50%"
+    },
+    {
+     "open": "134",
+     "msi": "130285",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "131033",
+       "4"
+      ]
+     },
+     "name": "다크니스 어뎁팅 III - 약화",
+     "desc": "엘리멘트 : 다크니스의 어둠의 표식 지속시간 동안 대상의 받는 피해 5% 증가"
+    }
+   ],
+   "name": "다크니스 어뎁팅 III",
+   "desc": "엘리멘트 : 다크니스의 최종 데미지가 150% 증가합니다."
+  },
+  {
+   "index": "134070",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "SkillPower",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "MaxDamageRatio",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "스로잉 엑스퍼트",
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다."
+  },
+  {
+   "index": "134080",
+   "open": "117",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "사이펀 바이탈리티",
+   "desc": "공격력이 15% 증가하고, 엘리멘트 : 다크니스 발동 시 5초간 지속되는 보호막을 생성하여 최대 HP의 10%만큼 피해를 방어합니다."
+  },
+  {
+   "index": "134090",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "120",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "PiercePower",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "다크니스 블레싱",
+   "desc": "최종 데미지가 12%, 방어 관통력이 5% 증가합니다."
+  },
+  {
+   "index": "134100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "131042",
+      "stat": "FinalDamage",
+      "value": "1200",
+      "growth": null
+     },
+     {
+      "targetSkill": "132020",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": null
+     },
+     {
+      "targetSkill": "132021",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": [],
+   "name": "시그너스 나이츠",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 쉐도우 배트 120% 스타더스트 150%"
+  }
+ ]
+}

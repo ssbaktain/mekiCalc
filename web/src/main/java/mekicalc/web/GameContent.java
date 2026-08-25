@@ -37,6 +37,7 @@ public final class GameContent {
     public final SkillData skillDataDk;    // 다크나이트
     public final SkillData skillDataBishop; // 비숍
     public final SkillData skillDataHero;  // 히어로
+    public final SkillData skillDataBow;   // 보우마스터
     /** 메인 동료 데이터(companions.json의 companions 배열, 원본 맵). 없으면 빈 목록(동료 탭 "준비 중"). */
     public final List<Map<String, Object>> companions;
     /** companions.json 전체 맵(소환쿨/유지·계승비율·등급평타 등 상수 포함). DPS 계산용. */
@@ -47,6 +48,8 @@ public final class GameContent {
     public final Map<String, Object> artifactRoot;
     /** 유물 목록(artifact.json의 artifacts 배열, 원본 맵). 없으면 빈 목록(유물 탭 "준비 중"). */
     public final List<Map<String, Object>> artifacts;
+    /** 유물 잠재 참조(artifact_potential.json): slotRule·grades·options. 없으면 빈 맵(잠재 미반영). */
+    public final Map<String, Object> artifactPotential;
     /** gear_options.json 전체 맵(장비 비교용 부위별 주/부옵션 스펙). 없으면 빈 맵. */
     public final Map<String, Object> gearOptions;
     /** 데이터 폴더 경로(개발 환경 개인 데이터 불러오기용 — 배포 시 개인 파일 없으면 빈 값). */
@@ -54,10 +57,11 @@ public final class GameContent {
 
     private GameContent(Map<String, StatDef> stats, Profile profile,
                         Map<String, Double> currency, List<StatSource> sources,
-                        EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop, SkillData skillDataHero,
+                        EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop, SkillData skillDataHero, SkillData skillDataBow,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
                         Map<String, Object> monsterDefense,
                         Map<String, Object> artifactRoot, List<Map<String, Object>> artifacts,
+                        Map<String, Object> artifactPotential,
                         Map<String, Object> gearOptions, Path dataDir) {
         this.stats = stats;
         this.profile = profile;
@@ -68,11 +72,13 @@ public final class GameContent {
         this.skillDataDk = skillDataDk;
         this.skillDataBishop = skillDataBishop;
         this.skillDataHero = skillDataHero;
+        this.skillDataBow = skillDataBow;
         this.companions = companions;
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
         this.artifactRoot = artifactRoot;
         this.artifacts = artifacts;
+        this.artifactPotential = artifactPotential;
         this.gearOptions = gearOptions;
         this.dataDir = dataDir;
     }
@@ -105,6 +111,12 @@ public final class GameContent {
         } catch (Exception e) {
             skillDataHero = null;
         }
+        SkillData skillDataBow;
+        try {
+            skillDataBow = SkillData.load(dataDir, "bowmaster");
+        } catch (Exception e) {
+            skillDataBow = null;
+        }
         Map<String, Object> compRoot = loadCompanionRoot(dataDir);
         List<Map<String, Object>> comps = new ArrayList<>();
         Object arr = compRoot.get("companions");
@@ -115,8 +127,9 @@ public final class GameContent {
         Object artArr = artRoot.get("artifacts");
         if (artArr != null) for (Object o : Json.asList(artArr)) arts.add(Json.asMap(o));
         Map<String, Object> gearOpts = loadJsonMap(dataDir, "gear_options.json");
-        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop, skillDataHero,
-                comps, compRoot, monDef, artRoot, arts, gearOpts, dataDir);
+        Map<String, Object> artPot = loadJsonMap(dataDir, "artifact_potential.json");
+        return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop, skillDataHero, skillDataBow,
+                comps, compRoot, monDef, artRoot, arts, artPot, gearOpts, dataDir);
     }
 
     /** dataDir의 JSON 파일을 맵으로 읽는다. 없거나 손상 시 빈 맵. */

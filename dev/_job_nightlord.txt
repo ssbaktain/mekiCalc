@@ -1,0 +1,180 @@
+==========================================================================
+■ 나이트로드 (CI 9) — 액티브/패시브 스킬
+==========================================================================
+
+[ActiveSkill J1] 91010 :: LuckySeven tgtCnt=1
+    DMG GetDamageR coeff=26.0% tgt=Myself vals=['260', 'None', '2'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J0] 9000 :: None cd=60s tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '150']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[PassiveSkill J1] 91040 :: None tgtCnt=1
+
+[PassiveSkill J1] 91020 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['RunSpeedMms', '150']
+
+[ActiveSkill J1] 91030 :: DarkSight cd=25s tgtCnt=1
+
+[ActiveSkill J2] 92010 :: ShurikenBurst tgtCnt=1
+    DMG GetDamageR coeff=40.0% tgt=Target vals=['400', 'None', '3'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 92060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '50']
+
+[ActiveSkill J2] 92020 :: WindTalisman cd=24s tgtCnt=1
+    DMG GetDamageR coeff=400.0% tgt=Myself vals=['4000', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J2] 92080 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['BaseAttackPower', '100']
+
+[PassiveSkill J2] 92050 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['MinDamageRatio', '150']
+
+[PassiveSkill J2] 92040 :: None tgtCnt=7
+    State tgt=Target vals=[]
+
+[PassiveSkill J2] 92070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['CriticalChance', '60']
+    ModStat tgt=Myself vals=['CriticalPower', '100']
+
+[ActiveSkill J2] 92030 :: ShadowRush cd=6s tgtCnt=1
+    ModStatR tgt=Myself vals=['RunSpeedMms', '500']
+
+[ActiveSkill J3] 93010 :: ShurikenChallenge tgtCnt=1
+    DMG GetDamageR coeff=80.0% tgt=Myself vals=['800', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J3] 93030 :: None tgtCnt=1
+    CreateProjectile proj=93030 maxTgt=None tick=['99999999', '99999999'] dur=99999999 -> SkillIndex=['93032']
+      └ child skill 93032 (None):
+    CreateProjectile proj=93030 maxTgt=None tick=['99999999', '99999999'] dur=99999999 -> SkillIndex=['93032']
+      └ child skill 93032 (None):
+
+[ActiveSkill J3] 93020 :: TripleThrow cd=13s tgtCnt=1
+    DMG GetDamageR coeff=360.0% tgt=Target vals=['3600', 'None', '3'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J3] 93080 :: None tgtCnt=1
+    State tgt=Myself vals=[]
+    ModStat tgt=Myself vals=['FinalDamage', '100']
+    ModStat tgt=Parent vals=['AttackSpeed', '80']
+    ClearState tgt=Myself vals=['93080']
+
+[ActiveSkill J3] 93040 :: DarkFlare cd=45s tgtCnt=1
+    CreateProjectile proj=93040 maxTgt=5 tick=['5000', '5000'] dur=20000 -> SkillIndex=['93041']
+      └ child skill 93041 (None):
+         DMG GetDamageR coeff=400.0% tgt=Target vals=['4000', 'None', '2'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J3] 93050 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['MaxHp', '100']
+    ModStat tgt=Myself vals=['AttackPowerToBoss', '180']
+
+[PassiveSkill J3] 93060 :: None tgtCnt=1
+    ModStat tgt=Parent vals=['Weakness', '120']
+
+[PassiveSkill J3] 93070 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['Attack', '180']
+
+[ActiveSkill J4] 94010 :: ShowDownChallenge tgtCnt=1
+    DMG GetDamageR coeff=290.0% tgt=Myself vals=['2900', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J4] 94100 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['93041', '1', 'FinalDamage', '150']
+    ModSkillStat tgt=Myself vals=['93060', '1', 'FinalDamage', '500']
+    ModSkillStat tgt=Myself vals=['93031', '1', 'FinalDamage', '500']
+    ModSkillStat tgt=Myself vals=['92020', '1', 'FinalDamage', '1300']
+
+[ActiveSkill J4] 94020 :: QuadrupleThrow cd=10s tgtCnt=1
+    DMG GetDamageR coeff=1150.0% tgt=Target vals=['11500', 'None', '4'] growthCol=12(~0.51%/lv)
+
+[ActiveSkill J4] 94030 :: SuddenRaid cd=19s tgtCnt=1
+    DMG GetDamageR coeff=1400.0% tgt=Myself vals=['14000', 'None', '3'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J4] 94050 :: None tgtCnt=1
+    ModSkill tgt=Myself vals=['92040', '0', 'SkillTargetCount', '3']
+    ModSkillStat tgt=Myself vals=['92041', '2', 'FinalDamage', '3000']
+
+[ActiveSkill J4] 94040 :: PurgeArea cd=45s tgtCnt=1
+    CreateProjectile proj=94040 maxTgt=None tick=None dur=20000 -> SkillIndex=['94041']
+      └ child skill 94041 (None):
+         ModStat tgt=Target vals=['Weakness', '180']
+         ModStatR tgt=Target vals=['RunSpeedMms', '-100']
+         ModStat tgt=Target vals=['CriticalResist', '-100']
+    ModStat tgt=Myself vals=['FinalDamage', '130']
+
+[PassiveSkill J4] 94070 :: None cd=12s tgtCnt=1
+    DMG GetDamageR coeff=2500.0% tgt=Target vals=['25000', 'None', '1'] growthCol=21(~0.408%/lv)
+    ModStat tgt=Myself vals=['AvoidChance', '20']
+    State tgt=Myself vals=[]
+
+[PassiveSkill J4] 94080 :: None tgtCnt=1
+    DMG GetDamageR coeff=600.0% tgt=Target vals=['6000', 'None', '1'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J4] 94090 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['SkillPower', '150']
+    ModStat tgt=Myself vals=['MaxDamageRatio', '200']
+
+[PassiveSkill J4] 94060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['FinalDamage', '150']
+    ModStat tgt=Myself vals=['MinDamageRatio', '200']
+
+==========================================================================
+■ 나이트로드 (CI 9) — 마스터리 58개
+==========================================================================
+  M90010 lv12 parent=91010 main=True :: ModSkillStat['91010', '1', 'GiveDamagePower1', '150']
+  M90020 lv15 parent=91010 main=True :: ModSkill['91010', '1', 'MaxHitCount', '1']
+  M90030 lv19 parent=91010 main=True :: ModSkillStat['91010', '1', 'GiveDamagePower1', '200']
+  M90040 lv22 parent=91010 main=True :: ModSkill['91010', '1', 'MaxHitCount', '1']
+  M90050 lv26 parent=91010 main=True :: ModSkillStat['91010', '1', 'GiveDamagePower1', '200']
+  M90060 lv32 parent=92010 main=True :: ModSkillStat['92010', '0', 'GiveDamagePower1', '150'] | ModSkillStat['92011', '0', 'GiveDamagePower1', '150']
+  M90070 lv37 parent=92010 main=True :: ModSkill['92011', '0', 'MaxHitCount', '1']
+  M90080 lv42 parent=92010 main=True :: ModSkillStat['92010', '0', 'GiveDamagePower1', '200'] | ModSkillStat['92011', '0', 'GiveDamagePower1', '200']
+  M90090 lv47 parent=92010 main=True :: ModSkill['92010', '1', 'ModStatAddValue', '150'] | ModSkill['92011', '1', 'ModStatAddValue', '150']
+  M90100 lv52 parent=92010 main=True :: ModSkillStat['92010', '0', 'GiveDamagePower1', '200'] | ModSkillStat['92011', '0', 'GiveDamagePower1', '200']
+  M90110 lv56 parent=92010 main=True :: ModSkill['92010', '0', 'Value', '1', '2'] | ModSkill['92011', '0', 'Value', '1', '2']
+  M90120 lv62 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '100']
+  M90130 lv66 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '110']
+  M90140 lv71 parent=93010 main=True :: ModSkill['93010', '1', 'ModStatAddValue', '100']
+  M90150 lv76 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '120']
+  M90160 lv80 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '130']
+  M90170 lv84 parent=93010 main=True :: ModSkill['93010', '1', 'ModStatAddValue', '100']
+  M90180 lv88 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '140']
+  M90190 lv92 parent=93010 main=True :: ModSkillStat['93010', '1', 'GiveDamagePower1', '150']
+  M90200 lv96 parent=93010 main=True :: ModSkill['93010', '1', 'Value', '1', '2']
+  M90210 lv102 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '100']
+  M90220 lv106 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '110']
+  M90230 lv111 parent=94010 main=True :: ModSkill['94010', '1', 'ModStatAddValue', '100']
+  M90240 lv116 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '120']
+  M90250 lv120 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '130']
+  M90260 lv124 parent=94010 main=True :: ModSkill['94010', '1', 'ModStatAddValue', '100']
+  M90270 lv128 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '140']
+  M90280 lv132 parent=94010 main=True :: ModSkillStat['94010', '1', 'GiveDamagePower1', '150']
+  M90290 lv136 parent=94010 main=True :: ModSkill['94010', '1', 'Value', '1', '2']
+  M90015 lv14 parent=None main=None :: None
+  M90025 lv17 parent=None main=None :: None
+  M90035 lv21 parent=91020 main=None :: ModStatR['RunSpeedMms', '50']
+  M90045 lv24 parent=91030 main=None :: ModSkillR['91031', '0', 'DurationMs', '500']
+  M90055 lv28 parent=None main=None :: None
+  M90065 lv34 parent=None main=None :: None
+  M90075 lv39 parent=92020 main=None :: ModSkillR['92020', '0', 'DurationMs', '500']
+  M90085 lv44 parent=92040 main=None :: ModSkillStat['92041', '2', 'GiveDamagePower1', '800']
+  M90095 lv49 parent=92070 main=None :: ModStat['CriticalChance', '80']
+  M90105 lv54 parent=92030 main=None :: ModSkillEnabled['92030', '2']
+  M90115 lv58 parent=None main=None :: None
+  M90125 lv64 parent=None main=None :: None
+  M90135 lv68 parent=93030 main=None :: ModSkillStat['93031', '1', 'GiveDamagePower1', '1000']
+  M90145 lv73 parent=93020 main=None :: ModSkillStat['93020', '1', 'GiveDamagePower1', '1000']
+  M90155 lv78 parent=93040 main=None :: ModSkill['93041', '1', 'Value', '1', '2']
+  M90165 lv82 parent=93060 main=None :: ModSkillEnabled['93060', '2']
+  M90175 lv86 parent=None main=None :: None
+  M90185 lv90 parent=93080 main=None :: ModSkill['93080', '2', 'DurationMs', '5000'] | ModSkill['93080', '2', 'Value', '60', '1']
+  M90195 lv94 parent=93040 main=None :: ModSkillR['93040', '0', 'SkillCoolTimeMs', '-300']
+  M90205 lv98 parent=93060 main=None :: ModSkill['93060', '0', 'SkillTriggerRatio', '100']
+  M90215 lv104 parent=93040 main=None :: ModSkillProjectileR['93040', 'TickTimeMs', '-400', '0'] | ModSkillProjectileR['93040', 'TickTimeMs', '-400', '1']
+  M90225 lv108 parent=94020 main=None :: ModSkillR['94020', '0', 'SkillCoolTimeMs', '-300']
+  M90235 lv113 parent=94040 main=None :: ModSkillEnabled['94041', '3'] | ModDamagePipelineStat['0', '0', 'CriticalPower', '$CreatureStateCount(TargetCreature;PurgeArea_Weakness) * 300']
+  M90245 lv118 parent=94070 main=None :: ModSkillEnabled['94070', '2'] | ModSkillDisabled['94070', '3'] | ModSkill['94071', '1', 'Value', '100', '1']
+  M90255 lv122 parent=94050 main=None :: ModSkill['92040', '0', 'SkillTriggerTimeMs', '-1000', '0'] | ModSkill['92040', '0', 'SkillTriggerTimeMs', '-1000', '1'] | ModSkill['92040', '1', 'DurationMs', '-1000']
+  M90265 lv126 parent=94030 main=None :: ModSkillStat['94030', '0', 'GiveDamagePower1', '500']
+  M90275 lv130 parent=94080 main=None :: ModSkillStat['94080', '1', 'GiveDamagePower1', '1000']
+  M90285 lv134 parent=94020 main=None :: ModSkillStat['94020', '1', 'GiveDamagePower1', '500']
+  M90295 lv138 parent=94050 main=None :: ModStat['Weakness', '150']

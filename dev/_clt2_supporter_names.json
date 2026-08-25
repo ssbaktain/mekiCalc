@@ -1,0 +1,368 @@
+{
+  "SUPPORTER_1_0": {
+    "index": "1",
+    "class": "Hero",
+    "grade": "Grade1",
+    "name": "전사 지망생"
+  },
+  "SUPPORTER_2_0": {
+    "index": "2",
+    "class": "ArchMageIL",
+    "grade": "Grade1",
+    "name": "마법사 지망생"
+  },
+  "SUPPORTER_3_0": {
+    "index": "3",
+    "class": "BowMaster",
+    "grade": "Grade1",
+    "name": "궁수 지망생"
+  },
+  "SUPPORTER_4_0": {
+    "index": "4",
+    "class": "Shadower",
+    "grade": "Grade1",
+    "name": "도적 지망생"
+  },
+  "SUPPORTER_5_0": {
+    "index": "5",
+    "class": "Captain",
+    "grade": "Grade1",
+    "name": "해적 지망생"
+  },
+  "SUPPORTER_1_1": {
+    "index": "101",
+    "class": "Hero",
+    "grade": "Grade2",
+    "name": "히어로(1차)"
+  },
+  "SUPPORTER_1_2": {
+    "index": "201",
+    "class": "Hero",
+    "grade": "Grade3",
+    "name": "히어로(2차)"
+  },
+  "SUPPORTER_1_3": {
+    "index": "301",
+    "class": "Hero",
+    "grade": "Grade4",
+    "name": "히어로(3차)"
+  },
+  "SUPPORTER_1_4": {
+    "index": "401",
+    "class": "Hero",
+    "grade": "Grade5",
+    "name": "히어로(4차)"
+  },
+  "SUPPORTER_2_1": {
+    "index": "102",
+    "class": "Paladin",
+    "grade": "Grade2",
+    "name": "팔라딘(1차)"
+  },
+  "SUPPORTER_2_2": {
+    "index": "202",
+    "class": "Paladin",
+    "grade": "Grade3",
+    "name": "팔라딘(2차)"
+  },
+  "SUPPORTER_2_3": {
+    "index": "302",
+    "class": "Paladin",
+    "grade": "Grade4",
+    "name": "팔라딘(3차)"
+  },
+  "SUPPORTER_2_4": {
+    "index": "402",
+    "class": "Paladin",
+    "grade": "Grade5",
+    "name": "팔라딘(4차)"
+  },
+  "SUPPORTER_3_1": {
+    "index": "103",
+    "class": "DarkKnight",
+    "grade": "Grade2",
+    "name": "다크나이트(1차)"
+  },
+  "SUPPORTER_3_2": {
+    "index": "203",
+    "class": "DarkKnight",
+    "grade": "Grade3",
+    "name": "다크나이트(2차)"
+  },
+  "SUPPORTER_3_3": {
+    "index": "303",
+    "class": "DarkKnight",
+    "grade": "Grade4",
+    "name": "다크나이트(3차)"
+  },
+  "SUPPORTER_3_4": {
+    "index": "403",
+    "class": "DarkKnight",
+    "grade": "Grade5",
+    "name": "다크나이트(4차)"
+  },
+  "SUPPORTER_4_1": {
+    "index": "104",
+    "class": "ArchMageIL",
+    "grade": "Grade2",
+    "name": "아크메이지(썬,콜)(1차)"
+  },
+  "SUPPORTER_4_2": {
+    "index": "204",
+    "class": "ArchMageIL",
+    "grade": "Grade3",
+    "name": "아크메이지(썬,콜)(2차)"
+  },
+  "SUPPORTER_4_3": {
+    "index": "304",
+    "class": "ArchMageIL",
+    "grade": "Grade4",
+    "name": "아크메이지(썬,콜)(3차)"
+  },
+  "SUPPORTER_4_4": {
+    "index": "404",
+    "class": "ArchMageIL",
+    "grade": "Grade5",
+    "name": "아크메이지(썬,콜)(4차)"
+  },
+  "SUPPORTER_5_1": {
+    "index": "105",
+    "class": "ArchMageFP",
+    "grade": "Grade2",
+    "name": "아크메이지(불,독)(1차)"
+  },
+  "SUPPORTER_5_2": {
+    "index": "205",
+    "class": "ArchMageFP",
+    "grade": "Grade3",
+    "name": "아크메이지(불,독)(2차)"
+  },
+  "SUPPORTER_5_3": {
+    "index": "305",
+    "class": "ArchMageFP",
+    "grade": "Grade4",
+    "name": "아크메이지(불,독)(3차)"
+  },
+  "SUPPORTER_5_4": {
+    "index": "405",
+    "class": "ArchMageFP",
+    "grade": "Grade5",
+    "name": "아크메이지(불,독)(4차)"
+  },
+  "SUPPORTER_6_1": {
+    "index": "106",
+    "class": "Bishop",
+    "grade": "Grade2",
+    "name": "비숍(1차)"
+  },
+  "SUPPORTER_6_2": {
+    "index": "206",
+    "class": "Bishop",
+    "grade": "Grade3",
+    "name": "비숍(2차)"
+  },
+  "SUPPORTER_6_3": {
+    "index": "306",
+    "class": "Bishop",
+    "grade": "Grade4",
+    "name": "비숍(3차)"
+  },
+  "SUPPORTER_6_4": {
+    "index": "406",
+    "class": "Bishop",
+    "grade": "Grade5",
+    "name": "비숍(4차)"
+  },
+  "SUPPORTER_7_1": {
+    "index": "107",
+    "class": "BowMaster",
+    "grade": "Grade2",
+    "name": "보우마스터(1차)"
+  },
+  "SUPPORTER_7_2": {
+    "index": "207",
+    "class": "BowMaster",
+    "grade": "Grade3",
+    "name": "보우마스터(2차)"
+  },
+  "SUPPORTER_7_3": {
+    "index": "307",
+    "class": "BowMaster",
+    "grade": "Grade4",
+    "name": "보우마스터(3차)"
+  },
+  "SUPPORTER_7_4": {
+    "index": "407",
+    "class": "BowMaster",
+    "grade": "Grade5",
+    "name": "보우마스터(4차)"
+  },
+  "SUPPORTER_8_1": {
+    "index": "108",
+    "class": "Marksman",
+    "grade": "Grade2",
+    "name": "신궁(1차)"
+  },
+  "SUPPORTER_8_2": {
+    "index": "208",
+    "class": "Marksman",
+    "grade": "Grade3",
+    "name": "신궁(2차)"
+  },
+  "SUPPORTER_8_3": {
+    "index": "308",
+    "class": "Marksman",
+    "grade": "Grade4",
+    "name": "신궁(3차)"
+  },
+  "SUPPORTER_8_4": {
+    "index": "408",
+    "class": "Marksman",
+    "grade": "Grade5",
+    "name": "신궁(4차)"
+  },
+  "SUPPORTER_9_1": {
+    "index": "109",
+    "class": "NightLord",
+    "grade": "Grade2",
+    "name": "나이트로드(1차)"
+  },
+  "SUPPORTER_9_2": {
+    "index": "209",
+    "class": "NightLord",
+    "grade": "Grade3",
+    "name": "나이트로드(2차)"
+  },
+  "SUPPORTER_9_3": {
+    "index": "309",
+    "class": "NightLord",
+    "grade": "Grade4",
+    "name": "나이트로드(3차)"
+  },
+  "SUPPORTER_9_4": {
+    "index": "409",
+    "class": "NightLord",
+    "grade": "Grade5",
+    "name": "나이트로드(4차)"
+  },
+  "SUPPORTER_10_1": {
+    "index": "110",
+    "class": "Shadower",
+    "grade": "Grade2",
+    "name": "섀도어(1차)"
+  },
+  "SUPPORTER_10_2": {
+    "index": "210",
+    "class": "Shadower",
+    "grade": "Grade3",
+    "name": "섀도어(2차)"
+  },
+  "SUPPORTER_10_3": {
+    "index": "310",
+    "class": "Shadower",
+    "grade": "Grade4",
+    "name": "섀도어(3차)"
+  },
+  "SUPPORTER_10_4": {
+    "index": "410",
+    "class": "Shadower",
+    "grade": "Grade5",
+    "name": "섀도어(4차)"
+  },
+  "SUPPORTER_11_1": {
+    "index": "111",
+    "class": "Viper",
+    "grade": "Grade2",
+    "name": "바이퍼(1차)"
+  },
+  "SUPPORTER_11_2": {
+    "index": "211",
+    "class": "Viper",
+    "grade": "Grade3",
+    "name": "바이퍼(2차)"
+  },
+  "SUPPORTER_11_3": {
+    "index": "311",
+    "class": "Viper",
+    "grade": "Grade4",
+    "name": "바이퍼(3차)"
+  },
+  "SUPPORTER_11_4": {
+    "index": "411",
+    "class": "Viper",
+    "grade": "Grade5",
+    "name": "바이퍼(4차)"
+  },
+  "SUPPORTER_12_1": {
+    "index": "112",
+    "class": "Captain",
+    "grade": "Grade2",
+    "name": "캡틴(1차)"
+  },
+  "SUPPORTER_12_2": {
+    "index": "212",
+    "class": "Captain",
+    "grade": "Grade3",
+    "name": "캡틴(2차)"
+  },
+  "SUPPORTER_12_3": {
+    "index": "312",
+    "class": "Captain",
+    "grade": "Grade4",
+    "name": "캡틴(3차)"
+  },
+  "SUPPORTER_12_4": {
+    "index": "412",
+    "class": "Captain",
+    "grade": "Grade5",
+    "name": "캡틴(4차)"
+  },
+  "SUPPORTER_13_1": {
+    "index": "113",
+    "class": "NightWalker",
+    "grade": "Grade2",
+    "name": "나이트워커(1차)"
+  },
+  "SUPPORTER_13_2": {
+    "index": "213",
+    "class": "NightWalker",
+    "grade": "Grade3",
+    "name": "나이트워커(2차)"
+  },
+  "SUPPORTER_13_3": {
+    "index": "313",
+    "class": "NightWalker",
+    "grade": "Grade4",
+    "name": "나이트워커(3차)"
+  },
+  "SUPPORTER_13_4": {
+    "index": "413",
+    "class": "NightWalker",
+    "grade": "Grade5",
+    "name": "나이트워커(4차)"
+  },
+  "SUPPORTER_14_1": {
+    "index": "114",
+    "class": "WindBreaker",
+    "grade": "Grade2",
+    "name": "윈드브레이커(1차)"
+  },
+  "SUPPORTER_14_2": {
+    "index": "214",
+    "class": "WindBreaker",
+    "grade": "Grade3",
+    "name": "윈드브레이커(2차)"
+  },
+  "SUPPORTER_14_3": {
+    "index": "314",
+    "class": "WindBreaker",
+    "grade": "Grade4",
+    "name": "윈드브레이커(3차)"
+  },
+  "SUPPORTER_14_4": {
+    "index": "414",
+    "class": "WindBreaker",
+    "grade": "Grade5",
+    "name": "윈드브레이커(4차)"
+  }
+}

@@ -1,0 +1,181 @@
+==========================================================================
+■ 다크나이트 (CI 3) — 액티브/패시브 스킬
+==========================================================================
+
+[ActiveSkill J1] 31010 :: SlashBlast tgtCnt=1
+    DMG GetDamageR coeff=26.0% tgt=Myself vals=['260', 'None', '2'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J0] 9000 :: None cd=60s tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '150']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[PassiveSkill J1] 31020 :: None tgtCnt=1
+
+[PassiveSkill J1] 31030 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['Defence', '150']
+    ModStat tgt=Myself vals=['Str', '30']
+
+[PassiveSkill J1] 31040 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['MaxHp', '100']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[ActiveSkill J2] 32010 :: SpearPulling tgtCnt=1
+    DMG GetDamageR coeff=40.0% tgt=Myself vals=['400', 'None', '3'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 32070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '50']
+
+[ActiveSkill J2] 32020 :: Beholder cd=30s tgtCnt=1
+    CreateProjectile proj=32020 maxTgt=1 tick=['99999999', '99999999'] dur=20000 -> SkillIndex=['32023']
+      └ child skill 32023 (None):
+    CreateProjectile proj=32022 maxTgt=6 tick=None dur=20000 -> SkillIndex=['32022']
+      └ child skill 32022 (None):
+         ModStat tgt=Target vals=['Weakness', '150']
+    CreateProjectile proj=33060 maxTgt=None tick=None dur=20000 -> SkillIndex=['33061']
+      └ child skill 33061 (None):
+         ModStatR tgt=Target vals=['Attack', '150']
+         ModStat tgt=Target vals=['AttackPowerToBoss', '200']
+    CreateProjectile proj=33040 maxTgt=6 tick=['1000', '1000'] dur=20000 -> SkillIndex=['33041']
+      └ child skill 33041 (None):
+         DMG GetDamageR coeff=60.0% tgt=Target vals=['600', 'Dot', '1'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 32050 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['Str', '$CreatureFinalStat(FiredCreature;Defence) * 100 / 1000']
+
+[ActiveSkill J2] 32030 :: BeholderShock cd=18s tgtCnt=1
+
+[PassiveSkill J2] 32060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['MinDamageRatio', '150']
+
+[ActiveSkill J2] 32040 :: HyperBody cd=30s tgtCnt=0
+    ModStatR tgt=Target vals=['Defence', '150']
+    ModStatR tgt=Myself vals=['Attack', '120']
+
+[PassiveSkill J2] 32080 :: None tgtCnt=1
+    DMG GetDamageR coeff=35.0% tgt=Target vals=['350', 'Dot', '1'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J3] 33010 :: LamanchaSpear tgtCnt=1
+    DMG GetDamageR coeff=80.0% tgt=Myself vals=['800', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J3] 33040 :: None tgtCnt=1
+    ModSkillEnabled tgt=Myself vals=['32020', '4']
+
+[ActiveSkill J3] 33020 :: Rush cd=22s tgtCnt=1
+    DMG GetDamageR coeff=600.0% tgt=Myself vals=['6000', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[ActiveSkill J3] 33030 :: CrossOverChain cd=30s tgtCnt=1
+    State tgt=Myself vals=[]
+    ModStatR tgt=Parent vals=['Attack', '150']
+    ModStat tgt=Parent vals=['Toughness', '100']
+
+[PassiveSkill J3] 33060 :: None tgtCnt=1
+    ModSkillEnabled tgt=Myself vals=['32020', '3']
+
+[PassiveSkill J3] 33070 :: None cd=2s tgtCnt=1
+    ModStat tgt=Myself vals=['CriticalChance', '80']
+    ModStat tgt=Parent vals=['CriticalPower', '300']
+
+[PassiveSkill J3] 33080 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['DebuffResist', '15']
+
+[PassiveSkill J3] 33050 :: None tgtCnt=1
+    ModSkillProjectile tgt=Myself vals=['32021', 'MaxTargetCount', '3']
+    ModSkillStat tgt=Myself vals=['32021', '1', 'FinalDamage', '1000']
+
+[ActiveSkill J4] 34010 :: DarkImpale tgtCnt=1
+    DMG GetDamageR coeff=290.0% tgt=Myself vals=['2900', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J4] 34100 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['33041', '1', 'FinalDamage', '400']
+    ModSkillStat tgt=Myself vals=['33020', '1', 'FinalDamage', '300']
+    ModSkillStat tgt=Myself vals=['32021', '1', 'FinalDamage', '300']
+
+[ActiveSkill J4] 34020 :: GungnirDescent cd=13s tgtCnt=1
+    DMG GetDamageR coeff=1800.0% tgt=Target vals=['18000', 'None', '2'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J4] 34080 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['32080', '1', 'FinalDamage', '5000']
+
+[PassiveSkill J4] 34050 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['MinHpRatio', '1']
+    ModStat tgt=Myself vals=['FinalDamage', '100']
+
+[PassiveSkill J4] 34060 :: None cd=5s tgtCnt=1
+    State tgt=Myself vals=[]
+
+[ActiveSkill J4] 34030 :: DarkResonance cd=35s tgtCnt=1
+    ModStatR tgt=Myself vals=['Attack', '300']
+
+[ActiveSkill J4] 34040 :: MagicCrash cd=28s tgtCnt=1
+    DMG GetDamageR coeff=4800.0% tgt=FiredTargetPlatform vals=['48000', 'None', '1'] growthCol=12(~0.51%/lv)
+    ModStat tgt=Parent vals=['Weakness', '100']
+
+[PassiveSkill J4] 34090 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['SkillPower', '150']
+    ModStat tgt=Myself vals=['MaxDamageRatio', '200']
+
+[PassiveSkill J4] 34070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['Toughness', '50']
+    ModStat tgt=Myself vals=['FinalDamage', '150']
+
+==========================================================================
+■ 다크나이트 (CI 3) — 마스터리 58개
+==========================================================================
+  M30010 lv12 parent=31010 main=True :: ModSkillStat['31010', '1', 'GiveDamagePower1', '150']
+  M30020 lv15 parent=31010 main=True :: ModSkill['31010', '1', 'MaxHitCount', '1']
+  M30030 lv19 parent=31010 main=True :: ModSkillStat['31010', '1', 'GiveDamagePower1', '200']
+  M30040 lv22 parent=31010 main=True :: ModSkill['31010', '1', 'MaxHitCount', '1']
+  M30050 lv26 parent=31010 main=True :: ModSkillStat['31010', '1', 'GiveDamagePower1', '200']
+  M30060 lv32 parent=32010 main=True :: ModSkillStat['32010', '1', 'GiveDamagePower1', '150']
+  M30070 lv37 parent=32010 main=True :: ModSkill['32010', '1', 'MaxHitCount', '1']
+  M30080 lv42 parent=32010 main=True :: ModSkillStat['32010', '1', 'GiveDamagePower1', '200']
+  M30090 lv47 parent=32010 main=True :: ModSkill['32010', '1', 'ModStatAddValue', '150']
+  M30100 lv52 parent=32010 main=True :: ModSkillStat['32010', '1', 'GiveDamagePower1', '200']
+  M30110 lv56 parent=32010 main=True :: ModSkill['32010', '1', 'Value', '1', '2']
+  M30120 lv62 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '100']
+  M30130 lv66 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '110']
+  M30140 lv71 parent=33010 main=True :: ModSkill['33010', '1', 'ModStatAddValue', '100']
+  M30150 lv76 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '120']
+  M30160 lv80 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '130']
+  M30170 lv84 parent=33010 main=True :: ModSkill['33010', '1', 'ModStatAddValue', '100']
+  M30180 lv88 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '140']
+  M30190 lv92 parent=33010 main=True :: ModSkillStat['33010', '1', 'GiveDamagePower1', '150']
+  M30200 lv96 parent=33010 main=True :: ModSkill['33010', '1', 'Value', '1', '2']
+  M30210 lv102 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '100']
+  M30220 lv106 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '110']
+  M30230 lv111 parent=34010 main=True :: ModSkill['34010', '1', 'ModStatAddValue', '100']
+  M30240 lv116 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '120'] | None
+  M30250 lv120 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '130']
+  M30260 lv124 parent=34010 main=True :: ModSkill['34010', '1', 'ModStatAddValue', '100']
+  M30270 lv128 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '140']
+  M30280 lv132 parent=34010 main=True :: ModSkillStat['34010', '1', 'GiveDamagePower1', '150'] | None
+  M30290 lv136 parent=34010 main=True :: ModSkill['34010', '1', 'Value', '1', '2']
+  M30015 lv14 parent=None main=None :: None
+  M30025 lv17 parent=None main=None :: None
+  M30035 lv21 parent=31030 main=None :: ModStatR['Defence', '100']
+  M30045 lv24 parent=31040 main=None :: ModStatR['RunSpeedMms', '50']
+  M30055 lv28 parent=None main=None :: None
+  M30065 lv34 parent=None main=None :: None
+  M30075 lv39 parent=32020 main=None :: ModSkill['32022', '1', 'Value', '100', '1']
+  M30085 lv44 parent=32030 main=None :: ModSkillStat['32021', '1', 'GiveDamagePower1', '500']
+  M30095 lv49 parent=32040 main=None :: ModSkillR['32040', '0', 'DurationMs', '500']
+  M30105 lv54 parent=32080 main=None :: ModSkillStat['32080', '1', 'GiveDamagePower1', '500']
+  M30115 lv58 parent=None main=None :: None
+  M30125 lv64 parent=None main=None :: None
+  M30135 lv68 parent=33020 main=None :: ModSkillStat['33020', '1', 'GiveDamagePower1', '800']
+  M30145 lv73 parent=33030 main=None :: ModSkillR['33030', '2', 'Value', '1000', '1']
+  M30155 lv78 parent=33040 main=None :: ModSkillStat['33041', '1', 'GiveDamagePower1', '500']
+  M30165 lv82 parent=33060 main=None :: ModSkillEnabled['33061', '2']
+  M30175 lv86 parent=None main=None :: None
+  M30185 lv90 parent=33020 main=None :: ModSkillR['33020', '0', 'SkillCoolTimeMs', '-300']
+  M30195 lv94 parent=33040 main=None :: ModSkillProjectile['33040', 'MaxTargetCount', '3']
+  M30205 lv98 parent=33060 main=None :: ModSkillR['33061', '1', 'Value', '500', '1']
+  M30215 lv104 parent=32020 main=None :: ModSkillR['32020', '0', 'SkillCoolTimeMs', '-300']
+  M30225 lv108 parent=34020 main=None :: ModSkillStat['34020', '1', 'GiveDamagePower1', '500'] | ModSkillStat['34021', '0', 'GiveDamagePower1', '500']
+  M30235 lv113 parent=34080 main=None :: ModSkillR['34080', '1', 'Value', '500', '3']
+  M30245 lv118 parent=34050 main=None :: ModSkillEnabled['34051', '3'] | ModSkillR['34050', '2', 'Value', '1000', '1'] | ModSkillR['34052', '2', 'Value', '1000', '1']
+  M30255 lv122 parent=34060 main=None :: ModSkillStat['34062', '1', 'GiveDamagePower1', '500']
+  M30265 lv126 parent=34040 main=None :: ModSkillEnabled['34040', '3']
+  M30275 lv130 parent=34030 main=None :: ModSkillR['34030', '1', 'DurationMs', '400']
+  M30285 lv134 parent=34020 main=None :: ChangeSkill['34020', '34021']
+  M30295 lv138 parent=34060 main=None :: ModSkillEnabled['34061', '2']

@@ -1,0 +1,1655 @@
+{
+ "creatureIndex": "5",
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "51010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "50010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +15%"
+    },
+    {
+     "open": "15",
+     "msi": "50020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1"
+    },
+    {
+     "open": "19",
+     "msi": "50030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%"
+    },
+    {
+     "open": "22",
+     "msi": "50040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "에너지 볼트 - 대상",
+     "desc": "에너지 볼트 최대 대상 수 +1"
+    },
+    {
+     "open": "26",
+     "msi": "50050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "에너지 볼트 - 피해",
+     "desc": "에너지 볼트 피해량 +20%"
+    }
+   ],
+   "name": "에너지 볼트",
+   "desc": "[기본 공격 효과] 적에게 에너지 응집체를 날려 폭발시켜 주변 적 2명에게 «26»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "51020",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "마나 웨이브",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다."
+  },
+  {
+   "index": "51030",
+   "open": "15",
+   "type": "active",
+   "cooldownMs": "30000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "MagicGuard"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Defence",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "MagicGuard_2"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "50035",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "매직 가드 - 재사용",
+     "desc": "매직 가드 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "매직 가드",
+   "desc": "15초간 공격력이 12%, 방어력이 12% 증가합니다."
+  },
+  {
+   "index": "51040",
+   "open": "10",
+   "type": "active",
+   "cooldownMs": "10000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "50045",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "텔레포트 - 재사용",
+     "desc": "텔레포트 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "텔레포트",
+   "desc": "입력된 방향에 따라 상,하,좌,우로 일정 거리만큼 순간 이동합니다. 챕터 사냥에서는 발동 후 재사용 대기시간이 50% 감소합니다. 사용중인 스킬을 취소하고 즉시 발동합니다."
+  },
+  {
+   "index": "52010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "50060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "플레임 오브 - 피해",
+     "desc": "플레임 오브 피해량 +15%"
+    },
+    {
+     "open": "37",
+     "msi": "50070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 오브 - 대상",
+     "desc": "플레임 오브 최대 대상 수 +1"
+    },
+    {
+     "open": "42",
+     "msi": "50080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "플레임 오브 - 피해",
+     "desc": "플레임 오브 피해량 +20%"
+    },
+    {
+     "open": "47",
+     "msi": "50090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 오브 - 보스 몬스터 피해",
+     "desc": "플레임 오브에 보스 몬스터 데미지 15% 추가 적용"
+    },
+    {
+     "open": "52",
+     "msi": "50100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "플레임 오브 - 피해",
+     "desc": "플레임 오브 피해량 +20%"
+    },
+    {
+     "open": "56",
+     "msi": "50110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 오브 - 타격",
+     "desc": "플레임 오브 적 타격 횟수 +1"
+    }
+   ],
+   "name": "플레임 오브",
+   "desc": "[기본 공격 효과] 전방에 불타는 오브를 발사하여 5명에게 «40»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "52020",
+   "open": "50",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnHit",
+   "triggerRatio": "500",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 12.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true,
+      "dotDurMs": "20000",
+      "dotTickMs": "1000"
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "엘리멘탈 드레인",
+   "desc": "독 속성 타격 시 50% 확률로 20초간 중독을 부여합니다. 중독은 1초마다 «12»% 피해를 입히며 최대 5회 중첩됩니다."
+  },
+  {
+   "index": "52030",
+   "open": "38",
+   "type": "active",
+   "cooldownMs": "18000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 200.0,
+      "hits": "3",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "50075",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "700",
+      "growth": null
+     },
+     "name": "포이즌 브레스 - 피해",
+     "desc": "포이즌 브레스 피해량 +70%"
+    }
+   ],
+   "name": "포이즌 브레스",
+   "desc": "대기를 맹독성으로 바꿔 주변 적 6명에게 «200»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "52040",
+   "open": "40",
+   "type": "active",
+   "cooldownMs": "30000",
+   "targetCount": "0",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "200",
+      "growth": 0.4,
+      "tgt": "Target",
+      "durationMs": "15000",
+      "state": "Meditation"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "44",
+     "msi": "50085",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "300"
+     },
+     "name": "메디테이션 - 지속",
+     "desc": "메디테이션 지속시간 +30%"
+    }
+   ],
+   "name": "메디테이션",
+   "desc": "15초간 아군 플레이어의 공격력을 20% 증가시킵니다."
+  },
+  {
+   "index": "52050",
+   "open": "33",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "매직 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다."
+  },
+  {
+   "index": "52060",
+   "open": "35",
+   "type": "passive",
+   "cooldownMs": "2500",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "500",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "52061",
+     "durationMs": "20000",
+     "tickMs": "1000",
+     "dmg": {
+      "coeff": 13.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     },
+     "maxTarget": "3"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "54",
+     "msi": "50105",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "이그나이트 - 피해",
+     "desc": "이그나이트 피해량 +100%"
+    }
+   ],
+   "name": "이그나이트",
+   "desc": "자신의 불 스킬로 공격 시 50% 확률로 대상의 위치에 20초간 불의 벽을 생성합니다. 불의 벽은 적 3명에게 1초마다 «13»% 지속 피해를 입힙니다. 불의 벽은 일반 몬스터 데미지가 250% 추가로 적용되며, 최대 3개까지만 유지됩니다."
+  },
+  {
+   "index": "52070",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "스펠 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다."
+  },
+  {
+   "index": "52080",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": "500",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "500",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "49",
+     "msi": "50095",
+     "effect": {
+      "kind": "stat",
+      "stat": "AttackSpeed",
+      "value": "70",
+      "growth": null
+     },
+     "name": "MP 이터 - MP 부스트",
+     "desc": "MP가 50% 이상일 때 공격 속도 7% 증가"
+    }
+   ],
+   "name": "MP 이터",
+   "desc": "공격 시 50% 확률로 MP를 1.5% 회복합니다."
+  },
+  {
+   "index": "53010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "50120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +10%"
+    },
+    {
+     "open": "66",
+     "msi": "50130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +11%"
+    },
+    {
+     "open": "71",
+     "msi": "50140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "익스플로젼 - 보스 몬스터 피해",
+     "desc": "익스플로젼에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "76",
+     "msi": "50150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +12%"
+    },
+    {
+     "open": "80",
+     "msi": "50160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +13%"
+    },
+    {
+     "open": "84",
+     "msi": "50170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "익스플로젼 - 보스 몬스터 피해",
+     "desc": "익스플로젼에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "88",
+     "msi": "50180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +14%"
+    },
+    {
+     "open": "92",
+     "msi": "50190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "익스플로젼 - 피해",
+     "desc": "익스플로젼 피해량 +15%"
+    },
+    {
+     "open": "96",
+     "msi": "50200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "익스플로젼 - 타격",
+     "desc": "익스플로젼 적 타격 횟수 +1"
+    }
+   ],
+   "name": "익스플로젼",
+   "desc": "[기본 공격 효과] 화염 폭발을 일으켜 주변 적 6명에게 «80»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "53020",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "35000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 160.0,
+      "hits": "3",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "53021",
+     "durationMs": "20000",
+     "tickMs": "800",
+     "dmg": {
+      "coeff": 70.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": true
+     },
+     "maxTarget": "10"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "50135",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "포이즌 미스트 - 피해",
+     "desc": "포이즌 미스트 피해량 +50%"
+    },
+    {
+     "open": "90",
+     "msi": "50185",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "포이즌 미스트 - 재사용",
+     "desc": "포이즌 미스트 재사용 대기시간 30% 감소"
+    },
+    {
+     "open": "104",
+     "msi": "50215",
+     "effect": {
+      "kind": "ratio",
+      "key": "TickTimeMs",
+      "value": "-500"
+     },
+     "name": "포이즌 미스트 - 타격 주기",
+     "desc": "포이즌 미스트 독 안개 타격 주기 50% 감소"
+    }
+   ],
+   "name": "포이즌 미스트",
+   "desc": "독을 폭발시켜 주변 적 10명에게 «160»% 피해를 3회 입히고 20초간 독 안개를 생성합니다. 독 안개는 범위 내 적 10명에게 0.8초마다 «70»% 지속 피해를 입힙니다."
+  },
+  {
+   "index": "53030",
+   "open": "69",
+   "type": "active",
+   "cooldownMs": "27000",
+   "targetCount": "1",
+   "triggerType": "OnHit",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": "53031",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 120.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": 120.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": 120.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "OnHit",
+     "triggerRatio": "1000",
+     "triggerTimeMs": null
+    },
+    "dealChild": "53031"
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "50145",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "53030",
+       "2"
+      ]
+     },
+     "name": "포이즌 리젼 - 중독",
+     "desc": "포이즌 리젼 지속시간 동안 2초마다 중독 상태가 아닌 주변 적들에게 중독 3중첩 부여"
+    },
+    {
+     "open": "78",
+     "msi": "50155",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "포이즌 리젼 - 피해",
+     "desc": "포이즌 리젼 피해량 +50%"
+    },
+    {
+     "open": "94",
+     "msi": "50195",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "1000",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "포이즌 리젼 - 일반 몬스터 피해",
+     "desc": "포이즌 리전 일반 몬스터 데미지 100%p 추가 증가"
+    }
+   ],
+   "name": "포이즌 리젼",
+   "desc": "맹독의 폭발 마법진을 15초간 소환하여 지속시간 동안 중독에 걸린 적을 자신의 불 스킬로 타격 시 폭발을 일으킵니다. 폭발은 «120»% 피해를 2회 입히고, 가까운 범위에 중독 상태의 적이 있다면 연쇄적으로 폭발시킵니다. 폭발이 발생한 대상은 2초동안 다시 폭발하지 않습니다."
+  },
+  {
+   "index": "53040",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnTimer",
+   "triggerRatio": "1000",
+   "triggerTimeMs": [
+    "300",
+    "300"
+   ],
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Defence",
+      "val": "250",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalAdapting_FP"
+     },
+     {
+      "stat": "Defence",
+      "val": "250",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalAdapting_FP"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "엘리멘탈 어댑팅",
+   "desc": "전투 시작 시 장막을 활성화하여 15초간 방어력이 25% 증가하고, 2초간 디버프에 면역이 됩니다. 이후 20초마다 발동합니다."
+  },
+  {
+   "index": "53050",
+   "open": "66",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "98",
+     "msi": "50205",
+     "effect": {
+      "kind": "setSkill",
+      "key": "Value",
+      "value": "$CreatureStateCount(TargetCreature;ArchMagePoison) * 50"
+     },
+     "name": "익스트림 매직 - 피해",
+     "desc": "익스트림 매직 독 중첩 당 피해 증가량 2%p 증가"
+    }
+   ],
+   "name": "익스트림 매직",
+   "desc": "공격 시 적에게 걸린 중독 중첩 수 * 3%만큼 증가된 피해를 입힙니다."
+  },
+  {
+   "index": "53060",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "200",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Target",
+      "durationMs": "7000",
+      "state": "ElementalReset_FP"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "82",
+     "msi": "50165",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillTriggerRatio",
+      "value": "1000"
+     },
+     "name": "엘리멘탈 리셋 - 확률",
+     "desc": "엘리멘탈 리셋의 발동 확률이 2배로 증가"
+    }
+   ],
+   "name": "엘리멘탈 리셋",
+   "desc": "공격 시 20% 확률로 7초간 대상의 받는 피해를 «10»% 증가시킵니다."
+  },
+  {
+   "index": "53070",
+   "open": "74",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalChance",
+      "val": "80",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "CriticalPower",
+      "val": "120",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "매직 크리티컬",
+   "desc": "크리티컬 확률이 8% 크리티컬 데미지가 12% 증가합니다."
+  },
+  {
+   "index": "53080",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "MpConsumeRatio",
+      "val": "100",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "엘리먼트 앰플리피케이션",
+   "desc": "현재 MP가 50% 이상이라면, MP 소모량이 10% 증가하고, 최종 데미지가 15% 증가합니다."
+  },
+  {
+   "index": "54010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "50210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +10%"
+    },
+    {
+     "open": "106",
+     "msi": "50220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +11%"
+    },
+    {
+     "open": "111",
+     "msi": "50230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 보스 몬스터 피해",
+     "desc": "플레임 스윕에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "116",
+     "msi": "50240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +12%"
+    },
+    {
+     "open": "120",
+     "msi": "50250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +13%"
+    },
+    {
+     "open": "124",
+     "msi": "50260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 보스 몬스터 피해",
+     "desc": "플레임 스윕에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "128",
+     "msi": "50270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +14%"
+    },
+    {
+     "open": "132",
+     "msi": "50280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 피해",
+     "desc": "플레임 스윕 피해량 +15%"
+    },
+    {
+     "open": "136",
+     "msi": "50290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "플레임 스윕 - 타격",
+     "desc": "플레임 스윕 적 타격 횟수 +1"
+    }
+   ],
+   "name": "플레임 스윕",
+   "desc": "[기본 공격 효과] 강력한 화염으로 휩쓸어 전방의 적 6명에게 «290»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "54020",
+   "open": "103",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnEnemyDie",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": "54022",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 3000.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "OnEnemyDie",
+     "triggerRatio": "1000",
+     "triggerTimeMs": null
+    },
+    "dealChild": "54022"
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "50225",
+     "effect": {
+      "kind": "projectile",
+      "key": "MaxFireCount",
+      "value": "1",
+      "growth": null
+     },
+     "name": "미스트 이럽션 - 폭발",
+     "desc": "미스트 이럽션 폭발 최대 횟수 +1 (재사용 대기시간 2초)"
+    },
+    {
+     "open": "122",
+     "msi": "50255",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "미스트 이럽션 - 피해",
+     "desc": "미스트 이럽션 피해량 +100%"
+    }
+   ],
+   "name": "미스트 이럽션",
+   "desc": "포이즌 미스트 범위 내 적이 죽으면 독 안개가 폭발하여 10명에게 «3000»% 피해를 입힙니다. 포이즌 미스트마다 1회씩 발동하며, 독 안개가 사라지며 한번 더 폭발합니다."
+  },
+  {
+   "index": "54030",
+   "open": "105",
+   "type": "active",
+   "cooldownMs": "33000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 600.0,
+      "hits": "3",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "50235",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "54031",
+       "1"
+      ]
+     },
+     "name": "메테오 - 파이널 어택",
+     "desc": "[메테오 스킬 장착 중] 공격 시 20% 확률로 «750»% 추가 피해 (메테오 스킬 레벨에 비례하여 피해량 증가)"
+    },
+    {
+     "open": "134",
+     "msi": "50275",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "메테오 - 피해",
+     "desc": "메테오 피해량 +50%"
+    }
+   ],
+   "name": "메테오",
+   "desc": "주변 임의의 적의 위치에 운석을 떨어뜨려 5명의 적에게 «600»% 피해를 3회 입힙니다. 운석은 3개 소환됩니다."
+  },
+  {
+   "index": "54040",
+   "open": "107",
+   "type": "active",
+   "cooldownMs": "25000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "53021",
+     "durationMs": "20000",
+     "tickMs": "800",
+     "dmg": {
+      "coeff": 70.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": true
+     },
+     "maxTarget": "10"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "50245",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "54040",
+       "2"
+      ]
+     },
+     "name": "플레임 헤이즈 - 독 안개",
+     "desc": "플레임 헤이즈 사용 시 포이즌 미스트 독 안개 생성"
+    },
+    {
+     "open": "126",
+     "msi": "50285",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "54042",
+       "1"
+      ]
+     },
+     "name": "플레임 헤이즈 - 화상",
+     "desc": "[플레임 헤이즈 스킬 장착 중] 불 스킬 공격 시 5% 확률로 플레임 헤이즈 화상 부여"
+    }
+   ],
+   "name": "플레임 헤이즈",
+   "desc": "전방으로 이동하는 화염 구체를 소환하고 1.5초 후 폭발시켜 구체 주변의 적 10명에게 «1200»% 피해를 3회 입히고, 10초간 화상을 부여하여 1초마다 «150»% 지속 피해를 입힙니다. 대상이 보스라면 30초간 화상이 지속됩니다. 화상은 최대 5개까지 개별 적용됩니다."
+  },
+  {
+   "index": "54050",
+   "open": "110",
+   "type": "active",
+   "cooldownMs": "30000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "150",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "Infinity"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "인피니티",
+   "desc": "15초간 자신의 최종 데미지가 15% 증가하고, 1초마다 1% 추가로 증가합니다. 추가 효과는 최대 10회까지 중첩됩니다."
+  },
+  {
+   "index": "54060",
+   "open": "115",
+   "type": "active",
+   "cooldownMs": "80000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "54061",
+     "durationMs": "30000",
+     "tickMs": "4000",
+     "dmg": {
+      "coeff": 3500.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     },
+     "maxTarget": "3"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "130",
+     "msi": "50295",
+     "effect": {
+      "kind": "pipelineStat",
+      "stat": "GiveDamagePower1",
+      "value": "$CreatureStateCount(TargetCreature;ArchMageBurn) * 200",
+      "growth": null
+     },
+     "name": "이프리트 - 피해",
+     "desc": "적에게 걸린 화상 효과 수마다 이프리트 피해량 +20%"
+    },
+    {
+     "open": "138",
+     "msi": "50265",
+     "effect": {
+      "kind": "projectile",
+      "key": "DurationTimeMs",
+      "value": "10000",
+      "growth": null
+     },
+     "name": "이프리트 - 지속 & 대상",
+     "desc": "이프리트 지속시간 +10초, 최대 대상 수 +3"
+    }
+   ],
+   "name": "이프리트",
+   "desc": "30초간 이프리트를 소환합니다. 이프리트는 4초마다 주변 적 3명을 공격하여 «3500»% 피해를 입힙니다."
+  },
+  {
+   "index": "54070",
+   "open": "117",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BuffDurationRatio",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "마스터 매직",
+   "desc": "버프 지속시간이 10% 증가합니다."
+  },
+  {
+   "index": "54080",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "250",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "10000",
+      "state": "ArcaneAim",
+      "stateMax": 5
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "아케인 에임",
+   "desc": "공격 시 25% 확률로 10초간 최종 데미지가 3% 증가합니다. 최대 5회 중첩됩니다."
+  },
+  {
+   "index": "54090",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "퍼번트 드레인",
+   "desc": "공격 시 적에게 걸린 중독 중첩 수 * 6%만큼 자신의 불 스킬 피해량이 증가합니다."
+  },
+  {
+   "index": "54100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "53032",
+      "stat": "FinalDamage",
+      "value": "100",
+      "growth": null
+     },
+     {
+      "targetSkill": "53020",
+      "stat": "FinalDamage",
+      "value": "100",
+      "growth": null
+     },
+     {
+      "targetSkill": "53021",
+      "stat": "FinalDamage",
+      "value": "100",
+      "growth": null
+     },
+     {
+      "targetSkill": "52061",
+      "stat": "FinalDamage",
+      "value": "500",
+      "growth": null
+     },
+     {
+      "targetSkill": "52020",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": null
+     },
+     {
+      "targetSkill": "53033",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": null
+     },
+     {
+      "targetSkill": "52030",
+      "stat": "FinalDamage",
+      "value": "800",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": [],
+   "name": "메이플 용사",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 포이즌 리젼 10% 포이즌 미스트 10% 이그나이트 50% 엘리멘탈 드레인 150% 포이즌 브레스 80%"
+  }
+ ]
+}

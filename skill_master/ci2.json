@@ -1,0 +1,1892 @@
+{
+ "creatureIndex": "2",
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "21010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "20010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +15%"
+    },
+    {
+     "open": "15",
+     "msi": "20020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": null,
+      "targetSkill": "21010",
+      "growth": null
+     },
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1"
+    },
+    {
+     "open": "19",
+     "msi": "20030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%"
+    },
+    {
+     "open": "22",
+     "msi": "20040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": null,
+      "targetSkill": "21010",
+      "growth": null
+     },
+     "name": "슬래시 블러스트 - 대상",
+     "desc": "슬래시 블러스트 최대 대상 수 +1"
+    },
+    {
+     "open": "26",
+     "msi": "20050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "슬래시 블러스트 - 피해",
+     "desc": "슬래시 블러스트 피해량 +20%"
+    }
+   ],
+   "name": "슬래시 블러스트",
+   "desc": "[기본 공격 효과] 전방의 적 3명에게 «26»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "21020",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "워리어 리프",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다."
+  },
+  {
+   "index": "21030",
+   "open": "10",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Str",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Defence",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "20035",
+     "effect": {
+      "kind": "stat",
+      "stat": "Defence",
+      "value": "100",
+      "growth": null
+     },
+     "name": "아이언 바디 - 방어력",
+     "desc": "아이언 바디 방어력 증가량 10%p 추가 증가"
+    }
+   ],
+   "name": "아이언 바디",
+   "desc": "STR이 30 증가하고, 방어력이 15% 증가합니다."
+  },
+  {
+   "index": "21040",
+   "open": "15",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "MaxHp",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "RunSpeedMms",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "20045",
+     "effect": {
+      "kind": "stat",
+      "stat": "RunSpeedMms",
+      "value": "50",
+      "growth": null
+     },
+     "name": "워리어 마스터리 - 속도",
+     "desc": "워리어 마스터리 이동 속도 증가량 5%p 추가 증가"
+    }
+   ],
+   "name": "워리어 마스터리",
+   "desc": "최대 HP가 10% 이동 속도가 10% 증가합니다."
+  },
+  {
+   "index": "22010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "20060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 피해",
+     "desc": "디바인 스윙 피해량 +15%"
+    },
+    {
+     "open": "37",
+     "msi": "20070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "22010",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 대상",
+     "desc": "디바인 스윙 최대 대상 수 +1"
+    },
+    {
+     "open": "42",
+     "msi": "20080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 피해",
+     "desc": "디바인 스윙 피해량 +20%"
+    },
+    {
+     "open": "47",
+     "msi": "20090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "22010",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 보스 몬스터 피해",
+     "desc": "디바인 스윙에 보스 몬스터 데미지 15% 추가 적용"
+    },
+    {
+     "open": "52",
+     "msi": "20100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 피해",
+     "desc": "디바인 스윙 피해량 +20%"
+    },
+    {
+     "open": "56",
+     "msi": "20110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "22010",
+      "growth": null
+     },
+     "name": "디바인 스윙 - 타격",
+     "desc": "디바인 스윙 적 타격 횟수 +1"
+    }
+   ],
+   "name": "디바인 스윙",
+   "desc": "[기본 공격 효과] 전방의 적 5명에게 «40»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "22020",
+   "open": "35",
+   "type": "active",
+   "cooldownMs": "18000",
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 460.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "100",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "10000",
+      "state": "PageOrder"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "20075",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "페이지 오더 - 피해",
+     "desc": "페이지 오더 피해량 +50%"
+    },
+    {
+     "open": "44",
+     "msi": "20095",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "22020",
+       "2"
+      ]
+     },
+     "name": "페이지 오더 - 약화",
+     "desc": "페이지 오더에 피해입은 적 10초간 받는 피해 10% 증가"
+    }
+   ],
+   "name": "페이지 오더",
+   "desc": "주변 적 7명에게 «460»% 피해를 입힙니다."
+  },
+  {
+   "index": "22030",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnAttack",
+   "triggerRatio": "150",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "10000",
+      "state": "HolyCharge"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "49",
+     "msi": "20085",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "50",
+      "parentType": "ModStatR",
+      "parentStat": null,
+      "targetSkill": "22030",
+      "growth": null
+     },
+     "name": "홀리 차지 - 공격력",
+     "desc": "홀리 차지 공격력 증가량 5%p 추가 증가"
+    }
+   ],
+   "name": "홀리 차지",
+   "desc": "기본 공격 시 15% 확률로 10초간 공격력이 15% 증가합니다."
+  },
+  {
+   "index": "22040",
+   "open": "40",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "80",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Toughness",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "스탠스",
+   "desc": "받는 피해가 3% 감소하고, 공격력이 8% 증가합니다."
+  },
+  {
+   "index": "22050",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "웨폰 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다."
+  },
+  {
+   "index": "22060",
+   "open": "33",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "웨폰 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다."
+  },
+  {
+   "index": "22070",
+   "open": "50",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnAttack",
+   "triggerRatio": "250",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 35.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "54",
+     "msi": "20105",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "파이널 어택 - 피해",
+     "desc": "파이널 어택 피해량 +50%"
+    }
+   ],
+   "name": "파이널 어택",
+   "desc": "공격 시 25% 확률로 파이널 어택이 발동하여 «35»% 추가 피해를 입힙니다."
+  },
+  {
+   "index": "22080",
+   "open": "38",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "23010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "20120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +10%"
+    },
+    {
+     "open": "66",
+     "msi": "20130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +11%"
+    },
+    {
+     "open": "71",
+     "msi": "20140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "23010",
+      "growth": null
+     },
+     "name": "디바인 차지 - 보스 몬스터 피해",
+     "desc": "디바인 차지에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "76",
+     "msi": "20150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +12%"
+    },
+    {
+     "open": "80",
+     "msi": "20160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +13%"
+    },
+    {
+     "open": "84",
+     "msi": "20170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "23010",
+      "growth": null
+     },
+     "name": "디바인 차지 - 보스 몬스터 피해",
+     "desc": "디바인 차지에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "88",
+     "msi": "20180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +14%"
+    },
+    {
+     "open": "92",
+     "msi": "20190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "디바인 차지 - 피해",
+     "desc": "디바인 차지 피해량 +15%"
+    },
+    {
+     "open": "96",
+     "msi": "20200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "23010",
+      "growth": null
+     },
+     "name": "디바인 차지 - 타격",
+     "desc": "디바인 차지 적 타격 횟수 +1"
+    }
+   ],
+   "name": "디바인 차지",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «80»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "23020",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "22000",
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 600.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Stun",
+      "tgt": "Parent"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "20135",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "800",
+      "growth": null
+     },
+     "name": "돌진 - 피해",
+     "desc": "돌진 피해량 +80%"
+    },
+    {
+     "open": "90",
+     "msi": "20185",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300",
+      "parentType": "",
+      "parentStat": null,
+      "targetSkill": "23020"
+     },
+     "name": "돌진 - 재사용",
+     "desc": "돌진 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "돌진",
+   "desc": "전방으로 돌격하며 12명에게 «600»% 피해를 입히고 2.5초간 기절시킵니다."
+  },
+  {
+   "index": "23030",
+   "open": "74",
+   "type": "active",
+   "cooldownMs": "25000",
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "20000",
+      "state": "Restoration"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Heal",
+      "val": 9.0,
+      "growth": 0.4
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "78",
+     "msi": "20155",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "100",
+      "parentType": "ModStatR",
+      "parentStat": null,
+      "targetSkill": "23030",
+      "growth": null
+     },
+     "name": "리스토네이션 - 공격력",
+     "desc": "리스토네이션 공격력 증가량 10%p 추가 증가"
+    }
+   ],
+   "name": "리스토네이션",
+   "desc": "HP를 9% 즉시 회복하고, 20초간 공격력이 12% 증가합니다."
+  },
+  {
+   "index": "23040",
+   "open": "66",
+   "type": "active",
+   "cooldownMs": 30000,
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": "23041",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1600.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "10000",
+      "state": "NobleDemand"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "None",
+     "triggerRatio": null,
+     "coolTimeMs": 30000
+    },
+    "dealChild": "23041"
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "20145",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "노블 디맨드 - 피해",
+     "desc": "노블 디맨드 피해량 +50%"
+    },
+    {
+     "open": "94",
+     "msi": "20195",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300",
+      "parentType": "",
+      "parentStat": null,
+      "targetSkill": "23040"
+     },
+     "name": "노블 디맨드 - 재사용",
+     "desc": "노블 디맨드 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "노블 디맨드",
+   "desc": "주변 적 8명에게 «1600»% 피해를 입히고, 10초간 받는 피해를 «12»% 증가시킵니다."
+  },
+  {
+   "index": "23050",
+   "open": "69",
+   "type": "active",
+   "cooldownMs": "35000",
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackPower",
+      "val": "250",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "25000",
+      "state": "CombatOrders_Self"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Jobstep3SkillLevel",
+      "val": "18",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "25000",
+      "state": "CombatOrders"
+     },
+     {
+      "stat": "Jobstep4SkillLevel",
+      "val": "18",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "25000",
+      "state": "CombatOrders_4th"
+     },
+     {
+      "stat": "MpConsumeRatio",
+      "val": "-200",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "25000",
+      "state": "CombatOrders_MpConsumeRatioDown"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "82",
+     "msi": "20165",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "23050",
+       "3"
+      ]
+     },
+     "name": "컴뱃 오더스 - 데미지",
+     "desc": "컴뱃 오더스 지속시간 동안 자신의 데미지 25%p 증가"
+    },
+    {
+     "open": "104",
+     "msi": "20215",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "23050",
+       "4"
+      ]
+     },
+     "name": "컴뱃 오더스 - 4차 스킬",
+     "desc": "컴뱃 오더스 지속시간 동안 대상의 4차 스킬 레벨 18 증가"
+    }
+   ],
+   "name": "컴뱃 오더스",
+   "desc": "25초간 아군 플레이어의 3차 스킬 레벨을 18 증가시키고, MP 소모량을 20% 감소시킵니다."
+  },
+  {
+   "index": "23060",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "180",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "98",
+     "msi": "20205",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "23061",
+       "2"
+      ]
+     },
+     "name": "파라쇼크 가드 - 공격력",
+     "desc": "파라쇼크 가드의 공격력 증가 효과가 범위 내 아군 플레이어에게 적용 자신은 공격력 증가량 10%p 추가 증가"
+    }
+   ],
+   "name": "파라쇼크 가드",
+   "desc": "공격력이 18% 증가하고, 자신을 제외한 주변 범위 내 아군 플레이어의 받는 피해가 5% 감소합니다."
+  },
+  {
+   "index": "23070",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Toughness",
+      "val": "60",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "DebuffResist",
+      "val": "5",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "아킬레스",
+   "desc": "받는 피해가 6% 감소하고, 디버프 내성이 5 증가합니다."
+  },
+  {
+   "index": "23080",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnTimer",
+   "triggerRatio": "1000",
+   "triggerTimeMs": [
+    "15000",
+    "15000"
+   ],
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "10000",
+      "state": "BlessingArmor"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "블레싱 아머",
+   "desc": "15초마다 5초간 지속되는 보호막을 생성하여 최대 HP의 6%만큼 피해를 방어하고, 10초간 최종 데미지가 15% 증가합니다."
+  },
+  {
+   "index": "24010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "20210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +10%"
+    },
+    {
+     "open": "106",
+     "msi": "20220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +11%"
+    },
+    {
+     "open": "111",
+     "msi": "20230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "24010",
+      "growth": null
+     },
+     "name": "블래스트 - 보스 몬스터 피해",
+     "desc": "블래스트에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "116",
+     "msi": "20240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +12%"
+    },
+    {
+     "open": "120",
+     "msi": "20250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +13%"
+    },
+    {
+     "open": "124",
+     "msi": "20260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "24010",
+      "growth": null
+     },
+     "name": "블래스트 - 보스 몬스터 피해",
+     "desc": "블래스트에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "128",
+     "msi": "20270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +14%"
+    },
+    {
+     "open": "132",
+     "msi": "20280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "블래스트 - 피해",
+     "desc": "블래스트 피해량 +15%"
+    },
+    {
+     "open": "136",
+     "msi": "20290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "24010",
+      "growth": null
+     },
+     "name": "블래스트 - 타격",
+     "desc": "블래스트 적 타격 횟수 +1"
+    }
+   ],
+   "name": "블래스트",
+   "desc": "[기본 공격 효과] 성스러운 빛의 기사와 하나가 되어 전방의 적 6명에게 «290»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "24020",
+   "open": "107",
+   "type": "active",
+   "cooldownMs": "16000",
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 460.0,
+      "hits": "6",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": 400.0,
+      "hits": "4",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "200",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "10000",
+      "state": "DivineStigma"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "122",
+     "msi": "20255",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "디바인 스티그마 - 피해",
+     "desc": "디바인 스티그마 피해량 +50%"
+    },
+    {
+     "open": "138",
+     "msi": "20295",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "24020",
+       "3"
+      ]
+     },
+     "name": "디바인 스티그마 - 약화",
+     "desc": "디바인 스티그마의 성흔 폭발에 피해입은 적 10초간 받는 피해 20% 증가"
+    }
+   ],
+   "name": "디바인 스티그마",
+   "desc": "전방의 적 8명에게 «460»% 피해를 6회 입히고, 전방에 성흔을 남겨 폭발시킵니다. 성흔은 주변 적 8명에게 «400»% 피해를 4회 입힙니다."
+  },
+  {
+   "index": "24030",
+   "open": "103",
+   "type": "active",
+   "cooldownMs": "18000",
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 780.0,
+      "hits": "5",
+      "growth": 0.5,
+      "dot": false,
+      "bossDmg": 100.0
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "20225",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "생츄어리 - 피해",
+     "desc": "생츄어리 피해량 +50%"
+    },
+    {
+     "open": "134",
+     "msi": "20285",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "1000",
+      "parentType": "GetDamageR",
+      "parentStat": "AttackPowerToBoss",
+      "targetSkill": "24030",
+      "growth": null
+     },
+     "name": "생츄어리 - 보스 데미지",
+     "desc": "생츄어리에 보스 몬스터 데미지 100% 추가 적용"
+    }
+   ],
+   "name": "생츄어리",
+   "desc": "거대한 망치로 지면을 내리쳐 전방의 적 7명에게 «780»% 피해를 5회 입힙니다. 이 스킬은 보스 몬스터 데미지가 100% 추가로 적용됩니다."
+  },
+  {
+   "index": "24040",
+   "open": "117",
+   "type": "active",
+   "cooldownMs": "28000",
+   "targetCount": "1",
+   "area": true,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 4800.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Dispel",
+      "tgt": "Target"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "매직 크래쉬",
+   "desc": "대상의 지면에 바위를 소환하여 폭발시켜 대상의 버프를 1개 제거하고, 대상 주변 적 5명에게 «4800»% 피해를 1회 입힙니다."
+  },
+  {
+   "index": "24050",
+   "open": "115",
+   "type": "active",
+   "cooldownMs": "30000",
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "22000",
+      "state": "DivineBlessing"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "126",
+     "msi": "20265",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "120",
+      "parentType": "ModStat",
+      "parentStat": null,
+      "targetSkill": "24050",
+      "growth": null
+     },
+     "name": "디바인 블레싱 - 최종 데미지",
+     "desc": "디바인 블레싱 최종 데미지 증가량 12%p 추가 증가"
+    }
+   ],
+   "name": "디바인 블레싱",
+   "desc": "22초간 가까운 아군 플레이어 1명과 자신의 최종 데미지를 12% 증가시킵니다."
+  },
+  {
+   "index": "24060",
+   "open": "105",
+   "type": "active",
+   "cooldownMs": "24000",
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "100",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "20000",
+      "state": "GuardianSpirit_Self"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "Heal",
+      "val": 0.8,
+      "growth": 0.4
+     },
+     {
+      "stat": "Toughness",
+      "val": "50",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "20000",
+      "state": "GuardianSpirit_ToughnessSelf"
+     },
+     {
+      "stat": "Toughness",
+      "val": "50",
+      "growth": null,
+      "tgt": "Target",
+      "durationMs": "20000",
+      "state": "GuardianSpirit_ToughnessAlly"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "20235",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "24060",
+       "4"
+      ]
+     },
+     "name": "가디언 스피릿 - 보호",
+     "desc": "아군 플레이어에게 가디언 스피릿의 지속 회복 효과 부여 시 지속시간 동안 자신과 해당 아군의 받는 피해 5% 감소"
+    }
+   ],
+   "name": "가디언 스피릿",
+   "desc": "20초간 자신의 최종 데미지를 10% 증가시키고, 가까운 아군 플레이어 1명에게 20초간 지속 회복을 부여하여 1초마다 HP를 0.8% 회복시킵니다."
+  },
+  {
+   "index": "24070",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnActiveSkill",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "counterEvery": 10,
+   "counterOn": "basicAttack",
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "300",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "5000",
+      "state": "DivineJudgement_Buff"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "24071",
+     "durationMs": "1100",
+     "tickMs": "#FastByAttackSpeed(1000)",
+     "dmg": {
+      "coeff": 850.0,
+      "hits": "4",
+      "growth": 0.4,
+      "dot": false
+     },
+     "maxTarget": "4"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "130",
+     "msi": "20275",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "디바인 저지먼트 - 피해",
+     "desc": "디바인 저지먼트 피해량 +50%"
+    }
+   ],
+   "name": "디바인 저지먼트",
+   "desc": "기본 공격 효과 스킬을 10회 사용할 때마다 5초간 기본 공격 데미지가 30% 증가하고, 전방에 신성 낙인을 생성합니다. 신성 낙인은 1초 후 폭발하여 주변 적 4명에게 «850»% 피해를 4회 입힙니다. 신성 낙인은 공격 속도에 비례하여 더 빠르게 폭발합니다."
+  },
+  {
+   "index": "24080",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "SkillPower",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "MaxDamageRatio",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "팔라딘 엑스퍼트",
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다."
+  },
+  {
+   "index": "24090",
+   "open": "110",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnState",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": "HolyCharge",
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "180",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "10000",
+      "state": "AdvancedHolyCharge"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "20245",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "100",
+      "parentType": "ModStat",
+      "parentStat": null,
+      "targetSkill": "24090",
+      "growth": null
+     },
+     "name": "어드밴스드 홀리 차지 - 최종 데미지",
+     "desc": "어드밴스드 홀리 차지 최종 데미지 증가량 10%p 추가 증가"
+    }
+   ],
+   "name": "어드밴스드 홀리 차지",
+   "desc": "홀리 차지 지속시간 동안 최종 데미지가 18% 증가합니다."
+  },
+  {
+   "index": "24100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "area": false,
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "requireState": null,
+   "consumeRequire": false,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "23041",
+      "stat": "FinalDamage",
+      "value": "200",
+      "growth": null
+     },
+     {
+      "targetSkill": "23020",
+      "stat": "FinalDamage",
+      "value": "300",
+      "growth": null
+     },
+     {
+      "targetSkill": "22020",
+      "stat": "FinalDamage",
+      "value": "800",
+      "growth": null
+     },
+     {
+      "targetSkill": "22070",
+      "stat": "FinalDamage",
+      "value": "1500",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": [],
+   "name": "메이플 용사",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 노블 디맨드 20% 돌진 30% 페이지 오더 80% 파이널 어택 150%"
+  }
+ ]
+}

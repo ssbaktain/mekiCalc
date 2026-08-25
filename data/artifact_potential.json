@@ -1,0 +1,243 @@
+{
+ "_comment": "유물 잠재(HiddenForce) 참조. 클뜯 2694 ArtifactHiddenForceTable/OptionTable. 값=천분율(표시%는 ÷10). 줄수=유물등급 slotRule + 각성도(reqAwake 이상 슬롯만 열림). 미스틱(mythic)은 값이 배열(같은 등급 내 롤, 높은 값=낮은 확률). 생존 3종(statId=null)은 표시만·딜 미반영. CC중뎀 제외.",
+ "slotRule": {
+  "EPIC": {
+   "maxSlot": 2,
+   "reqAwake": [
+    2,
+    4
+   ]
+  },
+  "UNIQUE": {
+   "maxSlot": 2,
+   "reqAwake": [
+    1,
+    3
+   ]
+  },
+  "LEGENDARY": {
+   "maxSlot": 3,
+   "reqAwake": [
+    1,
+    3,
+    5
+   ]
+  }
+ },
+ "grades": [
+  {
+   "id": "rare",
+   "name": "레어"
+  },
+  {
+   "id": "epic",
+   "name": "에픽"
+  },
+  {
+   "id": "unique",
+   "name": "유니크"
+  },
+  {
+   "id": "legend",
+   "name": "레전더리"
+  },
+  {
+   "id": "mythic",
+   "name": "미스틱"
+  }
+ ],
+ "options": [
+  {
+   "type": "AttackPower",
+   "statId": "DMG",
+   "name": "데미지%",
+   "deal": true,
+   "values": {
+    "rare": 40,
+    "epic": 60,
+    "unique": 90,
+    "legend": 140,
+    "mythic": [
+     200,
+     240
+    ]
+   }
+  },
+  {
+   "type": "CriticalChance",
+   "statId": "CRIT_RATE",
+   "name": "크리티컬 확률%",
+   "deal": true,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "MaxDamageRatio",
+   "statId": "MAX_DMG_MULT",
+   "name": "최대 데미지 배율%",
+   "deal": true,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "MinDamageRatio",
+   "statId": "MIN_DMG_MULT",
+   "name": "최소 데미지 배율%",
+   "deal": true,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "AttackPowerToBoss",
+   "statId": "BOSS_DMG",
+   "name": "보스 몬스터 데미지%",
+   "deal": true,
+   "values": {
+    "rare": 40,
+    "epic": 60,
+    "unique": 90,
+    "legend": 140,
+    "mythic": [
+     200,
+     240
+    ]
+   }
+  },
+  {
+   "type": "AttackPowerExcludeBoss",
+   "statId": "NORMAL_DMG",
+   "name": "일반 몬스터 데미지%",
+   "deal": true,
+   "values": {
+    "rare": 40,
+    "epic": 60,
+    "unique": 90,
+    "legend": 140,
+    "mythic": [
+     200,
+     240
+    ]
+   }
+  },
+  {
+   "type": "PiercePower",
+   "statId": "DEF_PEN",
+   "name": "방어 관통력%",
+   "deal": true,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "MainStatR",
+   "statId": "MAIN_STAT_PCT",
+   "name": "주스탯%",
+   "deal": true,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "AttackPowerInCc",
+   "statId": null,
+   "name": "상태이상 데미지%",
+   "deal": false,
+   "values": {
+    "rare": 40,
+    "epic": 60,
+    "unique": 90,
+    "legend": 140,
+    "mythic": [
+     200,
+     240
+    ]
+   }
+  },
+  {
+   "type": "Toughness",
+   "statId": null,
+   "name": "받는 피해 감소",
+   "deal": false,
+   "values": {
+    "rare": 10,
+    "epic": 15,
+    "unique": 23,
+    "legend": 35,
+    "mythic": [
+     50,
+     60
+    ]
+   }
+  },
+  {
+   "type": "DefenceR",
+   "statId": null,
+   "name": "방어력%",
+   "deal": false,
+   "values": {
+    "rare": 20,
+    "epic": 30,
+    "unique": 45,
+    "legend": 70,
+    "mythic": [
+     100,
+     120
+    ]
+   }
+  },
+  {
+   "type": "HitChance",
+   "statId": null,
+   "name": "명중",
+   "deal": false,
+   "values": {
+    "rare": 2,
+    "epic": 3,
+    "unique": 4,
+    "legend": 7,
+    "mythic": [
+     10,
+     12
+    ]
+   }
+  }
+ ]
+}

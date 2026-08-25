@@ -1,0 +1,180 @@
+==========================================================================
+■ 보우마스터 (CI 7) — 액티브/패시브 스킬
+==========================================================================
+
+[ActiveSkill J1] 71010 :: 71010 tgtCnt=1
+    DMG GetDamageR coeff=26.0% tgt=Myself vals=['260', 'None', '2'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J0] 9000 :: None cd=60s tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '150']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[PassiveSkill J1] 71020 :: None tgtCnt=1
+
+[PassiveSkill J1] 71040 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '50']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[PassiveSkill J1] 71030 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['CriticalChance', '50']
+
+[ActiveSkill J2] 72010 :: 72010 tgtCnt=1
+    DMG GetDamageR coeff=40.0% tgt=Myself vals=['400', 'None', '3'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 72040 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '50']
+
+[ActiveSkill J2] 72020 :: 72020 cd=19s tgtCnt=1
+    DMG GetDamageR coeff=250.0% tgt=Target vals=['2500', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J2] 72080 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['BaseAttackPower', '100']
+
+[PassiveSkill J2] 72030 :: None tgtCnt=1
+    DMG GetDamageR coeff=22.0% tgt=Target vals=['220', 'Dot', '1'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 72060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['MinDamageRatio', '150']
+
+[PassiveSkill J2] 72050 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['Dex', '#BowMaster_SoulArrow(50)']
+
+[PassiveSkill J2] 72070 :: None tgtCnt=1
+    DMG GetDamageR coeff=35.0% tgt=Target vals=['350', 'Dot', '1'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J3] 73010 :: WindArrow2 tgtCnt=1
+    DMG GetDamageR coeff=80.0% tgt=Myself vals=['800', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J3] 73020 :: None cd=5s tgtCnt=1
+    DMG GetDamageR coeff=550.0% tgt=Target vals=['5500', 'None', '1'] growthCol=21(~0.408%/lv)
+    DMG GetDamageR coeff=550.0% tgt=Target vals=['5500', 'None', '1'] growthCol=21(~0.408%/lv) Flag=ExcludeTarget
+
+[ActiveSkill J3] 73040 :: ArrowPlatter cd=40s tgtCnt=1
+    CreateProjectile proj=73040 maxTgt=1 tick=['300', '300'] dur=60000 -> SkillIndex=['73041']
+      └ child skill 73041 (None):
+         DMG GetDamageR coeff=50.0% tgt=Target vals=['500', 'Dot', '1'] growthCol=12(~0.51%/lv) Flag=FiredFromProjectile
+
+[PassiveSkill J3] 73070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['HitChance', '1']
+    ModStat tgt=Myself vals=['CriticalPower', '$CreatureStateCount(FiredCreature;73070) * 30']
+
+[ActiveSkill J3] 73030 :: 73030 cd=60s tgtCnt=1
+    CreateProjectile proj=73030 maxTgt=5 tick=['3000', '3000'] dur=20000 -> SkillIndex=['73031']
+      └ child skill 73031 (None):
+         DMG GetDamageR coeff=600.0% tgt=Target vals=['6000', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J3] 73060 :: None tgtCnt=1
+    State tgt=Myself vals=[]
+    ModStat tgt=Myself vals=['FinalDamage', '100']
+    ClearState tgt=Myself vals=['73060']
+
+[PassiveSkill J3] 73080 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['Attack', '200']
+
+[PassiveSkill J3] 73050 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['Defence', '-100']
+    ModStat tgt=Myself vals=['FinalDamage', '150']
+
+[ActiveSkill J4] 74010 :: UncountableArrow tgtCnt=1
+    DMG GetDamageR coeff=290.0% tgt=Myself vals=['2900', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J4] 74100 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['73041', '1', 'FinalDamage', '250']
+    ModSkillStat tgt=Myself vals=['73031', '1', 'FinalDamage', '300']
+    ModSkillStat tgt=Myself vals=['72020', '1', 'FinalDamage', '1000']
+
+[ActiveSkill J4] 74020 :: StormArrow cd=40s tgtCnt=1
+    DMG GetDamageR coeff=800.0% tgt=Myself vals=['8000', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J4] 74080 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['72070', '1', 'FinalDamage', '5000']
+
+[PassiveSkill J4] 74050 :: None tgtCnt=1
+    ModSkill tgt=Myself vals=['72030', '0', 'SkillTargetCount', '2']
+    ModSkillStat tgt=Myself vals=['72030', '1', 'FinalDamage', '5000']
+
+[PassiveSkill J4] 74040 :: None tgtCnt=1
+    ModSkill tgt=Myself vals=['73020', '2', 'MaxHitCount', '4']
+    ModSkillStat tgt=Myself vals=['73020', '0', 'FinalDamage', '4000']
+
+[ActiveSkill J4] 74030 :: SharpEyes cd=35s tgtCnt=1
+    ClearState tgt=Myself vals=['SharpEyes']
+    ClearState tgt=Parent vals=['SharpEyes_Self']
+    ModStat tgt=Myself vals=['CriticalPower', '$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000']
+    ModStat tgt=Myself vals=['CriticalPower', '$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000']
+    ModStat tgt=Parent vals=['CriticalPower', '400']
+
+[PassiveSkill J4] 74070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AvoidChance', '15']
+    ModStat tgt=Myself vals=['Toughness', '100']
+    ModStatR tgt=Myself vals=['Attack', '280']
+
+[PassiveSkill J4] 74060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['SkillPower', '150']
+    ModStat tgt=Myself vals=['MaxDamageRatio', '200']
+
+[PassiveSkill J4] 74090 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['PiercePower', '100']
+    ModStat tgt=Myself vals=['FinalDamage', '100']
+
+==========================================================================
+■ 보우마스터 (CI 7) — 마스터리 58개
+==========================================================================
+  M70010 lv12 parent=71010 main=True :: ModSkillStat['71010', '1', 'GiveDamagePower1', '150']
+  M70020 lv15 parent=71010 main=True :: ModSkill['71010', '1', 'MaxHitCount', '1']
+  M70030 lv19 parent=71010 main=True :: ModSkillStat['71010', '1', 'GiveDamagePower1', '200']
+  M70040 lv22 parent=71010 main=True :: ModSkill['71010', '1', 'MaxHitCount', '1']
+  M70050 lv26 parent=71010 main=True :: ModSkillStat['71010', '1', 'GiveDamagePower1', '200']
+  M70060 lv32 parent=72010 main=True :: ModSkillStat['72010', '1', 'GiveDamagePower1', '150']
+  M70070 lv37 parent=72010 main=True :: ModSkill['72010', '1', 'MaxHitCount', '1']
+  M70080 lv42 parent=72010 main=True :: ModSkillStat['72010', '1', 'GiveDamagePower1', '200']
+  M70090 lv47 parent=72010 main=True :: ModSkill['72010', '1', 'ModStatAddValue', '150']
+  M70100 lv52 parent=72010 main=True :: ModSkillStat['72010', '1', 'GiveDamagePower1', '200']
+  M70110 lv56 parent=72010 main=True :: ModSkill['72010', '1', 'Value', '1', '2']
+  M70120 lv62 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '100']
+  M70130 lv66 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '110']
+  M70140 lv71 parent=73010 main=True :: ModSkill['73010', '1', 'ModStatAddValue', '100']
+  M70150 lv76 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '120']
+  M70160 lv80 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '130']
+  M70170 lv84 parent=73010 main=True :: ModSkill['73010', '1', 'ModStatAddValue', '100']
+  M70180 lv88 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '140']
+  M70190 lv92 parent=73010 main=True :: ModSkillStat['73010', '1', 'GiveDamagePower1', '150']
+  M70200 lv96 parent=73010 main=True :: ModSkill['73010', '1', 'Value', '1', '2']
+  M70210 lv102 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '100']
+  M70220 lv106 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '110']
+  M70230 lv111 parent=74010 main=True :: ModSkill['74010', '1', 'ModStatAddValue', '100']
+  M70240 lv116 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '120']
+  M70250 lv120 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '130']
+  M70260 lv124 parent=74010 main=True :: ModSkill['74010', '1', 'ModStatAddValue', '100']
+  M70270 lv128 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '140']
+  M70280 lv132 parent=74010 main=True :: ModSkillStat['74010', '1', 'GiveDamagePower1', '150']
+  M70290 lv136 parent=74010 main=True :: ModSkill['74010', '1', 'Value', '1', '2']
+  M70015 lv14 parent=None main=None :: None
+  M70025 lv17 parent=None main=None :: None
+  M70035 lv21 parent=71040 main=None :: ModSkill['71040', '1', 'Value', '50', '1']
+  M70045 lv24 parent=71030 main=None :: ModStat['CriticalChance', '50']
+  M70055 lv28 parent=None main=None :: None
+  M70065 lv34 parent=None main=None :: None
+  M70075 lv39 parent=72020 main=None :: ModSkillStat['72020', '1', 'GiveDamagePower1', '500']
+  M70085 lv44 parent=72030 main=None :: ModSkillStat['72030', '1', 'GiveDamagePower1', '500']
+  M70095 lv49 parent=72020 main=None :: ModSkillEnabled['72020', '3']
+  M70105 lv54 parent=72070 main=None :: ModSkillStat['72070', '1', 'GiveDamagePower1', '500']
+  M70115 lv58 parent=None main=None :: None
+  M70125 lv64 parent=None main=None :: None
+  M70135 lv68 parent=73020 main=None :: ModSkillStat['73020', '0', 'GiveDamagePower1', '500']
+  M70145 lv73 parent=73040 main=None :: ModSkillStat['73041', '0', 'GiveDamagePower1', '500']
+  M70155 lv78 parent=73030 main=None :: ModSkillProjectile['73030', 'MaxTargetCount', '3']
+  M70165 lv82 parent=73030 main=None :: ModSkillProjectileR['73030', 'TickTimeMs', '-300', '0'] | ModSkillProjectileR['73030', 'TickTimeMs', '-300', '1']
+  M70175 lv86 parent=None main=None :: None
+  M70185 lv90 parent=73060 main=None :: ModSkill['73060', '2', 'DurationMs', '5000']
+  M70195 lv94 parent=73030 main=None :: ModSkill['73031', '1', 'ModStatAddValue', '1000']
+  M70205 lv98 parent=73040 main=None :: ModSkillProjectile['73040', 'MaxTargetCount', '2']
+  M70215 lv104 parent=73030 main=None :: ModSkillR['73030', '0', 'SkillCoolTimeMs', '-500']
+  M70225 lv108 parent=74020 main=None :: ModSkillStat['74020', '1', 'GiveDamagePower1', '500'] | ModSkillStat['74021', '1', 'GiveDamagePower1', '500']
+  M70235 lv113 parent=74080 main=None :: ModSkillR['74080', '1', 'Value', '500', '3']
+  M70245 lv118 parent=74070 main=None :: ModSkillR['74030', '0', 'DurationMs', '500']
+  M70255 lv122 parent=74040 main=None :: ModSkillR['73020', '0', 'SkillCoolTimeMs', '-400']
+  M70265 lv126 parent=74030 main=None :: ModSkillEnabled['74070', '3']
+  M70275 lv130 parent=74050 main=None :: GetHealByMaxHpR['10'] | GetDamageR['10500', 'Dot', '1']
+  M70285 lv134 parent=74020 main=None :: ChangeSkill['74020', '74021']
+  M70295 lv138 parent=74040 main=None :: ModSkill['73020', '2', 'MaxHitCount', '3'] | ModSkillR['74040', '2', 'Value', '500', '3']

@@ -34,6 +34,20 @@ import mekicalc.engine.skill.SkillData;
 import mekicalc.engine.skill.SkillDpsModel;
 import mekicalc.model.StatBlock;
 import mekicalc.model.StatDef;
+import mekicalc.timeline.Action;
+import mekicalc.timeline.Analyzer;
+import mekicalc.timeline.ArtifactAssembler;
+import mekicalc.timeline.BuffAccumulator;
+import mekicalc.timeline.BuffSource;
+import mekicalc.timeline.DealExpander;
+import mekicalc.timeline.Preset;
+import mekicalc.timeline.Schedule;
+import mekicalc.timeline.Scheduler;
+import mekicalc.timeline.Timeline;
+import mekicalc.timeline.ir.ArtifactBook;
+import mekicalc.timeline.ir.EffectIR;
+import mekicalc.timeline.ir.SkillBook;
+import mekicalc.timeline.ir.SkillIR;
 
 /**
  * 무상태 계산 서비스. (읽기전용 {@link GameContent} + 요청 입력) → 결과.
@@ -53,11 +67,15 @@ public final class CalcService {
     private static final int JOB_DARK_KNIGHT = 2;
     private static final int JOB_BISHOP = 3;
     private static final int JOB_HERO = 4;
+    private static final int JOB_BOWMASTER = 5;
     private static final double NORMAL_SECONDS = 90;   // 일반몹(챕터 스테이지) 기준 전투시간
     private static final double BOSS_SECONDS = 70;      // 보스(챕터 보스) 기준 전투시간
 
     private final GameContent content;
     private final VisionOcr ocr;
+    private volatile SkillBook nlBook;   // 나이트로드 IR(타임라인 엔진용), 최초 요청 시 지연 로딩
+    private volatile ArtifactBook nlArtBook;   // 유물 IR(타임라인 조립용), 최초 요청 시 지연 로딩
+    private volatile Map<String, Integer> nlArtSlugToIdx;   // 카탈로그 슬러그id → manual idx(이름 조인), 지연 구축
 
     public CalcService(GameContent content) {
         this(content, buildOcr(content.dataDir));
@@ -111,6 +129,7 @@ public final class CalcService {
         if (job == JOB_DARK_KNIGHT) return content.skillDataDk;
         if (job == JOB_BISHOP) return content.skillDataBishop;
         if (job == JOB_HERO) return content.skillDataHero;
+        if (job == JOB_BOWMASTER) return content.skillDataBow;
         return null;
     }
 
@@ -222,6 +241,8 @@ public final class CalcService {
             m.put("unit", d.unit);
             m.put("group", d.group);
             m.put("qualitative", d.qualitative);
+            m.put("combine", d.combine.name());   // SUM | DIMINISHING | MULT_PCT — 변경 실험의 옵션 가산식용
+            m.put("max", d.max);                    // DIMINISHING cap(공속150·방관100·쿨감%100)
             out.add(m);
         }
         return out;
@@ -737,6 +758,441 @@ public final class CalcService {
         return out;
     }
 
+    private SkillBook nlBook() {
+        SkillBook b = nlBook;
+        if (b == null) {
+            synchronized (this) {
+                if (nlBook == null) nlBook = SkillBook.load(content.dataDir.resolve("skills_calc/nightlord_manual.json"));
+                b = nlBook;
+            }
+        }
+        return b;
+    }
+
+    private ArtifactBook nlArtBook() {
+        ArtifactBook b = nlArtBook;
+        if (b == null) {
+            synchronized (this) {
+                if (nlArtBook == null) nlArtBook = ArtifactBook.load(content.dataDir.resolve("skills_calc/artifact_manual.json"));
+                b = nlArtBook;
+            }
+        }
+        return b;
+    }
+
+    /**
+     * 나이트로드 정밀 타임라인 엔진 실행(스킬 전용, 유물·동료 미조립). 자동/수동 배치를 시뮬해
+     * 종합 DPS·스킬별 기여·액션 시퀀스·버프 윈도우(간트 시각화용)를 반환한다.
+     *
+     * @param mode    "manual"이면 casts대로 배치, 그 외 자동 로테이션
+     * @param casts   수동 배치 [{timeMs, skillIdx}] (자동이면 무시)
+     * @param simMs   시뮬 길이(ms). 0이면 일반몹 90초/보스 70초 기본.
+     */
+    public Map<String, Object> nlTimeline(Map<String, Double> stats, String mode,
+                                          List<Map<String, Object>> casts, String chapter, String target, int simMs,
+                                          List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                                          Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                                          boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                                          boolean fillSkills, boolean optimize) {
+        boolean boss = isBossTarget(target);
+        Double def = targetDef(chapter, target);
+        double monDef = def == null ? 0 : def;
+        if (simMs <= 0) simMs = (int) ((boss ? BOSS_SECONDS : NORMAL_SECONDS) * 1000);
+
+        stats = withPotential(stats, potentials);   // 유물 잠재를 큐브와 동일 규칙(방관/공속 곱, 그 외 합)으로 프리셋에 합성
+        // 유물 조립을 스케줄러보다 먼저 — 상시 공속(헬레나)을 프리셋 공속에 합산해 공격 빈도(→onAttack 유물·전체 DPS)에 반영
+        List<ArtifactAssembler.Equip> equips = toTimelineEquips(artifacts);
+        String artContent = (contentOverride != null && !contentOverride.isEmpty())
+                ? contentOverride : (boss ? "챕터보스" : "챕터사냥");
+        // 벞지(유저 프리셋 버프지속%) — 유물 시간창 버프에도 적용(무녀구슬 자체분은 assemble이 사전합산). 디버프·상시·순환 제외.
+        double userBuffDur = stats.getOrDefault("BUFF_DURATION", 0.0);
+        ArtifactAssembler.Ctx artCtx = new ArtifactAssembler.Ctx(boss, artContent, enemies, kills, preActivateProc, artOffsetMs, userBuffDur);
+        ArtifactAssembler asm = new ArtifactAssembler(nlArtBook());
+        ArtifactAssembler.Result artRes = asm.assemble(equips, artCtx, simMs);
+        if (artRes.artSpeed() != 0 || artRes.artCdrPct() != 0 || artRes.artBuffDurPct() != 0 || artRes.artSummonDurPct() != 0) {
+            stats = new LinkedHashMap<>(stats);
+            if (artRes.artSpeed() != 0) stats.merge("ATK_SPEED", artRes.artSpeed(), Double::sum);              // 헬레나 등 공속→공격빈도
+            if (artRes.artCdrPct() != 0) stats.merge("COOLDOWN_REDUCTION_PCT", artRes.artCdrPct(), Double::sum); // 영혼계약서 쿨감→발동빈도
+            if (artRes.artBuffDurPct() != 0) stats.merge("BUFF_DURATION", artRes.artBuffDurPct(), Double::sum);  // 무녀구슬 버프지속
+            if (artRes.artSummonDurPct() != 0) stats.merge("SUMMON_DURATION", artRes.artSummonDurPct(), Double::sum); // 유리구두 동료소환지속(동료엔진서 반영)
+        }
+        Preset preset = new Preset(stats);
+        SkillBook book = nlBook();
+        Scheduler sched = new Scheduler(book, preset, skillsOff == null ? java.util.Set.of() : skillsOff);
+        sched.setOptimize("manual".equals(mode) ? optimize : true);   // 자동=항상 최적화, 수동=토글
+
+        Schedule schedule;
+        if ("manual".equals(mode) && casts != null) {
+            List<Scheduler.ManualCast> mc = new ArrayList<>();
+            for (Map<String, Object> c : casts) {
+                int t = (int) Math.round(numOf(c.get("timeMs")));
+                int idx = (int) numOf(c.get("skillIdx"));
+                if (idx > 0) mc.add(new Scheduler.ManualCast(t, idx));
+            }
+            schedule = sched.placeManual(mc, simMs, autoFillBasic, fillSkills);
+        } else {
+            schedule = sched.placeAuto(simMs);
+        }
+
+        DealExpander de = new DealExpander(book, preset);
+        Timeline tl = de.expand(schedule, simMs);
+        // 아드(스케줄러 onActiveSkill) + 베놈(DealExpander onAttack) 윈도우 병합 → BuffAccumulator(약화 게이트)
+        java.util.Map<Integer, java.util.List<int[]>> combinedWin = new java.util.HashMap<>(schedule.eventWindows());
+        combinedWin.putAll(de.onAttackWindows());
+        Schedule schedule2 = new Schedule(schedule.actions(), combinedWin);
+        BuffAccumulator ba = new BuffAccumulator(book, preset);
+        List<BuffSource> sources = ba.buildSources(schedule2, simMs);
+        ba.accumulate(tl, schedule2, simMs);
+
+        // 위에서 미리 assemble한 유물 결과를 슬롯에 반영(상시/시간창·성배 발동창).
+        asm.accumulate(tl, artRes, simMs);
+        List<Map<String, Object>> cycleRows = asm.accumulateCycle(tl, preset, artRes, simMs);   // 순환(크확 파티션) — base 뒤·파생 앞(순환 크확이 파생 입력에 반영). 창별 실제효과 행 반환(간트 툴팁)
+        List<BuffSource> allSrc = new ArrayList<>(sources);   // 스킬+유물 소스 = 파생 입력(크확·공속) 경계의 원천
+        allSrc.addAll(artRes.sources());
+        List<Map<String, Object>> derivedRows = asm.accumulateDerived(tl, preset, artRes, simMs, allSrc);   // derived 표시행 — 입력 버프의 실제 경계(정확한 시간) 기준
+        asm.accumulateDmgMult(tl, preset, artRes, boss, artOffsetMs);   // 육각(DMG 곱중첩) — 스택(사전활성 offset 반영)
+        asm.accumulateUptime(tl, de.attackInstances(), preActivateProc, artRes);   // 은펜던트·천도명약(onAttack 약화 확률누산, 베놈과 동일 스트림)
+        // 성배(onKill)는 이제 assemble에서 확률누산 발동 창을 sources로 만들어 accumulate에서 반영됨
+        List<ArtifactAssembler.StackSeg> stackSegs = asm.stackSegments(artRes, boss, artOffsetMs, de.attackInstances(), preActivateProc, simMs);
+
+        Analyzer an = new Analyzer(tl, preset, monDef, boss, simMs);
+
+        double total = an.totalDamage();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("mode", "manual".equals(mode) ? "manual" : "auto");
+        out.put("simMs", simMs);
+        out.put("boss", boss);
+        out.put("monsterDef", monDef);
+        out.put("dps", safe(an.dps()));
+        out.put("total", safe(total));
+        out.put("cooldowns", sched.effectiveCooldowns());   // 실효 쿨(ms) — 프론트 배치 자동시각용
+        out.put("baseSlotMs", sched.baseSlotMs());           // 실효 공속 슬롯(ms, 유물 반영)
+        // 액션 기준 순간 DPS 점(스킬·평타 시각마다). 프론트가 액션 수 기준으로 집계(뭉뚱그림)·단조곡선 렌더.
+        java.util.TreeSet<Integer> atSet = new java.util.TreeSet<>();
+        for (Action a : schedule.actions()) if (a.timeMs() >= 0 && a.timeMs() < simMs) atSet.add(a.timeMs());
+        int[] actionTimes = new int[atSet.size()];
+        { int ii = 0; for (int t : atSet) actionTimes[ii++] = t; }
+        double[] adps = an.actionIntervalDps(actionTimes);
+        List<Object> dpsPoints = new ArrayList<>(actionTimes.length);
+        for (int i = 0; i < actionTimes.length; i++) {
+            Map<String, Object> p = new LinkedHashMap<>();
+            p.put("t", actionTimes[i]);
+            p.put("dps", safe(adps[i]));
+            dpsPoints.add(p);
+        }
+        out.put("dpsPoints", dpsPoints);
+
+        List<Map<String, Object>> perSkill = new ArrayList<>();
+        for (Map.Entry<Integer, Double> e : an.perSkillDamage().entrySet()) {
+            int idx = e.getKey();
+            long hits = an.skillHits(idx);
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("idx", idx);
+            row.put("name", book.skill(idx) == null ? String.valueOf(idx) : book.skill(idx).name());
+            row.put("damage", safe(e.getValue()));
+            row.put("pct", safe(total > 0 ? e.getValue() / total * 100 : 0));
+            row.put("hits", hits);
+            row.put("per1", safe(hits > 0 ? e.getValue() / hits : 0));
+            perSkill.add(row);
+        }
+        out.put("perSkill", perSkill);
+
+        List<Map<String, Object>> acts = new ArrayList<>();
+        for (Action a : schedule.actions()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("t", a.timeMs());
+            m.put("basic", a.basic());
+            m.put("idx", a.skill().idx());
+            m.put("name", a.basic() ? "평타" : a.skill().name());
+            m.put("dmg", safe(an.skillDamageAt(a.skill().idx(), a.timeMs())));   // 그 순간 데미지(툴팁)
+            int dur = dotDurationMs(a.skill());   // 도트/지속딜이면 간트에 바로 표시
+            if (dur > 0) m.put("durMs", dur);
+            acts.add(m);
+        }
+        out.put("actions", acts);
+
+        // 딜 라인: 스킬별 실제 딜 시각(진한 틱) + 도트/지속/주기면 활성 구간(옅은 막대).
+        // 라인 대상 = 즉발 외 딜(도트/주기/프록)이 있는 스킬. 그 경우 즉발(첫 타격, 캐스트 시각)도 틱에 포함(strong)해 전체 타격을 표시.
+        Map<Integer, java.util.Set<Integer>> castTimes = new LinkedHashMap<>();
+        int basicIdx = -1;
+        for (Action a : schedule.actions()) {
+            if (a.basic()) { if (basicIdx < 0) basicIdx = a.skill().idx(); }
+            else castTimes.computeIfAbsent(a.skill().idx(), k -> new java.util.HashSet<>()).add(a.timeMs());
+        }
+        Map<Integer, Double> perSkillDmg = an.perSkillDamage();   // idx → 총딜(정렬용)
+        final int fBasicIdx = basicIdx;
+        List<Map<String, Object>> dealLines = new ArrayList<>();
+        for (int idx : tl.dealingSkills()) {
+            if (idx == fBasicIdx) continue;   // 평타(=쇼다운 챌린지)는 액션바에 있으니 딜 라인 생략(중복 방지)
+            SkillIR sk = book.skill(idx);
+            if (sk == null) continue;
+            java.util.Set<Integer> castSet = castTimes.getOrDefault(idx, java.util.Set.of());
+            List<Integer> hits = new ArrayList<>(), overTime = new ArrayList<>();
+            for (int t : new java.util.TreeSet<>(tl.timesOf(idx))) {
+                if (t < 0 || t >= simMs) continue;
+                hits.add(t);
+                if (!castSet.contains(t)) overTime.add(t);   // 즉발(캐스트) 외 딜 = 도트/주기/프록
+            }
+            if (overTime.isEmpty()) continue;   // 즉발만 → 라인 불필요(액션바로 충분)
+            // 지속 막대 = DealExpander가 기록한 실제 지속 윈도우[발동, 발동+지속](마스터리 반영).
+            // ★틱 시각과 연동하지 않는다 — duration은 별개 개념이라 '마지막 타격 후 유지되는 무-딜 구간'도 막대에 포함한다.
+            List<Map<String, Object>> wins = new ArrayList<>();
+            List<int[]> dw = de.dotWindows().get(idx);
+            if (dw != null) for (int[] w : dw) wins.add(win(w[0], w[1], simMs));
+            List<Map<String, Object>> tickObjs = new ArrayList<>(hits.size());
+            for (int t : hits) {   // 모든 딜 시각(즉발 첫타격 포함)
+                Map<String, Object> tk = new LinkedHashMap<>();
+                tk.put("t", t);
+                tk.put("dmg", safe(an.skillDamageAt(idx, t)));   // 그 틱 순간 데미지(툴팁)
+                if (castSet.contains(t)) tk.put("strong", true);  // 즉발(캐스트) = 강한 첫 타격 → 굵게
+                tickObjs.add(tk);
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", sk.name());
+            row.put("ticks", tickObjs);
+            row.put("windows", wins);
+            row.put("_dmg", perSkillDmg.getOrDefault(idx, 0.0));
+            dealLines.add(row);
+        }
+        dealLines.sort((x, y) -> Double.compare((Double) y.getOrDefault("_dmg", 0.0), (Double) x.getOrDefault("_dmg", 0.0)));   // 딜 지분(총딜) 내림차순
+        for (Map<String, Object> r : dealLines) r.remove("_dmg");
+        out.put("dealLines", dealLines);
+
+        List<Map<String, Object>> buffs = new ArrayList<>();
+        for (BuffSource bs : sources) buffs.add(buffRow(bs, simMs, false));
+        for (BuffSource bs : artRes.sources()) buffs.add(buffRow(bs, simMs, true));
+        buffs.addAll(derivedRows);   // 파생(라이브 크확·공속 후처리) 대표 효과 행
+        buffs.addAll(cycleRows);     // 순환(크확 파티션) 창별 표시행 — 각 창의 실제 적용 효과(effects) 포함
+        // 스택 세그먼트의 실효 효과값(스택 반영). 라벨→원본 스펙 매칭. 약화=value(‰)×스택, 육각=preset.dmg×value(‰)×스택.
+        Map<String, ArtifactAssembler.UptimeSpec> upByLabel = new LinkedHashMap<>();
+        for (ArtifactAssembler.UptimeSpec u : artRes.uptimes()) upByLabel.put(u.label(), u);
+        Map<String, ArtifactAssembler.DmgMultSpec> dmByLabel = new LinkedHashMap<>();
+        for (ArtifactAssembler.DmgMultSpec dm : artRes.dmgMults()) dmByLabel.put(dm.label(), dm);
+        for (ArtifactAssembler.StackSeg sg : stackSegs) {            // 육각·은펜던트·천도명약 시각별 스택 세그먼트
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("label", sg.label());
+            m.put("start", sg.start());
+            m.put("end", sg.end());
+            m.put("always", sg.start() == 0 && sg.end() >= simMs);
+            m.put("artifact", true);
+            m.put("inst", sg.inst());
+            m.put("stacks", sg.stacks());
+            ArtifactAssembler.UptimeSpec u = upByLabel.get(sg.label());
+            ArtifactAssembler.DmgMultSpec dm = dmByLabel.get(sg.label());
+            if (u != null && "Weakness".equals(u.stat()))               // 약화 스택 = 적 받는 피해 증가
+                m.put("effects", List.of(statEff("WEAKNESS", u.value() / 10.0 * sg.stacks())));
+            else if (dm != null)                                        // 육각 = 데미지 곱중첩 실효 %p
+                m.put("effects", List.of(statEff("DMG", preset.dmg() * dm.value() / 1000.0 * sg.stacks())));
+            buffs.add(m);
+        }
+        out.put("buffs", buffs);
+
+        // 유물 스킵 진단(적용 안 된 효과 + 사유). 검증·UI 표시용.
+        List<Map<String, Object>> artSkips = new ArrayList<>();
+        for (ArtifactAssembler.Skip sk : artRes.skips()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("idx", sk.idx());
+            m.put("name", sk.name());
+            m.put("effIdx", sk.effIdx());
+            m.put("reason", sk.reason());
+            artSkips.add(m);
+        }
+        out.put("artifactSkips", artSkips);
+        return out;
+    }
+
+    /** BuffSource → 간트 표시행. artifact=유물 소스 구분. effects=이 소스가 주는 효과+값(툴팁). */
+    private static Map<String, Object> buffRow(BuffSource bs, int simMs, boolean artifact) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("label", bs.label());
+        m.put("start", bs.startMs());
+        m.put("end", bs.endMs());
+        m.put("always", bs.startMs() == 0 && bs.endMs() >= simMs);   // 상시(숙련·페이크) 표시 구분용
+        m.put("artifact", artifact);
+        if (bs.inst() >= 0) m.put("inst", bs.inst());   // 유물 인스턴스 인덱스(프론트 그룹핑·오염방지 키)
+        if (bs.dormant()) m.put("dormant", true);       // 무실효(대상 불일치·마리수 미충족) — 흐리게 표시
+        List<Map<String, Object>> effs = new ArrayList<>();
+        for (var e : bs.adds().entrySet()) if (e.getValue() != 0) effs.add(statEff(e.getKey().name(), e.getValue()));
+        if (bs.finalDmgFrac() != 0) effs.add(statEff("FINAL_DMG", bs.finalDmgFrac() * 100.0));   // 분율→표시%
+        if (!effs.isEmpty()) m.put("effects", effs);
+        return m;
+    }
+
+    /** {stat(영문키), value(소수1자리)} 효과 표시 항목. 프론트가 한글명으로 변환. */
+    private static Map<String, Object> statEff(String stat, double value) {
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("stat", stat);
+        e.put("value", Math.round(value * 10) / 10.0);
+        return e;
+    }
+
+    /**
+     * 요청 유물 배열 [{id, awaken}] → 타임라인 조립기 Equip 목록.
+     * id는 카탈로그 슬러그("deadmans_charm") 또는 숫자 idx("301") 둘 다 허용(이름 조인으로 해소). 매칭 실패는 스킵.
+     */
+    private List<ArtifactAssembler.Equip> toTimelineEquips(List<Map<String, Object>> artifacts) {
+        List<ArtifactAssembler.Equip> out = new ArrayList<>();
+        if (artifacts == null) return out;
+        Map<String, Integer> slug = nlArtSlugToIdx();
+        for (Map<String, Object> e : artifacts) {
+            Object id = e.get("id");
+            if (id == null) continue;
+            String s = id.toString().trim();
+            Integer idx = slug.get(s);
+            if (idx == null) {
+                try { idx = (int) Double.parseDouble(s); } catch (NumberFormatException ignore) { continue; }   // "402"·"402.0" 모두 허용
+            }
+            out.add(new ArtifactAssembler.Equip(idx, (int) numOf(e.get("awaken"))));
+        }
+        return out;
+    }
+
+    /**
+     * 유물 잠재를 프리셋 스탯에 합성(큐브와 동일 경로). 잠재 옵션 → 딜 스탯 델타 → {@code combine}
+     * (방관/공속 체감 곱연산·주스탯% 전파는 큐브가 쓰는 규칙 그대로). 잠재 없으면 원본 그대로.
+     */
+    private Map<String, Double> withPotential(Map<String, Double> stats, List<Map<String, Object>> potentials) {
+        List<Map<String, Object>> opts = potentialStatOpts(potentials);
+        if (opts.isEmpty()) return stats;
+        DamageModel dm = content.damageModel(Map.of());
+        StatBlock cur = new StatBlock();
+        stats.forEach(cur::set);
+        return dm.combine(cur, deltaOfReq(dm, opts)).asMap();
+    }
+
+    /** 잠재 옵션 [{type, grade, value?}] → 딜 스탯 옵션 [{statId, value(표시%)}]. 생존/CC중뎀·미상 타입은 제외. */
+    private List<Map<String, Object>> potentialStatOpts(List<Map<String, Object>> potentials) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        if (potentials == null || potentials.isEmpty()) return out;
+        Map<String, Map<String, Object>> byType = potentialOptionsByType();
+        for (Map<String, Object> p : potentials) {
+            Object type = p.get("type");
+            if (type == null) continue;
+            Map<String, Object> opt = byType.get(type.toString());
+            if (opt == null || !Boolean.TRUE.equals(opt.get("deal")) || opt.get("statId") == null) continue;
+            Double permille = resolvePotentialValue(p, opt);   // 천분율
+            if (permille == null || permille == 0) continue;
+            Map<String, Object> o = new LinkedHashMap<>();
+            o.put("statId", opt.get("statId").toString());
+            o.put("value", permille / 10.0);   // 천분율 → 표시%(combine/deltaOfReq 단위)
+            out.add(o);
+        }
+        return out;
+    }
+
+    /** 잠재 1줄의 값(천분율): value(미스틱 롤) 우선, 없으면 등급 기본값(배열이면 최저 롤). */
+    private static Double resolvePotentialValue(Map<String, Object> p, Map<String, Object> opt) {
+        if (p.get("value") instanceof Number n) return n.doubleValue();
+        Object grade = p.get("grade");
+        if (grade == null || !(opt.get("values") instanceof Map)) return null;
+        Object gv = ((Map<?, ?>) opt.get("values")).get(grade.toString());
+        if (gv instanceof Number n) return n.doubleValue();
+        if (gv instanceof List<?> l && !l.isEmpty() && l.get(0) instanceof Number n) return n.doubleValue();
+        return null;
+    }
+
+    /** 잠재 참조(artifact_potential.json)의 options를 type→옵션 맵으로. */
+    @SuppressWarnings("unchecked")
+    private Map<String, Map<String, Object>> potentialOptionsByType() {
+        Map<String, Map<String, Object>> m = new LinkedHashMap<>();
+        Object opts = content.artifactPotential == null ? null : content.artifactPotential.get("options");
+        if (opts instanceof List) for (Object o : (List<Object>) opts) {
+            if (o instanceof Map<?, ?> opt && opt.get("type") != null)
+                m.put(opt.get("type").toString(), (Map<String, Object>) opt);
+        }
+        return m;
+    }
+
+    /** 카탈로그(슬러그 id + 이름) ↔ 유물 IR(idx + 이름) 이름 조인 맵. 신규 유물(카탈로그 미등재)은 조인 제외. */
+    private Map<String, Integer> nlArtSlugToIdx() {
+        Map<String, Integer> m = nlArtSlugToIdx;
+        if (m == null) {
+            synchronized (this) {
+                if (nlArtSlugToIdx == null) {
+                    Map<String, Integer> nameToIdx = new LinkedHashMap<>();
+                    for (var a : nlArtBook().artifacts()) nameToIdx.put(a.name(), a.idx());
+                    Map<String, Integer> built = new LinkedHashMap<>();
+                    for (Map<String, Object> a : content.artifacts) {
+                        Object id = a.get("id"), name = a.get("name");
+                        if (id == null || name == null) continue;
+                        Integer idx = nameToIdx.get(name.toString());
+                        if (idx != null) built.put(id.toString(), idx);
+                    }
+                    nlArtSlugToIdx = Map.copyOf(built);
+                }
+                m = nlArtSlugToIdx;
+            }
+        }
+        return m;
+    }
+
+    private static double numOf(Object o) {
+        return o instanceof Number ? ((Number) o).doubleValue() : 0;
+    }
+
+    /** 딜 라인 활성 구간 1개 [start, min(end,sim)) → {start,end} 맵. */
+    private static Map<String, Object> win(int start, int end, int simMs) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("start", start);
+        m.put("end", Math.min(end, simMs));
+        return m;
+    }
+
+    /** 스킬의 deal 도트 효과 틱 간격(ms). 없으면 null(=도트/지속 아님, 순간 프록 등). 딜 라인 막대 그룹핑용. */
+    private static Integer dotTickMs(SkillIR s) {
+        for (EffectIR e : s.effects()) {
+            if (!"deal".equals(e.role())) continue;
+            boolean dot = e.isDot() || (e.tickMs() != null && e.durationMs() != null);
+            if (dot && e.tickMs() != null && e.tickMs() > 0) return e.tickMs();
+        }
+        return null;
+    }
+
+    /** 스킬의 deal 효과 중 도트/지속딜(tick+duration)의 최대 지속시간(ms). 없으면 0. 간트 지속딜 바 표시용. */
+    private static int dotDurationMs(SkillIR s) {
+        int max = 0;
+        for (EffectIR e : s.effects()) {
+            if (!"deal".equals(e.role())) continue;
+            boolean dot = e.isDot() || (e.tickMs() != null && e.durationMs() != null);
+            if (dot && e.durationMs() != null) max = Math.max(max, e.durationMs());
+        }
+        return max;
+    }
+
+    /** 수동 배치 드롭다운용 나이트로드 시전 가능 스킬 목록(active 트리거·전투기여). idx 오름차순 + 맨 위 평타. */
+    public List<Map<String, Object>> nlSkills() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (SkillIR s : nlBook().skills()) {
+            if (!"active".equals(s.trigger())) continue;
+            boolean combat = s.hasDeal() || s.role().contains("buff") || s.role().contains("debuff");
+            if (!combat) continue;   // utility 단독(쉐도우 러쉬) 제외
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("idx", s.idx());
+            m.put("name", s.name());
+            m.put("requireLevel", s.requireLevel());
+            m.put("deal", s.hasDeal());
+            out.add(m);
+        }
+        out.sort((x, y) -> Integer.compare((int) x.get("idx"), (int) y.get("idx")));
+        // 수동(평타 자동채움 끔)에서 평타도 직접 배치할 수 있게 대표 평타 1종을 맨 위에 노출.
+        // 실제 시전은 스케줄러가 레벨에 맞는 최고차수 평타로 재선정하므로 어떤 basicAttack idx를 보내도 동일.
+        SkillIR basic = null;
+        for (SkillIR s : nlBook().skills()) {
+            if (!"basicAttack".equals(s.trigger())) continue;
+            if (basic == null || s.requireLevel() > basic.requireLevel()) basic = s;
+        }
+        if (basic != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("idx", basic.idx());
+            m.put("name", "평타");
+            m.put("requireLevel", 0);
+            m.put("deal", true);
+            m.put("basic", true);
+            out.add(0, m);
+        }
+        return out;
+    }
+
     /** 유물 탭용 메타: 유물 목록(id/name/grade/category) + 슬롯 임계(slotByAwakenSum). */
     public Map<String, Object> artifactCatalog() {
         List<Map<String, Object>> list = new ArrayList<>();
@@ -751,6 +1207,7 @@ public final class CalcService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("list", list);
         out.put("slotByAwakenSum", content.artifactRoot.get("slotByAwakenSum"));
+        out.put("potential", content.artifactPotential);   // 잠재 참조(slotRule·grades·options)
         return out;
     }
 

@@ -1,0 +1,182 @@
+==========================================================================
+■ 비숍 (CI 6) — 액티브/패시브 스킬
+==========================================================================
+
+[ActiveSkill J1] 61010 :: EnergyBolt tgtCnt=1
+    DMG GetDamageR coeff=26.0% tgt=Target vals=['260', 'None', '2'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J0] 9000 :: None cd=60s tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '150']
+    ModStatR tgt=Myself vals=['RunSpeedMms', '100']
+
+[PassiveSkill J1] 61020 :: None tgtCnt=1
+
+[ActiveSkill J1] 61040 :: Teleport cd=10s tgtCnt=1
+
+[ActiveSkill J1] 61030 :: MagicGuard cd=30s tgtCnt=1
+    ModStatR tgt=Myself vals=['Attack', '120']
+    ModStatR tgt=Myself vals=['Defence', '120']
+
+[ActiveSkill J2] 62010 :: HolyArrow tgtCnt=1
+    DMG GetDamageR coeff=40.0% tgt=Myself vals=['400', 'None', '3'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J2] 62040 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackSpeed', '50']
+
+[ActiveSkill J2] 62020 :: Heal cd=18s tgtCnt=0
+    ModStatR tgt=Parent vals=['Attack', '100']
+
+[PassiveSkill J2] 62060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['Int', '$CreatureFinalStat(FiredCreature;Defence) * 100 / 1000']
+
+[ActiveSkill J2] 62030 :: Bless cd=24s tgtCnt=0
+    ModStatR tgt=Target vals=['Attack', '160']
+
+[PassiveSkill J2] 62070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['MinDamageRatio', '150']
+
+[PassiveSkill J2] 62080 :: None cd=0.8s tgtCnt=1
+
+[PassiveSkill J2] 62050 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['CriticalChance', '80']
+
+[ActiveSkill J3] 63010 :: ShiningRay tgtCnt=1
+    DMG GetDamageR coeff=80.0% tgt=Myself vals=['800', 'None', '5'] growthCol=21(~0.408%/lv)
+
+[PassiveSkill J3] 63040 :: None tgtCnt=1
+    ModStatR tgt=Myself vals=['Defence', '250']
+    State tgt=Myself vals=[]
+
+[PassiveSkill J3] 63050 :: None cd=18s tgtCnt=1
+    UseSkill -> ['63052']
+      └ skill 63052 (None):
+         DMG GetDamageR coeff=150.0% tgt=Target vals=['1500', 'Dot', '2'] growthCol=21(~0.408%/lv)
+
+[ActiveSkill J3] 63020 :: HolyFountain cd=40s tgtCnt=1
+    CreateProjectile proj=63020 maxTgt=None tick=['200', '200'] dur=25000 -> SkillIndex=['63021']
+      └ child skill 63021 (None):
+         ModStat tgt=Parent vals=['AttackPowerToBoss', '100']
+         State tgt=Parent vals=[]
+
+[ActiveSkill J3] 63030 :: HolyMagicShell cd=27s tgtCnt=0
+    ModStat tgt=Target vals=['Toughness', '50']
+    ModStatR tgt=Myself vals=['Attack', '150']
+
+[PassiveSkill J3] 63060 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['AttackPowerExcludeBoss', '150']
+    ModStat tgt=Parent vals=['DebuffResist', '5']
+    ModStat tgt=Myself vals=['AttackPower', '250']
+
+[PassiveSkill J3] 63070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['CriticalChance', '80']
+    ModStat tgt=Myself vals=['CriticalPower', '120']
+
+[PassiveSkill J3] 63080 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['FinalDamage', '150']
+    ModStat tgt=Myself vals=['MpConsumeRatio', '100']
+
+[ActiveSkill J4] 64010 :: Bigbang tgtCnt=1
+    DMG GetDamageR coeff=290.0% tgt=Myself vals=['2900', 'None', '5'] growthCol=21(~0.408%/lv)
+    State tgt=Myself vals=[]
+    ClearState tgt=Myself vals=['BigbangEffect']
+
+[PassiveSkill J4] 64100 :: None tgtCnt=1
+    ModSkillStat tgt=Myself vals=['63051', '2', 'FinalDamage', '500']
+    ModSkillStat tgt=Myself vals=['63052', '1', 'FinalDamage', '500']
+    ModSkill tgt=Myself vals=['62020', '1', 'ModStatAddValue', '250']
+    ModSkill tgt=Myself vals=['63021', '1', 'ModStatAddValue', '300']
+
+[ActiveSkill J4] 64020 :: AngelRay cd=17s tgtCnt=1
+    DMG GetDamageR coeff=680.0% tgt=Target vals=['6800', 'None', '2'] growthCol=12(~0.51%/lv)
+    DMG GetDamageR coeff=680.0% tgt=Parent vals=['6800', 'Dot', '1'] growthCol=12(~0.51%/lv) COND=$CreatureIsBoss(TargetCreature) == 1 Flag=Disabled
+
+[ActiveSkill J4] 64030 :: Genesis cd=23s tgtCnt=1
+    UseSkillToTarget -> ['64031']
+      └ skill 64031 (None):
+         DMG GetDamageR coeff=700.0% tgt=Target vals=['7000', 'None', '6'] growthCol=12(~0.51%/lv) Flag=SyncQueueDelayBySkillSpeed
+
+[ActiveSkill J4] 64040 :: AdvancedBless cd=26s tgtCnt=0
+    ModStat tgt=Target vals=['FinalDamage', '70']
+    ModStat tgt=Parent vals=['MpConsumeRatio', '-70']
+    ModStat tgt=Myself vals=['FinalDamage', '40']
+
+[ActiveSkill J4] 64050 :: Infinity cd=30s tgtCnt=1
+    ModStat tgt=Myself vals=['FinalDamage', '150']
+    ModStatOnTick tgt=Myself vals=['FinalDamage', '10', '10']
+
+[ActiveSkill J4] 64060 :: Bahamute cd=80s tgtCnt=1
+    CreateProjectile proj=64060 maxTgt=1 tick=['4000', '4000'] dur=30000 -> SkillIndex=['64061']
+      └ child skill 64061 (None):
+         DMG GetDamageR coeff=3500.0% tgt=ProjectilePosition vals=['35000', 'None', '1'] growthCol=12(~0.51%/lv)
+
+[PassiveSkill J4] 64070 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['BuffDurationRatio', '100']
+
+[PassiveSkill J4] 64080 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['FinalDamage', '30']
+
+[PassiveSkill J4] 64090 :: None tgtCnt=1
+    ModStat tgt=Myself vals=['FinalDamage', '50']
+    ModStat tgt=Myself vals=['CriticalPower', '$CreatureFinalStat(FiredCreature;HpRatio) / 100 * 20']
+
+==========================================================================
+■ 비숍 (CI 6) — 마스터리 58개
+==========================================================================
+  M60010 lv12 parent=61010 main=True :: ModSkillStat['61010', '0', 'GiveDamagePower1', '150'] | ModSkillStat['61011', '0', 'GiveDamagePower1', '150']
+  M60020 lv15 parent=61010 main=True :: ModSkill['61011', '0', 'MaxHitCount', '1']
+  M60030 lv19 parent=61010 main=True :: ModSkillStat['61010', '0', 'GiveDamagePower1', '200'] | ModSkillStat['61011', '0', 'GiveDamagePower1', '200']
+  M60040 lv22 parent=61010 main=True :: ModSkill['61011', '0', 'MaxHitCount', '1']
+  M60050 lv26 parent=61010 main=True :: ModSkillStat['61010', '0', 'GiveDamagePower1', '200'] | ModSkillStat['61011', '0', 'GiveDamagePower1', '200']
+  M60060 lv32 parent=62010 main=True :: ModSkillStat['62010', '1', 'GiveDamagePower1', '150']
+  M60070 lv37 parent=62010 main=True :: ModSkill['62010', '1', 'MaxHitCount', '1']
+  M60080 lv42 parent=62010 main=True :: ModSkillStat['62010', '1', 'GiveDamagePower1', '200']
+  M60090 lv47 parent=62010 main=True :: ModSkill['62010', '1', 'ModStatAddValue', '150']
+  M60100 lv52 parent=62010 main=True :: ModSkillStat['62010', '1', 'GiveDamagePower1', '200']
+  M60110 lv56 parent=62010 main=True :: ModSkill['62010', '1', 'Value', '1', '2']
+  M60120 lv62 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '100']
+  M60130 lv66 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '110']
+  M60140 lv71 parent=63010 main=True :: ModSkill['63010', '1', 'ModStatAddValue', '100']
+  M60150 lv76 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '120']
+  M60160 lv80 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '130']
+  M60170 lv84 parent=63010 main=True :: ModSkill['63010', '1', 'ModStatAddValue', '100']
+  M60180 lv88 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '140']
+  M60190 lv92 parent=63010 main=True :: ModSkillStat['63010', '1', 'GiveDamagePower1', '150']
+  M60200 lv96 parent=63010 main=True :: ModSkill['63010', '1', 'Value', '1', '2']
+  M60210 lv102 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '100']
+  M60220 lv106 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '110']
+  M60230 lv111 parent=64010 main=True :: ModSkill['64010', '1', 'ModStatAddValue', '100']
+  M60240 lv116 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '120']
+  M60250 lv120 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '130']
+  M60260 lv124 parent=64010 main=True :: ModSkill['64010', '1', 'ModStatAddValue', '100']
+  M60270 lv128 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '140']
+  M60280 lv132 parent=64010 main=True :: ModSkillStat['64010', '1', 'GiveDamagePower1', '150']
+  M60290 lv136 parent=64010 main=True :: ModSkill['64010', '1', 'Value', '1', '2']
+  M60015 lv14 parent=None main=None :: None
+  M60025 lv17 parent=None main=None :: None
+  M60035 lv21 parent=61030 main=None :: ModSkillR['61030', '0', 'SkillCoolTimeMs', '-300']
+  M60045 lv24 parent=61040 main=None :: ModSkillR['61040', '0', 'SkillCoolTimeMs', '-300']
+  M60055 lv28 parent=None main=None :: None
+  M60065 lv34 parent=None main=None :: None
+  M60075 lv39 parent=62020 main=None :: ModSkillR['62020', '1', 'DurationMs', '500']
+  M60085 lv44 parent=62030 main=None :: ModSkillR['62030', '1', 'DurationMs', '300']
+  M60095 lv49 parent=62080 main=None :: ModStat['AttackSpeed', '70']
+  M60105 lv54 parent=62020 main=None :: ModStatR['Attack', '80']
+  M60115 lv58 parent=None main=None :: None
+  M60125 lv64 parent=None main=None :: None
+  M60135 lv68 parent=63020 main=None :: ModSkillEnabled['63021', '2']
+  M60145 lv73 parent=63050 main=None :: ModSkillStat['63051', '2', 'GiveDamagePower1', '500'] | ModSkillStat['63052', '1', 'GiveDamagePower1', '500']
+  M60155 lv78 parent=63050 main=None :: ModSkill['63051', '0', 'SkillTriggerRatio', '100']
+  M60165 lv82 parent=63030 main=None :: ModSkillEnabled['63030', '2']
+  M60175 lv86 parent=None main=None :: None
+  M60185 lv90 parent=63060 main=None :: ModSkillEnabled['63060', '3'] | ModSkillEnabled['63061', '3']
+  M60195 lv94 parent=63050 main=None :: ModSkillEnabled['63050', '2']
+  M60205 lv98 parent=63060 main=None :: ModSkillR['63060', '1', 'DurationMs', '500'] | ModSkillR['63061', '1', 'DurationMs', '500']
+  M60215 lv104 parent=63050 main=None :: ModSkill['63051', '2', 'Value', '1', '2'] | ModSkill['63052', '1', 'Value', '1', '2']
+  M60225 lv108 parent=64020 main=None :: ModSkillStat['64020', '0', 'GiveDamagePower1', '500']
+  M60235 lv113 parent=64040 main=None :: ModSkillEnabled['64040', '3']
+  M60245 lv118 parent=64030 main=None :: ModSkillStat['64031', '1', 'GiveDamagePower1', '500']
+  M60255 lv122 parent=64020 main=None :: ModSkillEnabled['64020', '3']
+  M60265 lv126 parent=64030 main=None :: ModSkillR['64030', '0', 'SkillCoolTimeMs', '-300']
+  M60275 lv130 parent=64060 main=None :: ModSkillStat['64061', '1', 'GiveDamagePower1', '500'] | ModSkill['64061', '1', 'MaxHitCount', '3']
+  M60285 lv134 parent=64090 main=None :: ModStat['AttackSpeed', '$CreatureFinalStat(FiredCreature;HpRatio) / 100 * 15']
+  M60295 lv138 parent=64060 main=None :: ModSkillR['64060', '0', 'SkillCoolTimeMs', '-300']

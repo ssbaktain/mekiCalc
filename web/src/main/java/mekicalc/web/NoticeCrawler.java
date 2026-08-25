@@ -135,8 +135,8 @@ public final class NoticeCrawler {
                     if (n.postedAt > liveSince) liveSince = n.postedAt;
                 }
             }
-            // 4b) 갱신 글 재추출 → 발송 매트릭스(§3-3: issue 새 항목/우편 추가만 델타 발송).
-            //     + 확인 중인 현상은 제목이 안 바뀌어도 주기적으로 재크롤해 수정(open→fixed)을 웹에 반영(무알림).
+            // 4b) 갱신 글 재추출 → 웹에만 반영(카톡 발송 없음).
+            //     확인 중인 현상은 제목이 안 바뀌어도 주기적으로 재크롤해 수정(open→fixed)을 웹에 반영(무알림).
             enqueueIssueRefresh();
             processReextract();
             // 4c) 과거 글 백필 추출(하루 15건).
@@ -156,8 +156,7 @@ public final class NoticeCrawler {
 
     /**
      * 확인 중인 현상 중 아직 미해결(open) 항목이 남은 글을 주기적으로 재추출 대상에 넣는다. 제목이 안 바뀌어도
-     * 내용 수정(open→fixed)을 웹에 반영하기 위함. 발송 여부는 {@link #processReextract}의 {@link #issueDelta}가
-     * 판단한다(새 open/우편만 알림, 수정 완료는 웹만 갱신·무알림). 비용 보호를 위해 틱당 1개(가장 오래 안 본 글)만.
+     * 내용 수정(open→fixed)을 웹에 반영하기 위함(웹 모니터링 전용 · 카톡 발송 없음). 비용 보호를 위해 틱당 1개(가장 오래 안 본 글)만.
      */
     private void enqueueIssueRefresh() {
         long now = System.currentTimeMillis() / 1000;
@@ -177,23 +176,19 @@ public final class NoticeCrawler {
         }
     }
 
-    /** 갱신(제목변경) 감지된 글 재추출 + 발송 매트릭스. 이전 data와 새 data를 비교(§3-3). 틱당 소수. */
+    /** 갱신(제목변경/주기 재크롤) 감지된 글 재추출 → store 갱신(웹 반영). 카톡 발송 없음. 틱당 소수. */
     private void processReextract() {
         int quota = SUMMARIES_PER_TICK;
         for (String id : new java.util.ArrayList<>(pendingReextract)) {
             if (quota <= 0) break;
             NoticeStore.Notice n = store.get(id);
             if (n == null) { pendingReextract.remove(id); continue; }
-            NoticeData old = n.data;                 // 재추출 전 스냅샷(비교용)
-            if (!summarizeOne(n)) continue;          // 실패 → 다음 틱 재시도(pendingReextract 유지)
+            if (!summarizeOne(n)) continue;          // 재추출 = store에 최신 반영(웹 갱신). 실패 → 다음 틱 재시도
             pendingReextract.remove(id);
             quota--;
-            String delta = issueDelta(old, n.data, n);
-            if (delta != null) {
-                String key = "notice-delta:" + id + ":" + Integer.toHexString(delta.hashCode());
-                if (outbox.enqueue(delta, key) > 0)
-                    System.out.println("[갱신 델타 큐잉] id=" + id + " title=" + n.title);
-            }
+            // 확인 중인 현상의 변경은 웹에만 반영(open→fixed 모니터링). 카톡 델타 재공지는 하지 않는다(유저 확정 2026-08-15):
+            // 넥슨이 원문 문구를 반복 수정하면 정확 문자열 매칭이 '새 항목'으로 오인해 카톡 중복 발송되던 문제를 원천 제거.
+            // (수정 완료 시 넥슨이 별도 신규 공지를 올리므로 그 신규 발송으로 충분.)
         }
     }
 

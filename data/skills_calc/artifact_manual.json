@@ -1,0 +1,1072 @@
+{
+ "_comment": "유물 계산 IR manual(손작업본). 스캐폴드=기계추출(idx/grade/name/desc/트리거/effects.values). _로 시작하는 필드(_op/_raw/_child/_defer/_cltStat)=참고 힌트, 확정 후 삭제. 조건 태그(bossOnly/minEnemies/perEnemy/mpAtLeast/derived/window)는 _raw·desc 보고 유저가 추가. 규약=_clt2_ARTIFACT_TAGS.md",
+ "artifacts": [
+  {
+   "idx": "301",
+   "grade": "epic",
+   "name": "죽은자의 부적",
+   "desc": "10초마다 5초간 공격력이 10% 증가합니다.",
+   "descMax": "10초마다 5초간 공격력이 20% 증가합니다.",
+   "trigger": "period",
+   "periodMs": 10000,
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "unit": "pct",
+     "durationMs": 5000,
+     "_op": "ModStatR",
+     "_cltStat": "Attack"
+    }
+   ]
+  },
+  {
+   "idx": "302",
+   "grade": "epic",
+   "name": "돼지의 리본",
+   "desc": "공격 시 20% 확률로 HP를 1%, MP를 1% 회복합니다. 재사용 대기시간 5초",
+   "descMax": "공격 시 20% 확률로 HP를 2%, MP를 2% 회복합니다. 재사용 대기시간 5초",
+   "trigger": "onAttack",
+   "chance": 200,
+   "cooldownMs": 5000,
+   "effects": []
+  },
+  {
+   "idx": "303",
+   "grade": "epic",
+   "name": "무녀의 구슬",
+   "desc": "버프 지속시간이 6% 증가합니다.",
+   "descMax": "버프 지속시간이 12% 증가합니다.",
+   "effects": [
+    {
+     "stat": "BuffDurationRatio",
+     "values": [
+      60,
+      72,
+      84,
+      96,
+      108,
+      120
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "304",
+   "grade": "epic",
+   "name": "어둠의 계약서",
+   "desc": "보스 공격 시 크리티컬 확률이 8% 증가합니다.",
+   "descMax": "보스 공격 시 크리티컬 확률이 16% 증가합니다.",
+   "effects": [
+    {
+     "stat": "CriticalChance",
+     "values": [
+      80,
+      96,
+      112,
+      128,
+      144,
+      160
+     ],
+     "bossOnly": true,
+     "_op": "ModDamagePipelineStat"
+    }
+   ]
+  },
+  {
+   "idx": "401",
+   "grade": "unique",
+   "name": "무지개색 달팽이 등껍질",
+   "desc": "전투 시작 시 15초간 크리티컬 확률이 15%, 크리티컬 데미지가 20% 증가합니다.",
+   "descMax": "전투 시작 시 15초간 크리티컬 확률이 30%, 크리티컬 데미지가 40% 증가합니다.",
+   "trigger": "combatStart",
+   "note": "무지개달팽이: combatStart 15초 창. 크확15%[5각30%]+크뎀20%[5각40%] 둘 다 durationMs 15000(op2 크뎀은 클라 durationMs 생략됐으나 desc상 15초 동일)",
+   "effects": [
+    {
+     "stat": "CriticalChance",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "durationMs": 15000,
+     "_op": "ModStat"
+    },
+    {
+     "stat": "CriticalPower",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat",
+     "durationMs": 15000
+    }
+   ]
+  },
+  {
+   "idx": "402",
+   "grade": "unique",
+   "name": "육각 수정 목걸이",
+   "desc": "20초마다 30초간 데미지가 현재 수치의 15%만큼 증가합니다.\\n이 효과는 최대 3회까지 중첩됩니다.",
+   "descMax": "20초마다 30초간 데미지가 현재 수치의 30%만큼 증가합니다.\\n이 효과는 최대 3회까지 중첩됩니다.",
+   "trigger": "period",
+   "periodMs": 20000,
+   "effects": [
+    {
+     "stat": "DMG",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "dmgMult": true,
+     "maxStacks": 3,
+     "durationMs": 30000,
+     "_op": "ModStatR",
+     "_cltStat": "AttackPower"
+    }
+   ]
+  },
+  {
+   "idx": "403",
+   "grade": "unique",
+   "name": "아르웬의 유리구두",
+   "desc": "동료의 소환 지속시간이 20% 증가합니다.",
+   "descMax": "동료의 소환 지속시간이 40% 증가합니다.",
+   "effects": [
+    {
+     "stat": "SupporterDurationRatio",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "404",
+   "grade": "unique",
+   "name": "머쉬맘의 갓",
+   "desc": "명중이 5 증가하고, 공격 시 대상의 회피를 초과하는 명중 1마다 데미지가 1% 증가합니다. 최대 20%까지 적용됩니다.",
+   "descMax": "명중이 10 증가하고, 공격 시 대상의 회피를 초과하는 명중 1마다 데미지가 2% 증가합니다. 최대 40%까지 적용됩니다.",
+   "_survival": [
+    "HitChance"
+   ],
+   "note": "머쉬맘: 명중초과 데미지 최대치 가정(assumeMax)",
+   "effects": [
+    {
+     "stat": "DMG",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "assumeMax": true,
+     "_op": "ModDamagePipelineStat",
+     "_cltStat": "AttackPower"
+    }
+   ]
+  },
+  {
+   "idx": "405",
+   "grade": "unique",
+   "name": "맑은 샘물",
+   "desc": "[성장 던전] 전투 시 최종 데미지가 10% 증가합니다.",
+   "descMax": "[성장 던전] 전투 시 최종 데미지가 20% 증가합니다.",
+   "content": [
+    "성장던전"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "406",
+   "grade": "unique",
+   "name": "헬레나의 오래된 장갑",
+   "desc": "공격 속도가 8% 증가하고, 공격 속도의 25%만큼 최대 데미지 배율이 증가합니다.",
+   "descMax": "공격 속도가 16% 증가하고, 공격 속도의 50%만큼 최대 데미지 배율이 증가합니다.",
+   "effects": [
+    {
+     "stat": "AttackSpeed",
+     "values": [
+      80,
+      96,
+      112,
+      128,
+      144,
+      160
+     ],
+     "_op": "ModStat"
+    },
+    {
+     "stat": "MaxDamageRatio",
+     "derived": {
+      "from": "AttackSpeed",
+      "ratio": [
+       250,
+       300,
+       350,
+       400,
+       450,
+       500
+      ]
+     },
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "407",
+   "grade": "unique",
+   "name": "자쿰의 돌조각",
+   "desc": "[레이드 - 자쿰] 전투 시 최종 데미지가 20%, 디버프 내성이 15 증가하고, HP 물약 재사용 대기시간이 20% 감소합니다.",
+   "descMax": "[레이드 - 자쿰] 전투 시 최종 데미지가 60%, 디버프 내성이 45 증가하고, HP 물약 재사용 대기시간이 60% 감소합니다.",
+   "content": [
+    "레이드-자쿰"
+   ],
+   "_survival": [
+    "HpPotionCoolTimeReduceRatio",
+    "DebuffResist"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      280,
+      360,
+      440,
+      520,
+      600
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "408",
+   "grade": "unique",
+   "name": "혼테일의 비늘",
+   "desc": "[레이드 - 혼테일] 전투 시 최종 데미지가 20% 증가하고, HP 물약 재사용 대기시간이 20% 감소합니다. 혼테일이 부여하는 '허약', '유혹', '물약 봉인', '암흑' 디버프를 즉시 제거합니다. (재사용 대기시간 {2}초)",
+   "descMax": "[레이드 - 혼테일] 전투 시 최종 데미지가 60% 증가하고, HP 물약 재사용 대기시간이 60% 감소합니다. 혼테일이 부여하는 '허약', '유혹', '물약 봉인', '암흑' 디버프를 즉시 제거합니다. (재사용 대기시간 {2}초)",
+   "content": [
+    "레이드-혼테일"
+   ],
+   "_survival": [
+    "HpPotionCoolTimeReduceRatio"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      280,
+      360,
+      440,
+      520,
+      600
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "501",
+   "grade": "legend",
+   "name": "성배",
+   "desc": "적 처치 시 2% 확률로 30초간 최종 데미지가 15% 증가합니다. 처치한 대상이 보스라면 반드시 발동합니다.",
+   "descMax": "적 처치 시 2% 확률로 30초간 최종 데미지가 30% 증가합니다. 처치한 대상이 보스라면 반드시 발동합니다.",
+   "trigger": "onKill",
+   "chance": 20,
+   "note": "성배: onKill 2%(chance:20‰. TriggerRatio가 #Artifact_HolyGrail 함수라 자동추출 안 됨→수기). FinalDamage 15%[5각30%] 30초. K(분당처치수)로 구동. ★\"보스 처치 시 반드시 발동\"은 보스처치=전투종료라 무의미(보스탭 K=0)",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "durationMs": 30000,
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "502",
+   "grade": "legend",
+   "name": "낡은 오르골",
+   "desc": "디버프에 걸리면 디버프를 1개 제거하고, 25초간 공격력이 25% 증가합니다. 재사용 대기시간 20초",
+   "descMax": "디버프에 걸리면 디버프를 1개 제거하고, 25초간 공격력이 50% 증가합니다. 재사용 대기시간 20초",
+   "trigger": "onState",
+   "cooldownMs": 20000,
+   "_defer": "피격/상태의존 → 컨텐츠모드 보류",
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      250,
+      300,
+      350,
+      400,
+      450,
+      500
+     ],
+     "unit": "pct",
+     "durationMs": 25000,
+     "_op": "ModStatR",
+     "_cltStat": "Attack"
+    }
+   ]
+  },
+  {
+   "idx": "503",
+   "grade": "legend",
+   "name": "은 펜던트",
+   "desc": "공격 시 15% 확률로 대상의 받는 피해가 5초간 10% 증가하고, HP 회복력이 30초간 5% 감소합니다. 최대 5회 중첩되며 지속시간은 개별 적용됩니다.",
+   "descMax": "공격 시 15% 확률로 대상의 받는 피해가 5초간 20% 증가하고, HP 회복력이 30초간 10% 감소합니다. 최대 5회 중첩되며 지속시간은 개별 적용됩니다.",
+   "trigger": "onAttack",
+   "chance": 150,
+   "_survival": [
+    "HpRecoverPower"
+   ],
+   "note": "은펜던트: onAttack 15% Weakness 5초, 최대5중첩·개별지속(individualDur=발동마다 독립창 겹쳐쌓기 non-pause. refresh:false 아님). 효과=v×min(5,겹치는창수)",
+   "effects": [
+    {
+     "stat": "Weakness",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "maxStacks": 5,
+     "durationMs": 5000,
+     "_op": "ModStat",
+     "individualDur": true
+    }
+   ]
+  },
+  {
+   "idx": "504",
+   "grade": "legend",
+   "name": "별의 돌",
+   "desc": "받는 피해가 20% 증가하고, 보스 몬스터 데미지가 50% 증가합니다.",
+   "descMax": "받는 피해가 40% 증가하고, 보스 몬스터 데미지가 100% 증가합니다.",
+   "_survival": [
+    "Weakness(self=받피증 페널티)"
+   ],
+   "effects": [
+    {
+     "stat": "AttackPowerToBoss",
+     "values": [
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "505",
+   "grade": "legend",
+   "name": "고대의 책",
+   "desc": "크리티컬 확률이 10% 증가하고, 크리티컬 확률의 30%만큼 크리티컬 데미지가 증가합니다.",
+   "descMax": "크리티컬 확률이 20% 증가하고, 크리티컬 확률의 60%만큼 크리티컬 데미지가 증가합니다.",
+   "effects": [
+    {
+     "stat": "CriticalChance",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "_op": "ModStat"
+    },
+    {
+     "stat": "CriticalPower",
+     "derived": {
+      "from": "CriticalChance",
+      "ratio": [
+       300,
+       360,
+       420,
+       480,
+       540,
+       600
+      ]
+     },
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "506",
+   "grade": "legend",
+   "name": "월로",
+   "desc": "피해를 입으면 5% 확률로 HP를 3% 회복하고, 1초간 피해 면역이 됩니다. 재사용 대기시간 5초",
+   "descMax": "피해를 입으면 5% 확률로 HP를 6% 회복하고, 2초간 피해 면역이 됩니다. 재사용 대기시간 5초",
+   "trigger": "onDamage",
+   "chance": 50,
+   "cooldownMs": 5000,
+   "_defer": "피격/상태의존 → 컨텐츠모드 보류",
+   "effects": []
+  },
+  {
+   "idx": "507",
+   "grade": "legend",
+   "name": "화염초",
+   "desc": "주변의 적 1명마다 최종 데미지가 1% 증가합니다. 최대 10명까지 적용됩니다.",
+   "descMax": "주변의 적 1명마다 최종 데미지가 2% 증가합니다. 최대 10명까지 적용됩니다.",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      10,
+      12,
+      14,
+      16,
+      18,
+      20
+     ],
+     "perEnemy": {
+      "max": 10
+     },
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "508",
+   "grade": "legend",
+   "name": "영혼의 계약서",
+   "desc": "[챕터 사냥] 전투 시 스킬 재사용 대기시간이 20% 감소합니다.",
+   "descMax": "[챕터 사냥] 전투 시 스킬 재사용 대기시간이 40% 감소합니다.",
+   "content": [
+    "챕터사냥"
+   ],
+   "effects": [
+    {
+     "stat": "COOLDOWN_REDUCTION_PCT",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat",
+     "_cltStat": "CoolTimeReduceRatio"
+    }
+   ]
+  },
+  {
+   "idx": "509",
+   "grade": "legend",
+   "name": "불이 켜진 램프",
+   "desc": "[월드보스] 전투 시 최종 데미지가 20% 증가합니다.",
+   "descMax": "[월드보스] 전투 시 최종 데미지가 40% 증가합니다.",
+   "content": [
+    "월드보스"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "510",
+   "grade": "legend",
+   "name": "영혼의 주머니",
+   "desc": "[아레나 / 월드 아레나] 전투 시 최종 데미지가 20% 증가합니다.",
+   "descMax": "[아레나 / 월드 아레나] 전투 시 최종 데미지가 40% 증가합니다.",
+   "content": [
+    "월드아레나",
+    "아레나"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "511",
+   "grade": "legend",
+   "name": "고대문서 조각",
+   "desc": "[길드 토벌전] 전투 시 최종 데미지가 20% 증가합니다.",
+   "descMax": "[길드 토벌전] 전투 시 최종 데미지가 40% 증가합니다.",
+   "content": [
+    "길드토벌전"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      240,
+      280,
+      320,
+      360,
+      400
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "512",
+   "grade": "legend",
+   "name": "얼음의 영혼석",
+   "desc": "2초마다 MP를 1% 회복합니다. MP 50% 이상 시 크리티컬 데미지가 20% 증가하고, 75% 이상이면 40%(2배)로 적용됩니다.",
+   "descMax": "2초마다 MP를 1% 회복합니다. MP 50% 이상 시 크리티컬 데미지가 40% 증가하고, 75% 이상이면 80%(2배)로 적용됩니다.",
+   "note": "얼음: ★MP≥75% 가정(최대효율) → 크뎀 40%[5각80%](2스택 합=단일 effect 통합). 추후 MP 선택지. 원식=MP≥50%→20%, ≥75%→+20%(mpAtLeast 500/750)",
+   "effects": [
+    {
+     "stat": "CriticalPower",
+     "values": [
+      400,
+      480,
+      560,
+      640,
+      720,
+      800
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "513",
+   "grade": "legend",
+   "name": "불타는 용암",
+   "desc": "공격 시 대상이 보호막이 아닌 버프를 가지고 있다면 최종 데미지가 4%, 디버프를 가지고 있다면 8%, 보호막을 가지고 있다면 60% 증가합니다.",
+   "descMax": "공격 시 대상이 보호막이 아닌 버프를 가지고 있다면 최종 데미지가 8%, 디버프를 가지고 있다면 16%, 보호막을 가지고 있다면 120% 증가합니다.",
+   "note": "불타는용암: ★대상 상태 우선순위 배타(보호막>디버프>버프, 최고 하나만). priorityGroup:burn 내 condition(require) 충족 중 최고 priority만 적용(가산 아님). shield60%[5각120%]>debuff8%[16%]>buff4%[8%](require=IfShield/IfDebuff/IfBuffExceptShield). ★require=대상상태 의존→컨텐츠모드 보류(현재 0). 우선순위 배타는 유저 케이스 근거(디버프=8% 버프무관), clt/실측 최종확인 필요",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      40,
+      48,
+      56,
+      64,
+      72,
+      80
+     ],
+     "require": "buff",
+     "_defer": "IfBuffExceptShield → 컨텐츠모드 보류",
+     "_op": "ModDamagePipelineStat",
+     "priorityGroup": "burn",
+     "priority": 1
+    },
+    {
+     "stat": "FinalDamage",
+     "values": [
+      80,
+      96,
+      112,
+      128,
+      144,
+      160
+     ],
+     "require": "debuff",
+     "_defer": "IfDebuff → 컨텐츠모드 보류",
+     "_op": "ModDamagePipelineStat",
+     "priorityGroup": "burn",
+     "priority": 2
+    },
+    {
+     "stat": "FinalDamage",
+     "values": [
+      600,
+      720,
+      840,
+      960,
+      1080,
+      1200
+     ],
+     "require": "shield",
+     "_defer": "IfShield → 컨텐츠모드 보류",
+     "_op": "ModDamagePipelineStat",
+     "priorityGroup": "burn",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "idx": "514",
+   "grade": "legend",
+   "name": "세이람의 목걸이",
+   "desc": "적이 2명 이상일 때 일반 몬스터 데미지가 30% 증가합니다. 적이 1명일 때는 보스 몬스터 데미지가 10% 증가합니다.",
+   "descMax": "적이 2명 이상일 때 일반 몬스터 데미지가 60% 증가합니다. 적이 1명일 때는 보스 몬스터 데미지가 20% 증가합니다.",
+   "note": "세이람: 적2+→일반뎀(multi)·적1→보스뎀(single). 배타(M으로 갈림)",
+   "effects": [
+    {
+     "stat": "AttackPowerExcludeBoss",
+     "values": [
+      300,
+      360,
+      420,
+      480,
+      540,
+      600
+     ],
+     "_op": "ModStat",
+     "targetMode": "multi"
+    },
+    {
+     "stat": "AttackPowerToBoss",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "_op": "ModStat",
+     "targetMode": "single"
+    }
+   ]
+  },
+  {
+   "idx": "515",
+   "grade": "legend",
+   "name": "감정의 물병",
+   "desc": "공격력이 15% 증가합니다. 60%를 초과하는 공격 속도 3%마다 최종 데미지가 0.5% 증가합니다. 최대 10%까지 적용됩니다.",
+   "descMax": "공격력이 30% 증가합니다. 60%를 초과하는 공격 속도 3%마다 최종 데미지가 1% 증가합니다. 최대 20%까지 적용됩니다.",
+   "note": "물병: FinalDamage=초과분 derived. 공속 60%(threshold600) 초과분을 3%(step30)마다 perStep‰씩(0.5%[5각1%]) 최대 maxCount20회(cap=perStep×20=10%[5각20%]). 라이브 공속 의존(tick200ms). ★공속60% 미만이면 0",
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "unit": "pct",
+     "_op": "ModStatR",
+     "_cltStat": "Attack"
+    },
+    {
+     "stat": "FinalDamage",
+     "_op": "ModStat",
+     "derived": {
+      "from": "AttackSpeed",
+      "threshold": 600,
+      "step": 30,
+      "perStep": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "maxCount": 20
+     }
+    }
+   ]
+  },
+  {
+   "idx": "516",
+   "grade": "legend",
+   "name": "천도나무용 명약",
+   "desc": "공격 시 20% 확률로 5초간 대상의 받는 피해를 15% 증가시킵니다.",
+   "descMax": "공격 시 20% 확률로 5초간 대상의 받는 피해를 30% 증가시킵니다.",
+   "_survival": [
+    "Weakness(self=받피증 페널티)"
+   ],
+   "note": "천도명약: ★대상 버프없음 가정 → effect1(전투중1회 require:buff) 제외(drop). effect0=onAttack 20% Weakness 5초만 적용. 추후 컨텐츠모드에서 effect1 복원",
+   "effects": [
+    {
+     "stat": "Weakness",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "trigger": "onAttack",
+     "chance": 200,
+     "durationMs": 5000,
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "517",
+   "grade": "legend",
+   "name": "양초",
+   "desc": "전투 시작 시 최종 데미지가 8% 증가하고, 20초 후 보스 몬스터 데미지가 30% 증가합니다. 전투 시작 40초 후 모든 효과가 사라집니다.",
+   "descMax": "전투 시작 시 최종 데미지가 16% 증가하고, 20초 후 보스 몬스터 데미지가 60% 증가합니다. 전투 시작 40초 후 모든 효과가 사라집니다.",
+   "trigger": "combatStart",
+   "fixedDuration": true,
+   "note": "양초: 최종뎀 idx0=전투시작~40초(durationMs40000). 보스뎀 idx1=20초후 시작(delayMs20000)~40초 종료(durationMs20000). 전투시작 40초에 전체 소멸(combatStart 기준)",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      80,
+      96,
+      112,
+      128,
+      144,
+      160
+     ],
+     "durationMs": 40000,
+     "_op": "ModStat"
+    },
+    {
+     "stat": "AttackPowerToBoss",
+     "values": [
+      300,
+      360,
+      420,
+      480,
+      540,
+      600
+     ],
+     "_op": "ModStat",
+     "delayMs": 20000,
+     "durationMs": 20000
+    }
+   ]
+  },
+  {
+   "idx": "518",
+   "grade": "legend",
+   "name": "동맹의 증표",
+   "desc": "아군 플레이어(본인 포함)의 공격력을 10% 증가시킵니다. 이 유물을 장착한 다른 플레이어의 효과와 중복 적용됩니다.",
+   "descMax": "아군 플레이어(본인 포함)의 공격력을 20% 증가시킵니다. 이 유물을 장착한 다른 플레이어의 효과와 중복 적용됩니다.",
+   "note": "동맹증표: 자식 9051801 ModStatR Attack → ATK_PCT 곱(unit:pct=ModStatR 반영, 별도 태그 불요). 다인플 미가정이라 target 제외(본인만). 10%[5각20%]. 멀티 중복(타 플레이어)은 미모델",
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "unit": "pct"
+    }
+   ]
+  },
+  {
+   "idx": "519",
+   "grade": "legend",
+   "name": "뿔피리",
+   "desc": "동료가 소환되어 있는 동안 자신과 동료의 최종 데미지가 10% 증가합니다. [챕터 보스] 전투 시 자신에게 적용되는 효과가 2배로 적용됩니다.",
+   "descMax": "동료가 소환되어 있는 동안 자신과 동료의 최종 데미지가 20% 증가합니다. [챕터 보스] 전투 시 자신에게 적용되는 효과가 2배로 적용됩니다.",
+   "trigger": "companionSummoned",
+   "note": "뿔피리: FinalDamage 10%[5각20%]를 자신+동료 **양쪽** 부여. trigger=동료소환중(companionSummoned). ★유일하게 \"이미 소환돼 있는 동료\"에게 스탯을 주는 유물(동료 소환된 동안 상시). clt op=Myself(op1)+Parent(op3) 두 개라 effect도 분리: effect0 target:self(+챕터보스 selfMult ×2), effect1 target:companion(동료 각 개체 스탯풀에 FinalDamage 주입, selfMult 없음=동료는 배수 안받음). aw0 챕터보스=자신20%/동료10%, 타컨텐츠=둘다10%. ★2배는 clt op에 없음—desc 유래 컨텐츠 로직. ★동료몫 실제 주입은 동료엔진 조립 시(현재 유일 케이스 특례).",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "_op": "ModStat",
+     "target": "self",
+     "contentMult": [
+      {
+       "content": [
+        "챕터보스"
+       ],
+       "ratio": 2
+      }
+     ]
+    },
+    {
+     "stat": "FinalDamage",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "target": "companion",
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "520",
+   "grade": "legend",
+   "name": "저주받은 인형",
+   "desc": "명중이 15, 최종 데미지가 7% 증가합니다. 자신의 공격을 대상이 회피하면 5초간 최종 데미지 효과가 사라지고, 명중이 3배로 적용됩니다.",
+   "descMax": "명중이 30, 최종 데미지가 14% 증가합니다. 자신의 공격을 대상이 회피하면 5초간 최종 데미지 효과가 사라지고, 명중이 3배로 적용됩니다.",
+   "_survival": [
+    "HitChance"
+   ],
+   "note": "저주인형: FinalDamage 7%[5각14%]. 회피시 최종뎀 사라짐→명중 충분 시 상시 근사(피격/회피 미모델). 명중(HitChance)은 비딜(자식+본체 2건이나 _survival 중복제거)",
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      70,
+      84,
+      98,
+      112,
+      126,
+      140
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
+   "idx": "521",
+   "grade": "legend",
+   "name": "레인디어의 창",
+   "desc": "공격력이 5%, 방어 관통력이 5% 증가합니다. 적이 1명이라면 방어 관통력 증가 효과가 2배로 적용됩니다. 단, 해당 적이 보스일 경우에는 2배 대신 3배로 적용됩니다.",
+   "descMax": "공격력이 10%, 방어 관통력이 10% 증가합니다. 적이 1명이라면 방어 관통력 증가 효과가 2배로 적용됩니다. 단, 해당 적이 보스일 경우에는 2배 대신 3배로 적용됩니다.",
+   "note": "레인디어: 공격력 5%[5각10%](Attack=ATK_PCT, effect0=조건없음 **무조건 상시**, 방관분기와 독립). 방관은 마리수·보스 ★배타분기(하나만): 적2+(multi)→방관5%[10%] / 적1 비보스(single+bossZero)→10%[20%](2배) / 적1 보스(single+bossOnly)→15%[30%](3배). ★조건 자체가 마리수×보스 파티션이라 **priorityGroup 불요**(항상 정확히 하나만 참, default 가산으로 OK)—불타는용암(buff/debuff/shield 겹침→우선순위 필요)과 다름. ★clt op엔 조건 안 보이나 desc상 배타(2/3배 대체). idx1/2/3=op2/3/4",
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+     ],
+     "unit": "pct",
+     "_op": "ModStatR",
+     "_cltStat": "Attack"
+    },
+    {
+     "stat": "PiercePower",
+     "values": [
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+     ],
+     "_op": "ModStat",
+     "targetMode": "multi"
+    },
+    {
+     "stat": "PiercePower",
+     "values": [
+      100,
+      120,
+      140,
+      160,
+      180,
+      200
+     ],
+     "_op": "ModStat",
+     "targetMode": "single",
+     "bossZero": true
+    },
+    {
+     "stat": "PiercePower",
+     "values": [
+      150,
+      180,
+      210,
+      240,
+      270,
+      300
+     ],
+     "_op": "ModStat",
+     "targetMode": "single",
+     "bossOnly": true
+    }
+   ]
+  },
+  {
+   "idx": "522",
+   "grade": "legend",
+   "name": "비밀 지도",
+   "desc": "공격력이 5% 증가합니다. 적이 10명 이상일 때 최종 데미지가 5% 증가합니다. [성장 던전] 전투 시 최종 데미지 증가 효과가 3배로 적용됩니다.",
+   "descMax": "공격력이 10% 증가합니다. 적이 10명 이상일 때 최종 데미지가 10% 증가합니다. [성장 던전] 전투 시 최종 데미지 증가 효과가 3배로 적용됩니다.",
+   "note": "비밀지도: 공격력 5%[5각10%](effect0 항상). 최종뎀=적10명이상(minEnemies10) base 5%[10%], [성장던전]에서 ×3=15%[30%]. ★뿔피리처럼 contentMult(base×ratio): 성장던전은 \"적10명\" 공간의 **부분집합**이라 base가 거기서도 켜짐→pre-split이면 5%+15% 중복버그. 그래서 base 단일 effect+contentMult로. clt op은 FinalDamage 50+150 두개(둘다 Myself·무조건)라 150(op3)=drop, 50에 ratio3 부여. 우리 챕터탭=성장던전 아님→base 5%만(M≥10시)",
+   "effects": [
+    {
+     "stat": "ATK_PCT",
+     "values": [
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+     ],
+     "unit": "pct",
+     "_op": "ModStatR",
+     "_cltStat": "Attack"
+    },
+    {
+     "stat": "FinalDamage",
+     "values": [
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+     ],
+     "_op": "ModStat",
+     "minEnemies": 10,
+     "contentMult": [
+      {
+       "content": [
+        "성장던전"
+       ],
+       "ratio": 3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "idx": "523",
+   "grade": "legend",
+   "name": "순환의 고리",
+   "desc": "5초마다 이 유물의 효과를 제거한 후 현재 크리티컬 확률에 따라 다른 효과를 적용합니다.\\n[100% 미만] 크리티컬 확률 30% 증가.\\n[100% 이상] 스킬 데미지 40% 증가.\\n[100%를 초과하는 10%마다] 기본 공격 데미지 6%씩 최대 10회 추가 증가.",
+   "descMax": "5초마다 이 유물의 효과를 제거한 후 현재 크리티컬 확률에 따라 다른 효과를 적용합니다.\\n[100% 미만] 크리티컬 확률 60% 증가.\\n[100% 이상] 스킬 데미지 80% 증가.\\n[100%를 초과하는 10%마다] 기본 공격 데미지 12%씩 최대 10회 추가 증가.",
+   "trigger": "period",
+   "periodMs": 5000,
+   "startDelayMs": 5000,
+   "refresh": true,
+   "note": "순환의고리: trigger=period 5초 + ★startDelayMs 5000(게임시작 5초후 첫발동). ★refresh:true=매 발동 자기 이전효과 **제거 후 재적용(비누적)** — clt op1~3 ClearState(Artifact_5_23_1/2/3) 대변. 없으면 clt DurationMs 99999999(무한)라 매 5초 누적폭주. 순서: 자기효과 제거→고리 뺀 라이브 크확 재측정→조건버프 부여(제거가 먼저라 자기 크확버프 자동 제외). ★배타 regime(크확 100%기준 파티션, 하나만): 크확<100%(critLt:1000)→크확+30%[5각60%](CriticalChance) / 크확≥100%(critGte:1000)→스킬뎀+40%[5각80%](SkillPower) AND 평타뎀 critExcess(초과 10%=step100마다 +6%[5각12%], 최대10회, BaseAttackPower). ★조건=플랫태그 critLt/critGte(천분율, 1000=100%)로 minEnemies·targetMode와 동일 양식. 엔진 특수(라이브스탯 의존)",
+   "effects": [
+    {
+     "stat": "SkillPower",
+     "values": [
+      400,
+      480,
+      560,
+      640,
+      720,
+      800
+     ],
+     "_op": "ModStat",
+     "critGte": 1000
+    },
+    {
+     "stat": "BaseAttackPower",
+     "values": [
+      60,
+      72,
+      84,
+      96,
+      108,
+      120
+     ],
+     "_op": "ModStat",
+     "critGte": 1000,
+     "critExcess": {
+      "step": 100,
+      "maxCount": 10
+     }
+    },
+    {
+     "stat": "CriticalChance",
+     "values": [
+      300,
+      360,
+      420,
+      480,
+      540,
+      600
+     ],
+     "_op": "ModStat",
+     "critLt": 1000
+    }
+   ]
+  }
+ ]
+}

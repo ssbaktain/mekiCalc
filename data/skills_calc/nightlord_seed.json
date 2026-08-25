@@ -1,0 +1,1340 @@
+{
+  "_comment": "나이트로드 계산 IR 참고본(seed). skills=마스터리 제외 본체(idx/name/desc/role/type/trigger/condition/requireLevel/cooldown/mp/summon/effects). effects=deal(coeff/hits/targetCount/growthSlot)·statUp/buff/debuff(stat/value/growthSlot/durationMs)·resource(action/name/target/maxStack|amount)·cc·skillBoost. masteries=분리 섹션(lv/skill소속/type/stat/value/role/note, 레벨 오름차순). role은 전역/패시브성격(statUp/debuff)에만. growthSlot·durationMs·requireLevel=원본(clt2 IR/HeroSkillTable) 조회. requireLevel null=기본습득(레벨제한 없음). 선반영·boostedBy·descTemplate 등은 제외.",
+  "job": "nightlord",
+  "skills": [
+    {
+      "idx": "9000",
+      "name": "민첩한 몸놀림",
+      "desc": "15초간 공격 속도가 15%, 이동 속도가 10% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": null,
+      "cooldown": 60000,
+      "mp": 80,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "AttackSpeed",
+          "value": 150,
+          "durationMs": 15000
+        },
+        {
+          "role": "statUp",
+          "stat": "RunSpeedMms",
+          "value": 100,
+          "durationMs": 15000
+        }
+      ]
+    },
+    {
+      "idx": "91010",
+      "name": "럭키 세븐",
+      "desc": "[기본 공격 효과] 전방에 표창을 던져 적 3명에게 26% 피해를 2회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "basicAttack",
+      "requireLevel": null,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 260,
+          "hits": 2,
+          "targetCount": 3,
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "91020",
+      "name": "헤이스트",
+      "desc": "이동 속도가 15% 증가합니다.",
+      "role": [
+        "utility"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 10,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "RunSpeedMms",
+          "value": 150,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "91030",
+      "name": "다크 사이트",
+      "desc": "8초간 몸을 숨기며, 지속시간 내 스킬 발동 시 8초간 크리티컬 확률 6%, 공격력 10% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 15,
+      "cooldown": 25000,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "CriticalChance",
+          "value": 60,
+          "growthSlot": 21,
+          "durationMs": 8000
+        },
+        {
+          "role": "statUp",
+          "stat": "ATK_PCT",
+          "value": 100,
+          "growthSlot": 21,
+          "durationMs": 8000
+        }
+      ]
+    },
+    {
+      "idx": "91040",
+      "name": "플래시 점프",
+      "desc": "점프 중 한 번 더 도약합니다.",
+      "role": [
+        "utility"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": null,
+      "effects": []
+    },
+    {
+      "idx": "92010",
+      "name": "슈리켄 버스트",
+      "desc": "[기본 공격 효과] 적에게 폭발하는 수리검을 던져 주변 적 4명에게 40% 피해를 3회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "basicAttack",
+      "requireLevel": 30,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 400,
+          "hits": 3,
+          "targetCount": 4,
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "92020",
+      "name": "윈드 탈리스만",
+      "desc": "전방에 부적을 던져 적 8명에게 400% 피해를 입히고, 2초간 기절시킵니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 35,
+      "cooldown": 24000,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 4000,
+          "hits": 1,
+          "targetCount": 8,
+          "growthSlot": 12
+        },
+        {
+          "role": "cc",
+          "mode": "stun",
+          "durationMs": 2000
+        }
+      ]
+    },
+    {
+      "idx": "92030",
+      "name": "쉐도우 러쉬",
+      "desc": "전방으로 신속하게 이동합니다. 사용중인 스킬을 취소하고 즉시 발동합니다.",
+      "role": [
+        "utility"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 50,
+      "cooldown": 6000,
+      "effects": []
+    },
+    {
+      "idx": "92040",
+      "name": "마크 오브 어쌔신",
+      "desc": "2.5초마다 주변 임의의 적 7명에게 암살자의 표식을 새깁니다. 표식이 새겨진 적을 공격하면 190% 피해를 입히고 표식이 사라집니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "passive",
+      "trigger": "periodic",
+      "periodMs": 2500,
+      "requireLevel": 43,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 1900,
+          "hits": 1,
+          "growthSlot": 21,
+          "targetCount": 7
+        }
+      ]
+    },
+    {
+      "idx": "92050",
+      "name": "자벨린 마스터리",
+      "desc": "최소 데미지 배율이 15% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 40,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "MinDamageRatio",
+          "value": 150,
+          "growthSlot": 22,
+          "preReflected": true
+        }
+      ]
+    },
+    {
+      "idx": "92060",
+      "name": "자벨린 액셀레이션",
+      "desc": "공격 속도가 5% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 33,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "AttackSpeed",
+          "value": 50,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "92070",
+      "name": "크리티컬 스로우",
+      "desc": "크리티컬 확률 6%, 크리티컬 데미지 10% 증가.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 45,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "CriticalChance",
+          "value": 60,
+          "growthSlot": 22
+        },
+        {
+          "role": "statUp",
+          "stat": "CriticalPower",
+          "value": 100,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "92080",
+      "name": "피지컬 트레이닝",
+      "desc": "기본 공격 데미지가 10% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 38,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "BaseAttackPower",
+          "value": 100,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "93010",
+      "name": "슈리켄 챌린지",
+      "desc": "[기본 공격 효과] 거대 수리검을 소환하여 6명의 적에게 80% 피해를 5회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "basicAttack",
+      "requireLevel": 60,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 800,
+          "hits": 5,
+          "targetCount": 6,
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "93020",
+      "name": "트리플 스로우",
+      "desc": "대상에게 표창을 던져 360% 피해를 3회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 63,
+      "cooldown": 13000,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 3600,
+          "hits": 3,
+          "growthSlot": 12
+        }
+      ]
+    },
+    {
+      "idx": "93030",
+      "name": "쉐도우 파트너",
+      "desc": "그림자를 생성하여 공격 시 25% 확률로 84% 추가 피해를 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "passive",
+      "trigger": "onAttack",
+      "triggerBy": "anyHit",
+      "chance": 250,
+      "requireLevel": 60,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 840,
+          "hits": 1,
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "93040",
+      "name": "다크 플레어",
+      "desc": "20초간 어두운 기운을 방출하는 검을 생성하여 2초마다 주변 적 8명에게 330% 피해를 2회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 69,
+      "cooldown": 45000,
+      "mp": 85,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 3300,
+          "hits": 2,
+          "targetCount": 8,
+          "growthSlot": 12,
+          "durationMs": 20000,
+          "tickMs": 2000
+        }
+      ]
+    },
+    {
+      "idx": "93050",
+      "name": "래디컬 다크니스",
+      "desc": "최대 HP 10%, 보스 몬스터 데미지 18% 증가.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 72,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "AttackPowerToBoss",
+          "value": 180,
+          "growthSlot": 22
+        },
+        {
+          "role": "statUp",
+          "stat": "MaxHp",
+          "value": 100,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "93060",
+      "name": "베놈",
+      "desc": "공격한 대상을 50% 확률로 10초간 중독시켜 1초마다 45% 지속 피해를 줍니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "passive",
+      "trigger": "onAttack",
+      "triggerBy": "anyHit",
+      "chance": 500,
+      "refresh": false,
+      "requireLevel": 74,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 450,
+          "form": "dot",
+          "growthSlot": 21,
+          "durationMs": 10000,
+          "tickMs": 1000
+        }
+      ]
+    },
+    {
+      "idx": "93070",
+      "name": "숙련된 표창술",
+      "desc": "공격력이 18% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 75,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "ATK_PCT",
+          "mode": "post",
+          "value": 180,
+          "growthSlot": 22,
+          "preReflected": false
+        }
+      ]
+    },
+    {
+      "idx": "93080",
+      "name": "아드레날린",
+      "desc": "스킬을 5번 발동할 때마다 10초간 최종 데미지 15%, 공격 속도 8% 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onActiveSkill",
+      "count": 5,
+      "refresh": false,
+      "requireLevel": 66,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "FinalDamage",
+          "value": 150,
+          "growthSlot": 22,
+          "durationMs": 10000
+        },
+        {
+          "role": "statUp",
+          "stat": "AttackSpeed",
+          "value": 80,
+          "growthSlot": 22,
+          "durationMs": 10000
+        }
+      ]
+    },
+    {
+      "idx": "94010",
+      "name": "쇼다운 챌린지",
+      "desc": "[기본 공격 효과] 폭발하는 부적을 소환하고 거대 수리검으로 꿰뚫어 6명의 적에게 290% 피해를 5회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "basicAttack",
+      "requireLevel": 100,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 2900,
+          "hits": 5,
+          "targetCount": 6,
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "94020",
+      "name": "쿼드러플 스로우",
+      "desc": "대상에게 표창을 던져 1150% 피해를 4회 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 103,
+      "cooldown": 10000,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 11500,
+          "hits": 4,
+          "growthSlot": 12
+        }
+      ]
+    },
+    {
+      "idx": "94030",
+      "name": "써든레이드",
+      "desc": "주변의 적 8명에게 1400% 피해를 3회 입히고, 5초간 1초마다 360% 지속 피해를 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 105,
+      "cooldown": 19000,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 14000,
+          "hits": 3,
+          "targetCount": 8,
+          "growthSlot": 12
+        },
+        {
+          "role": "deal",
+          "coeff": 3600,
+          "form": "dot",
+          "targetCount": 8,
+          "growthSlot": 12,
+          "durationMs": 5000,
+          "tickMs": 1000
+        }
+      ]
+    },
+    {
+      "idx": "94040",
+      "name": "퍼지 에어리어",
+      "desc": "20초간 결계로 적 받피 18% 증가·이속 10% 감소, 자신은 결계 내에서 최종 데미지 13% 증가.",
+      "role": [
+        "buff",
+        "debuff"
+      ],
+      "type": "active",
+      "trigger": "active",
+      "requireLevel": 110,
+      "cooldown": 45000,
+      "summon": {
+        "durationMs": 20000
+      },
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "FinalDamage",
+          "value": 130,
+          "growthSlot": 22,
+          "durationMs": 20000,
+          "sustain": "summon"
+        },
+        {
+          "role": "debuff",
+          "stat": "Weakness",
+          "value": 180,
+          "target": "enemy",
+          "growthSlot": 21,
+          "durationMs": 20000,
+          "sustain": "summon"
+        }
+      ]
+    },
+    {
+      "idx": "94050",
+      "name": "마크 오브 나이트로드",
+      "desc": "마크 오브 어쌔신의 최대 대상 3명, 최종 데미지 300% 증가.",
+      "role": [
+        "skillBoost"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 107,
+      "effects": [
+        {
+          "role": "skillBoost",
+          "value": 3,
+          "target": "92040",
+          "type": "targetCount"
+        },
+        {
+          "role": "skillBoost",
+          "value": 3000,
+          "target": "92040",
+          "type": "finalDmg",
+          "growthSlot": 21
+        }
+      ]
+    },
+    {
+      "idx": "94060",
+      "name": "다크 세레니티",
+      "desc": "최종 데미지 12%, 최소 데미지 배율 20% 증가.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 125,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "FinalDamage",
+          "value": 120,
+          "growthSlot": 22
+        },
+        {
+          "role": "statUp",
+          "stat": "MinDamageRatio",
+          "value": 200,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "94070",
+      "name": "페이크",
+      "desc": "최종 데미지가 10% 증가합니다. 피해입을 시 20% 확률로 공격자에게 2500% 반격하고 3초간 최종 데미지가 증가합니다.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 115,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "FinalDamage",
+          "value": 100,
+          "growthSlot": 22,
+          "preReflected": true
+        }
+      ],
+      "note": "반격딜 25000%(onDamage 20%)+피격시 최종뎀 3초 off는 피격빈도 모델 필요→보류(A안). 페이크-회피 마스터리 습득시 회피20%로 off 거의 없어 최종뎀% 상시로 근사."
+    },
+    {
+      "idx": "94080",
+      "name": "페이탈 베놈",
+      "desc": "베놈 상태의 적을 공격 시 20% 확률로 600% 추가 피해를 입힙니다.",
+      "role": [
+        "deal"
+      ],
+      "type": "passive",
+      "trigger": "onAttack",
+      "triggerBy": "anyHit",
+      "chance": 200,
+      "gatedBy": "93060",
+      "requireLevel": 117,
+      "effects": [
+        {
+          "role": "deal",
+          "coeff": 6000,
+          "hits": 1,
+          "growthSlot": 21
+        }
+      ],
+      "note": "클뜯 GetDamageR Values[1]='Dot'(도트 분류)이나 인게임 즉발딜→도트 태그 안붙임(유저확정, 쉐도우파트너와 동일). 8-13 패치로 Values[1] None→Dot이나 실동작 즉발 유지."
+    },
+    {
+      "idx": "94090",
+      "name": "자벨린 엑스퍼트",
+      "desc": "스킬 데미지 15%, 최대 데미지 배율 20% 증가.",
+      "role": [
+        "buff"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 120,
+      "effects": [
+        {
+          "role": "statUp",
+          "stat": "SkillPower",
+          "value": 150,
+          "growthSlot": 22
+        },
+        {
+          "role": "statUp",
+          "stat": "MaxDamageRatio",
+          "value": 200,
+          "growthSlot": 22
+        }
+      ]
+    },
+    {
+      "idx": "94100",
+      "name": "메이플 용사",
+      "desc": "다크 플레어 15%, 베놈 50%, 쉐도우 파트너 50%, 윈드 탈리스만 130% 최종 데미지 증가.",
+      "role": [
+        "skillBoost"
+      ],
+      "type": "passive",
+      "trigger": "onStart",
+      "requireLevel": 100,
+      "effects": [
+        {
+          "role": "skillBoost",
+          "value": 150,
+          "target": "93041",
+          "type": "finalDmg",
+          "growthSlot": 23
+        },
+        {
+          "role": "skillBoost",
+          "value": 500,
+          "target": "93060",
+          "type": "finalDmg",
+          "growthSlot": 23
+        },
+        {
+          "role": "skillBoost",
+          "value": 500,
+          "target": "93031",
+          "type": "finalDmg",
+          "growthSlot": 23
+        },
+        {
+          "role": "skillBoost",
+          "value": 1300,
+          "target": "92020",
+          "type": "finalDmg",
+          "growthSlot": 23
+        }
+      ]
+    }
+  ],
+  "masteries": [
+    {
+      "lv": 12,
+      "skill": "91010",
+      "masteryName": "럭키 세븐 - 피해",
+      "type": "skillDamage",
+      "value": 150,
+      "unit": "pct",
+      "masteryIdx": "90010"
+    },
+    {
+      "lv": 14,
+      "type": "stat",
+      "masteryName": "주스탯 강화",
+      "stat": "MAIN_STAT_FLAT",
+      "value": 30,
+      "role": "statUp",
+      "masteryIdx": "90015",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 15,
+      "skill": "91010",
+      "masteryName": "럭키 세븐 - 대상",
+      "type": "targetCount",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90020"
+    },
+    {
+      "lv": 17,
+      "type": "stat",
+      "masteryName": "크리티컬 확률 강화",
+      "stat": "CriticalChance",
+      "value": 50,
+      "role": "statUp",
+      "masteryIdx": "90025",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 19,
+      "skill": "91010",
+      "masteryName": "럭키 세븐 - 피해",
+      "type": "skillDamage",
+      "value": 200,
+      "unit": "pct",
+      "masteryIdx": "90030"
+    },
+    {
+      "lv": 21,
+      "skill": "91020",
+      "masteryName": "헤이스트 - 속도",
+      "type": "stat",
+      "stat": "RunSpeedMms",
+      "value": 50,
+      "role": "statUp",
+      "masteryIdx": "90035"
+    },
+    {
+      "lv": 22,
+      "skill": "91010",
+      "masteryName": "럭키 세븐 - 대상",
+      "type": "targetCount",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90040"
+    },
+    {
+      "lv": 24,
+      "skill": "91030",
+      "masteryName": "다크 사이트 - 지속",
+      "type": "duration",
+      "value": 500,
+      "unit": "pct",
+      "masteryIdx": "90045"
+    },
+    {
+      "lv": 26,
+      "skill": "91010",
+      "masteryName": "럭키 세븐 - 피해",
+      "type": "skillDamage",
+      "value": 200,
+      "unit": "pct",
+      "masteryIdx": "90050"
+    },
+    {
+      "lv": 28,
+      "type": "stat",
+      "masteryName": "기본 공격 데미지 강화",
+      "stat": "BaseAttackPower",
+      "value": 150,
+      "role": "statUp",
+      "masteryIdx": "90055",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 32,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 피해",
+      "targets": [
+        "92010",
+        "92011"
+      ],
+      "type": "skillDamage",
+      "value": 150,
+      "unit": "pct",
+      "masteryIdx": "90060"
+    },
+    {
+      "lv": 34,
+      "type": "stat",
+      "masteryName": "명중 강화",
+      "stat": "HitChance",
+      "value": 5,
+      "role": "statUp",
+      "masteryIdx": "90065",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 37,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 대상",
+      "type": "targetCount",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90070"
+    },
+    {
+      "lv": 39,
+      "skill": "92020",
+      "masteryName": "윈드 탈리스만 - 피해",
+      "type": "skillDamage",
+      "value": 800,
+      "unit": "pct",
+      "masteryIdx": "90075",
+      "note": "8-13 패치: 기절지속+50% → 윈드탈리스만(92020) 피해 +80%로 교체(원본 ModSkillStat[92020,GiveDamagePower1,800]=사전규약상 skillDamage). 이름도 '기절'→'피해'로 변경됨(clt 확인)."
+    },
+    {
+      "lv": 42,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 피해",
+      "targets": [
+        "92010",
+        "92011"
+      ],
+      "type": "skillDamage",
+      "value": 200,
+      "unit": "pct",
+      "masteryIdx": "90080"
+    },
+    {
+      "lv": 44,
+      "skill": "92040",
+      "masteryName": "마크 오브 어쌔신 - 피해",
+      "type": "skillDamage",
+      "value": 800,
+      "unit": "pct",
+      "masteryIdx": "90085"
+    },
+    {
+      "lv": 47,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 보스 몬스터 피해",
+      "targets": [
+        "92010",
+        "92011"
+      ],
+      "type": "skillStat",
+      "stat": "AttackPowerToBoss",
+      "value": 150,
+      "unit": "pct",
+      "masteryIdx": "90090"
+    },
+    {
+      "lv": 49,
+      "skill": "92070",
+      "masteryName": "크리티컬 스로우 - 크리티컬",
+      "type": "stat",
+      "stat": "CriticalChance",
+      "value": 80,
+      "role": "statUp",
+      "masteryIdx": "90095"
+    },
+    {
+      "lv": 52,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 피해",
+      "targets": [
+        "92010",
+        "92011"
+      ],
+      "type": "skillDamage",
+      "value": 200,
+      "unit": "pct",
+      "masteryIdx": "90100"
+    },
+    {
+      "lv": 54,
+      "skill": "92030",
+      "masteryName": "쉐도우 러쉬 - 가속",
+      "type": "stat",
+      "stat": "RunSpeedMms",
+      "value": 500,
+      "unit": "pct",
+      "role": "statUp",
+      "masteryIdx": "90105",
+      "note": "기본 Flag:Disabled, 마스터리로 활성화(이속+50%, 딜무관)"
+    },
+    {
+      "lv": 56,
+      "skill": "92010",
+      "masteryName": "슈리켄 버스트 - 타격",
+      "targets": [
+        "92010",
+        "92011"
+      ],
+      "type": "hit",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90110"
+    },
+    {
+      "lv": 58,
+      "type": "stat",
+      "masteryName": "최대 데미지 배율 강화",
+      "stat": "MaxDamageRatio",
+      "value": 100,
+      "role": "statUp",
+      "masteryIdx": "90115",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 62,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90120"
+    },
+    {
+      "lv": 64,
+      "type": "stat",
+      "masteryName": "기본 공격 대상 수 강화",
+      "stat": "BaseAttackMaxHitCount",
+      "value": 1,
+      "role": "statUp",
+      "masteryIdx": "90125",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 66,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 110,
+      "unit": "pct",
+      "masteryIdx": "90130"
+    },
+    {
+      "lv": 68,
+      "skill": "93030",
+      "masteryName": "쉐도우 파트너 - 피해",
+      "type": "skillDamage",
+      "value": 1000,
+      "unit": "pct",
+      "masteryIdx": "90135"
+    },
+    {
+      "lv": 71,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 보스 몬스터 피해",
+      "type": "skillStat",
+      "stat": "AttackPowerToBoss",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90140"
+    },
+    {
+      "lv": 73,
+      "skill": "93020",
+      "masteryName": "트리플 스로우 - 피해",
+      "type": "skillDamage",
+      "value": 1000,
+      "unit": "pct",
+      "masteryIdx": "90145"
+    },
+    {
+      "lv": 76,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 120,
+      "unit": "pct",
+      "masteryIdx": "90150"
+    },
+    {
+      "lv": 78,
+      "skill": "93040",
+      "masteryName": "다크 플레어 - 타격",
+      "type": "hit",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90155"
+    },
+    {
+      "lv": 80,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 130,
+      "unit": "pct",
+      "masteryIdx": "90160"
+    },
+    {
+      "lv": 82,
+      "skill": "93060",
+      "masteryName": "베놈 - 약화",
+      "type": "stat",
+      "stat": "Weakness",
+      "value": 150,
+      "unit": "pct",
+      "role": "debuff",
+      "target": "enemy",
+      "gatedBy": "93060",
+      "masteryIdx": "90165",
+      "note": "기본 Flag:Disabled, 마스터리로 활성화(적 받는피해15%)"
+    },
+    {
+      "lv": 84,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 보스 몬스터 피해",
+      "type": "skillStat",
+      "stat": "AttackPowerToBoss",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90170"
+    },
+    {
+      "lv": 86,
+      "type": "stat",
+      "masteryName": "스킬 데미지 강화",
+      "stat": "SkillPower",
+      "value": 150,
+      "role": "statUp",
+      "masteryIdx": "90175",
+      "note": "StatData 전역스탯(ParentSkillIndex없음, op아닌 테이블필드)"
+    },
+    {
+      "lv": 88,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 140,
+      "unit": "pct",
+      "masteryIdx": "90180"
+    },
+    {
+      "lv": 90,
+      "skill": "93080",
+      "masteryName": "아드레날린 - 지속",
+      "effects": [
+        {
+          "type": "duration",
+          "value": 5000,
+          "unit": "ms",
+          "note": "아드레날린 버프 지속 10→15초"
+        },
+        {
+          "type": "value",
+          "stat": "FinalDamage",
+          "value": 60,
+          "note": "아드레날린 최종뎀 10→16%"
+        }
+      ],
+      "masteryIdx": "90185"
+    },
+    {
+      "lv": 92,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 150,
+      "unit": "pct",
+      "masteryIdx": "90190"
+    },
+    {
+      "lv": 94,
+      "skill": "93040",
+      "masteryName": "다크 플레어 - 재사용",
+      "type": "cooldown",
+      "value": -300,
+      "unit": "pct",
+      "masteryIdx": "90195"
+    },
+    {
+      "lv": 96,
+      "skill": "93010",
+      "masteryName": "슈리켄 챌린지 - 타격",
+      "type": "hit",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90200"
+    },
+    {
+      "lv": 98,
+      "skill": "93060",
+      "masteryName": "베놈 - 확률",
+      "type": "probability",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90205"
+    },
+    {
+      "lv": 102,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90210"
+    },
+    {
+      "lv": 104,
+      "skill": "93040",
+      "masteryName": "다크 플레어 - 타격 주기",
+      "type": "tick",
+      "value": -250,
+      "unit": "pct",
+      "masteryIdx": "90215"
+    },
+    {
+      "lv": 106,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 110,
+      "unit": "pct",
+      "masteryIdx": "90220"
+    },
+    {
+      "lv": 108,
+      "skill": "94020",
+      "masteryName": "쿼드러플 스로우 - 재사용",
+      "type": "cooldown",
+      "value": -300,
+      "unit": "pct",
+      "masteryIdx": "90225"
+    },
+    {
+      "lv": 111,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 보스 몬스터 피해",
+      "type": "skillStat",
+      "stat": "AttackPowerToBoss",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90230"
+    },
+    {
+      "lv": 113,
+      "skill": "94040",
+      "masteryName": "퍼지 에어리어 - 크리티컬",
+      "gatedBy": "94040",
+      "effects": [
+        {
+          "type": "skillStat",
+          "stat": "CRIT_RATE",
+          "value": 100,
+          "unit": "pct",
+          "note": "적크리저항-10%(CriticalResist-100)→내크확 연결, 부호반전"
+        },
+        {
+          "type": "skillStat",
+          "stat": "CRIT_DMG",
+          "value": 300,
+          "unit": "pct",
+          "note": "적받는크뎀+30%→내크뎀 합산(퍼지약화 MaxStack1이라 30% 고정)"
+        }
+      ],
+      "masteryIdx": "90235"
+    },
+    {
+      "lv": 116,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 120,
+      "unit": "pct",
+      "masteryIdx": "90240"
+    },
+    {
+      "lv": 118,
+      "skill": "94070",
+      "masteryName": "페이크 - 회피",
+      "effects": [
+        {
+          "type": "value",
+          "stat": "FinalDamage",
+          "value": 100,
+          "note": "페이크 최종뎀 10→20%"
+        }
+      ],
+      "masteryIdx": "90245",
+      "note": "회피20%(op2 활성화)+피격시 최종뎀off 방지(op3 비활성)=A안 최종뎀 상시 근거. 회피/반격 딜무관"
+    },
+    {
+      "lv": 120,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 130,
+      "unit": "pct",
+      "masteryIdx": "90250"
+    },
+    {
+      "lv": 122,
+      "skill": "92040",
+      "masteryName": "마크 오브 나이트로드 - 약화",
+      "type": "stat",
+      "stat": "Weakness",
+      "value": 80,
+      "unit": "pct",
+      "role": "debuff",
+      "target": "enemy",
+      "durationMs": 2000,
+      "masteryIdx": "90255",
+      "note": "8-13 패치: (구)발동주기단축 → 약화 부여로 교체(구 90295와 효과·이름 스왑, Weakness 150→80). 마크딜(92040) 발동 대상에 2초 약화. 가동률=durationMs2000/마크periodMs(엔진이 skill 92040 주기 참조)=80%(마크주기는 90295 마스터리로 -500 변동). 원본=OnAttack+TriggerCondition SkillIndex==92041(경량화로 92040에 통합)."
+    },
+    {
+      "lv": 124,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 보스 몬스터 피해",
+      "type": "skillStat",
+      "stat": "AttackPowerToBoss",
+      "value": 100,
+      "unit": "pct",
+      "masteryIdx": "90260"
+    },
+    {
+      "lv": 126,
+      "skill": "94030",
+      "masteryName": "써든레이드 - 피해",
+      "type": "skillDamage",
+      "value": 500,
+      "unit": "pct",
+      "masteryIdx": "90265"
+    },
+    {
+      "lv": 128,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 140,
+      "unit": "pct",
+      "masteryIdx": "90270"
+    },
+    {
+      "lv": 130,
+      "skill": "94080",
+      "masteryName": "페이탈 베놈 - 피해",
+      "type": "skillDamage",
+      "value": 1000,
+      "unit": "pct",
+      "masteryIdx": "90275"
+    },
+    {
+      "lv": 132,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 피해",
+      "type": "skillDamage",
+      "value": 150,
+      "unit": "pct",
+      "masteryIdx": "90280"
+    },
+    {
+      "lv": 134,
+      "skill": "94020",
+      "masteryName": "쿼드러플 스로우 - 피해",
+      "type": "skillDamage",
+      "value": 500,
+      "unit": "pct",
+      "masteryIdx": "90285"
+    },
+    {
+      "lv": 136,
+      "skill": "94010",
+      "masteryName": "쇼다운 챌린지 - 타격",
+      "type": "hit",
+      "value": 1,
+      "unit": "count",
+      "masteryIdx": "90290"
+    },
+    {
+      "lv": 138,
+      "skill": "92040",
+      "masteryName": "마크 오브 나이트로드 - 발동 주기",
+      "effects": [
+        {
+          "type": "period",
+          "value": -500,
+          "unit": "ms",
+          "note": "마크 발동주기 -0.5초(딜 자주)"
+        },
+        {
+          "type": "duration",
+          "value": -500,
+          "unit": "ms",
+          "note": "마크 표식 지속 -0.5초(딜무관)"
+        }
+      ],
+      "masteryIdx": "90295",
+      "note": "8-13 패치: (구)약화 → 마크 발동주기/지속 단축으로 교체(구 90255와 효과·이름 스왑)."
+    }
+  ]
+}

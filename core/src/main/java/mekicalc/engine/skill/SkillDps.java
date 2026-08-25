@@ -130,8 +130,13 @@ public final class SkillDps {
         // 보스뎀 합산(BOSS_DMG에 '합산' 후 G 계산, 실측 2026-07): 평타 보스뎀 마스터리 + 인핸스레이징블로우 bossDmgBonus(보스뎀+100%).
         StatBlock gb = b;
         double mbAdd = (basic && boss) ? levelSum(s.raw, "masteryBossByLevel", cl) : 0;
-        if (boss) mbAdd += s.num("bossDmgBonus", 0);   // 없는 스킬은 0
-        if (mbAdd != 0) { gb = new StatBlock(b); gb.set(BOSS_DMG, gb.get(BOSS_DMG) + mbAdd); }
+        if (boss && cl >= s.num("bossDmgBonusOpen", 0)) mbAdd += s.num("bossDmgBonus", 0);   // 인핸스(open0=항상)·피닉스(94렙)
+        double ndAdd = (!boss && cl >= s.num("normalDmgBonusOpen", 0)) ? s.num("normalDmgBonus", 0) : 0;   // 애로우플래터 일반몹뎀+200(open0=항상)·피닉스 일반몹뎀+100(94렙)
+        if (mbAdd != 0 || ndAdd != 0) {
+            gb = new StatBlock(b);
+            if (mbAdd != 0) gb.set(BOSS_DMG, gb.get(BOSS_DMG) + mbAdd);
+            if (ndAdd != 0) gb.set(NORMAL_DMG, gb.get(NORMAL_DMG) + ndAdd);
+        }
 
         double meyong = 1.0;
         if (s.has("meyong")) {
@@ -248,6 +253,7 @@ public final class SkillDps {
             // fullBuff(최대딜)는 천장 → 소환·발동 버프도 100%로 켠다. 평균/시뮬(active)만 가동률 게이팅.
             if (!fullBuff) {
                 if (Json.bool(m, "requiresSummon", false)) u *= summonUptime(input);   // 소환 중에만(비홀더스 버프)
+                else if (m.containsKey("hitCount")) u = mortalUptime(m, atkSpeedBase);   // 모탈블로우: 40타 채우는 시간 대비 지속 가동률
                 else if (m.containsKey("proc") && !m.containsKey("triggerCasts")) u = procBuffUptime(m, atkSpeedBase);   // 발동형(로드오브다크니스)
             }
 
@@ -258,6 +264,8 @@ public final class SkillDps {
             if (cr != 0) eff.set(CRIT_RATE, eff.get(CRIT_RATE) + cr * scale * u);
             double cd = Json.num(m, "critDmg", 0);
             if (cd != 0) eff.set(CRIT_DMG, eff.get(CRIT_DMG) + cd * scale * u);
+            double cdRatio = Json.num(m, "critDmgSelfRatio", 0);   // 샤프아이즈: 자신 현재 크뎀의 ratio%만큼 추가(가동률 u)
+            if (cdRatio != 0) eff.set(CRIT_DMG, eff.get(CRIT_DMG) + eff.get(CRIT_DMG) * cdRatio / 100.0 * u);
             // 레벨계수는 base에만, 마스터리는 스케일 없이 나중에 더함(인게임 툴팁이 마스터리 미표기 → 마지막 계산).
             double fd = Json.num(m, "finalDmg", 0) * scale + levelSum(m, "finalDmgMasteryByLevel", cl);
             if (m.containsKey("rampFinalDmgMax")) {   // 인피니티 램프업: 지속 내 시간평균(해석식, 버프지속%↑→최대유지↑→효율↑) / fullBuff는 최대(천장)
@@ -318,6 +326,19 @@ public final class SkillDps {
             if (cl >= Json.num(combo, "finalDmgOpen", Double.MAX_VALUE))   // 콤보시너지(75렙): 최종뎀 = 스택×스택당(선형 합) 1회 곱
                 eff.set(FINAL_DMG, multPct(eff.get(FINAL_DMG), stack * (Json.num(combo, "finalDmgPerStack", 0) + levelSum(combo, "finalDmgMasteryByLevel", cl))));
             eff.set(COMBO_STACK, stack);   // 조건딜(플래시슬래시 콤보3↑·인핸스레이징블로우 콤보5↑)용
+        }
+
+        // ★보우마스터 컨센트레이션: 크뎀 스택. 스킬발동당(액티브 1/cd 합)×지속, min maxStack. 일반몹/보스 공통(중첩유지 낮음).
+        Map<String, Object> conc = data.concentration();
+        if (conc != null && cl >= Json.num(conc, "open", Double.MAX_VALUE)) {
+            double castRate = 0;
+            for (Skill s : data.skills()) {
+                if (!"dealActive".equals(s.kind) || !wants(s.id, s.open, cl)) continue;
+                double cd = cooldown(s, eff);
+                if (cd > 0) castRate += 1.0 / cd;
+            }
+            double stack = Math.min(Json.num(conc, "maxStack", 0), castRate * Json.num(conc, "dur", 0));
+            add(eff, CRIT_DMG, stack * Json.num(conc, "critDmgPerStack", 0));   // 스택당 크뎀%
         }
 
         return new Buffed(eff, 1 + (skillAtkSum + externalAtkPct) / 100.0);   // 동료 스킬 공퍼도 같은 합 버킷에 합산
@@ -584,6 +605,10 @@ public final class SkillDps {
         addEff(p, "최대 HP", Json.num(m, "hp", 0) * sc);
         addEff(p, "이동 속도", Json.num(m, "move", 0) * sc);
         addEffFlat(p, "디버프 내성(+)", Json.num(m, "debuffResist", 0) * sc);
+        double prd = Json.num(m, "playerRecvDmg", 0) * sc;   // 스피릿블레이드 등 받는 피해 감소(생존→딜 무관, 표시용)
+        if (prd != 0) p.add("받는 피해 " + num1(prd) + "%");
+        double cdSelf = Json.num(m, "critDmgSelfRatio", 0);   // 샤프아이즈: 자신 현재 크뎀의 ratio%만큼 추가(비율이라 스케일 미적용)
+        if (cdSelf != 0) p.add("자신 크리티컬 데미지 +현재 크뎀의 " + num1(cdSelf) + "%");
         if (m.containsKey("desc")) p.add(Json.str(m, "desc", ""));   // 수치화 어려운 패시브(아이언 월 등) 원문 표시
         return p;
     }
@@ -720,6 +745,12 @@ public final class SkillDps {
         List<String> eff = new ArrayList<>();
         for (Map<String, Object> d : data.debuffs())
             if (s.id.equals(Json.str(d, "source", ""))) addEff(eff, "받는 피해", debuffRecvDmg(d, cl, input));
+        // 스킬 내부 debuffs 배열(히어로 magicCrash/incising): RECV_DMG 받피증. open 게이팅·보스한정 표기.
+        if (s.has("debuffs")) for (Object o : Json.asList(s.raw.get("debuffs"))) {
+            Map<String, Object> d = Json.asMap(o);
+            if (!"RECV_DMG".equals(Json.str(d, "stat", "")) || cl < Json.num(d, "open", 0)) continue;
+            eff.add("받는 피해 +" + num1(Json.num(d, "value", 0)) + "%" + (Json.bool(d, "bossOnly", false) ? " (보스)" : ""));
+        }
         e.put("effects", eff);
         return e;
     }
@@ -846,6 +877,19 @@ public final class SkillDps {
         double hitCd = s.num("procHitCd", 0);
         double cap = (hitCd > 0 && freq > 0) ? Math.min(1.0, (1.0 / hitCd) / freq) : 1.0;   // 대상당 procHitCd초 1회 상한
         return u1 * cap;
+    }
+
+    /**
+     * 내부쿨(cd) 있는 발동형 추가타(플레시 미라주 CoolTimeMs 5000 등)의 발동빈도 상한 배수.
+     * 발동 실효 = min(초당공격×proc%, 1/cd). 내부쿨이 병목이면 &lt;1로 깎아 과대(매 공격 발동 가정) 방지.
+     * cd 없는 발동(파이널어택·퀴버·쉐파·페이탈)은 1.0(무영향).
+     */
+    private double procCdCap(Skill s, StatBlock eff, double actionsPerSec) {
+        double icd = s.num("cd", 0);
+        if (icd <= 0) return 1.0;
+        double procPct = (s.num("proc", 0) + levelSum(s.raw, "procMasteryByLevel", charLevel(eff))) / 100.0;
+        double freq = actionsPerSec * procPct;
+        return (freq > 0) ? Math.min(1.0, (1.0 / icd) / freq) : 1.0;
     }
 
     public double shadowExtraPerHit(StatBlock eff, boolean boss) { return procExtraPerHit(data.skill("shadowPartner"), eff, boss); }
@@ -1017,6 +1061,22 @@ public final class SkillDps {
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;   // 소환 게이팅(비홀더 쇼크 등)
             skillActionsPerSec += gate / cd;   // 시전 1회 = 평타 1슬롯
+            if (s.has("summon")) {   // ★보우마스터 피닉스: 소환 지속/주기 = 주기딜 횟수(20초/3초). perHit에 bossDmgBonus(94렙) 포함.
+                Map<String, Object> sm = Json.asMap(s.raw.get("summon"));
+                double period = Math.max(0.1, Json.num(sm, "period", 1) * (1 - levelSum(s.raw, "periodMasteryPctByLevel", cl) / 100.0));   // 피닉스 82렙 타격주기 -30%(R연산 비율)
+                double reps = Json.num(sm, "dur", 0) / period;
+                baseDps += perHit(s, bf, boss) * reps / cd * gate;
+                procActionsPerSec += reps / cd * gate;
+                continue;
+            }
+            if (s.has("dotInstall")) {   // ★보우마스터 애로우플래터: 설치 dot(1틱=perHit, /period 초당, 설치유지 min(1,dur/cd)). normalDmgBonus는 perHit 반영.
+                Map<String, Object> di = Json.asMap(s.raw.get("dotInstall"));
+                double period = Math.max(0.1, Json.num(di, "period", 1));
+                double install = cd > 0 ? Math.min(1.0, Json.num(di, "dur", 0) / cd) : 1.0;
+                baseDps += perHit(s, bf, boss) / period * install * gate;
+                procActionsPerSec += install / period * gate;
+                continue;
+            }
             int hits = hitsPerCast(s, eff, boss);
             baseDps += perHit(s, bf, boss) * hits / cd * gate;
             // 발동은 시전(공격)당 1회 — 단 다크 플레어(설치기)는 틱마다 별도 공격 판정(소환수 취급).
@@ -1042,6 +1102,7 @@ public final class SkillDps {
         for (Skill s : data.skills()) {
             if (!s.has("period") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
             double period = s.num("period", 5) - levelSum(s.raw, "periodMasteryByLevel", cl);
+            if (Json.bool(s.raw, "fastByAtkSpeed", false)) period /= (1 + eff.get(ATK_SPEED) / 100.0);   // 퀴버=OnTimer FastByAttackSpeed: 공속 빠를수록 발동 간격 단축
             if (period > 0) baseDps += periodicPerHit(s, eff, boss) * atkF / period;
         }
 
@@ -1049,7 +1110,7 @@ public final class SkillDps {
         double procPerProc = 0;
         for (Skill s : data.skills()) {
             if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
-            procPerProc += procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec);   // 트페=천사의힘 가동률×깃털쿨상한, 그 외=1
+            procPerProc += procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec) * procCdCap(s, eff, procActionsPerSec);   // 트페=천사의힘 가동률×깃털쿨상한, 플레시미라주=내부쿨 상한, 그 외=1
         }
         double procDps = procActionsPerSec * procPerProc * atkF;
 
@@ -1123,6 +1184,22 @@ public final class SkillDps {
             if (cd <= 0) continue;
             double gate = Json.bool(s.raw, "requiresSummon", false) ? summonUptime(eff) : 1.0;
             skillActionsPerSec += gate / cd;
+            if (s.has("summon")) {   // ★피닉스: 소환 주기딜(baseDps 루프와 동일 산식). 지분 표시도 일치.
+                Map<String, Object> sm = Json.asMap(s.raw.get("summon"));
+                double period = Math.max(0.1, Json.num(sm, "period", 1) * (1 - levelSum(s.raw, "periodMasteryPctByLevel", cl) / 100.0));   // 피닉스 82렙 타격주기 -30%(R연산 비율)
+                double reps = Json.num(sm, "dur", 0) / period;
+                parts.merge(s.name, perHit(s, bf, boss) * reps / cd * gate, Double::sum);
+                procActionsPerSec += reps / cd * gate;
+                continue;
+            }
+            if (s.has("dotInstall")) {   // ★애로우플래터: 설치 dot(baseDps 루프와 동일 산식). 지분 표시도 일치.
+                Map<String, Object> di = Json.asMap(s.raw.get("dotInstall"));
+                double period = Math.max(0.1, Json.num(di, "period", 1));
+                double install = cd > 0 ? Math.min(1.0, Json.num(di, "dur", 0) / cd) : 1.0;
+                parts.merge(s.name, perHit(s, bf, boss) / period * install * gate, Double::sum);
+                procActionsPerSec += install / period * gate;
+                continue;
+            }
             int hits = hitsPerCast(s, eff, boss);
             double contrib = perHit(s, bf, boss) * hits / cd * gate;
             double procAttempts = s.has("ticks")
@@ -1144,13 +1221,14 @@ public final class SkillDps {
         for (Skill s : data.skills()) {
             if (!s.has("period") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
             double period = s.num("period", 5) - levelSum(s.raw, "periodMasteryByLevel", cl);
+            if (Json.bool(s.raw, "fastByAtkSpeed", false)) period /= (1 + eff.get(ATK_SPEED) / 100.0);   // 퀴버=OnTimer FastByAttackSpeed: 공속 빠를수록 발동 간격 단축
             if (period > 0) parts.merge(s.name, periodicPerHit(s, eff, boss) * atkF / period, Double::sum);
         }
 
         // 발동 추가타(쉐파·페이탈·파이널어택): 스킬별로 따로 표기. 미습득/미선택은 0이라 빠짐.
         for (Skill s : data.skills()) {
             if (!"dealPassiveNoCd".equals(s.kind) || !s.has("proc") || !s.has("base") || !wants(s.id, s.open, cl)) continue;
-            double d = procActionsPerSec * procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec) * atkF;
+            double d = procActionsPerSec * procExtraPerHit(s, eff, boss) * triumphGate(s, eff, procActionsPerSec) * procCdCap(s, eff, procActionsPerSec) * atkF;
             if (d > 0) parts.merge(s.name, d, Double::sum);
         }
 
@@ -1356,6 +1434,14 @@ public final class SkillDps {
         double lambda = (1 + atkSpeedBase / 100.0) * proc;   // 초당 발동 시도 × 확률
         if (icd > 0) lambda = Math.min(lambda, 1.0 / icd);   // 내부쿨 상한
         return Math.min(1.0, dur * lambda);
+    }
+
+    /** 모탈블로우 가동률: 40타 채우는 시간(hitCount/초당타격) 대비 지속(dur). 사이클=채우기+지속(지속중 미누적). */
+    private double mortalUptime(Map<String, Object> m, double atkSpeedBase) {
+        double cps = 1 + atkSpeedBase / 100.0;   // 초당 타격 근사(시전/평타 빈도)
+        double hc = Json.num(m, "hitCount", 0), dur = Json.num(m, "dur", 0);
+        if (cps <= 0 || hc <= 0) return 0;
+        return dur / (hc / cps + dur);
     }
 
     /** MULT_PCT 합성: (1+a/100)(1+b/100)−1, %단위. (최종 데미지끼리 곱.) */

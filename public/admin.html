@@ -143,6 +143,32 @@
         </div>
       </details>
     </section>
+
+    <section class="admin-card">
+      <h2>디스코드 공지 봇</h2>
+      <p>디스코드 채널의 <b>웹훅 URL</b>을 등록하면 새 공지·종료 임박 안내가 그 채널로 전송됩니다(카톡과 동일 내용). 디스코드에서 <b>채널 설정 → 연동 → 웹후크 → 새 웹후크 → URL 복사</b>로 만든 주소를 붙여넣으세요.</p>
+      <table class="rooms" id="hooksTable" hidden>
+        <thead>
+          <tr>
+            <th>라벨</th>
+            <th>웹훅</th>
+            <th class="center">활성</th>
+            <th>상태</th>
+            <th class="center"></th>
+          </tr>
+        </thead>
+        <tbody id="hooksBody"></tbody>
+      </table>
+      <div class="empty" id="hooksEmpty" hidden>등록된 웹훅이 없습니다. 아래에서 채널 웹훅 URL을 등록하세요.</div>
+      <div id="hooksErr" hidden></div>
+
+      <div class="add-form">
+        <input class="cid" id="addHookUrl" style="width:320px" placeholder="https://discord.com/api/webhooks/…">
+        <input class="nm" id="addHookLabel" placeholder="라벨(예: 메키 공식서버 #공지)">
+        <button class="btn" id="addHookBtn">웹훅 등록</button>
+      </div>
+      <div class="muted-note">라벨·활성을 바꾼 뒤 각 행의 <b>저장</b>을 누르세요. <b>테스트</b>는 해당 채널로 확인 메시지를 즉시 보냅니다. 보안을 위해 URL 토큰은 마스킹되어 표시됩니다.</div>
+    </section>
   </div>
 
   <script>
@@ -274,6 +300,86 @@
     $('#pickHeader').addEventListener('change', (e) => { setPick(e.target.checked); e.target.indeterminate = false; });
     $('#sendBtn').addEventListener('click', broadcast);
     loadRooms();
+
+    // ──────────────── 디스코드 웹훅 ────────────────
+    function showHookErr(msg) { const e = $('#hooksErr'); e.textContent = msg; e.hidden = !msg; }
+
+    function hookStatus(h) {
+      if (h.lastError) return `<span style="color:#f56565">발송 실패: ${esc(h.lastError)}</span>`;
+      if (h.lastOkAt) return `<span style="color:#48bb78">정상</span>`;
+      return `<span class="src">대기 중</span>`;
+    }
+    function hookRow(h) {
+      return `<tr data-id="${h.id}">
+        <td data-label="라벨"><input class="name hlabel" value="${esc(h.label)}" placeholder="(라벨 없음)"></td>
+        <td data-label="웹훅"><span class="cid">${esc(h.url)}</span></td>
+        <td class="center" data-label="활성"><input type="checkbox" class="henabled" ${h.enabled ? 'checked' : ''}></td>
+        <td data-label="상태">${hookStatus(h)}</td>
+        <td class="center act">
+          <button class="btn ghost htest">테스트</button>
+          <button class="btn hsave">저장</button>
+          <button class="btn ghost hdel">삭제</button>
+        </td>
+      </tr>`;
+    }
+    function renderHooks(list) {
+      const body = $('#hooksBody'), table = $('#hooksTable'), empty = $('#hooksEmpty');
+      body.innerHTML = list.map(hookRow).join('');
+      table.hidden = list.length === 0;
+      empty.hidden = list.length !== 0;
+      body.querySelectorAll('tr').forEach(tr => {
+        $('.hsave', tr).addEventListener('click', () => saveHook(tr));
+        $('.htest', tr).addEventListener('click', () => testHook(tr));
+        $('.hdel', tr).addEventListener('click', () => deleteHook(tr));
+      });
+    }
+    async function loadHooks() {
+      showHookErr('');
+      try {
+        const data = await api('GET', '/api/admin/discord/hooks');
+        renderHooks((data && data.hooks) || []);
+      } catch (e) { showHookErr('웹훅 목록을 불러오지 못했습니다: ' + e.message); }
+    }
+    async function addHook() {
+      showHookErr('');
+      const url = $('#addHookUrl').value.trim();
+      const label = $('#addHookLabel').value.trim();
+      if (!url) { showHookErr('웹훅 URL을 입력하세요.'); return; }
+      try {
+        await api('POST', '/api/admin/discord/hooks', { url, label });
+        $('#addHookUrl').value = ''; $('#addHookLabel').value = '';
+        await loadHooks();
+      } catch (e) { showHookErr('등록 실패: ' + e.message); }
+    }
+    async function saveHook(tr) {
+      const id = tr.dataset.id, btn = $('.hsave', tr);
+      try {
+        await api('PUT', '/api/admin/discord/hooks/' + id, {
+          label: $('.hlabel', tr).value.trim(),
+          enabled: $('.henabled', tr).checked,
+        });
+        btn.textContent = '저장됨'; btn.classList.add('saved');
+        setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 1200);
+      } catch (e) { showHookErr('저장 실패: ' + e.message); }
+    }
+    async function testHook(tr) {
+      const id = tr.dataset.id, btn = $('.htest', tr), orig = btn.textContent;
+      btn.textContent = '전송 중…'; btn.disabled = true;
+      try {
+        const r = await api('POST', '/api/admin/discord/hooks/' + id + '/test');
+        if (r && r.ok) { btn.textContent = '전송됨'; setTimeout(() => { btn.textContent = orig; }, 1500); }
+        else { showHookErr('테스트 실패: ' + ((r && r.error) || '알 수 없는 오류')); btn.textContent = orig; }
+      } catch (e) { showHookErr('테스트 실패: ' + e.message); btn.textContent = orig; }
+      finally { btn.disabled = false; loadHooks(); }
+    }
+    async function deleteHook(tr) {
+      const id = tr.dataset.id;
+      if (!confirm('이 웹훅을 삭제할까요? 이 채널로는 더 이상 공지가 전송되지 않습니다.')) return;
+      try { await api('DELETE', '/api/admin/discord/hooks/' + id); await loadHooks(); }
+      catch (e) { showHookErr('삭제 실패: ' + e.message); }
+    }
+    $('#addHookBtn').addEventListener('click', addHook);
+    loadHooks();
   </script>
 </body>
 </html>

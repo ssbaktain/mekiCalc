@@ -1,0 +1,106 @@
+{
+  "_comment": "보우마스터 스킬 데이터(DPS 모델용). skills_hero.json/nightlord.json 동일 스키마·규칙. %는 표기 그대로. 스킬 공격력%만 엔진 적용, 그 외(최종뎀·크확·크뎀·보뎀·최소/최대뎀·기본공격뎀·스킬뎀·주스탯·방어력·방관)는 프리셋 선반영. 마스터리(피해/보스/쿨감/타격/대상)는 엔진 적용. 단일전투 가정(대상수 무영향). HP 항상 최대. ★보우마스터 고유: 컨센트레이션(크뎀 스택, 스킬발동당 min(10,액티브발동/초×4)), 모탈블로우(40타 카운트 최종뎀10%), 소울애로우(공속비례 Dex), 애로우플래터(설치 dot 일반몹뎀+200%), 피닉스(소환 주기딜). 콤보 없음. skill.txt(클뜯 원문) 기준 2026-08-06.",
+  "_notInHere": "선반영: 아처마스터리 이속, 크리티컬샷 크확5, 보우액셀 공속5, 피지컬트레이닝 기본공뎀10, 보우마스터리 최소뎀15, 마크맨쉽 공격력20(적1명=단일전투 상시→statPassive 공퍼 엔진), 익스트림아쳐리 최종뎀15·방어-10, 보우엑스퍼트 스킬뎀15·최대뎀20, 아머피어싱 방관10·최종뎀10, 일루전스탭 공격력14(생존분岐 무시), 소울애로우 Dex(공속비례 주스탯→선반영). 컨센트레이션 크뎀·모탈블로우 최종뎀은 각 concentration/buff 객체로 엔진 처리.",
+  "_todo": "엔진 신규 구현 필요: (1)컨센트레이션 크뎀 스택(concentration 객체, 스킬발동빈도×4초, min 10), (2)모탈블로우 40타 카운트 최종뎀10%(가동률=타수/40), (3)애로우플래터 설치 dot+일반몹뎀200%(NORMAL_DMG 조건), (4)피닉스 소환 주기딜(20초/3초=6.67회), (5)소울애로우 공속비례 Dex(선반영 근사), (6)샤프아이즈 자신 크뎀% 추가(크뎀×0.4). 성장비 kind별 세부.",
+
+  "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
+
+  "growth": {
+    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.4, "dealPassiveNoCd": 0.4,
+    "statActive": 0.4, "statPassive": 0.3, "meyong": 5
+  },
+  "meyong": { "tier": 4, "open": 100, "_targets": "애로우 플래터 25%, 피닉스 30%, 리트리트 샷 100%" },
+
+  "concentration": {
+    "name": "컨센트레이션", "open": 66, "dur": 4,
+    "maxStack": 10, "critDmgPerStack": 30, "on": "skillCast",
+    "_note": "클뜯 73070: 스킬 발동 시 4초간 크리티컬 데미지 +30%/스택(CriticalPower=StateCount(73070)×30), 최대 10중첩(크뎀 최대 +300%). ★유저확정: 스택 = min(maxStack, 액티브발동/초 × dur) 일반몹/보스 공통(콤보와 달리 스킬발동당이라 중첩유지 낮음, skillCastRate 기반). 크뎀은 최종딜 크리분에 반영." },
+
+  "skills": [
+    { "id": "basic1", "name": "애로우 블로우", "kind": "basic", "tier": 1, "open": 1,
+      "base": 26, "hitsBase": 2, "targetsBase": 3,
+      "masteryDmgByLevel": { "12": 15, "19": 20, "26": 20 }, "targetPlus": { "15": 1, "22": 1 } },
+
+    { "id": "basic2", "name": "바람의 시", "kind": "basic", "tier": 2, "open": 30,
+      "base": 40, "hitsBase": 3, "targetsBase": 5,
+      "masteryDmgByLevel": { "32": 15, "42": 20, "52": 20 }, "masteryBossByLevel": { "47": 15 },
+      "targetPlus": { "37": 1 }, "hitPlus": { "56": 1 } },
+
+    { "id": "basic3", "name": "바람의 시 II", "kind": "basic", "tier": 3, "open": 60,
+      "base": 80, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "62": 10, "66": 11, "76": 12, "80": 13, "88": 14, "92": 15 },
+      "masteryBossByLevel": { "71": 10, "84": 10 }, "hitPlus": { "96": 1 } },
+
+    { "id": "basic4", "name": "언카운터블 애로우", "kind": "basic", "tier": 4, "open": 100,
+      "base": 290, "hitsBase": 5, "targetsBase": 6,
+      "masteryDmgByLevel": { "102": 10, "106": 11, "116": 12, "120": 13, "128": 14, "132": 15 },
+      "masteryBossByLevel": { "111": 10, "124": 10 }, "hitPlus": { "136": 1 } },
+
+    { "id": "retreatShot", "name": "리트리트 샷", "kind": "dealActive", "tier": 2, "open": 35,
+      "base": 250, "hits": 3, "targets": 1, "cd": 19, "meyong": 100,
+      "masteryDmgByLevel": { "39": 50 },
+      "_note": "클뜯 72020: 대상 250%×3회, cd19. 39렙 피해+50%. 메용(74100) 최종뎀+100%." },
+
+    { "id": "arrowPlatter", "name": "애로우 플래터", "kind": "dealActive", "tier": 3, "open": 63,
+      "base": 50, "hits": 1, "targets": 1, "cd": 40, "meyong": 25,
+      "dotInstall": { "period": 0.3, "dur": 60 }, "normalDmgBonus": 200,
+      "masteryDmgByLevel": { "73": 50 }, "targetPlus": { "98": 2 },
+      "_note": "클뜯 73040→73041(CreateProjectile 설치 60초): 0.3초마다 50% 지속피해(dot), 일반몹 데미지 +200%(normalDmgBonus, 일반몹전만). cd40. 73렙 피해+50%(73041), 98렙 대상+2(73040 MaxTargetCount). 메용 25%. 설치기라 시간평균 dps." },
+
+    { "id": "phoenix", "name": "피닉스", "kind": "dealActive", "tier": 3, "open": 69,
+      "base": 600, "hits": 1, "targets": 5, "cd": 60, "meyong": 30,
+      "summon": { "dur": 20, "period": 3 }, "normalDmgBonus": 100, "normalDmgBonusOpen": 94,
+      "masteryDmgByLevel": {}, "targetPlus": { "78": 3 }, "cdrMasteryByLevel": { "104": 50 }, "periodMasteryPctByLevel": { "82": 30 },
+      "_note": "클뜯 73030→73031(CreateProjectile 소환 20초): 3초마다 주변 5명 600% 피해(73031 GetDamageR 6000=600%). cd60. 78렙 대상+3(5→8), 82렙 틱주기 30% 감소(70165 ModSkillProjectileR TickTimeMs -300 = -30% 비율, R연산은 값/10=%: 104렙 SkillCoolTimeMs -500=재사용-50%로 확정. 3000→2100ms=2.1초), 94렙 일반몹뎀+100%(70195→73031 AttackPowerExcludeBoss +1000=100%, normalDmgBonus. 애로우플래터와 동일 메커니즘. ★설명 '보스'가 아니라 '일반 몬스터'), 104렙 재사용-50%. 메용 30%. 소환 주기딜=20초/3초≈6.67회." },
+
+    { "id": "stormArrow", "name": "폭풍의 시", "kind": "dealActive", "tier": 4, "open": 103,
+      "base": 800, "hits": 20, "targets": 7, "cd": 40,
+      "masteryDmgByLevel": { "108": 50 },
+      "_note": "클뜯 74020(StormArrow): 800%×20회, 전방 7명, cd40, 공속 빠를수록 빠르게 발사. 108렙 피해+50%. 134렙 ChangeSkill 74021(동일 계수). 단일전투 대상수 무관." },
+
+    { "id": "quiverCartridge", "name": "퀴버 카트리지", "kind": "dealPassiveNoCd", "tier": 2, "open": 40,
+      "base": 22, "targets": 1, "period": 1, "fastByAtkSpeed": true,
+      "finalMasteryByLevel": { "107": 500 }, "finalMasteryTier": 4, "finalMasteryGrowth": 0.4, "targetPlus": { "107": 2 },
+      "_note": "클뜯 72030: ★TriggerType OnTimer(발동확률 아님!) TriggerTimeMs #FastByAttackSpeed(1000)=1초 간격 공속비례 단축. 220=22% Dot. 107렙 어드밴스드퀴버(74050): 대상+2, 최종뎀+500%(FinalDamage 5000). ★proc 필드 제거(procDps+주기형 이중계산 버그 수정 2026-08-06), period+fastByAtkSpeed로 공속비례 주기딜만." },
+
+    { "id": "phalanxMirage", "name": "플레시 미라주", "kind": "dealPassiveNoCd", "tier": 3, "open": 60,
+      "base": 550, "hits": 1, "targets": 1, "proc": 20, "cd": 5,
+      "masteryDmgByLevel": { "68": 50 }, "finalMasteryByLevel": { "110": 400 }, "finalMasteryTier": 4, "finalMasteryGrowth": 0.4, "targetPlus": { "110": 4 },
+      "_note": "클뜯 73020: 공격 시 #MultByAttackSpeed(200)=20%(공속 빠를수록 최대 50%) 발동, ★CoolTimeMs 5000=내부쿨 5초(procCdCap로 발동빈도 1/5s 상한). Op1 본체 550% + Op2 550%(ExcludeTarget 주변 4명)→단일전투는 본체 제외라 Op2 무효=550% 1타(hits1). 68렙 피해+50%, 110렙 미라주II(74040): Op2 대상+4·최종뎀+400%(FinalDamage 4000). 138렙 최종뎀+50%p·대상+3(만렙 미반영)." },
+
+    { "id": "finalAttack", "name": "파이널 어택", "kind": "dealPassiveNoCd", "tier": 2, "open": 50,
+      "base": 35, "proc": 25, "targets": 1,
+      "masteryDmgByLevel": { "54": 50 },
+      "finalMasteryByLevel": { "105": 500, "113": 50 }, "finalMasteryTier": 4, "finalMasteryGrowth": 0.4,
+      "_note": "클뜯 72070: 공격 시 25% 추가타 35% Dot. 105렙 어드밴스드파이널어택(74080): 최종뎀+500%(72070), 113렙 +50%p." }
+  ],
+
+  "buffs": [
+    { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60 },
+
+    { "id": "sharpEyes", "name": "샤프 아이즈", "kind": "statActive", "tier": 4, "open": 115,
+      "critDmgSelfRatio": 40, "dur": 18, "cd": 35,
+      "_note": "클뜯 74030: 18초간 아군 크뎀의 20%만큼 아군 크뎀↑, 자신은 크뎀 40% 추가(자신 크뎀 × 0.4 가산 근사). critDmgSelfRatio=자신 현재 크뎀의 40%. 엔진: CRIT_DMG += 현재 크뎀 × 0.4 × 가동률." },
+
+    { "id": "mortalBlow", "name": "모탈 블로우", "kind": "statPassive", "tier": 3, "open": 72,
+      "finalDmg": 10, "hitCount": 40, "dur": 5,
+      "_note": "클뜯 73060: 적 40회 직접 타격 시 5초간 최종뎀+10%(효과 중 타수 미누적). 가동률 = min(1, (초당타수×5) / (40 + 초당타수×5)) 근사(40타 채우는 시간 대비 5초 지속). 엔진 신규." }
+  ],
+
+  "debuffs": [],
+
+  "_statPassivesNote": "보우마스터 패시브(대부분 선반영). 유틸(이속·회피·명중)은 표시 전용. 마크맨쉽(적1명 공격력20)은 단일전투 가정이라 상시 공퍼 엔진 적용. 소울애로우(공속비례 Dex)는 주스탯 선반영. 일루전스탭 공격력14는 15초마다 9초 소실 분기 무시하고 선반영.",
+  "statPassives": [
+    { "id": "archerMastery",   "name": "아처 마스터리",     "tier": 1, "open": 10,  "atkSpeed": 5, "move": 10, "atkSpeedMasteryByLevel": { "21": 5 } },
+    { "id": "criticalShot",    "name": "크리티컬 샷",       "tier": 1, "open": 15,  "critRate": 5, "critRateMasteryByLevel": { "24": 5 } },
+    { "id": "bowAccel",        "name": "보우 액셀레이션",   "tier": 2, "open": 33,  "atkSpeed": 5 },
+    { "id": "physicalTraining","name": "피지컬 트레이닝",   "tier": 2, "open": 38,  "basicAtkDmg": 10 },
+    { "id": "bowMastery",      "name": "보우 마스터리",     "tier": 2, "open": 43,  "minMult": 15 },
+    { "id": "soulArrow",       "name": "소울 애로우 : 활",  "tier": 2, "open": 45,  "desc": "Dex(주스탯) +50(공속 빠를수록 최대 300, 선반영)" },
+    { "id": "markmanship",     "name": "마크맨쉽",         "tier": 3, "open": 74,  "always": true, "atkPct": 20 },
+    { "id": "extremeArchery",  "name": "익스트림 아쳐리 : 활","tier": 3, "open": 75, "finalDmg": 15 },
+    { "id": "illusionStep",    "name": "일루전 스탭",       "tier": 4, "open": 117, "always": true, "atkPct": 14 },
+    { "id": "bowExpert",       "name": "보우 엑스퍼트",     "tier": 4, "open": 120, "skillDmg": 15, "maxMult": 20 },
+    { "id": "armorPiercing",   "name": "아머 피어싱",       "tier": 4, "open": 125, "defPen": 10, "finalDmg": 10 }
+  ]
+}

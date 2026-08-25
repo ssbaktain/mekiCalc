@@ -2,111 +2,434 @@
   "_comment": "히어로 스킬 데이터(DPS 모델용). skills_nightlord.json과 동일 스키마·규칙. %는 표기 그대로. growth=레벨당 상승비(kind별). 스킬로 증가하는 '공격력%'만 엔진 적용(스탯 미표기), 그 외(최종뎀·크확·크뎀·보뎀·최소/최대뎀·기본공격뎀·스킬뎀·주스탯·방어력)는 프리셋 스탯에 선반영. 마스터리(피해량/보스/쿨감/타격/대상)는 엔진 적용. 단일전투 가정(대상수 무영향, 미표기=1). HP 항상 최대. ★히어로 고유: 콤보 스택(combo 객체) — 일반몹은 상시 최대(8)·보스는 공속기반 평균. skill.txt(클뜯 원문) 기준 데이터화 2026-08-05.",
   "_notInHere": "선반영이라 뺀 것: 아이언바디 주스탯(STR=MainStat)/방어력, 워리어마스터리 HP/이속, 웨폰마스터리 최소뎀, 피지컬트레이닝 기본공격뎀, 웨폰액셀 공속(스탯표기), 찬스어택 크확8/상태이상뎀12, 인듀어 디버프내성, 셀프리커버리 HP/MP회복+HP50%↑최종뎀5%, 컴뱃마스터리 스킬뎀15·최대뎀20, 스탠스 받피감/최종뎀15, 스피릿블레이드 받피감8%(생존)·아군공10%(타플레이어). 콤보 공격력/최종뎀/방관은 combo 객체로 엔진 처리.",
   "_todo": "유저 확정/검증 필요: (1)콤보 공격력 성장(F22=0.3 base4%→만렙?)·발동율 만렙100%, (2)인핸스레이징블로우 보스뎀+100% 처리방식(BOSS_DMG 가산), (3)인사이징 dot 틱주기(1초 가정), (4)스카링소드 디버프 가동률(공격시35%×15초버프), (5)성장비 kind별 세부값(나로 가정 상속).",
-
-  "advanceLevels": { "1": 10, "2": 30, "3": 60, "4": 100 },
-
-  "growth": {
-    "basic": 0.4, "dealActive": 0.5, "dealPassiveCd": 0.4, "dealPassiveNoCd": 0.4,
-    "statActive": 0.4, "statPassive": 0.3, "meyong": 5, "combo": 0.3
+  "advanceLevels": {
+    "1": 10,
+    "2": 30,
+    "3": 60,
+    "4": 100
   },
-  "meyong": { "tier": 4, "open": 100, "_targets": "오라 블레이드 20%, 돌진 30%, 플래시 슬래시 80%" },
-
+  "growth": {
+    "basic": 0.4,
+    "dealActive": 0.5,
+    "dealPassiveCd": 0.4,
+    "dealPassiveNoCd": 0.4,
+    "statActive": 0.4,
+    "statPassive": 0.3,
+    "meyong": 5,
+    "combo": 0.3
+  },
+  "meyong": {
+    "tier": 4,
+    "open": 100,
+    "_targets": "오라 블레이드 20%, 돌진 30%, 플래시 슬래시 80%"
+  },
   "combo": {
-    "name": "콤보 어택", "open": 45, "dur": 10,
-    "maxStack": 5, "maxStackPlus": { "110": 2, "118": 1 },
-    "atkPctPerStack": 4, "atkPctMasteryByLevel": { "49": 1.5 },
-    "finalDmgPerStack": 5, "finalDmgOpen": 75, "finalDmgMasteryByLevel": { "82": 1 },
-    "defPenPerStack": 1, "defPenOpen": 130,
-    "procBase": 40, "procFullOpen": 75, "growth": 0.3,
-    "_note": "클뜯 확정: 콤보어택(12030) 공격 시 40%(콤보시너지 75렙 습득 후 100%)로 콤보 획득, 10초 지속, 최대 5스택(어드밴스드콤보 110렙 +2, 118렙 마스터리 +1 = 만렙 8). 스택당 공격력+4%(49렙 +1.5%p, ComboAttack State ValueLevelFactor F22=0.3 성장), 콤보시너지(13050/13051, 75렙) 최종뎀+5%/스택(82렙 +1%p, ComboAttack2), 방관+1%/스택(130렙 활성 PiercePower). 최종뎀은 선형 합(5스택=+25%, 곱연산 아님). ★일반몹=상시 최대스택(자동전투 만렙 콤보 유지), 보스=공속기반 평균 min(maxStack, 초당공격×발동율×dur)." },
-
+    "name": "콤보 어택",
+    "open": 45,
+    "dur": 10,
+    "maxStack": 5,
+    "maxStackPlus": {
+      "110": 2,
+      "118": 1
+    },
+    "atkPctPerStack": 4,
+    "atkPctMasteryByLevel": {
+      "49": 1.5
+    },
+    "finalDmgPerStack": 5,
+    "finalDmgOpen": 75,
+    "finalDmgMasteryByLevel": {
+      "82": 1
+    },
+    "defPenPerStack": 1,
+    "defPenOpen": 130,
+    "procBase": 40,
+    "procFullOpen": 75,
+    "growth": 0.3,
+    "_note": "클뜯 확정: 콤보어택(12030) 공격 시 40%(콤보시너지 75렙 습득 후 100%)로 콤보 획득, 10초 지속, 최대 5스택(어드밴스드콤보 110렙 +2, 118렙 마스터리 +1 = 만렙 8). 스택당 공격력+4%(49렙 +1.5%p, ComboAttack State ValueLevelFactor F22=0.3 성장), 콤보시너지(13050/13051, 75렙) 최종뎀+5%/스택(82렙 +1%p, ComboAttack2), 방관+1%/스택(130렙 활성 PiercePower). 최종뎀은 선형 합(5스택=+25%, 곱연산 아님). ★일반몹=상시 최대스택(자동전투 만렙 콤보 유지), 보스=공속기반 평균 min(maxStack, 초당공격×발동율×dur)."
+  },
   "skills": [
-    { "id": "basic1", "name": "슬래시 블러스트", "kind": "basic", "tier": 1, "open": 1,
-      "base": 26, "hitsBase": 2, "targetsBase": 3,
-      "masteryDmgByLevel": { "12": 15, "19": 20, "26": 20 }, "targetPlus": { "15": 1, "22": 1 } },
-
-    { "id": "basic2", "name": "브랜디쉬", "kind": "basic", "tier": 2, "open": 30,
-      "base": 40, "hitsBase": 3, "targetsBase": 5,
-      "masteryDmgByLevel": { "32": 15, "42": 20, "52": 20 }, "masteryBossByLevel": { "47": 15 },
-      "targetPlus": { "37": 1 }, "hitPlus": { "56": 1 } },
-
-    { "id": "basic3", "name": "브레이브 슬래시", "kind": "basic", "tier": 3, "open": 60,
-      "base": 80, "hitsBase": 5, "targetsBase": 6,
-      "masteryDmgByLevel": { "62": 10, "66": 11, "76": 12, "80": 13, "88": 14, "92": 15 },
-      "masteryBossByLevel": { "71": 10, "84": 10 }, "hitPlus": { "96": 1 } },
-
-    { "id": "basic4", "name": "레이징 블로우", "kind": "basic", "tier": 4, "open": 100,
-      "base": 290, "hitsBase": 5, "targetsBase": 6,
-      "masteryDmgByLevel": { "102": 10, "106": 11, "116": 12, "120": 13, "128": 14, "132": 15 },
-      "masteryBossByLevel": { "111": 10, "124": 10 }, "hitPlus": { "136": 1 } },
-
-    { "id": "flashSlash", "name": "플래시 슬래시", "kind": "dealActive", "tier": 2, "open": 35,
-      "base": 350, "hits": 1, "targets": 7, "cd": 16, "meyong": 80,
-      "masteryDmgByLevel": { "39": 50 }, "comboBonus": { "minStack": 3, "dmgPct": 50 },
-      "_note": "클뜯 12020(#FlashSlash): 계수 base 350%(SkillDescParam Const 3500 Div 10 = 350, F12 성장). ×1, cd16. 콤보 3스택 이상이면 피해 +50%(comboBonus). 39렙 피해+50%. 메용(14100) 최종뎀+80%. 일반몹은 콤보 만렙(8)이라 항상 3↑ → +50% 상시." },
-
-    { "id": "auraBlade", "name": "오라 블레이드", "kind": "dealActive", "tier": 3, "open": 69,
-      "base": 250, "hits": 4, "targets": 8, "cd": 16, "meyong": 20,
-      "masteryDmgByLevel": { "73": 50 }, "hitPlus": { "94": 1 }, "cdrMasteryByLevel": { "104": 30 } },
-
-    { "id": "rush", "name": "돌진", "kind": "dealActive", "tier": 3, "open": 63,
-      "base": 600, "hits": 1, "targets": 12, "cd": 22, "meyong": 30,
-      "masteryDmgByLevel": { "68": 80 }, "cdrMasteryByLevel": { "90": 30 }, "cc": "기절2.5초" },
-
-    { "id": "incising", "name": "인사이징", "kind": "dealActive", "tier": 4, "open": 103,
-      "base": 900, "hits": 3, "targets": 5, "cd": 19,
-      "dot": { "perSec": 150, "dur": 10, "period": 1, "targets": 5 },
-      "masteryDmgByLevel": { "108": 50 },
-      "debuffs": [ {"stat": "RECV_DMG", "value": 10, "target": "enemy", "dur": 10, "bossOnly": true, "used": true, "note": "보스면 받는피해+10%(Weakness), 138렙 마스터리 +50%p"} ],
-      "_note": "클뜯 14030(Incising): 900%×3(op1) + 상처 dot 150%/1초 10초(op2 GetDotR Incising_Dot). op3 Weakness100=보스한정 받피+10%. cd19. 108렙 피해+50%(단 클뜯 M10225 parent표기는 14030이나 실제 14020강화 — 인사이징 자체 강화는 122렙 M10255). 138렙 M10295: dot/받피 +50%p." },
-
-    { "id": "enhanceRagingBlow", "name": "인핸스 레이징 블로우", "kind": "dealActive", "tier": 4, "open": 107,
-      "base": 550, "hits": 6, "targets": 9, "cd": 19, "bossDmgBonus": 100,
-      "comboReq": 5, "comboOverFinalByStack": 20, "comboOverBase": 5,
-      "masteryDmgByLevel": { "108": 50 }, "masteryDmgByLevel2": { "122": 50 },
-      "_note": "클뜯 14020(EnhanceRagingBlow): 550%×6, cd19. 보스 몬스터 데미지 +100% 추가 적용(bossDmgBonus, 보스전 딜 배증). 콤보 5스택 이상일 때 사용 가능(comboReq, 일반몹 만렙콤보8이라 항상 충족). 108렙 피해+50%(M10225), 122렙 +50%(M10255 14030표기 실제 14020). 134렙 M10285: 콤보 5초과 중첩당 최종뎀+20%(comboOverFinalByStack, 8스택이면 (8-5)×20=60%)." },
-
-    { "id": "magicCrash", "name": "매직 크래쉬", "kind": "dealActive", "tier": 4, "open": 117,
-      "base": 4800, "hits": 1, "targets": 5, "cd": 28, "dual": "디버프",
-      "debuffs": [ {"stat": "RECV_DMG", "value": 10, "target": "enemy", "dur": 15, "used": true, "open": 126, "note": "126렙 M10265: 매직크래쉬 피해 적 받피+10% 15초"} ],
-      "_note": "클뜯 14040: 4800%×1, cd28, 버프1개 제거. op2 Weakness(126렙 마스터리로 활성=받피+10%)." },
-
-    { "id": "finalAttack", "name": "파이널 어택", "kind": "dealPassiveNoCd", "tier": 2, "open": 50,
-      "base": 35, "proc": 25, "targets": 1,
-      "masteryDmgByLevel": { "54": 50 },
-      "finalMasteryByLevel": { "105": 500, "113": 50 }, "finalMasteryTier": 4, "finalMasteryGrowth": 0.4,
-      "_note": "클뜯 12070: 공격 시 25% 추가타 35% Dot(쉐도우파트너 유형). 105렙 어드밴스드파이널어택(14080): 파이널어택 최종뎀+500%(12070 FinalDamage 5000). 113렙 M10235: +50%p." }
+    {
+      "id": "basic1",
+      "name": "슬래시 블러스트",
+      "kind": "basic",
+      "tier": 1,
+      "open": 1,
+      "base": 26,
+      "hitsBase": 2,
+      "targetsBase": 3,
+      "masteryDmgByLevel": {
+        "12": 15,
+        "19": 20,
+        "26": 20
+      },
+      "targetPlus": {
+        "15": 1,
+        "22": 1
+      }
+    },
+    {
+      "id": "basic2",
+      "name": "브랜디쉬",
+      "kind": "basic",
+      "tier": 2,
+      "open": 30,
+      "base": 40,
+      "hitsBase": 3,
+      "targetsBase": 5,
+      "masteryDmgByLevel": {
+        "32": 15,
+        "42": 20,
+        "52": 20
+      },
+      "masteryBossByLevel": {
+        "47": 15
+      },
+      "targetPlus": {
+        "37": 1
+      },
+      "hitPlus": {
+        "56": 1
+      }
+    },
+    {
+      "id": "basic3",
+      "name": "브레이브 슬래시",
+      "kind": "basic",
+      "tier": 3,
+      "open": 60,
+      "base": 80,
+      "hitsBase": 5,
+      "targetsBase": 6,
+      "masteryDmgByLevel": {
+        "62": 10,
+        "66": 11,
+        "76": 12,
+        "80": 13,
+        "88": 14,
+        "92": 15
+      },
+      "masteryBossByLevel": {
+        "71": 10,
+        "84": 10
+      },
+      "hitPlus": {
+        "96": 1
+      }
+    },
+    {
+      "id": "basic4",
+      "name": "레이징 블로우",
+      "kind": "basic",
+      "tier": 4,
+      "open": 100,
+      "base": 290,
+      "hitsBase": 5,
+      "targetsBase": 6,
+      "masteryDmgByLevel": {
+        "102": 10,
+        "106": 11,
+        "116": 12,
+        "120": 13,
+        "128": 14,
+        "132": 15
+      },
+      "masteryBossByLevel": {
+        "111": 10,
+        "124": 10
+      },
+      "hitPlus": {
+        "136": 1
+      }
+    },
+    {
+      "id": "flashSlash",
+      "name": "플래시 슬래시",
+      "kind": "dealActive",
+      "tier": 2,
+      "open": 35,
+      "base": 350,
+      "hits": 1,
+      "targets": 7,
+      "cd": 16,
+      "meyong": 80,
+      "masteryDmgByLevel": {
+        "39": 50
+      },
+      "comboBonus": {
+        "minStack": 3,
+        "dmgPct": 50
+      },
+      "_note": "클뜯 12020(#FlashSlash): 계수 base 350%(SkillDescParam Const 3500 Div 10 = 350, F12 성장). ×1, cd16. 콤보 3스택 이상이면 피해 +50%(comboBonus). 39렙 피해+50%. 메용(14100) 최종뎀+80%. 일반몹은 콤보 만렙(8)이라 항상 3↑ → +50% 상시."
+    },
+    {
+      "id": "auraBlade",
+      "name": "오라 블레이드",
+      "kind": "dealActive",
+      "tier": 3,
+      "open": 69,
+      "base": 250,
+      "hits": 4,
+      "targets": 8,
+      "cd": 16,
+      "meyong": 20,
+      "masteryDmgByLevel": {
+        "73": 50
+      },
+      "hitPlus": {
+        "94": 1
+      },
+      "cdrMasteryByLevel": {
+        "104": 30
+      }
+    },
+    {
+      "id": "rush",
+      "name": "돌진",
+      "kind": "dealActive",
+      "tier": 3,
+      "open": 63,
+      "base": 600,
+      "hits": 1,
+      "targets": 12,
+      "cd": 22,
+      "meyong": 30,
+      "masteryDmgByLevel": {
+        "68": 80
+      },
+      "cdrMasteryByLevel": {
+        "90": 30
+      },
+      "cc": "기절2.5초"
+    },
+    {
+      "id": "incising",
+      "name": "인사이징",
+      "kind": "dealActive",
+      "tier": 4,
+      "open": 103,
+      "base": 900,
+      "hits": 3,
+      "targets": 5,
+      "cd": 19,
+      "dual": "디버프",
+      "dot": {
+        "perSec": 150,
+        "dur": 10,
+        "period": 1,
+        "targets": 5
+      },
+      "masteryDmgByLevel": {
+        "108": 50
+      },
+      "debuffs": [
+        {
+          "stat": "RECV_DMG",
+          "value": 10,
+          "target": "enemy",
+          "dur": 10,
+          "bossOnly": true,
+          "used": true,
+          "note": "보스면 받는피해+10%(Weakness), 138렙 마스터리 +50%p"
+        }
+      ],
+      "_note": "클뜯 14030(Incising): 900%×3(op1) + 상처 dot 150%/1초 10초(op2 GetDotR Incising_Dot). op3 Weakness100=보스한정 받피+10%. cd19. 108렙 피해+50%(단 클뜯 M10225 parent표기는 14030이나 실제 14020강화 — 인사이징 자체 강화는 122렙 M10255). 138렙 M10295: dot/받피 +50%p."
+    },
+    {
+      "id": "enhanceRagingBlow",
+      "name": "인핸스 레이징 블로우",
+      "kind": "dealActive",
+      "tier": 4,
+      "open": 107,
+      "base": 550,
+      "hits": 6,
+      "targets": 9,
+      "cd": 19,
+      "bossDmgBonus": 100,
+      "comboReq": 5,
+      "comboOverFinalByStack": 20,
+      "comboOverBase": 5,
+      "masteryDmgByLevel": {
+        "108": 50
+      },
+      "masteryDmgByLevel2": {
+        "122": 50
+      },
+      "_note": "클뜯 14020(EnhanceRagingBlow): 550%×6, cd19. 보스 몬스터 데미지 +100% 추가 적용(bossDmgBonus, 보스전 딜 배증). 콤보 5스택 이상일 때 사용 가능(comboReq, 일반몹 만렙콤보8이라 항상 충족). 108렙 피해+50%(M10225), 122렙 +50%(M10255 14030표기 실제 14020). 134렙 M10285: 콤보 5초과 중첩당 최종뎀+20%(comboOverFinalByStack, 8스택이면 (8-5)×20=60%)."
+    },
+    {
+      "id": "magicCrash",
+      "name": "매직 크래쉬",
+      "kind": "dealActive",
+      "tier": 4,
+      "open": 117,
+      "base": 4800,
+      "hits": 1,
+      "targets": 5,
+      "cd": 28,
+      "dual": "디버프",
+      "debuffs": [
+        {
+          "stat": "RECV_DMG",
+          "value": 10,
+          "target": "enemy",
+          "dur": 15,
+          "used": true,
+          "open": 126,
+          "note": "126렙 M10265: 매직크래쉬 피해 적 받피+10% 15초"
+        }
+      ],
+      "_note": "클뜯 14040: 4800%×1, cd28, 버프1개 제거. op2 Weakness(126렙 마스터리로 활성=받피+10%)."
+    },
+    {
+      "id": "finalAttack",
+      "name": "파이널 어택",
+      "kind": "dealPassiveNoCd",
+      "tier": 2,
+      "open": 50,
+      "base": 35,
+      "proc": 25,
+      "targets": 1,
+      "masteryDmgByLevel": {
+        "54": 50
+      },
+      "finalMasteryByLevel": {
+        "105": 500,
+        "113": 50
+      },
+      "finalMasteryTier": 4,
+      "finalMasteryGrowth": 0.4,
+      "_note": "클뜯 12070: 공격 시 25% 추가타 35% Dot(쉐도우파트너 유형). 105렙 어드밴스드파이널어택(14080): 파이널어택 최종뎀+500%(12070 FinalDamage 5000). 113렙 M10235: +50%p."
+    }
   ],
-
   "buffs": [
-    { "id": "nimbleMove", "name": "민첩한 몸놀림", "fixed": true, "atkSpeed": 15, "dur": 15, "cd": 60 },
-
-    { "id": "spiritBlade", "name": "스피릿 블레이드", "kind": "statActive", "tier": 2, "open": 40,
-      "playerRecvDmg": -8, "dur": 20, "cd": 45, "cdrMasteryByLevel": { "44": 30 }, "used": false,
-      "_note": "클뜯 12040: 20초간 받는피해 8% 감소(Toughness, 생존→딜무관)+아군 플레이어 공격력10%(타플레이어라 무관). 44렙 재사용-30%. 딜 기여 없음(표시 전용)." },
-
-    { "id": "enrage", "name": "인레이지", "kind": "statActive", "tier": 4, "open": 115,
-      "finalDmg": 12, "critDmg": 15, "dur": 5, "cd": 10,
-      "_note": "클뜯 14050: 10초마다(cd) 5초간(dur) 최종뎀+12%·크뎀+15%(State Enrage). 가동률=dur/cd=0.5." }
+    {
+      "id": "nimbleMove",
+      "name": "민첩한 몸놀림",
+      "fixed": true,
+      "atkSpeed": 15,
+      "dur": 15,
+      "cd": 60
+    },
+    {
+      "id": "spiritBlade",
+      "name": "스피릿 블레이드",
+      "kind": "statActive",
+      "tier": 2,
+      "open": 40,
+      "playerRecvDmg": -8,
+      "dur": 20,
+      "cd": 45,
+      "cdrMasteryByLevel": {
+        "44": 30
+      },
+      "used": false,
+      "_note": "클뜯 12040: 20초간 받는피해 8% 감소(Toughness, 생존→딜무관)+아군 플레이어 공격력10%(타플레이어라 무관). 44렙 재사용-30%. 딜 기여 없음(표시 전용)."
+    },
+    {
+      "id": "enrage",
+      "name": "인레이지",
+      "kind": "statActive",
+      "tier": 4,
+      "open": 115,
+      "finalDmg": 12,
+      "critDmg": 15,
+      "dur": 5,
+      "cd": 10,
+      "_note": "클뜯 14050: 10초마다(cd) 5초간(dur) 최종뎀+12%·크뎀+15%(State Enrage). 가동률=dur/cd=0.5."
+    }
   ],
-
   "debuffs": [
-    { "id": "scaringSword", "name": "스카링 소드", "recvDmg": 20, "recvDmgPlusByLevel": { "78": 8 },
-      "open": 66, "proc": 35, "buffDur": 15, "debuffDur": 10, "used": true,
-      "_note": "클뜯 13040/13041: 15초간 예기(ScaringSword), 그 중 공격 시 35%로 대상 공격력-10%+받는피해+20%(10초, 78렙 +8%p→28%). 받피증만 딜 반영(대상 공격력 감소는 생존). 가동률=예기 유지(cd30/버프15)×발동." }
+    {
+      "id": "scaringSword",
+      "name": "스카링 소드",
+      "recvDmg": 20,
+      "recvDmgPlusByLevel": {
+        "78": 8
+      },
+      "open": 66,
+      "proc": 35,
+      "buffDur": 15,
+      "debuffDur": 10,
+      "used": true,
+      "_note": "클뜯 13040/13041: 15초간 예기(ScaringSword), 그 중 공격 시 35%로 대상 공격력-10%+받는피해+20%(10초, 78렙 +8%p→28%). 받피증만 딜 반영(대상 공격력 감소는 생존). 가동률=예기 유지(cd30/버프15)×발동."
+    }
   ],
-
   "_statPassivesNote": "히어로 패시브(대부분 선반영). 스킬탭 표시·토글용. 유틸(HP·이속·디버프내성·주스탯·방어력)은 표시 전용. 어드밴스드파이널어택은 파이널어택 finalMastery로 처리, 어드밴스드콤보는 combo.maxStackPlus로 처리. 콤보어택/콤보시너지는 combo 객체.",
   "statPassives": [
-    { "id": "ironBody",        "name": "아이언 바디",         "tier": 1, "open": 10,  "mainStatFlat": 30, "def": 15 },
-    { "id": "warriorMastery",  "name": "워리어 마스터리",      "tier": 1, "open": 15,  "hp": 10, "move": 10 },
-    { "id": "weaponAccel",     "name": "웨폰 액셀레이션",      "tier": 2, "open": 33,  "atkSpeed": 5 },
-    { "id": "physicalTraining","name": "피지컬 트레이닝",      "tier": 2, "open": 38,  "basicAtkDmg": 10 },
-    { "id": "weaponMastery",   "name": "웨폰 마스터리",        "tier": 2, "open": 43,  "minMult": 15 },
-    { "id": "chanceAttack",    "name": "찬스 어택",           "tier": 3, "open": 72,  "always": true, "critRate": 8 },
-    { "id": "endure",          "name": "인듀어",             "tier": 3, "open": 74,  "debuffResist": 15 },
-    { "id": "selfRecovery",    "name": "셀프 리커버리",        "tier": 3, "open": 60,  "desc": "매초 HP1%/MP0.5% 회복(98렙 HP50%↑ 최종뎀+5%)" },
-    { "id": "combatMastery",   "name": "컴뱃 마스터리",        "tier": 4, "open": 120, "skillDmg": 15, "maxMult": 20 },
-    { "id": "stance",          "name": "스탠스",             "tier": 4, "open": 125, "finalDmg": 15 }
+    {
+      "id": "ironBody",
+      "name": "아이언 바디",
+      "tier": 1,
+      "open": 10,
+      "mainStatFlat": 30,
+      "def": 15
+    },
+    {
+      "id": "warriorMastery",
+      "name": "워리어 마스터리",
+      "tier": 1,
+      "open": 15,
+      "hp": 10,
+      "move": 10
+    },
+    {
+      "id": "weaponAccel",
+      "name": "웨폰 액셀레이션",
+      "tier": 2,
+      "open": 33,
+      "atkSpeed": 5
+    },
+    {
+      "id": "physicalTraining",
+      "name": "피지컬 트레이닝",
+      "tier": 2,
+      "open": 38,
+      "basicAtkDmg": 10
+    },
+    {
+      "id": "weaponMastery",
+      "name": "웨폰 마스터리",
+      "tier": 2,
+      "open": 43,
+      "minMult": 15
+    },
+    {
+      "id": "chanceAttack",
+      "name": "찬스 어택",
+      "tier": 3,
+      "open": 72,
+      "always": true,
+      "critRate": 8
+    },
+    {
+      "id": "endure",
+      "name": "인듀어",
+      "tier": 3,
+      "open": 74,
+      "debuffResist": 15
+    },
+    {
+      "id": "selfRecovery",
+      "name": "셀프 리커버리",
+      "tier": 3,
+      "open": 60,
+      "desc": "매초 HP1%/MP0.5% 회복(98렙 HP50%↑ 최종뎀+5%)"
+    },
+    {
+      "id": "combatMastery",
+      "name": "컴뱃 마스터리",
+      "tier": 4,
+      "open": 120,
+      "skillDmg": 15,
+      "maxMult": 20
+    },
+    {
+      "id": "stance",
+      "name": "스탠스",
+      "tier": 4,
+      "open": 125,
+      "finalDmg": 15
+    }
   ]
 }

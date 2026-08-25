@@ -49,11 +49,12 @@ public final class SkillData {
     private final int meyongTier;
     private final int meyongOpen;
     private final Map<String, Object> combo;   // 히어로 콤보 스택(없는 직업은 null)
+    private final Map<String, Object> concentration;   // 보우마스터 컨센트레이션 크뎀 스택(없는 직업은 null)
 
     private SkillData(Map<Integer, Integer> advanceLevels, Map<String, Double> growth,
                       List<Skill> skills, List<Map<String, Object>> buffs,
                       List<Map<String, Object>> debuffs, List<Map<String, Object>> statPassives,
-                      int meyongTier, int meyongOpen, Map<String, Object> combo) {
+                      int meyongTier, int meyongOpen, Map<String, Object> combo, Map<String, Object> concentration) {
         this.advanceLevels = advanceLevels;
         this.growth = growth;
         this.skills = skills;
@@ -63,6 +64,7 @@ public final class SkillData {
         this.meyongTier = meyongTier;
         this.meyongOpen = meyongOpen;
         this.combo = combo;
+        this.concentration = concentration;
     }
 
     public Map<Integer, Integer> advanceLevels() { return advanceLevels; }
@@ -89,6 +91,8 @@ public final class SkillData {
     public int meyongOpen() { return meyongOpen; }
     /** 히어로 콤보 스택 정의(없는 직업은 null). */
     public Map<String, Object> combo() { return combo; }
+    /** 보우마스터 컨센트레이션 크뎀 스택 정의(없는 직업은 null). */
+    public Map<String, Object> concentration() { return concentration; }
 
     /** 나이트로드 스킬 데이터(하위호환). */
     public static SkillData load(Path dir) throws IOException {
@@ -117,10 +121,11 @@ public final class SkillData {
         int meyongOpen = (int) Json.num(mey, "open", 100);
 
         Map<String, Object> combo = root.containsKey("combo") ? Json.asMap(root.get("combo")) : null;
+        Map<String, Object> concentration = root.containsKey("concentration") ? Json.asMap(root.get("concentration")) : null;
 
         return new SkillData(adv, growth, skills,
                 rawList(root.get("buffs")), rawList(root.get("debuffs")), rawList(root.get("statPassives")),
-                meyongTier, meyongOpen, combo);
+                meyongTier, meyongOpen, combo, concentration);
     }
 
     private static List<Map<String, Object>> rawList(Object o) {

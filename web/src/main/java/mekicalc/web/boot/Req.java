@@ -86,6 +86,17 @@ final class Req {
         return out;
     }
 
+    /** JSON 숫자/문자 배열 → Set&lt;Integer&gt;. null/비배열/빈 배열이면 빈 셋. 스킬 사용해제 idx 등. */
+    static Set<Integer> toIntSet(Object o) {
+        Set<Integer> out = new LinkedHashSet<>();
+        if (!(o instanceof List)) return out;
+        for (Object el : (List<Object>) o) {
+            if (el instanceof Number) out.add(((Number) el).intValue());
+            else if (el != null) { try { out.add((int) Double.parseDouble(el.toString())); } catch (NumberFormatException ignore) {} }
+        }
+        return out;
+    }
+
     /** JSON 배열(객체들) → List&lt;Map&gt;. null/비배열이면 빈 리스트. */
     @SuppressWarnings("unchecked")
     static List<Map<String, Object>> mapList(Object o) {

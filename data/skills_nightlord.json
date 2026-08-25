@@ -37,9 +37,9 @@
       "base": 360, "hits": 3, "targets": 1, "cd": 13, "masteryDmgByLevel": { "73": 100 } },
 
     { "id": "darkFlare", "name": "다크 플레어", "kind": "dealActive", "tier": 3, "open": 69,
-      "base": 400, "hitsPerTick": 2, "hitsPerTickPlus": { "78": 1 }, "ticks": 4, "ticksPlus": { "104": 2 },
+      "base": 400, "hitsPerTick": 2, "hitsPerTickPlus": { "78": 1 }, "ticks": 4, "ticksPlus": { "104": 2.6667 },
       "targets": 5, "cd": 45, "cdrMasteryByLevel": { "94": 30 }, "meyong": 15,
-      "_comment": "20초 설치, 5초마다(주기-40%@104 → 3초마다, +2틱). 틱당 2타(+1@78)." },
+      "_comment": "클뜯 93040→93041(설치 20000ms, TickTimeMs 5000=5초, 400%×2 VLF12). 20/5=4틱. 104렙 마스터리(90215) ModSkillProjectileR TickTimeMs -400 = -40%(R연산 비율, 피닉스82렙과 동형) → 3000ms → 20/3≈6.667틱. ticksPlus 2.6667(=6.667-4, 절대→비율 보정 2026-08-06). 틱당 2타(+1@78)." },
 
     { "id": "quadThrow", "name": "쿼드러플 스로우", "kind": "dealActive", "tier": 4, "open": 103,
       "base": 1150, "hits": 4, "targets": 1, "cd": 10, "cdrMasteryByLevel": { "108": 30 },

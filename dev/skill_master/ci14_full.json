@@ -1,0 +1,1748 @@
+{
+ "creatureIndex": "14",
+ "indirectSrc": [],
+ "skills": [
+  {
+   "index": "9001",
+   "open": null,
+   "type": "active",
+   "cooldownMs": "60000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "150",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalHarmony"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "RunSpeedMms",
+      "val": "100",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "15000",
+      "state": "ElementalHarmony_2"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "엘리멘탈 하모니",
+   "desc": "15초간 공격 속도가 15%, 이동 속도가 10% 증가합니다."
+  },
+  {
+   "index": "141010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "140010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "브리즈 애로우 - 피해",
+     "desc": "브리즈 애로우 피해량 +15%"
+    },
+    {
+     "open": "15",
+     "msi": "140020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "브리즈 애로우 - 대상",
+     "desc": "브리즈 애로우 최대 대상 수 +1"
+    },
+    {
+     "open": "19",
+     "msi": "140030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "브리즈 애로우 - 피해",
+     "desc": "브리즈 애로우 피해량 +20%"
+    },
+    {
+     "open": "22",
+     "msi": "140040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "브리즈 애로우 - 대상",
+     "desc": "브리즈 애로우 최대 대상 수 +1"
+    },
+    {
+     "open": "26",
+     "msi": "140050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "브리즈 애로우 - 피해",
+     "desc": "브리즈 애로우 피해량 +20%"
+    }
+   ],
+   "name": "브리즈 애로우",
+   "desc": "[기본 공격 효과] 바람의 힘을 실은 화살을 날려 전방의 적 3명에게 «26»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "141020",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "거스트 쉬프트",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다."
+  },
+  {
+   "index": "141030",
+   "open": "15",
+   "type": "active",
+   "cooldownMs": "28000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "120",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "12000",
+      "state": "Element_Storm"
+     },
+     {
+      "stat": "AttackPower",
+      "val": "40",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "12000",
+      "state": "Element_Storm_2"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "140035",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "500"
+     },
+     "name": "엘리멘트 : 스톰 - 지속",
+     "desc": "엘리멘트 : 스톰 지속시간 +50%"
+    }
+   ],
+   "name": "엘리멘트 : 스톰",
+   "desc": "12초간 공격력이 12%, 데미지가 4% 증가합니다."
+  },
+  {
+   "index": "141040",
+   "open": "10",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "AttackSpeed",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "140045",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "50",
+      "parentType": "ModStatR",
+      "growth": null
+     },
+     "name": "위스퍼 오브 더 윈드 - 공격력",
+     "desc": "위스퍼 오브 더 윈드 공격력 증가량 5%p 추가 증가"
+    }
+   ],
+   "name": "위스퍼 오브 더 윈드",
+   "desc": "공격력이 3%, 공격 속도가 3% 증가합니다."
+  },
+  {
+   "index": "142010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "140060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "거스트 샷 - 피해",
+     "desc": "거스트 샷 피해량 +15%"
+    },
+    {
+     "open": "37",
+     "msi": "140070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "거스트 샷 - 대상",
+     "desc": "거스트 샷 최대 대상 수 +1"
+    },
+    {
+     "open": "42",
+     "msi": "140080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "거스트 샷 - 피해",
+     "desc": "거스트 샷 피해량 +20%"
+    },
+    {
+     "open": "47",
+     "msi": "140090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "거스트 샷 - 보스 몬스터 피해",
+     "desc": "거스트 샷에 보스 몬스터 데미지 15% 추가 적용"
+    },
+    {
+     "open": "52",
+     "msi": "140100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "거스트 샷 - 피해",
+     "desc": "거스트 샷 피해량 +20%"
+    },
+    {
+     "open": "56",
+     "msi": "140110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "거스트 샷 - 타격",
+     "desc": "거스트 샷 적 타격 횟수 +1"
+    }
+   ],
+   "name": "거스트 샷",
+   "desc": "[기본 공격 효과] 빠른 속도로 화살을 난사하여 전방의 적 5명에게 «40»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "142020",
+   "open": "35",
+   "type": "active",
+   "cooldownMs": "19000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 250.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Stun",
+      "tgt": "Parent"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "140075",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "스파이럴 볼텍스 - 피해",
+     "desc": "스파이럴 볼텍스 피해량 +50%"
+    },
+    {
+     "open": "49",
+     "msi": "140095",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "142020",
+       "2"
+      ]
+     },
+     "name": "스파이럴 볼텍스 - 기절",
+     "desc": "스파이럴 볼텍스 타격 대상 1.5초간 기절"
+    }
+   ],
+   "name": "스파이럴 볼텍스",
+   "desc": "바람의 결을 따라 회전하는 화살을 날려 전방의 적 9명에게 «250»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "142030",
+   "open": "50",
+   "type": "active",
+   "cooldownMs": "6000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "RunSpeedMms",
+      "val": "500",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "3000",
+      "state": "WindWalk_Mastery"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "54",
+     "msi": "140105",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "142030",
+       "3"
+      ]
+     },
+     "name": "윈드워크 - 가속",
+     "desc": "윈드워크 사용 후 3초간 이동 속도 50% 증가"
+    }
+   ],
+   "name": "윈드워크",
+   "desc": "바람의 힘을 빌려 전방으로 빠르게 전진합니다."
+  },
+  {
+   "index": "142040",
+   "open": "33",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "보우 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다."
+  },
+  {
+   "index": "142050",
+   "open": "40",
+   "type": "passive",
+   "cooldownMs": "2000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": "142051",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": "#TriflingWhim(360;200)",
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "None",
+     "triggerRatio": "1000",
+     "triggerTimeMs": null
+    },
+    "dealChild": "142051"
+   },
+   "masteries": [
+    {
+     "open": "44",
+     "msi": "140085",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "트라이플링 윔 I - 피해",
+     "desc": "트라이플링 윔 피해량 +50%"
+    }
+   ],
+   "name": "트라이플링 윔 I",
+   "desc": "스킬 발동 시 주변 임의의 적에게 «36»% 추가 피해를 입히는 정령의 기운을 3개 생성합니다. 동일 대상을 연속해서 타격할 때마다 정령의 기운으로 입히는 피해가 최대 80%까지 감소합니다. (0.5초 이내 타격 시 20%씩 최대 4회 감소)"
+  },
+  {
+   "index": "142060",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "보우 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다."
+  },
+  {
+   "index": "142070",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "120",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "CriticalChance",
+      "val": "60",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "실프스 에이드",
+   "desc": "공격력이 12%, 크리티컬 확률이 6% 증가합니다."
+  },
+  {
+   "index": "142080",
+   "open": "38",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "143010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "140120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +10%"
+    },
+    {
+     "open": "66",
+     "msi": "140130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +11%"
+    },
+    {
+     "open": "71",
+     "msi": "140140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 보스 몬스터 피해",
+     "desc": "서리바람의 군무에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "76",
+     "msi": "140150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +12%"
+    },
+    {
+     "open": "80",
+     "msi": "140160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +14%"
+    },
+    {
+     "open": "84",
+     "msi": "140170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 보스 몬스터 피해",
+     "desc": "서리바람의 군무에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "88",
+     "msi": "140180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +14%"
+    },
+    {
+     "open": "92",
+     "msi": "140190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 피해",
+     "desc": "서리바람의 군무 피해량 +15%"
+    },
+    {
+     "open": "96",
+     "msi": "140200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "서리바람의 군무 - 타격",
+     "desc": "서리바람의 군무 적 타격 횟수 +1"
+    }
+   ],
+   "name": "서리바람의 군무",
+   "desc": "[기본 공격 효과] 바람의 힘이 응축된 에메랄드를 매개로 거센 돌풍을 일으켜 주변 적 6명에게 «80»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "143020",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "20000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 330.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": 740.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "100",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "12000",
+      "state": "PinPointPierce_Weakness"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "140135",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "핀포인트 피어스 - 피해",
+     "desc": "핀포인트 피어스 피해량 +50%"
+    },
+    {
+     "open": "94",
+     "msi": "140195",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "143020",
+       "3"
+      ]
+     },
+     "name": "핀포인트 피어스 - 약화",
+     "desc": "핀포인트 피어스 두 번째 화살에 피해입은 적 12초간 받는 피해 10% 증가"
+    }
+   ],
+   "name": "핀포인트 피어스",
+   "desc": "한 명의 적에게 두 대의 화살을 연달아 날려 각각 «330»%, «740»% 피해를 입힙니다."
+  },
+  {
+   "index": "143030",
+   "open": "69",
+   "type": "active",
+   "cooldownMs": "38000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "30",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "20000",
+      "state": "EmeraldDust_SelfBuff"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "78",
+     "msi": "140155",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "에메랄드 플라워 - 재사용",
+     "desc": "에메랄드 플라워 재사용 대기시간 30% 감소"
+    }
+   ],
+   "name": "에메랄드 플라워",
+   "desc": "자신의 위치에 녹색 수정 꽃을 20초간 소환하여 범위 내 적들의 이동 속도를 «10»% 감소시킵니다. 대상이 보스라면 이동 속도가 감소하지 않지만 받는 피해가 «15»% 증가합니다."
+  },
+  {
+   "index": "143040",
+   "open": "66",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "140145",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "800",
+      "growth": null
+     },
+     "name": "트라이플링 윔 II - 피해",
+     "desc": "트라이플링 윔 피해량 +80%"
+    },
+    {
+     "open": "90",
+     "msi": "140185",
+     "effect": {
+      "kind": "modSkill",
+      "key": "FireRatio",
+      "value": "25",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "트라이플링 윔 II - 확률",
+     "desc": "트라이플링 윔 정령의 기운 강화 확률 +15%p"
+    },
+    {
+     "open": "104",
+     "msi": "140215",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "2",
+      "parentType": "UseSkill",
+      "growth": null
+     },
+     "name": "트라이플링 윔 II - 추가 생성",
+     "desc": "트라이플링 윔 발동 시 정령의 기운 2개 추가 생성"
+    }
+   ],
+   "name": "트라이플링 윔 II",
+   "desc": "트라이플링 윔 피해량이 «100»%로 변경되고, 25% 확률로 강화되어 2배의 피해를 입힙니다. (트라이플링 윔 II 스킬 레벨에 비례하여 피해량 증가)"
+  },
+  {
+   "index": "143050",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "알바트로스",
+   "desc": "최종 데미지가 15% 증가합니다."
+  },
+  {
+   "index": "143060",
+   "open": "74",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackPower",
+      "val": "300",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "AttackPowerExcludeBoss",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "98",
+     "msi": "140205",
+     "effect": {
+      "kind": "stat",
+      "stat": "AttackPowerToBoss",
+      "value": "75",
+      "growth": 0.3
+     },
+     "name": "페더리니스 - 보스 몬스터 데미지",
+     "desc": "페더리니스 일반 몬스터 데미지 증가량의 절반만큼 보스 몬스터 데미지 증가"
+    }
+   ],
+   "name": "페더리니스",
+   "desc": "데미지가 30%, 일반 몬스터 데미지가 15% 증가합니다."
+  },
+  {
+   "index": "143070",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "120",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "82",
+     "msi": "140165",
+     "effect": {
+      "kind": "stateMaxStack",
+      "state": "SecondWind_Count",
+      "value": "-4"
+     },
+     "name": "세컨드 윈드 - 중첩",
+     "desc": "세컨드 윈드 공격 속도 증가 효과 발동에 필요한 스킬 사용 횟수 4회 감소"
+    }
+   ],
+   "name": "세컨드 윈드",
+   "desc": "공격력이 12% 증가합니다. 스킬을 8회 발동할 때마다 8초간 공격 속도가 15% 증가합니다. 공격 속도 증가 효과 지속시간 동안과 효과가 사라진 후 4초간 스킬 사용 중첩이 증가하지 않습니다."
+  },
+  {
+   "index": "143080",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "AvoidChance",
+      "val": "20",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "Toughness",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "닷지",
+   "desc": "회피가 20 증가하고, 받는 피해가 5% 감소합니다."
+  },
+  {
+   "index": "144010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "140210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +10%"
+    },
+    {
+     "open": "106",
+     "msi": "140220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +11%"
+    },
+    {
+     "open": "111",
+     "msi": "140230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "페어리 턴 - 보스 몬스터 피해",
+     "desc": "페어리 턴에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "116",
+     "msi": "140240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +12%"
+    },
+    {
+     "open": "120",
+     "msi": "140250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +14%"
+    },
+    {
+     "open": "124",
+     "msi": "140260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "페어리 턴 - 보스 몬스터 피해",
+     "desc": "페어리 턴에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "128",
+     "msi": "140270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +14%"
+    },
+    {
+     "open": "132",
+     "msi": "140280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "페어리 턴 - 피해",
+     "desc": "페어리 턴 피해량 +15%"
+    },
+    {
+     "open": "136",
+     "msi": "140290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "페어리 턴 - 타격",
+     "desc": "페어리 턴 적 타격 횟수 +1"
+    }
+   ],
+   "name": "페어리 턴",
+   "desc": "[기본 공격 효과] 바람과 함께 춤을 추듯 가볍게 제자리에서 활을 휘둘러 전방의 적 6명에게 «290»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "144020",
+   "open": "103",
+   "type": "active",
+   "cooldownMs": "40000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": "142052",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 780.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": "#TriflingWhim(1000;200)",
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     },
+     {
+      "coeff": "#TriflingWhim(2000;200)",
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "None",
+     "triggerRatio": "1000",
+     "triggerTimeMs": null
+    },
+    "dealChild": "142052"
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "140225",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "천공의 노래 - 피해",
+     "desc": "천공의 노래 피해량 +50%"
+    },
+    {
+     "open": "134",
+     "msi": "140285",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "3",
+      "parentType": "UseSkill",
+      "growth": null
+     },
+     "name": "천공의 노래 - 추가 생성",
+     "desc": "천공의 노래 화살 발사 시 정령의 기운 3개 추가 생성"
+    }
+   ],
+   "name": "천공의 노래",
+   "desc": "빠른 속도로 화살을 13회 발사합니다. 화살은 전방의 적 9명에게 «780»% 피해를 입히며, 공격 속도가 빠를수록 더 빠르게 발사합니다. 화살을 발사할 때마다 정령의 기운을 2개 생성합니다. 스킬 사용 시 범위 내에 적이 없다면 가까운 적을 향해 이동합니다."
+  },
+  {
+   "index": "144030",
+   "open": "115",
+   "type": "active",
+   "cooldownMs": "35000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalPower",
+      "val": "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "18000",
+      "state": "SharpEyes"
+     },
+     {
+      "stat": "CriticalPower",
+      "val": "$CreatureFinalStat(UsedCreature;CriticalPower) * 200 / 1000",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "18000",
+      "state": "SharpEyes"
+     },
+     {
+      "stat": "CriticalPower",
+      "val": "400",
+      "growth": 0.4,
+      "tgt": "Parent",
+      "durationMs": "99999999",
+      "state": "SharpEyes_Self"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "126",
+     "msi": "140265",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "500"
+     },
+     "name": "샤프 아이즈 - 지속",
+     "desc": "샤프 아이즈 지속시간 +50%"
+    }
+   ],
+   "name": "샤프 아이즈",
+   "desc": "18초간 크리티컬 데미지의 20%만큼 아군 플레이어의 크리티컬 데미지를 증가시킵니다. 자신은 크리티컬 데미지가 40% 추가로 증가합니다."
+  },
+  {
+   "index": "144040",
+   "open": "110",
+   "type": "passive",
+   "cooldownMs": "25000",
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "300",
+   "triggerTimeMs": null,
+   "dealChild": "144041",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1100.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "OnAttack",
+     "triggerRatio": "300",
+     "triggerTimeMs": null
+    },
+    "dealChild": "144041"
+   },
+   "masteries": [
+    {
+     "open": "122",
+     "msi": "140255",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "스톰 브링어 - 피해",
+     "desc": "스톰 브링어 피해량 +50%"
+    },
+    {
+     "open": "138",
+     "msi": "140295",
+     "effect": {
+      "kind": "modSkill",
+      "key": "SkillTriggerRatio",
+      "value": "300",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "스톰 브링어 - 확률",
+     "desc": "스톰 브링어 거대한 화살 발동 확률 +30%"
+    }
+   ],
+   "name": "스톰 브링어",
+   "desc": "스킬 발동 시 50% 확률로 15초간 폭풍의 힘을 불러냅니다. 폭풍의 힘 지속시간 동안 공격 시 30% 확률로 거대한 화살을 발사하여 전방의 적 12명에게 «1100»% 피해를 입힙니다. 거대한 화살은 0.5초의 재사용 대기시간을 가집니다."
+  },
+  {
+   "index": "144050",
+   "open": "105",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "142052",
+      "stat": "FinalDamage",
+      "value": "1000",
+      "growth": 0.4
+     },
+     {
+      "targetSkill": "142051",
+      "stat": "FinalDamage",
+      "value": "1000",
+      "growth": 0.4
+     }
+    ]
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "140235",
+     "effect": {
+      "kind": "ratio",
+      "key": "Value",
+      "value": "350"
+     },
+     "name": "트라이플링 윔 III - 강화",
+     "desc": "트라이플링 윔 최종 데미지 증가량 +35%"
+    },
+    {
+     "open": "130",
+     "msi": "140275",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "2",
+      "parentType": "UseSkill",
+      "growth": null
+     },
+     "name": "트라이플링 윔 III - 추가 생성",
+     "desc": "트라이플링 윔 발동 시 정령의 기운 2개 추가 생성"
+    }
+   ],
+   "name": "트라이플링 윔 III",
+   "desc": "트라이플링 윔 최종 데미지가 100% 증가합니다."
+  },
+  {
+   "index": "144060",
+   "open": "117",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "MaxHp",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "윈드 블레싱",
+   "desc": "공격력이 10%, 최대 HP가 10% 증가합니다."
+  },
+  {
+   "index": "144070",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "SkillPower",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "MaxDamageRatio",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "보우 엑스퍼트",
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다."
+  },
+  {
+   "index": "144080",
+   "open": "107",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "140245",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "60",
+      "parentType": "ModStat",
+      "growth": null
+     },
+     "name": "에메랄드 더스트 - 최종 데미지",
+     "desc": "에메랄드 더스트 최종 데미지 증가량 +6%p 추가 증가"
+    }
+   ],
+   "name": "에메랄드 더스트",
+   "desc": "에메랄드 플라워가 범위 내 적들의 받는 피해를 «8»% 증가시키고, 에메랄드 플라워 지속시간 동안 자신의 최종 데미지가 3% 증가합니다."
+  },
+  {
+   "index": "144090",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "PiercePower",
+      "val": "80",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "알바트로스 맥시멈",
+   "desc": "최종 데미지가 10%, 방어 관통력이 8% 증가합니다."
+  },
+  {
+   "index": "144100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "143020",
+      "stat": "FinalDamage",
+      "value": "400",
+      "growth": null
+     },
+     {
+      "targetSkill": "142020",
+      "stat": "FinalDamage",
+      "value": "1000",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": [],
+   "name": "시그너스 나이츠",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 핀포인트 피어스 40% 스파이럴 볼텍스 100%"
+  }
+ ]
+}

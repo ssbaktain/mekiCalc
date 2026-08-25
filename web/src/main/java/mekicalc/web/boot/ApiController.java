@@ -9,6 +9,7 @@ import static mekicalc.web.boot.Req.str;
 import static mekicalc.web.boot.Req.strOpt;
 import static mekicalc.web.boot.Req.toDoubleMap;
 import static mekicalc.web.boot.Req.toEquipList;
+import static mekicalc.web.boot.Req.toIntSet;
 import static mekicalc.web.boot.Req.toStrSet;
 
 import java.util.Map;
@@ -152,6 +153,22 @@ public class ApiController {
                 toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"),
                 (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+    }
+
+    @GetMapping("/api/nl-skills")
+    public Object nlSkills() {
+        return service.nlSkills();
+    }
+
+    @PostMapping("/api/nl-timeline")
+    public Object nlTimeline(@RequestBody Map<String, Object> req) {
+        return service.nlTimeline(toDoubleMap(req.get("stats")), str(req, "mode"),
+                mapList(req.get("casts")), str(req, "chapter"), str(req, "target"),
+                (int) num(req, "simMs", 0), mapList(req.get("artifacts")), mapList(req.get("potentials")),
+                intOrNull(req, "enemies"), req.get("kills") instanceof Number ? num(req, "kills", 0) : null,
+                strOpt(req, "content"), (int) Math.round(num(req, "artOffsetSec", 0) * 1000),
+                bool(req, "preActivateProc", false), bool(req, "autoFillBasic", true), toIntSet(req.get("skillsOff")),
+                bool(req, "fillSkills", false), bool(req, "optimize", false));
     }
 
     @PostMapping("/api/ally-ratio")

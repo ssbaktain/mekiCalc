@@ -31,8 +31,9 @@ public final class BotOutbox {
         public long id;
         public String text;
         public String dedupKey;
-        public String status = "pending";   // pending | sent
+        public String status = "pending";   // pending | sent (카톡 발송 상태)
         public long leasedAt, createdAt, sentAt;
+        public long discordAt;               // 디스코드 발송 시각(0=미발송). 카톡 status와 완전 독립.
         public List<String> targetRooms;    // null=notify 권한 방 전체, 아니면 특정 chatId 목록(개인 공지/테스트)
 
         Map<String, Object> toMap() {
@@ -44,6 +45,7 @@ public final class BotOutbox {
             m.put("leasedAt", (double) leasedAt);
             m.put("createdAt", (double) createdAt);
             m.put("sentAt", (double) sentAt);
+            m.put("discordAt", (double) discordAt);
             m.put("targetRooms", targetRooms);   // null이면 그대로 null 저장
             return m;
         }
@@ -56,6 +58,7 @@ public final class BotOutbox {
             x.leasedAt = (long) Json.num(m, "leasedAt", 0);
             x.createdAt = (long) Json.num(m, "createdAt", 0);
             x.sentAt = (long) Json.num(m, "sentAt", 0);
+            x.discordAt = (long) Json.num(m, "discordAt", 0);
             x.targetRooms = strList(m.get("targetRooms"));
             return x;
         }
@@ -146,6 +149,39 @@ public final class BotOutbox {
         return out;
     }
 
+    /**
+     * 디스코드 발송 대상(브로드캐스트 & 미발송) 최대 limit건 반환. 카톡과 독립된 소비자용:
+     * {@code targetRooms==null}(전체 공지·리마인더만; 개인 공지/테스트 제외) 중 {@code discordAt==0}만.
+     * 카톡 status는 보지 않는다(카톡이 이미 보냈어도 디스코드는 아직일 수 있음). lease 없음 —
+     * 단일 스케줄러 소비자라, {@link #markDiscordSent} 전에 죽으면 다음 틱 재발송(at-least-once).
+     */
+    public synchronized List<Map<String, Object>> pollForDiscord(int limit) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Msg x : msgs) {
+            if (x.targetRooms != null) continue;   // 개인 공지/테스트는 디스코드 제외
+            if (x.discordAt != 0) continue;         // 이미 디스코드 발송됨
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", (double) x.id);
+            m.put("text", x.text);
+            out.add(m);
+            if (out.size() >= limit) break;
+        }
+        return out;
+    }
+
+    /** 디스코드 발송 완료 확정(해당 id들의 discordAt 기록). */
+    public synchronized int markDiscordSent(List<Object> ids) {
+        Set<Long> set = new HashSet<>();
+        for (Object o : ids) { if (o instanceof Number) set.add(((Number) o).longValue()); }
+        long now = System.currentTimeMillis() / 1000;
+        int n = 0;
+        for (Msg x : msgs) {
+            if (set.contains(x.id) && x.discordAt == 0) { x.discordAt = now; n++; }
+        }
+        if (n > 0) save();
+        return n;
+    }
+
     /** 발송 완료 확정. */
     public synchronized int ack(List<Object> ids) {
         Set<Long> set = new HashSet<>();
@@ -161,7 +197,11 @@ public final class BotOutbox {
         if (toRemove > 0) {
             java.util.Iterator<Msg> it = msgs.iterator();
             while (it.hasNext() && toRemove > 0) {
-                if ("sent".equals(it.next().status)) { it.remove(); toRemove--; }
+                Msg m = it.next();
+                if (!"sent".equals(m.status)) continue;
+                // 디스코드 미발송 브로드캐스트는 아직 지우지 않는다(디스코드 소비자가 긁어갈 때까지 보존 → 유실 0).
+                if (m.targetRooms == null && m.discordAt == 0) continue;
+                it.remove(); toRemove--;
             }
         }
         if (n > 0) save();

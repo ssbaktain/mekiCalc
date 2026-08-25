@@ -1,0 +1,194 @@
+{
+  "ARTIFACT_3_1": {
+    "index": "301",
+    "grade": "Grade3",
+    "nameKey": "ARTIFACT_NAME_3_1",
+    "name": "죽은자의 부적"
+  },
+  "ARTIFACT_3_2": {
+    "index": "302",
+    "grade": "Grade3",
+    "nameKey": "ARTIFACT_NAME_3_2",
+    "name": "돼지의 리본"
+  },
+  "ARTIFACT_3_3": {
+    "index": "303",
+    "grade": "Grade3",
+    "nameKey": "ARTIFACT_NAME_3_3",
+    "name": "무녀의 구슬"
+  },
+  "ARTIFACT_3_4": {
+    "index": "304",
+    "grade": "Grade3",
+    "nameKey": "ARTIFACT_NAME_3_4",
+    "name": "어둠의 계약서"
+  },
+  "ARTIFACT_4_1": {
+    "index": "401",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_1",
+    "name": "무지개색 달팽이 등껍질"
+  },
+  "ARTIFACT_4_2": {
+    "index": "402",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_2",
+    "name": "육각 수정 목걸이"
+  },
+  "ARTIFACT_4_3": {
+    "index": "403",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_3",
+    "name": "아르웬의 유리구두"
+  },
+  "ARTIFACT_4_4": {
+    "index": "404",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_4",
+    "name": "머쉬맘의 갓"
+  },
+  "ARTIFACT_4_5": {
+    "index": "405",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_5",
+    "name": "맑은 샘물"
+  },
+  "ARTIFACT_4_6": {
+    "index": "406",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_6",
+    "name": "헬레나의 오래된 장갑"
+  },
+  "ARTIFACT_4_7": {
+    "index": "407",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_7",
+    "name": "자쿰의 돌조각"
+  },
+  "ARTIFACT_4_8": {
+    "index": "408",
+    "grade": "Grade4",
+    "nameKey": "ARTIFACT_NAME_4_8",
+    "name": "혼테일의 비늘"
+  },
+  "ARTIFACT_5_1": {
+    "index": "501",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_1",
+    "name": "성배"
+  },
+  "ARTIFACT_5_2": {
+    "index": "502",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_2",
+    "name": "낡은 오르골"
+  },
+  "ARTIFACT_5_3": {
+    "index": "503",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_3",
+    "name": "은 펜던트"
+  },
+  "ARTIFACT_5_4": {
+    "index": "504",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_4",
+    "name": "별의 돌"
+  },
+  "ARTIFACT_5_5": {
+    "index": "505",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_5",
+    "name": "고대의 책"
+  },
+  "ARTIFACT_5_6": {
+    "index": "506",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_6",
+    "name": "월로"
+  },
+  "ARTIFACT_5_7": {
+    "index": "507",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_7",
+    "name": "화염초"
+  },
+  "ARTIFACT_5_8": {
+    "index": "508",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_8",
+    "name": "영혼의 계약서"
+  },
+  "ARTIFACT_5_9": {
+    "index": "509",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_9",
+    "name": "불이 켜진 램프"
+  },
+  "ARTIFACT_5_10": {
+    "index": "510",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_10",
+    "name": "영혼의 주머니"
+  },
+  "ARTIFACT_5_11": {
+    "index": "511",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_11",
+    "name": "고대문서 조각"
+  },
+  "ARTIFACT_5_12": {
+    "index": "512",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_12",
+    "name": "얼음의 영혼석"
+  },
+  "ARTIFACT_5_13": {
+    "index": "513",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_13",
+    "name": "불타는 용암"
+  },
+  "ARTIFACT_5_14": {
+    "index": "514",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_14",
+    "name": "세이람의 목걸이"
+  },
+  "ARTIFACT_5_15": {
+    "index": "515",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_15",
+    "name": "감정의 물병"
+  },
+  "ARTIFACT_5_16": {
+    "index": "516",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_16",
+    "name": "천도나무용 명약"
+  },
+  "ARTIFACT_5_17": {
+    "index": "517",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_17",
+    "name": "양초"
+  },
+  "ARTIFACT_5_18": {
+    "index": "518",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_18",
+    "name": "동맹의 증표"
+  },
+  "ARTIFACT_5_19": {
+    "index": "519",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_19",
+    "name": "뿔피리"
+  },
+  "ARTIFACT_5_20": {
+    "index": "520",
+    "grade": "Grade5",
+    "nameKey": "ARTIFACT_NAME_5_20",
+    "name": "저주받은 인형"
+  }
+}

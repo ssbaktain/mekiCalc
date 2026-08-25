@@ -1,0 +1,1665 @@
+{
+ "creatureIndex": "10",
+ "indirectSrc": [
+  "Defence"
+ ],
+ "skills": [
+  {
+   "index": "101010",
+   "open": null,
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 26.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "12",
+     "msi": "100010",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "더블 스탭 - 피해",
+     "desc": "더블 스탭 피해량 +15%"
+    },
+    {
+     "open": "15",
+     "msi": "100020",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "더블 스탭 - 대상",
+     "desc": "더블 스탭 최대 대상 수 +1"
+    },
+    {
+     "open": "19",
+     "msi": "100030",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "더블 스탭 - 피해",
+     "desc": "더블 스탭 피해량 +20%"
+    },
+    {
+     "open": "22",
+     "msi": "100040",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "더블 스탭 - 대상",
+     "desc": "더블 스탭 최대 대상 수 +1"
+    },
+    {
+     "open": "26",
+     "msi": "100050",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "더블 스탭 - 피해",
+     "desc": "더블 스탭 피해량 +20%"
+    }
+   ],
+   "name": "더블 스탭",
+   "desc": "[기본 공격 효과] 주변 적 3명에게 «26»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "101020",
+   "open": "10",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "RunSpeedMms",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "21",
+     "msi": "100035",
+     "effect": {
+      "kind": "stat",
+      "stat": "RunSpeedMms",
+      "value": "50",
+      "growth": null
+     },
+     "name": "헤이스트 - 속도",
+     "desc": "헤이스트 이동 속도 5%p 증가"
+    }
+   ],
+   "name": "헤이스트",
+   "desc": "이동 속도가 15% 증가합니다."
+  },
+  {
+   "index": "101030",
+   "open": "15",
+   "type": "active",
+   "cooldownMs": "25000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalChance",
+      "val": "60",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "8000",
+      "state": "DarkSight"
+     },
+     {
+      "stat": "Attack",
+      "val": "100",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "8000",
+      "state": "DarkSight_2"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "24",
+     "msi": "100045",
+     "effect": {
+      "kind": "ratio",
+      "key": "DurationMs",
+      "value": "500"
+     },
+     "name": "다크 사이트 - 지속",
+     "desc": "다크 사이트 크리티컬 확률, 공격력 버프 지속시간 +50%"
+    }
+   ],
+   "name": "다크 사이트",
+   "desc": "8초간 그림자에 몸을 숨기며 기습을 준비합니다. 지속시간 내 스킬 발동 시 8초간 크리티컬 확률이 6% 증가하고, 공격력이 10% 증가합니다."
+  },
+  {
+   "index": "101040",
+   "open": null,
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "플래시 점프",
+   "desc": "점프 중 한 번 더 도약하여 먼 거리를 이동합니다."
+  },
+  {
+   "index": "102010",
+   "open": "30",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 40.0,
+      "hits": "3",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "32",
+     "msi": "100060",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 피해",
+     "desc": "새비지 블로우 피해량 +15%"
+    },
+    {
+     "open": "37",
+     "msi": "100070",
+     "effect": {
+      "kind": "modSkill",
+      "key": "MaxHitCount",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 대상",
+     "desc": "새비지 블로우 최대 대상 수 +1"
+    },
+    {
+     "open": "42",
+     "msi": "100080",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 피해",
+     "desc": "새비지 블로우 피해량 +20%"
+    },
+    {
+     "open": "47",
+     "msi": "100090",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "150",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 보스 몬스터 피해",
+     "desc": "새비지 블로우에 보스 몬스터 데미지 15% 추가 적용"
+    },
+    {
+     "open": "52",
+     "msi": "100100",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "200",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 피해",
+     "desc": "새비지 블로우 피해량 +20%"
+    },
+    {
+     "open": "56",
+     "msi": "100110",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "새비지 블로우 - 타격",
+     "desc": "새비지 블로우 적 타격 횟수 +1"
+    }
+   ],
+   "name": "새비지 블로우",
+   "desc": "[기본 공격 효과] 전방의 적 5명에게 «40»% 피해를 3회 입힙니다."
+  },
+  {
+   "index": "102020",
+   "open": "35",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnHit",
+   "triggerRatio": "100",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "-100",
+      "growth": 0.3,
+      "tgt": "Target",
+      "durationMs": "5000",
+      "state": "102020"
+     },
+     {
+      "stat": "Attack",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "5000",
+      "state": "102020_2",
+      "stateMax": 3
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "39",
+     "msi": "100075",
+     "effect": {
+      "kind": "modSkill",
+      "key": "SkillTriggerRatio",
+      "value": "50",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "스틸 - 확률",
+     "desc": "스틸 발동 확률 5%p 증가"
+    },
+    {
+     "open": "54",
+     "msi": "100105",
+     "effect": {
+      "kind": "ratio",
+      "key": "Value",
+      "value": "500"
+     },
+     "name": "스틸 - 약화",
+     "desc": "스틸 대상 공격력 감소량 50% 증가"
+    }
+   ],
+   "name": "스틸",
+   "desc": "적을 타격하면 10% 확률로 힘을 흡수하여 5초간 대상의 공격력을 «10»% 감소시키고, 자신의 공격력을 5% 증가시킵니다. 이미 스틸이 적용된 대상에게는 효과 종료까지 다시 발생하지 않으며, 공격력 증가 효과는 최대 3회까지 중첩됩니다."
+  },
+  {
+   "index": "102030",
+   "open": "50",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "CriticalChance",
+      "val": "60",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "CriticalPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "크리티컬 엣지",
+   "desc": "크리티컬 확률이 6%, 크리티컬 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "102040",
+   "open": "33",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "AttackSpeed",
+      "val": "50",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "44",
+     "msi": "100085",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "70",
+      "parentType": "ModStat",
+      "growth": null
+     },
+     "name": "대거 액셀레이션 - 속도",
+     "desc": "대거 액셀레이션 공격 속도 7%p 증가"
+    }
+   ],
+   "name": "대거 액셀레이션",
+   "desc": "공격 속도가 5% 증가합니다."
+  },
+  {
+   "index": "102050",
+   "open": "40",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Attack",
+      "val": "80",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "CriticalResist",
+      "val": "70",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "카르마",
+   "desc": "공격력이 8% 증가하고, 크리티컬 저항이 7% 증가합니다."
+  },
+  {
+   "index": "102060",
+   "open": "43",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "MinDamageRatio",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "49",
+     "msi": "100095",
+     "effect": {
+      "kind": "stat",
+      "stat": "CriticalChance",
+      "value": "80",
+      "growth": null
+     },
+     "name": "대거 마스터리 - 크리티컬",
+     "desc": "대거 마스터리 크리티컬 확률 8%p 증가"
+    }
+   ],
+   "name": "대거 마스터리",
+   "desc": "최소 데미지 배율이 15% 증가합니다."
+  },
+  {
+   "index": "102070",
+   "open": "38",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "BaseAttackPower",
+      "val": "100",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "피지컬 트레이닝",
+   "desc": "기본 공격 데미지가 10% 증가합니다."
+  },
+  {
+   "index": "102080",
+   "open": "45",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "Luk",
+      "val": "$CreatureFinalStat(FiredCreature;Defence) * 100 / 1000",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "실드 마스터리",
+   "desc": "방어력의 10%만큼 LUK이 증가합니다."
+  },
+  {
+   "index": "103010",
+   "open": "60",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 80.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "62",
+     "msi": "100120",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +10%"
+    },
+    {
+     "open": "66",
+     "msi": "100130",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +11%"
+    },
+    {
+     "open": "71",
+     "msi": "100140",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 보스 몬스터 피해",
+     "desc": "엣지 카니발에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "76",
+     "msi": "100150",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +12%"
+    },
+    {
+     "open": "80",
+     "msi": "100160",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +13%"
+    },
+    {
+     "open": "84",
+     "msi": "100170",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 보스 몬스터 피해",
+     "desc": "엣지 카니발에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "88",
+     "msi": "100180",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +14%"
+    },
+    {
+     "open": "92",
+     "msi": "100190",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 피해",
+     "desc": "엣지 카니발 피해량 +15%"
+    },
+    {
+     "open": "96",
+     "msi": "100200",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "엣지 카니발 - 타격",
+     "desc": "엣지 카니발 적 타격 횟수 +1"
+    }
+   ],
+   "name": "엣지 카니발",
+   "desc": "[기본 공격 효과] 전방의 적 6명에게 «80»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "103020",
+   "open": "63",
+   "type": "active",
+   "cooldownMs": "23000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 450.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "type": "Stun",
+      "tgt": "Parent"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "73",
+     "msi": "100145",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "800",
+      "growth": null
+     },
+     "name": "무스펠 하임 - 피해",
+     "desc": "무스펠 하임 피해량 +80%"
+    }
+   ],
+   "name": "무스펠 하임",
+   "desc": "전방으로 돌진하며 7명에게 «450»% 피해를 2회 입히고 2초간 기절시킵니다."
+  },
+  {
+   "index": "103030",
+   "open": "66",
+   "type": "active",
+   "cooldownMs": "11000",
+   "targetCount": "$CreatureStateCount(FiredCreature;Meso)",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 270.0,
+      "hits": "3",
+      "growth": 0.5,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "90",
+     "msi": "100185",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "메소 익스플로젼 - 피해",
+     "desc": "메소 익스플로젼 피해량 +100%"
+    }
+   ],
+   "name": "메소 익스플로젼",
+   "desc": "적을 공격하면 50% 확률로 메소 중첩을 생성합니다. 스킬 발동 시 주변 적들을 공격하여 «270»% 피해를 3회 입힙니다. 이 스킬은 메소를 생성했을 때만 사용할 수 있고, 효과 대상 수는 생성된 메소 중첩 수만큼이며, 최대 10개까지 중첩됩니다."
+  },
+  {
+   "index": "103040",
+   "open": "69",
+   "type": "active",
+   "cooldownMs": "45000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": {
+     "child": "103041",
+     "durationMs": "20000",
+     "tickMs": "5000",
+     "dmg": {
+      "coeff": 400.0,
+      "hits": "2",
+      "growth": 0.5,
+      "dot": false
+     },
+     "maxTarget": "5"
+    },
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "78",
+     "msi": "100155",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "다크 플레어 - 타격",
+     "desc": "다크 플레어 적 타격 횟수 +1"
+    },
+    {
+     "open": "94",
+     "msi": "100195",
+     "effect": {
+      "kind": "ratio",
+      "key": "SkillCoolTimeMs",
+      "value": "-300"
+     },
+     "name": "다크 플레어 - 재사용",
+     "desc": "다크 플레어 재사용 대기시간 30% 감소"
+    },
+    {
+     "open": "104",
+     "msi": "100215",
+     "effect": {
+      "kind": "ratio",
+      "key": "TickTimeMs",
+      "value": "-400"
+     },
+     "name": "다크 플레어 - 타격 주기",
+     "desc": "다크 플레어 타격 주기 40% 감소"
+    }
+   ],
+   "name": "다크 플레어",
+   "desc": "20초간 어두운 기운을 방출하는 검을 생성하여 5초마다 주변 적 5명에게 «400»% 피해를 2회 입힙니다."
+  },
+  {
+   "index": "103050",
+   "open": "60",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "250",
+   "triggerTimeMs": [
+    "500",
+    "500"
+   ],
+   "dealChild": "103051",
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 84.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [],
+    "dealTrigger": {
+     "triggerType": "OnAttack",
+     "triggerRatio": "250",
+     "triggerTimeMs": null
+    },
+    "dealChild": "103051"
+   },
+   "masteries": [
+    {
+     "open": "68",
+     "msi": "100135",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "쉐도우 파트너 - 피해",
+     "desc": "쉐도우 파트너 피해량 +100%"
+    }
+   ],
+   "name": "쉐도우 파트너",
+   "desc": "그림자를 생성하여 공격 시 25% 확률로 «84»% 추가 피해를 입힙니다."
+  },
+  {
+   "index": "103060",
+   "open": "72",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "300",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 45.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": true,
+      "dotDurMs": "10000",
+      "dotTickMs": "1000"
+     }
+    ],
+    "buff": [],
+    "debuff": [
+     {
+      "stat": "Weakness",
+      "val": "120",
+      "growth": null,
+      "tgt": "Parent",
+      "durationMs": "10000",
+      "state": "103060_2"
+     }
+    ],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "82",
+     "msi": "100165",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "103060",
+       "2"
+      ]
+     },
+     "name": "베놈 - 약화",
+     "desc": "베놈 지속시간 동안 대상의 받는 피해 12% 증가"
+    },
+    {
+     "open": "98",
+     "msi": "100205",
+     "effect": {
+      "kind": "modSkill",
+      "key": "SkillTriggerRatio",
+      "value": "100",
+      "parentType": "",
+      "growth": null
+     },
+     "name": "베놈 - 확률",
+     "desc": "베놈 발동 확률 10%p 증가"
+    }
+   ],
+   "name": "베놈",
+   "desc": "단검에 독을 발라 공격한 대상을 30% 확률로 10초간 중독 상태로 만듭니다. 중독 상태의 적은 1초마다 «45»% 지속 피해를 입습니다."
+  },
+  {
+   "index": "103070",
+   "open": "74",
+   "type": "active",
+   "cooldownMs": "40000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "200",
+      "growth": 0.4,
+      "tgt": "Myself",
+      "durationMs": "13000",
+      "state": "IntoDarkness"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "인투 다크니스",
+   "desc": "13초간 최종 데미지가 20% 증가하고 2초간 기본 공격 피해 면역이 됩니다. 스킬 사용 시 근접한 적이 없다면 주변에서 HP 비율이 가장 낮은 적에게 접근합니다."
+  },
+  {
+   "index": "103080",
+   "open": "75",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "그리드",
+   "desc": "메소 익스플로젼의 메소 생성 확률을 25%p 증가시킵니다. 메소가 생성 될 때 5초간 공격력이 25% 증가합니다."
+  },
+  {
+   "index": "104010",
+   "open": "100",
+   "type": "active",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 290.0,
+      "hits": "5",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "102",
+     "msi": "100210",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "100",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +10%"
+    },
+    {
+     "open": "106",
+     "msi": "100220",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "110",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +11%"
+    },
+    {
+     "open": "111",
+     "msi": "100230",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 보스 몬스터 피해",
+     "desc": "크루얼 스탭에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "116",
+     "msi": "100240",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "120",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +12%"
+    },
+    {
+     "open": "120",
+     "msi": "100250",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "130",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +13%"
+    },
+    {
+     "open": "124",
+     "msi": "100260",
+     "effect": {
+      "kind": "modSkill",
+      "key": "ModStatAddValue",
+      "value": "100",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 보스 몬스터 피해",
+     "desc": "크루얼 스탭에 보스 몬스터 데미지 10% 추가 적용"
+    },
+    {
+     "open": "128",
+     "msi": "100270",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "140",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +14%"
+    },
+    {
+     "open": "132",
+     "msi": "100280",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "150",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 피해",
+     "desc": "크루얼 스탭 피해량 +15%"
+    },
+    {
+     "open": "136",
+     "msi": "100290",
+     "effect": {
+      "kind": "modSkill",
+      "key": "Value",
+      "value": "1",
+      "parentType": "GetDamageR",
+      "growth": null
+     },
+     "name": "크루얼 스탭 - 타격",
+     "desc": "크루얼 스탭 적 타격 횟수 +1"
+    }
+   ],
+   "name": "크루얼 스탭",
+   "desc": "[기본 공격 효과] 단검으로 전방의 적을 깊숙히 관통하여 6명의 적에게 «290»% 피해를 5회 입힙니다."
+  },
+  {
+   "index": "104020",
+   "open": "103",
+   "type": "active",
+   "cooldownMs": "13000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1400.0,
+      "hits": "2",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "108",
+     "msi": "100225",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "104020",
+       "3"
+      ]
+     },
+     "name": "암살 - 살의",
+     "desc": "블러디 파킷 공격 후, 다음 암살의 마무리 일격 피해량이 2배로 증가"
+    },
+    {
+     "open": "134",
+     "msi": "100285",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "암살 - 피해",
+     "desc": "암살 피해량 +50%"
+    }
+   ],
+   "name": "암살",
+   "desc": "적의 급소를 공격하여 대상에게 «1400»% 피해를 2회 입힙니다. 스킬을 2번째 사용할 때마다 마무리 일격을 가하여 대상에게 «{3}»% 피해를 추가로 입힙니다."
+  },
+  {
+   "index": "104030",
+   "open": "105",
+   "type": "active",
+   "cooldownMs": "19000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 1400.0,
+      "hits": "3",
+      "growth": 0.5,
+      "dot": false
+     },
+     {
+      "coeff": 360.0,
+      "hits": "1",
+      "growth": 0.5,
+      "dot": true,
+      "dotDurMs": "5000",
+      "dotTickMs": "1000"
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "126",
+     "msi": "100265",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "500",
+      "growth": null
+     },
+     "name": "써든레이드 - 피해",
+     "desc": "써든레이드 피해량 +50%"
+    }
+   ],
+   "name": "써든레이드",
+   "desc": "숨어 있던 동료들을 총동원하여 주변의 적 8명에게 «1400»% 피해를 3회 입히고, 5초간 1초마다 «360»% 지속 피해를 입힙니다."
+  },
+  {
+   "index": "104040",
+   "open": "110",
+   "type": "active",
+   "cooldownMs": "45000",
+   "targetCount": "1",
+   "triggerType": "None",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "130",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "20000",
+      "state": "SmokeShell_SelfBuff"
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "113",
+     "msi": "100235",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "104041",
+       "3"
+      ]
+     },
+     "name": "연막탄 - 크리티컬",
+     "desc": "연막탄 범위 내 적 크리티컬 저항 10% 감소, 아군 플레이어 크리티컬 데미지 30% 증가"
+    }
+   ],
+   "name": "연막탄",
+   "desc": "자신의 주변에 연막탄을 뿌려 20초간 범위 내 적들의 명중을 «10», 회피를 «10», 방어력을 «7»% 감소시키고, 범위 내 아군 플레이어의 받는 피해를 8% 감소시킵니다. 자신은 연막 지속시간 동안 최종 데미지가 13% 추가로 증가합니다."
+  },
+  {
+   "index": "104050",
+   "open": "107",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "122",
+     "msi": "100255",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "블러디 파킷 - 피해",
+     "desc": "블러디 파킷 피해량 +100%"
+    },
+    {
+     "open": "138",
+     "msi": "100295",
+     "effect": {
+      "kind": "setSkill",
+      "key": "MaxHitCount",
+      "value": "$CreatureStateCount(FiredCreature;BloodyPocket) * 2"
+     },
+     "name": "블러디 파킷 - 중첩",
+     "desc": "블러디 파킷 중첩 수가 2배로 적용"
+    }
+   ],
+   "name": "블러디 파킷",
+   "desc": "메소 익스플로젼으로 메소 생성 시 50% 확률로 암살자의 표식이 새겨진 블러디 파킷이 추가로 생성됩니다. 메소 익스플로젼 사용 시 주변 적들을 공격하여 «2800»% 피해를 입힙니다. 효과 대상 수는 생성된 블러디 파킷 수만큼이며, 최대 5개까지 중첩됩니다. 대상이 1명이라면 블러디 파킷 중첩 수 * 5%만큼 피해량이 증가합니다."
+  },
+  {
+   "index": "104060",
+   "open": "125",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "FinalDamage",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "섀도어 인스팅트",
+   "desc": "최종 데미지가 20% 증가합니다."
+  },
+  {
+   "index": "104070",
+   "open": "115",
+   "type": "passive",
+   "cooldownMs": "12000",
+   "targetCount": "1",
+   "triggerType": "OnDamage",
+   "triggerRatio": "200",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 2500.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [
+     {
+      "stat": "AvoidChance",
+      "val": "20",
+      "growth": null,
+      "tgt": "Myself",
+      "durationMs": "3000",
+      "state": "Fake_AvoidChanceUp"
+     }
+    ],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "118",
+     "msi": "100245",
+     "effect": {
+      "kind": "enable",
+      "value": [
+       "104070",
+       "2"
+      ]
+     },
+     "name": "페이크 - 회피",
+     "desc": "최종 데미지 증가량 +10%p 추가 증가 페이크 발동 시 최종 데미지 증가 효과가 사라지지 않고 3초간 회피 20 증가"
+    }
+   ],
+   "name": "페이크",
+   "desc": "최종 데미지가 10% 증가합니다. 피해입을 시 20% 확률로 공격자에게 반격하여 «2500»% 피해를 입히고, 3초간 최종 데미지 증가 효과가 사라집니다."
+  },
+  {
+   "index": "104080",
+   "open": "117",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnAttack",
+   "triggerRatio": "200",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [
+     {
+      "coeff": 600.0,
+      "hits": "1",
+      "growth": 0.4,
+      "dot": false
+     }
+    ],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [
+    {
+     "open": "130",
+     "msi": "100275",
+     "effect": {
+      "kind": "skillStat",
+      "stat": "GiveDamagePower1",
+      "value": "1000",
+      "growth": null
+     },
+     "name": "페이탈 베놈 - 피해",
+     "desc": "페이탈 베놈 피해량 +100%"
+    }
+   ],
+   "name": "페이탈 베놈",
+   "desc": "베놈 상태의 적을 공격 시 20% 확률로 «600»% 추가 피해를 입힙니다."
+  },
+  {
+   "index": "104090",
+   "open": "120",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [
+     {
+      "stat": "SkillPower",
+      "val": "150",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     },
+     {
+      "stat": "MaxDamageRatio",
+      "val": "200",
+      "growth": 0.3,
+      "tgt": "Myself",
+      "durationMs": "99999999",
+      "state": null
+     }
+    ],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": []
+   },
+   "masteries": [],
+   "name": "대거 엑스퍼트",
+   "desc": "스킬 데미지가 15%, 최대 데미지 배율이 20% 증가합니다."
+  },
+  {
+   "index": "104100",
+   "open": "100",
+   "type": "passive",
+   "cooldownMs": null,
+   "targetCount": "1",
+   "triggerType": "OnStart",
+   "triggerRatio": "1000",
+   "triggerTimeMs": null,
+   "dealChild": null,
+   "classes": {
+    "dmg": [],
+    "buff": [],
+    "debuff": [],
+    "indirect": [],
+    "util": [],
+    "summon": null,
+    "skillBoost": [
+     {
+      "targetSkill": "103041",
+      "stat": "FinalDamage",
+      "value": "150",
+      "growth": null
+     },
+     {
+      "targetSkill": "103060",
+      "stat": "FinalDamage",
+      "value": "500",
+      "growth": null
+     },
+     {
+      "targetSkill": "103051",
+      "stat": "FinalDamage",
+      "value": "500",
+      "growth": null
+     },
+     {
+      "targetSkill": "103020",
+      "stat": "FinalDamage",
+      "value": "400",
+      "growth": null
+     }
+    ]
+   },
+   "masteries": [],
+   "name": "메이플 용사",
+   "desc": "다음 스킬들의 최종 데미지가 증가합니다. 다크 플레어 15% 베놈 50% 쉐도우 파트너 50% 무스펠 하임 40%"
+  }
+ ]
+}
