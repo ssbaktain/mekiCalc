@@ -4177,7 +4177,7 @@ function ntHl(s) {
 }
 
 // ──────────────────── 정밀 타임라인 (나이트로드 · 베타) ────────────────────
-let tlMode = "auto", tlSkills = null, tlInited = false;
+let tlMode = "auto", tlSkills = null, tlInited = false, tlBooting = true;   // tlBooting: init 초기화 동안 runTimeline 중복 억제(첫 renderTimeline이 해제)
 
 function tlBig(n) {
   const u = [[1e16, "경"], [1e12, "조"], [1e8, "억"], [1e4, "만"]];
@@ -4188,6 +4188,7 @@ function tlBig(n) {
 async function renderTimeline() {
   if (!tlSkills) { try { tlSkills = await (await fetch("/api/nl-skills")).json(); } catch { tlSkills = []; } }
   if (!tlInited) { tlInitHandlers(); initBuildPresets(); fillBuildSel(); fillBuildPresetSelects(); bpApply(buildPresets.active); tlInited = true; }
+  tlBooting = false;   // 초기화(프리셋 적용) 중 발동한 runTimeline은 억제됐고, 이제부터 실계산 허용
   tlSyncMode();
   if (currentJob() !== 1) {
     $("tl-result").innerHTML = '<div class="tl-empty">정밀 타임라인은 현재 <b>나이트로드</b>만 지원해요.<br>캐릭터 직업을 나이트로드로 두고 다시 열어주세요.</div>';
@@ -5079,6 +5080,7 @@ function tlRenderExpDiff(box, baseD, modD, applied) {
 }
 
 async function runTimeline() {
+  if (tlBooting) return;   // init 초기화 중 중복 호출 억제(첫 renderTimeline이 tlBooting 해제)
   if (currentJob() !== 1) return;
   updateBuildWarn();
   if (buildJobMismatch()) return;   // 빌드 직업 ≠ 현재 직업 → 계산 차단(안내만)
