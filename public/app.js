@@ -363,8 +363,11 @@ const SETTINGS_LEAF = { label: "설정", panel: "settings", path: "/settings" };
 // 캐릭터 스탯이 있어야 계산되는 탭 — 미입력이면 블러+CTA 게이트(정상 렌더 스킵). 홈은 박스별로 따로 처리.
 const CHAR_GATED_PANELS = new Set(["cube", "optcompare", "compare", "recommend", "statcompare", "gear"]);
 
+let tlExpApply = false;   // 실험값 전체 적용(실험실 토글). buildMenu가 상단 실행에서 참조 → showPanel 위에 선언(TDZ 방지).
+
 function showPanel(name) {
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
+  updateExpTags();   // 패널 전환 시 '실험실' 태그 반영(실험값 적용 중일 때)
   document.body.classList.toggle("notices-active", name === "notices");   // 공지 탭은 비영리 → 광고 비노출(CSS)
   if (CHAR_GATED_PANELS.has(name)) {   // 캐릭터 미입력 → 게이트. 내 옵션 비교·우선순위 추천은 큐브 프리셋도 필요.
     const reqs = [{ empty: characterEmpty(), msg: "계산하려면 캐릭터 스탯이 필요해요.<br>스탯을 입력하면 이 기능을 쓸 수 있어요.", cta: "캐릭터 입력하러 가기", path: "/presets/build" }];
@@ -466,7 +469,39 @@ function goHome() {
   window.scrollTo({ top: 0 });
 }
 
-// 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
+// 실험값 적용 토글(타임라인 헤더 + 실험실 박스가 공유). 켜면 모든 엔진 계산이 실험값 기준으로 재계산.
+function setExpApply(on) {
+  tlExpApply = !!on;
+  syncExpToggles();
+  setBuildDirty(true);
+  updateExpTags();       // 각 계산 박스 '실험실' 태그 표시/숨김
+  recalcActivePanel();   // 현재 보이는 탭 즉시 재계산(타임라인 포함)
+}
+function syncExpToggles() {
+  for (const id of ["tl-exp-apply", "lab-exp-apply"]) { const el = $(id); if (el) el.checked = tlExpApply; }
+}
+
+// 실험값 적용 중이면 각 계산 패널 상단에 '실험실' 태그(토글 ON 색)를 표시. 결과 innerHTML과 독립(패널 직속).
+// 타임라인·실험실은 이미 토글 스위치가 있어 제외. 나머지 계산 탭의 메인 카드(핵심 큰 박스)에만 태그.
+const EXP_TAG_PANELS = ["cube", "optcompare", "compare", "recommend", "statcompare", "gear"];
+function updateExpTags() {
+  const on = expActive();
+  for (const name of EXP_TAG_PANELS) {
+    const panel = $("panel-" + name);
+    if (!panel) continue;
+    const host = panel.querySelector(":scope > .card") || panel;   // 탭 메인 카드(핵심 큰 박스)
+    let tag = host.querySelector(":scope > .exp-tag");
+    if (on && !tag) {
+      host.classList.add("exp-host");   // position:relative — 배지를 우측 상단에 얹기 위함
+      tag = document.createElement("div");
+      tag.className = "exp-tag";
+      tag.textContent = "실험실";
+      host.appendChild(tag);
+    } else if (!on && tag) { tag.remove(); host.classList.remove("exp-host"); }
+  }
+}
+
+// 현재 보이는 패널의 계산을 다시 돌린다(프리셋 전환·실험값 토글 시 즉시 반영용). 예상 데미지 카드는 항상 갱신.
 function recalcActivePanel() {
   calcDamage();
   if (currentSub === "ally") calcDamage();   // 동료 탭: 스탯/프리셋 바뀌면 홈 예상 데미지 갱신
@@ -476,6 +511,7 @@ function recalcActivePanel() {
   else if (!$("panel-optcompare").hidden) runOptCompare();
   else if (!$("panel-gear").hidden && $("gc-delta").innerHTML.trim()) runGearCompare();   // 결과가 떠 있을 때만 재계산
   else if (!$("panel-statcompare").hidden && scSource) runStatCompare();   // 기준 스탯이 있으면 새 스탯으로 재환산
+  else if (!$("panel-timeline").hidden) runTimeline();   // 타임라인 탭
 }
 
 // 내 옵션 비교: 프리셋 전환 시 좌측(현재 큐브)·결과를 갱신하되 우측(가정) 선택은 보존.
@@ -575,6 +611,8 @@ function buildMenu() {
   buildMobileMenu(itemEls);   // 모바일 햄버거 메뉴(좁은 화면용)
   const gear = $("header-settings");   // 데스크톱 상단 톱니(로그인 우측) → 설정 패널
   if (gear && !gear._wired) { gear._wired = true; gear.addEventListener("click", () => selectLeaf(SETTINGS_LEAF, null)); }
+  const labExp = $("lab-exp-apply");   // 실험실 박스 '실험값 적용' 토글(타임라인 헤더 토글과 공유)
+  if (labExp && !labExp._wired) { labExp._wired = true; labExp.checked = tlExpApply; labExp.addEventListener("change", () => setExpApply(labExp.checked)); }
   // 프리셋 서브탭은 미리 빌드로 세팅.
   selectSub("build");
   // 활성 메뉴는 '현재 경로' 기준으로 처음부터 설정. 무조건 첫 항목(예상 데미지)을 활성화하면
@@ -1448,8 +1486,8 @@ async function calcEvaluate() {
       part: $("ev-part").value, grade: $("ev-grade").value,
       slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
       ...targetForApi(), ...companionParams(),
-      stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
-      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
+      stats: effStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
+      ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     evResults = data.results;
     renderEval();
@@ -1654,12 +1692,12 @@ async function runRecommend(useSliderMax) {
   const done = deferLoading("rc-status");
   try {
     const data = await postJson("/api/recommend", {
-      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
+      stats: effStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       sliderValue: parseInt($("rc-slider").value, 10) || 0,
       sortKey: parseInt($("rc-sort").value, 10) || 0,
       upper: $("rc-upper").checked, lower: $("rc-lower").checked,
-      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 추천. 실험실과 동일 sim 길이(순환/파생 유물 sim 의존)
+      ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 추천. 실험실과 동일 sim 길이(순환/파생 유물 sim 의존)
     });
     const slider = $("rc-slider");
     slider.max = Math.max(0, data.maxDivisions - 1);
@@ -1779,8 +1817,8 @@ async function runOptCompare() {
     const data = await postJson("/api/optcompare", {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
       right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
-      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(), buffs: activeBuffs(), hitInterval: myHitInterval,
-      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
+      stats: effStats(), conversions: myConv, ...targetForApi(), ...companionParams(), buffs: activeBuffs(), hitInterval: myHitInterval,
+      ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     $("oc-l-result").innerHTML = ocResultHtml(data.left);
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
@@ -1938,10 +1976,10 @@ async function runStatCompare() {
   let data;
   try {
     data = await postJson("/api/stat-compare", {
-      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
+      stats: effStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       buffs: activeBuffs(), hitInterval: myHitInterval,
       refStatId: src.statId, refValue: src.value,
-      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
+      ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
   } catch (e) {
     const h = $("sc-head"); h.hidden = false;
@@ -2171,9 +2209,9 @@ async function runGearCompare() {
   try {
     const data = await postJson("/api/gear-compare", Object.assign(
       { leftOpts: gcCollect("gc-l"), rightOpts: gcCollect("gc-r"),
-        stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
+        stats: effStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
         simMs: tlSimMs() },   // 나이트로드=신엔진(유물 조립) 딜 기준, 실험실과 동일 sim
-      relicCtxPayload(), targetForApi(), companionParams()));
+      effRelicCtx(), targetForApi(), companionParams()));
     $("gc-delta").innerHTML = gcDeltaHtml(data);
     $("gc-status").textContent = "";
   } catch (e) { $("gc-status").textContent = "오류: " + e.message; }
@@ -2290,11 +2328,11 @@ async function runCompare() {
       if (p) rightOpts.push({ statId: p.stat, value: p.value });
     }
     const data = await postJson("/api/compare", {
-      stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
+      stats: effStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
       rightGrade: $("cmp-right-grade").value, rightOpts,
-      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
+      ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     if (!data.valid) { $("cmp-status").textContent = "현재(내 큐브 옵션)가 비어 있어 비교할 수 없습니다. '내 큐브' 탭에서 입력하세요."; return; }
     $("cmp-status").textContent = "";
@@ -4136,8 +4174,8 @@ let tlFillSkills = true;    // 수동 하이브리드: 빈 칸을 사용 중인 
 let tlOptimize = true;      // 스킬 사용 최적화(백엔드 플래그): 자동=항상, 수동=이 토글. tlSeq 불변(비파괴), 기본 ON.
 let tlExpStats = [];        // 가상 스탯 실험: [{stat, amount}] — 프리셋에 옵션식대로 가산(이 빌드 계산에서만). 빌드에 저장.
 let tlExpRelics = [];       // 유물 실험: [{id, awaken, pot:[{type,grade,value}]}] — 현재 장착 유물로 초기 채움, 각성·잠재 자유 편집. 이 빌드 계산에서만. 빌드에 저장.
-let tlExpApply = false;     // 실험값 전체 적용: ON이면 타임라인·아래 결과 전부 변경본 기준. OFF면 딜 비교만.
 let tlExpDiffActive = false; // 마지막 계산에서 실험 변경분(diff)이 있었는지 — 타임라인 헤더 토글 노출 조건.
+// tlExpApply는 buildMenu(showPanel→updateExpTags)가 상단 실행에서 참조하므로 파일 앞쪽(showPanel 위)에 선언됨.
 let tlSkillsOff = new Set();   // 사용 해제된 액티브 스킬 idx(빌드에 저장 · 자동/자동채움에서 제외)
 let tlCooldowns = {};   // idx → 실효 쿨(ms), 마지막 계산 응답에서 캐시(배치 자동시각용)
 let tlBaseSlotMs = 0;   // 실효 공속 슬롯(ms), 마지막 계산 응답 캐시
@@ -4332,7 +4370,8 @@ function bpApply(name) {
   // 유물 실험: 저장분 있으면 복원(각성·잠재), 없으면 현재 장착 유물로 초기 채움.
   if (b.expRelics != null) tlExpRelics = b.expRelics.map((r) => ({ id: r.id, awaken: String(r.awaken), pot: (r.pot || []).map((l) => ({ type: l.type || "", grade: l.grade || "", value: l.value == null ? null : l.value })) }));
   else tlExpRelics = tlExpRelicSnapshot();
-  tlExpApply = !!b.expApply;   // 토글 UI는 타임라인 헤더에서 이 값으로 렌더됨
+  tlExpApply = !!b.expApply;   // 토글 UI는 타임라인 헤더 + 실험실 박스에서 이 값으로 렌더됨
+  syncExpToggles();   // 실험실 박스 토글 상태 동기화
   tlRenderExp();
   tlRenderExpRelic();
   tlSkillsOff = new Set(b.skillsOff || []);
@@ -4663,6 +4702,45 @@ function relicCtxPayload() {
   return p;
 }
 
+// ── 실험값(실험실) 공용 적용 — 토글 ON이면 모든 엔진 계산이 실험값 기준 ──
+// 실험 스탯 델타를 프리셋 스탯에 합성(주/부스탯=공격력+스탯비례 환산, 그 외=옵션 계산식). tlRunExperiment와 동일 규칙.
+function applyExpStats(stats) {
+  const active = tlExpStats.filter((r) => r.stat && r.amount);
+  if (!active.length) return stats;
+  const out = Object.assign({}, stats);
+  for (const r of active) {
+    const der = tlStatDerived(r.stat, r.amount, out);
+    if (der != null) {
+      out.ATK_FLAT = (parseFloat(out.ATK_FLAT) || 0) + der.atk;
+      out.STAT_PROP_DMG = (parseFloat(out.STAT_PROP_DMG) || 0) + der.prop;
+    } else {
+      const cur = parseFloat(out[r.stat]) || 0;
+      out[r.stat] = tlCombineStat(r.stat, cur, r.amount);
+    }
+  }
+  return out;
+}
+
+// 실험값 적용 중이고 실험 변경분이 실제로 있으면 true(태그 표시·실험 계산 조건).
+function expActive() {
+  return tlExpApply && (tlExpStats.some((r) => r.stat && r.amount) || !!tlExpRelicPayload());
+}
+
+// 모든 계산 탭 공용 스탯 — 실험값 적용 중이면 실험 스탯 반영, 아니면 프리셋.
+function effStats() {
+  return tlExpApply ? applyExpStats(collectStats()) : collectStats();
+}
+
+// 모든 계산 탭 공용 유물/컨텐츠 — 실험값 적용 중이면 실험 유물 오버라이드 반영, 아니면 프리셋.
+function effRelicCtx() {
+  const p = relicCtxPayload();
+  if (tlExpApply) {
+    const rm = tlExpRelicPayload();
+    if (rm) { p.artifacts = rm.artifacts; p.potentials = rm.potentials; }
+  }
+  return p;
+}
+
 // 시뮬 길이(ms) — 타임라인 탭 설정. 큐브 계산도 동일 값을 써 실험실과 딜 기준을 맞춘다(순환/파생 유물은 sim 길이 의존).
 function tlSimMs() {
   let simSec = parseFloat($("tl-simsec").value) || 90;
@@ -4966,6 +5044,7 @@ async function runTimeline() {
     $("tl-result").innerHTML = `<div class="tl-empty">계산에 실패했어요. ${(e && e.message) || ""}</div>`;
   } finally {
     btn.disabled = false; btn.textContent = "계산";
+    updateExpTags();   // 실험값 편집/토글에 따라 '실험실' 태그 갱신
   }
 }
 
@@ -5007,7 +5086,7 @@ function renderTimelineResult(d) {
   // 순서: 간트(내부 하단=미반영 유물) → 헤드라인(종합 DPS·전체 데미지) → 스킬별 기여(도넛)
   $("tl-result").innerHTML = gantt + head + brk;
   const expApplyEl = $("tl-exp-apply");   // 매 렌더마다 새로 생성 → 재바인딩
-  if (expApplyEl) expApplyEl.addEventListener("change", () => { tlExpApply = expApplyEl.checked; setBuildDirty(true); runTimeline(); });
+  if (expApplyEl) expApplyEl.addEventListener("change", () => setExpApply(expApplyEl.checked));   // 실험실 박스 토글과 공유
   tlWireDonut();   // 도넛 호버 반응 연동
   tlWireZoom();    // Ctrl+휠 확대/축소 리스너(1회)
   tlWireGuide();   // 호버 시간 가이드선(1회)

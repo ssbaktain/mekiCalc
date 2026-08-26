@@ -212,7 +212,12 @@
 
       <!-- 변경 실험: 스탯을 얼마나 더/덜 얻으면 딜이 어떻게 변하는지. 프리셋 원본 불변, 이 빌드 계산에서만 옵션식대로 가산. -->
       <details id="tl-exp" class="card tl-skillsel">
-        <summary>실험실 <span class="tl-ro-hint">스탯·유물을 바꿔봤을 때 딜 변화를 즉시 관측 — 프리셋 원본은 그대로, 이 빌드 계산에서만 반영. 스탯은 <b>옵션 계산식대로 가산</b>(공속·방관·쿨감%는 체감누적, 최종뎀은 곱연산). ± 모두 지원. <b>실험값 전체 적용</b> 토글은 타임라인 박스 안에 있어요(변경이 있을 때 표시).</span></summary>
+        <summary>실험실 <span class="tl-ro-hint">스탯·유물을 바꿔봤을 때 딜 변화를 즉시 관측 — 프리셋 원본은 그대로, 이 빌드 계산에서만 반영. 스탯은 <b>옵션 계산식대로 가산</b>(공속·방관·쿨감%는 체감누적, 최종뎀은 곱연산). ± 모두 지원. <b>실험값 적용</b>을 켜면 타임라인·큐브·스탯비교·장비비교 등 <b>모든 계산</b>에 실험값이 반영돼요(계산되는 박스에 '실험실' 태그 표시).</span></summary>
+        <label class="lab-exp-apply-row" title="켜면 이 실험값을 타임라인·큐브·스탯비교·장비비교 등 모든 엔진 계산에 반영합니다.">
+          <span class="tl-switch"><input type="checkbox" id="lab-exp-apply"><span class="tl-switch-track"></span></span>
+          <span class="tl-exp-apply-lbl">실험값 적용</span>
+          <span class="lab-exp-hint">켜면 모든 계산에 반영</span>
+        </label>
         <table id="tl-exp-table" class="tl-table">
           <thead><tr><th>스탯</th><th>증감(내가 얻는 양)</th><th></th></tr></thead>
           <tbody></tbody>
