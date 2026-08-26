@@ -340,7 +340,7 @@ async function getSlots(part, grade) {
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
   { label: "데미지 분석(구)", panel: "home", path: "/" },   // 최좌측 · 구엔진 대시보드. 나이트로드(신엔진)면 숨김(body.job-nightlord). 추후 관리자 전용화 예정
-  { label: "타임라인", panel: "timeline", path: "/timeline" },   // 나이트로드 정밀 타임라인 시뮬(자동/수동 배치 · 버프 윈도우 간트 · 베타)
+  { label: "빌드", panel: "timeline", path: "/build" },   // 나이트로드 정밀 타임라인 시뮬(빌드=배치+프리셋 로드아웃). panel은 timeline 유지, 경로만 /build
   { label: "프리셋", flat: true, divider: true, items: [   // flat: 드롭다운X·클릭 시 캐릭터 탭 진입(서브바가 세부전환). divider: 뒤에 세로 구분선
     { label: "캐릭터", panel: "presets", sub: "build", path: "/presets/build" },
     { label: "동료", panel: "presets", sub: "ally", path: "/presets/ally" },
@@ -401,7 +401,7 @@ function allLeaves() {
 function leafByPath(path) { return allLeaves().find((l) => l.path === path) || null; }
 
 // 구 경로 호환: 스탯/스킬 프리셋이 '캐릭터'(빌드)로 통합됨 → 옛 북마크·링크를 새 경로로 정규화.
-const PATH_REDIRECTS = { "/presets/stat": "/presets/build", "/presets/skill": "/presets/build", "/presets/settings": "/settings" };
+const PATH_REDIRECTS = { "/presets/stat": "/presets/build", "/presets/skill": "/presets/build", "/presets/settings": "/settings", "/timeline": "/build" };
 function normPath(path) { return PATH_REDIRECTS[path] || path; }
 
 // 라우트별 문서 제목·설명(크롤러가 렌더 시 반영, 유저 탭 제목도 갱신).
@@ -463,8 +463,9 @@ function homeLeaf() {
 
 function navigate(path, push) {
   let leaf = leafByPath(normPath(path)) || homeLeaf();   // 구 경로면 정규화(캐릭터 탭으로)
-  if (leaf === MENU[0]) leaf = homeLeaf();   // 홈(데미지 분석) 목적지는 나이트로드면 타임라인으로
+  if (leaf === MENU[0]) leaf = homeLeaf();   // 홈(데미지 분석) 목적지는 나이트로드면 빌드로
   applyLeaf(leaf, null, push);
+  if (leaf.path && location.pathname !== leaf.path) history.replaceState({ p: leaf.path }, "", leaf.path);   // 리다이렉트(구경로 /timeline·홈→빌드) 시 주소 정정
 }
 
 // 홈(=진입 탭)으로 이동. 로고 클릭·기본 진입 공용. 나이트로드면 타임라인.
@@ -5648,6 +5649,7 @@ function tlDealLines(dealLines, pct, lanes) {
     syncMobileActive(bootLeaf);
     applyRouteMeta(bootLeaf.path);
   } else {
-    navigate(bootPath, false);   // 직접 URL 진입(예: /cube)이면 해당 패널로. '/'면 홈 유지(멱등).
+    // 초기 bootPath가 아니라 '현재' 경로로 — 데이터 로드 중 사용자가 다른 탭을 눌렀으면 그 탭을 유지(강제 복귀 방지).
+    navigate(location.pathname, false);
   }
 })();
