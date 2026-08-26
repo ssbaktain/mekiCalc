@@ -703,7 +703,8 @@ function buildMobileMenu(itemEls) {
 document.addEventListener("click", closeMenus);
 buildMenu();
 
-// i 버튼(ⓘ) + 호버 툴팁 요소 생성. summary/label 안이어도 클릭이 토글·입력을 건드리지 않게 막음.
+// i 버튼(ⓘ) + 툴팁 요소 생성. 호버로 뜨고(팝업 위로 옮겨도 유지), 클릭하면 고정(.pin) — 마우스를 떼도 유지.
+// 고정 상태에서 버튼 재클릭 또는 바깥 클릭 시 해제. 팝업 내부 클릭(링크 등)은 유지.
 function mkInfo(label, bodyEl, small) {
   const wrap = document.createElement("span");
   wrap.className = "info-help " + (small ? "info-inline" : "info-block");
@@ -711,13 +712,21 @@ function mkInfo(label, bodyEl, small) {
   btn.type = "button"; btn.className = "info-btn" + (small ? " info-btn-sm" : "");
   btn.textContent = label;
   if (small) btn.setAttribute("aria-label", "설명");
-  btn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
   const pop = document.createElement("span");
   pop.className = "info-pop";
   pop.appendChild(bodyEl);
+  btn.addEventListener("click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const on = wrap.classList.contains("pin");
+    document.querySelectorAll(".info-help.pin").forEach((w) => { if (w !== wrap) w.classList.remove("pin"); });   // 한 번에 하나만 고정
+    wrap.classList.toggle("pin", !on);
+  });
+  pop.addEventListener("click", (e) => e.stopPropagation());   // 팝업 내부 클릭은 고정 유지(바깥 클릭 닫힘에서 제외)
   wrap.appendChild(btn); wrap.appendChild(pop);
   return wrap;
 }
+// 바깥 클릭 시 고정된 툴팁 해제.
+document.addEventListener("click", () => { document.querySelectorAll(".info-help.pin").forEach((w) => w.classList.remove("pin")); });
 // 설명글(접이식 panel-about + 인라인 힌트·안내 status/hint)을 i 버튼 호버 툴팁으로 접어 화면을 깔끔하게.
 // 경고성(.deal-warning·.relic-notice)·동적 상태(#id 있는 status)는 제외.
 function toInfoHelp() {
@@ -5465,6 +5474,33 @@ function tlWireZoom() {
     applyTlZoom();
     scroll.scrollLeft = cursorX * (tlZoom / prev) - (e.clientX - rect.left);
   }, { passive: false });
+
+  // 모바일 핀치 줌 — 간트 안에서 두 손가락을 벌리면 가로 배율 확대(브라우저 전체 줌 대신).
+  let pinchDist = 0, pinchScroll = null, pinchZoom0 = 1;
+  const dist2 = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const midX = (t) => (t[0].clientX + t[1].clientX) / 2;
+  box.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 2) return;
+    const g = e.target.closest && e.target.closest(".tl-gantt");
+    pinchScroll = g && g.querySelector(".tl-gantt-scroll");
+    if (!pinchScroll) return;
+    pinchDist = dist2(e.touches); pinchZoom0 = tlZoom;
+    e.preventDefault();
+  }, { passive: false });
+  box.addEventListener("touchmove", (e) => {
+    if (e.touches.length !== 2 || !pinchScroll || pinchDist <= 0) return;
+    e.preventDefault();
+    const prev = tlZoom;
+    tlZoom = Math.min(tlMaxZoom, Math.max(1, pinchZoom0 * (dist2(e.touches) / pinchDist)));
+    if (tlZoom === prev) return;
+    const rect = pinchScroll.getBoundingClientRect();
+    const cx = midX(e.touches) - rect.left + pinchScroll.scrollLeft;   // 두 손가락 중심점 기준 확대
+    applyTlZoom();
+    pinchScroll.scrollLeft = cx * (tlZoom / prev) - (midX(e.touches) - rect.left);
+  }, { passive: false });
+  const endPinch = (e) => { if (e.touches.length < 2) { pinchDist = 0; pinchScroll = null; } };
+  box.addEventListener("touchend", endPinch);
+  box.addEventListener("touchcancel", endPinch);
 }
 
 /** 버프 윈도우 레인들. isArt=유물(황금색 바 + '상시' 툴팁). 스택 세그먼트는 진하기·툴팁·숫자로 표시. */

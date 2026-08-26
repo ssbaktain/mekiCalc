@@ -34,7 +34,8 @@ header h1 { margin: 0; font-size: 28px; }
 header .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 
 /* 브랜드(로고 + 타이틀) — 클릭 시 홈 이동 */
-.brand { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; min-width: 0; text-decoration: none; }
+a.brand, a.brand:visited, a.brand:hover, a.brand:active { color: inherit; text-decoration: none; }   /* 가이드의 로고 링크: 메인(div)과 동일하게 — visited 보라색·밑줄 제거 */
 .brand-logo { width: 44px; height: 44px; flex-shrink: 0; display: block; }
 .brand:hover h1 { color: var(--accent); }
 
@@ -231,9 +232,11 @@ body.job-nightlord .menu-home { display: none !important; }
 .info-inline { margin: 0; }          /* 인라인 힌트(이름 옆 ⓘ)는 여백 없음 → 중앙 정렬 유지 */
 .info-btn { display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); color: var(--muted); cursor: help; font-size: 12px; line-height: 1; padding: 4px 10px; border-radius: 12px; white-space: nowrap; }
 .info-btn-sm { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; font-size: 12px; border-radius: 50%; }
-.info-help:hover .info-btn, .info-btn:focus-visible { color: var(--accent); border-color: var(--accent); }
-.info-pop { display: none; position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; width: max-content; max-width: min(92vw, 440px); background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
-.info-help:hover .info-pop, .info-btn:focus-visible + .info-pop, .info-pop:hover { display: block; }
+.info-help:hover .info-btn, .info-btn:focus-visible, .info-help.pin .info-btn { color: var(--accent); border-color: var(--accent); }
+.info-pop { display: none; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: max-content; max-width: min(92vw, 440px); background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+/* 버튼↔팝업 사이 투명 브릿지 — 마우스가 틈을 지날 때 호버가 끊기지 않게 */
+.info-pop::before { content: ""; position: absolute; top: -8px; left: 0; right: 0; height: 8px; }
+.info-help:hover .info-pop, .info-btn:focus-visible + .info-pop, .info-pop:hover, .info-help.pin .info-pop { display: block; }
 .info-pop .about-body { padding: 0; }
 .info-pop p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.7; }
 .info-pop a { color: var(--accent); text-decoration: none; }
@@ -877,6 +880,13 @@ html.deep-route #panel-home { display: none !important; }
 .guide { max-width: 760px; margin: 18px auto 8px; padding: 0 18px; line-height: 1.75; }
 .guide-note { background: #232830; border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin: 14px 0; }
 .guide-note p { margin: 0; color: var(--text); font-size: 14px; line-height: 1.7; }
+/* 스탯 입력 가이드 스크린샷 */
+.guide-shot { margin: 14px 0 20px; text-align: center; }
+.guide-shot img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.guide-shot figcaption { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+/* 본문 속 게임 햄버거 버튼 아이콘(모양만) */
+.hb-inline { display: inline-flex; flex-direction: column; justify-content: center; gap: 3px; width: 18px; height: 15px; padding: 2px; vertical-align: middle; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+.hb-inline span { display: block; height: 2px; background: var(--text); border-radius: 1px; }
 .guide .guide-crumb { margin-bottom: 12px; }
 .guide .guide-crumb a { color: var(--accent); text-decoration: none; font-size: 13px; }
 .guide h1 { font-size: 24px; margin: 6px 0 6px; }
@@ -1569,7 +1579,7 @@ body.notices-active .ad-slot { display: none !important; }
 /* 간트: 라벨 열(스크롤 밖 고정) + 트랙 열(가로 스크롤) 2열 분리 */
 .tl-gantt { margin-top: 6px; display: flex; gap: 10px; align-items: flex-start; }
 .tl-gantt-labels { flex: 0 0 84px; }
-.tl-gantt-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.tl-gantt-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: var(--border) transparent; touch-action: pan-x pan-y; }   /* 핀치는 JS가 가로 배율로 처리(브라우저 전체 줌 대신), 팬은 스크롤 */
 .tl-gantt-scroll::-webkit-scrollbar { height: 8px; }
 .tl-gantt-scroll::-webkit-scrollbar-track { background: transparent; }
 .tl-gantt-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
