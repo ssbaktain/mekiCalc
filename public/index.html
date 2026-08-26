@@ -6,7 +6,11 @@
   <script>
     /* 딥링크(예: /notices)로 들어오면 홈(예상 데미지) 패널이 첫 페인트에 잠깐 보이던 깜빡임 제거.
        app.js 로드 전에 홈을 CSS로 숨겨두고, app.js가 대상 패널을 띄운 뒤 이 클래스를 뗀다. */
-    try { if (location.pathname !== "/" && location.pathname !== "") document.documentElement.classList.add("deep-route"); } catch (e) {}
+    try {
+      var _p = location.pathname, _deep = _p !== "/" && _p !== "";
+      var _nl = false; try { _nl = localStorage.getItem("mekicalc.job") === "1"; } catch (e) {}
+      if (_deep || _nl) document.documentElement.classList.add("deep-route");   // "/"라도 최근 직업이 나이트로드면 진입=타임라인 → 홈 미리 숨김
+    } catch (e) {}
   </script>
   <title>메키칼크 MekiCalc · 메이플 키우기 스탯·딜 효율 계산기</title>
   <meta name="description" content="메키칼크(MekiCalc)는 메이플 키우기 스탯·딜 효율 계산기입니다. 예상 데미지·DPS, 큐브 잠재능력 기댓값, 동료 기여, 장비 비교, 스테이지·보스별 절대 데미지까지 한 번에 계산합니다." />
@@ -174,9 +178,9 @@
       <div class="card tl-relic-opts">
         <div class="dash-head"><h2>유물 계산 설정</h2><span class="dash-sub">마리수·처치수·컨텐츠·시간 의존 유물 반영</span></div>
         <div class="tl-ro-grid">
-          <label>마리수(적)<input id="tl-enemies" type="number" min="1" placeholder="미지정"><span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></label>
-          <label>분당 처치수<input id="tl-kills" type="number" min="0" placeholder="미지정"><span class="tl-ro-hint">성배</span></label>
-          <label>컨텐츠<select id="tl-content">
+          <label><span class="ro-head">마리수(적)<span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></span><input id="tl-enemies" type="number" min="1" placeholder="미지정"></label>
+          <label><span class="ro-head">분당 처치수<span class="tl-ro-hint">성배</span></span><input id="tl-kills" type="number" min="0" placeholder="미지정"></label>
+          <label><span class="ro-head">컨텐츠<span class="tl-ro-hint">자쿰·혼테일·월드보스·아레나 등</span></span><select id="tl-content">
             <option value="">자동(대상 기준)</option>
             <option value="성장던전">성장 던전</option>
             <option value="레이드-자쿰">레이드-자쿰</option>
@@ -185,8 +189,8 @@
             <option value="아레나">아레나</option>
             <option value="월드아레나">월드 아레나</option>
             <option value="길드토벌전">길드 토벌전</option>
-          </select><span class="tl-ro-hint">자쿰·혼테일·월드보스·아레나 등</span></label>
-          <label>유물 사전활성(초)<input id="tl-artoffset" type="number" min="0" value="0"><span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></label>
+          </select></label>
+          <label><span class="ro-head">유물 사전활성(초)<span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></span><input id="tl-artoffset" type="number" min="0" value="0"></label>
         </div>
         <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
       </div>
@@ -589,7 +593,7 @@
         <div class="controls">
           <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
         </div>
-        <p class="status">비교하고 싶은 스탯 한 곳에 값을 입력하세요. 그 스탯과 같은 딜을 내는 다른 스탯의 필요량이 채워집니다.</p>
+        <p id="sc-guide" class="status">비교하고 싶은 스탯 한 곳에 값을 입력하세요. 그 스탯과 같은 딜을 내는 다른 스탯의 필요량이 채워집니다.</p>
         <p id="sc-head" class="sc-head" hidden></p>
         <div id="sc-form" class="sc-form"></div>
       </div>

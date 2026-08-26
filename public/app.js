@@ -241,6 +241,7 @@ function setJob(job) {
   myBuffJob = job;
   if (changed) myBuffs = null;   // 직업 변경 → 스킬 선택 초기화(불변식). 일관 상태(동일 직업)면 no-op이라 선택 보존.
   document.body.classList.toggle("job-nightlord", job === 1);   // 나이트로드=신엔진 → 구엔진 '데미지 분석(구)' 탭 숨김
+  try { localStorage.setItem("mekicalc.job", String(job)); } catch (e) {}   // 다음 로드 첫 페인트 진입탭 결정용(head 스크립트가 읽음)
   return changed;
 }
 
@@ -453,8 +454,11 @@ function applyLeaf(leaf, item, push) {
 }
 // 주소(path)로 이동. push=false는 초기 진입·뒤로가기(주소 안 바꿈).
 // 기본 진입/로고 목적지 — 나이트로드(신엔진)는 타임라인, 그 외는 데미지 분석(구).
+// buildMenu는 스탯 로드 전 실행이라 currentJob()=0일 수 있음 → 그땐 캐시된 직업으로 판단(첫 페인트 깜빡임 방지).
 function homeLeaf() {
-  return currentJob() === 1 ? (allLeaves().find((l) => l.panel === "timeline") || MENU[0]) : MENU[0];
+  let job = currentJob();
+  if (!job) { try { job = parseInt(localStorage.getItem("mekicalc.job"), 10) || 0; } catch (e) {} }
+  return job === 1 ? (allLeaves().find((l) => l.panel === "timeline") || MENU[0]) : MENU[0];
 }
 
 function navigate(path, push) {
@@ -621,10 +625,11 @@ function buildMenu() {
   const activeItem = (menuLeaf && routeItemEls.get(menuLeaf.path)) || left.querySelector(".menu-item");
   if (activeItem) setActiveMenu(activeItem);
   syncMobileActive(menuLeaf || MENU[0]);   // 모바일 메뉴 활성도 현재 경로 기준(깜빡임 방지)
-  // 홈 패널은 현재 경로가 홈일 때만 노출(딥링크면 여기서 홈으로 덮지 않음 → 패널 깜빡임 방지). 나이트로드는 타임라인으로.
+  // 홈 경로면 첫 페인트에 진입 패널만 노출(렌더·라우팅·메뉴활성은 데이터 로드 후 init의 navigate가 수행).
+  // 나이트로드=타임라인. 여기서 showPanel/applyLeaf로 렌더까지 하면 데이터 미로드 상태라 에러 → 가시성만 잡는다.
   if (location.pathname === "/" || location.pathname === "") {
-    const hl = homeLeaf();
-    if (hl === MENU[0]) showPanel("home"); else applyLeaf(hl, null, false);
+    const hp = homeLeaf().panel;
+    for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + hp);
   }
 }
 
@@ -696,6 +701,40 @@ function buildMobileMenu(itemEls) {
 }
 document.addEventListener("click", closeMenus);
 buildMenu();
+
+// i 버튼(ⓘ) + 호버 툴팁 요소 생성. summary/label 안이어도 클릭이 토글·입력을 건드리지 않게 막음.
+function mkInfo(label, bodyEl, small) {
+  const wrap = document.createElement("span");
+  wrap.className = "info-help " + (small ? "info-inline" : "info-block");
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.className = "info-btn" + (small ? " info-btn-sm" : "");
+  btn.textContent = label;
+  if (small) btn.setAttribute("aria-label", "설명");
+  btn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
+  const pop = document.createElement("span");
+  pop.className = "info-pop";
+  pop.appendChild(bodyEl);
+  wrap.appendChild(btn); wrap.appendChild(pop);
+  return wrap;
+}
+// 설명글(접이식 panel-about + 인라인 힌트·안내 status/hint)을 i 버튼 호버 툴팁으로 접어 화면을 깔끔하게.
+// 경고성(.deal-warning·.relic-notice)·동적 상태(#id 있는 status)는 제외.
+function toInfoHelp() {
+  document.querySelectorAll("details.panel-about").forEach((d) => {
+    const sum = d.querySelector("summary");
+    const body = d.querySelector(".about-body");
+    if (!body) return;
+    d.replaceWith(mkInfo("ⓘ " + (sum ? sum.textContent.trim() : "도움말"), body, false));   // 링크 등 본문 유지
+  });
+  document.querySelectorAll(".tl-ro-hint, .status:not([id]), .hint").forEach((h) => {
+    if (!h.textContent.trim()) return;
+    const body = document.createElement("span");
+    body.className = "info-pop-body";
+    body.innerHTML = h.innerHTML;
+    h.replaceWith(mkInfo("ⓘ", body, true));
+  });
+}
+toInfoHelp();
 
 // 뒤로/앞으로 가기 → 해당 라우트 패널로(주소는 브라우저가 이미 바꿈).
 window.addEventListener("popstate", () => navigate(location.pathname, false));
@@ -4451,18 +4490,21 @@ $("tb-stat").addEventListener("change", () => {
   const name = $("tb-stat").value;
   if (!canLeaveStat()) { $("tb-stat").value = statPresets.active; return; }
   statPresets.active = name; saveJSON(STATP_KEY, statPresets); spApply(name); if ($("sp-sel")) $("sp-sel").value = name;
+  resetLab();   // 프리셋 변경 → 실험실 초기화
   setBuildDirty(true); updateBuildWarn(); runTimeline();
 });
 $("tb-ally").addEventListener("change", () => {
   const name = $("tb-ally").value;
   if (!canLeaveAlly()) { $("tb-ally").value = allyPresets.active; return; }
   allyPresets.active = name; saveJSON(ALLYP_KEY, allyPresets); apApply(name); if ($("ap-sel")) $("ap-sel").value = name;
+  resetLab();   // 프리셋 변경 → 실험실 초기화
   setBuildDirty(true); updateBuildWarn(); runTimeline();
 });
 $("tb-relic").addEventListener("change", () => {
   const name = $("tb-relic").value;
   if (!canLeaveRelic()) { $("tb-relic").value = relicPresets.active; return; }
   relicPresets.active = name; saveJSON(RELICP_KEY, relicPresets); rpApply(name); if ($("rp-sel")) $("rp-sel").value = name;
+  resetLab();   // 프리셋 변경(유물 새로 반영 후) → 실험실 초기화
   setBuildDirty(true); updateBuildWarn(); runTimeline();
 });
 
@@ -4842,6 +4884,16 @@ function tlExpRelicSnapshot() {
   }));
 }
 function tlExpRelicInit() { tlExpRelics = tlExpRelicSnapshot(); tlRenderExpRelic(); }
+// 빌드 내 프리셋(스탯/동료/유물) 선택이 바뀌면 실험실 초기화 — 실험값은 이전 프리셋 기준이라 무의미.
+function resetLab() {
+  tlExpStats = [];
+  tlExpApply = false;
+  tlExpRelics = tlExpRelicSnapshot();   // 새 프리셋의 현재 장착 유물로 리셋
+  syncExpToggles();
+  tlRenderExp();
+  tlRenderExpRelic();
+  updateExpTags();
+}
 function tlExpRelicAddRow() { tlExpRelics.push({ id: "", awaken: "0", pot: [] }); tlRenderExpRelic(); }
 
 // 유물 드롭다운: 카탈로그 전체(미보유도 '새로 뽑으면' 시뮬용). 딜 미반영(생존)·지원예정은 라벨.

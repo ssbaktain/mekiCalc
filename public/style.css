@@ -224,6 +224,21 @@ body.job-nightlord .menu-home { display: none !important; }
 /* 실험실 박스 토글 행 */
 .lab-exp-apply-row { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 10px; cursor: pointer; }
 .lab-exp-hint { color: var(--muted); font-size: 12px; }
+
+/* 설명글 i 버튼(ⓘ) 호버 툴팁 — 길게 펼쳐진 설명(panel-about 등)을 접어두고 호버 시 표시 */
+.info-help { position: relative; display: inline-flex; align-items: center; vertical-align: middle; }
+.info-block { margin: 2px 0 8px; }   /* panel-about(탭 상단 독립 버튼) 하단 여백 */
+.info-inline { margin: 0; }          /* 인라인 힌트(이름 옆 ⓘ)는 여백 없음 → 중앙 정렬 유지 */
+.info-btn { display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); color: var(--muted); cursor: help; font-size: 12px; line-height: 1; padding: 4px 10px; border-radius: 12px; white-space: nowrap; }
+.info-btn-sm { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; font-size: 12px; border-radius: 50%; }
+.info-help:hover .info-btn, .info-btn:focus-visible { color: var(--accent); border-color: var(--accent); }
+.info-pop { display: none; position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; width: max-content; max-width: min(92vw, 440px); background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+.info-help:hover .info-pop, .info-btn:focus-visible + .info-pop, .info-pop:hover { display: block; }
+.info-pop .about-body { padding: 0; }
+.info-pop p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.7; }
+.info-pop a { color: var(--accent); text-decoration: none; }
+.info-pop-body { display: block; color: var(--text); font-size: 13px; line-height: 1.6; }
+.info-pop-body a { color: var(--accent); text-decoration: none; }
 .menu-item { position: relative; }
 .menu-label {
   background: none; border: none; cursor: pointer;
@@ -1247,6 +1262,7 @@ html.deep-route #panel-home { display: none !important; }
 .tl-relic-opts { margin-top: 10px; }
 .tl-ro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 8px; }
 .tl-ro-grid > label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.tl-ro-grid > label > .ro-head { display: flex; align-items: center; gap: 5px; }   /* 이름 + ⓘ 를 한 줄로(입력칸은 아래) */
 .tl-ro-grid input, .tl-ro-grid select { padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 400; }
 .tl-ro-hint { font-size: 11px; font-weight: 400; color: var(--muted); opacity: .75; }
 .tl-ro-check { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--text); flex-wrap: wrap; }
