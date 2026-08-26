@@ -1577,8 +1577,19 @@ body.notices-active .ad-slot { display: none !important; }
 
 /* 간트 */
 /* 간트: 라벨 열(스크롤 밖 고정) + 트랙 열(가로 스크롤) 2열 분리 */
-.tl-gantt { margin-top: 6px; display: flex; gap: 10px; align-items: flex-start; }
-.tl-gantt-labels { flex: 0 0 84px; }
+/* 3열: 이름(라벨) 열 · 접기 버튼 전용 열 · 트랙 열. 버튼이 실제 공간을 차지해 이름과 겹치지 않음. */
+.tl-gantt { position: relative; margin-top: 6px; display: flex; gap: 0; align-items: stretch; }
+.tl-gantt-labels { flex: 0 0 auto; width: auto; max-width: min(45%, 300px); overflow: hidden; transition: max-width .18s ease; }
+.tl-labels-toggle-col { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; align-self: stretch; }
+.tl-labels-toggle { width: 20px; height: 44px; padding: 0;
+  background: var(--accent2); border: none; border-radius: 10px; color: #fff; cursor: pointer;
+  font-size: 14px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .4); transition: background .15s ease, transform .1s ease; }
+.tl-labels-toggle::before { content: "‹"; }
+.tl-labels-toggle:hover { background: var(--accent); }
+.tl-labels-toggle:active { transform: scale(.9); }
+.tl-gantt.collapsed .tl-gantt-labels { max-width: 0; }
+.tl-gantt.collapsed .tl-labels-toggle::before { content: "›"; }
 .tl-gantt-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: var(--border) transparent; touch-action: pan-x pan-y; }   /* 핀치는 JS가 가로 배율로 처리(브라우저 전체 줌 대신), 팬은 스크롤 */
 .tl-gantt-scroll::-webkit-scrollbar { height: 8px; }
 .tl-gantt-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -1652,7 +1663,7 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-tip { position: fixed; z-index: 1000; transform: translate(-50%, -100%); pointer-events: none;
   background: #12151b; color: #e8eaed; border: 1px solid var(--accent2); border-radius: 6px;
   padding: 6px 10px; font-size: 12px; font-weight: 600; white-space: pre-line; text-align: left; line-height: 1.5;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .45); }
+  max-width: 94vw; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); }   /* 화면 넘침만 방지, 사실상 자연 폭 유지 */
 /* 툴팁 첫 줄(이름) 강조 · 마지막 줄(시간) 흐리게는 textContent라 불가 — 여러 줄만 지원 */
 .tl-tip[hidden] { display: none; }
 /* 딜 라인(도트·주기·프록) — 회색 계열 + 그라데이션. 옅은 막대=활성 구간, 진한 세로줄=실제 딜 틱 */
@@ -1681,7 +1692,7 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-bpct { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tl-bper { color: var(--muted); font-size: 12px; white-space: nowrap; }
 @media (max-width: 640px) {
-  .tl-gantt-labels { flex-basis: 60px; }
+  .tl-gantt-labels { max-width: 40%; }   /* 모바일: 가변 폭 유지, 상한만 좁게 */
   .tl-brow { grid-template-columns: 72px 1fr 44px; }
   .tl-bper { display: none; }
 }

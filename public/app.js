@@ -715,11 +715,22 @@ function mkInfo(label, bodyEl, small) {
   const pop = document.createElement("span");
   pop.className = "info-pop";
   pop.appendChild(bodyEl);
+  // 팝업이 화면 오른쪽/왼쪽 경계를 넘으면 그만큼 밀어 넣어 잘리지 않게(모바일에서 버튼이 오른쪽에 있을 때).
+  const fitPop = () => {
+    pop.style.left = "0px";
+    const r = pop.getBoundingClientRect(), m = 8;
+    let dx = 0;
+    if (r.right > window.innerWidth - m) dx = (window.innerWidth - m) - r.right;   // 오른쪽 넘침 → 왼쪽으로
+    if (r.left + dx < m) dx = m - r.left;                                          // 왼쪽 넘침 → 오른쪽으로
+    if (dx) pop.style.left = dx + "px";
+  };
+  wrap.addEventListener("mouseenter", () => requestAnimationFrame(fitPop));   // 호버 표시(데스크톱)
   btn.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
     const on = wrap.classList.contains("pin");
     document.querySelectorAll(".info-help.pin").forEach((w) => { if (w !== wrap) w.classList.remove("pin"); });   // 한 번에 하나만 고정
     wrap.classList.toggle("pin", !on);
+    if (!on) requestAnimationFrame(fitPop);   // 고정(모바일 탭)으로 열 때 위치 보정
   });
   pop.addEventListener("click", (e) => e.stopPropagation());   // 팝업 내부 클릭은 고정 유지(바깥 클릭 닫힘에서 제외)
   wrap.appendChild(btn); wrap.appendChild(pop);
@@ -4282,24 +4293,89 @@ function tlInitHandlers() {
 
 // 간트 커스텀 툴팁(네이티브 title 대신 — 마우스에 안 가리게 바 위에, 즉시 표시). #tl-result에 위임.
 // x=마우스 위치 추적(확대 시 넓은 바에서 고정 좌표가 넘치는 문제 방지), y=바 위 고정.
+// 간트 막대/마커의 툴팁을 배치. anchor=기준 막대. y는 간트 최상단(시각 가이드 태그 높이) 위 — 어떤 막대와도 안 겹침.
+// x는 막대 중앙 정렬을 기본으로 하되, 박스가 결과 영역 경계를 넘으면 그쪽을 한계로 두고 반대 방향으로 늘린다(폭 제한 없이).
+function tlPlaceTip(res, tip, anchor) {
+  tip.hidden = false;
+  tip.style.transform = "none";   // left/top을 박스 좌상단 기준으로 직접 배치(중앙 translate 안 씀)
+  const rRes = res.getBoundingClientRect(), rBar = anchor.getBoundingClientRect();
+  const gantt = anchor.closest(".tl-gantt");
+  const yTop = (gantt || anchor).getBoundingClientRect().top;   // 간트 최상단(막대들보다 위)
+  const margin = 8, tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = rBar.left + rBar.width / 2 - tw / 2;               // 막대 중앙 정렬
+  const maxL = rRes.right - margin - tw, minL = rRes.left + margin;
+  if (left > maxL) left = maxL;                                  // 오른쪽 경계 넘음 → 오른쪽 끝을 한계로(왼쪽으로 늘어남)
+  if (left < minL) left = minL;                                  // 왼쪽 경계 넘음 → 왼쪽 끝을 한계로(오른쪽으로 늘어남)
+  tip.style.left = left + "px";
+  tip.style.top = (yTop - 6 - th) + "px";                        // 간트 상단 위에 박스가 얹히도록(높이만큼 올림)
+}
 function tlWireTooltip() {
   const res = $("tl-result"), tip = $("tl-tip");
   if (!res || !tip) return;
+  // 데스크톱: 호버로 표시
   res.addEventListener("mousemove", (e) => {
+    if (tip.dataset.pinned) return;   // 터치로 고정된 동안엔 호버가 덮지 않음
     const el = e.target.closest("[data-tip]");
     if (!el) { tip.hidden = true; return; }
-    tip.innerHTML = el.getAttribute("data-tip");   // 취소선(<s>) 등 렌더. 줄바꿈(\n)은 CSS white-space:pre-line.
-    tip.hidden = false;
-    tip.style.top = (el.getBoundingClientRect().top - 6) + "px";         // y = 바 바로 위(현재 그대로)
-    // 커서 우측에 표시, 결과 영역(간트) 오른쪽 경계에 닿으면 좌측으로 flip — window 전체가 아니라 컨테이너 기준
-    const gap = 12, rightEdge = res.getBoundingClientRect().right;
-    const flip = (e.clientX + gap + tip.offsetWidth) > rightEdge - 8;
-    tip.style.left = (flip ? e.clientX - gap : e.clientX + gap) + "px";
-    tip.style.transform = flip ? "translate(-100%, -100%)" : "translate(0, -100%)";
+    tip.innerHTML = el.getAttribute("data-tip");
+    tlPlaceTip(res, tip, el);
   });
   res.addEventListener("mouseout", (e) => {
+    if (tip.dataset.pinned) return;
     const el = e.target.closest("[data-tip]");
     if (el && !el.contains(e.relatedTarget)) tip.hidden = true;
+  });
+  // 모바일: 막대 탭으로 표시(고정). 다른 곳 탭하면 닫힘.
+  res.addEventListener("touchend", (e) => {
+    const t = e.changedTouches && e.changedTouches[0];
+    const el = t && document.elementFromPoint(t.clientX, t.clientY);
+    const bar = el && el.closest && el.closest("[data-tip]");
+    if (!bar) { tip.hidden = true; delete tip.dataset.pinned; return; }
+    tip.innerHTML = bar.getAttribute("data-tip");
+    tip.dataset.pinned = "1";
+    tlPlaceTip(res, tip, bar);
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!tip.dataset.pinned) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    const el = t && document.elementFromPoint(t.clientX, t.clientY);
+    if (!el || !el.closest || (!el.closest("[data-tip]") && !el.closest(".tl-tip"))) { tip.hidden = true; delete tip.dataset.pinned; }
+  }, { passive: true });
+  // 라벨 열 접기 토글(재렌더돼도 위임으로 유지). 가변 폭(width:auto)이라 max-width 애니메이션이 앞부분에서
+  // 죽는 걸 막기 위해, 실제 내용폭을 측정해 px 시작/끝점을 명시한다. 접힘 동안 매 프레임 스크롤도 보정.
+  res.addEventListener("click", (e) => {
+    if (!e.target.closest(".tl-labels-toggle")) return;
+    const g = res.querySelector(".tl-gantt");
+    const scroll = g && g.querySelector(".tl-gantt-scroll");
+    const inner = scroll && scroll.querySelector(".tl-gantt-inner");
+    const labels = g && g.querySelector(".tl-gantt-labels");
+    if (!g || !labels) return;
+    let frac = 0;
+    if (inner && inner.clientWidth > 0) frac = scroll.scrollLeft / inner.clientWidth;   // 좌측 경계 콘텐츠 비율
+
+    const collapsing = !tlLabelsCollapsed;
+    // 제약 없는 내용폭 측정(transition 잠시 끔) → 펼침 목표폭은 CSS 상한(45%·300px)으로 클램프
+    labels.style.transition = "none";
+    labels.style.maxWidth = "none";
+    const full = labels.scrollWidth;
+    const target = Math.min(full, 300, res.clientWidth * 0.45);
+    labels.style.maxWidth = (collapsing ? target : 0) + "px";   // 시작점
+    void labels.offsetWidth;                                     // reflow
+    labels.style.transition = "";                               // CSS transition 복귀
+
+    tlLabelsCollapsed = collapsing;
+    g.classList.toggle("collapsed", collapsing);
+    labels.style.maxWidth = (collapsing ? 0 : target) + "px";   // 목표점
+    const done = () => { labels.style.maxWidth = ""; labels.removeEventListener("transitionend", done); };   // 끝나면 CSS값으로 복귀
+    labels.addEventListener("transitionend", done);
+
+    if (!scroll || !inner) return;
+    const t0 = performance.now(), DUR = 240;
+    const follow = (now) => {
+      scroll.scrollLeft = frac * inner.clientWidth;   // 폭 변하는 중에도 같은 비율 유지
+      if (now - t0 < DUR) requestAnimationFrame(follow);
+    };
+    requestAnimationFrame(follow);
   });
 }
 
@@ -5325,7 +5401,10 @@ function tlGantt(d) {
     `<div class="tl-trow${L.tall ? " tl-trow-tall" : ""}"><div class="${L.trackCls}">${L.bars}</div></div>`).join("") +
     `<div class="tl-axis">${axis}</div>`;
   // DPS 곡선 오버레이(토글 시) + 호버 가이드선(평소 숨김, 커서 올리면 해당 시각에 세로선+시간·DPS)
-  return `<div class="tl-gantt"><div class="tl-gantt-labels">${labelCol}</div>` +
+  // 라벨 접기 버튼(주로 모바일): 접으면 이름 열을 왼쪽으로 숨기고 트랙이 확장. tlLabelsCollapsed 상태 유지.
+  return `<div class="tl-gantt${tlLabelsCollapsed ? " collapsed" : ""}">` +
+    `<div class="tl-gantt-labels">${labelCol}</div>` +
+    `<div class="tl-labels-toggle-col"><button type="button" class="tl-labels-toggle" title="이름 열 접기/펼치기" aria-label="이름 열 접기/펼치기"></button></div>` +
     `<div class="tl-gantt-scroll"><div class="tl-gantt-inner">${rowCol}${tlDpsOverlay(d)}` +
     `<div class="tl-guide" hidden><span class="tl-guide-time"></span></div></div></div></div>`;
 }
@@ -5449,6 +5528,7 @@ function tlUpdateDpsCurve() {
 
 // 간트 확대/축소: Ctrl+휠로 가로 배율 조정(최소 100%=1, 최대=시뮬 길이 비례). 확대 시 가로 스크롤.
 let tlZoom = 1, tlMaxZoom = 8, tlGuideMs = 0, tlLastData = null;
+let tlLabelsCollapsed = false;   // 간트 이름(라벨) 열 접힘 — 모바일 가로폭 확보용. 클릭 토글, 렌더 간 유지.
 // DPS 곡선 상태(타임라인 카드 헤더의 토글·슬라이더로 제어). tlDpsAgg=구간 뭉뚱그리기 강도(0~100), 곡률은 항상 최대.
 let tlShowDps = false, tlDpsAgg = 30, tlDpsShownPts = null;
 function applyTlZoom() {
