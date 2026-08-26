@@ -875,6 +875,8 @@ html.deep-route #panel-home { display: none !important; }
 
 /* 정적 가이드 페이지(/guide/*.html) */
 .guide { max-width: 760px; margin: 18px auto 8px; padding: 0 18px; line-height: 1.75; }
+.guide-note { background: #232830; border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin: 14px 0; }
+.guide-note p { margin: 0; color: var(--text); font-size: 14px; line-height: 1.7; }
 .guide .guide-crumb { margin-bottom: 12px; }
 .guide .guide-crumb a { color: var(--accent); text-decoration: none; font-size: 13px; }
 .guide h1 { font-size: 24px; margin: 6px 0 6px; }
