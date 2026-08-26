@@ -1663,7 +1663,7 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-tip { position: fixed; z-index: 1000; transform: translate(-50%, -100%); pointer-events: none;
   background: #12151b; color: #e8eaed; border: 1px solid var(--accent2); border-radius: 6px;
   padding: 6px 10px; font-size: 12px; font-weight: 600; white-space: pre-line; text-align: left; line-height: 1.5;
-  max-width: 94vw; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); }   /* 화면 넘침만 방지, 사실상 자연 폭 유지 */
+  max-width: calc(100vw - 16px); box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); }   /* 좌우 8px 여백 확보(가로 스크롤 방지) */
 /* 툴팁 첫 줄(이름) 강조 · 마지막 줄(시간) 흐리게는 textContent라 불가 — 여러 줄만 지원 */
 .tl-tip[hidden] { display: none; }
 /* 딜 라인(도트·주기·프록) — 회색 계열 + 그라데이션. 옅은 막대=활성 구간, 진한 세로줄=실제 딜 틱 */

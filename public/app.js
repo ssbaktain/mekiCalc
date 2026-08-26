@@ -4298,14 +4298,15 @@ function tlInitHandlers() {
 function tlPlaceTip(res, tip, anchor) {
   tip.hidden = false;
   tip.style.transform = "none";   // left/top을 박스 좌상단 기준으로 직접 배치(중앙 translate 안 씀)
-  const rRes = res.getBoundingClientRect(), rBar = anchor.getBoundingClientRect();
+  const rBar = anchor.getBoundingClientRect();
   const gantt = anchor.closest(".tl-gantt");
   const yTop = (gantt || anchor).getBoundingClientRect().top;   // 간트 최상단(막대들보다 위)
+  const vw = document.documentElement.clientWidth;              // 스크롤바 제외 뷰포트 폭(가로 스크롤 방지 기준)
   const margin = 8, tw = tip.offsetWidth, th = tip.offsetHeight;
   let left = rBar.left + rBar.width / 2 - tw / 2;               // 막대 중앙 정렬
-  const maxL = rRes.right - margin - tw, minL = rRes.left + margin;
-  if (left > maxL) left = maxL;                                  // 오른쪽 경계 넘음 → 오른쪽 끝을 한계로(왼쪽으로 늘어남)
-  if (left < minL) left = minL;                                  // 왼쪽 경계 넘음 → 왼쪽 끝을 한계로(오른쪽으로 늘어남)
+  const maxL = vw - margin - tw, minL = margin;
+  if (left > maxL) left = maxL;                                  // 오른쪽 경계 넘음 → 왼쪽으로 늘어남
+  if (left < minL) left = minL;                                  // 왼쪽 경계 넘음 → 오른쪽으로 늘어남
   tip.style.left = left + "px";
   tip.style.top = (yTop - 6 - th) + "px";                        // 간트 상단 위에 박스가 얹히도록(높이만큼 올림)
 }
