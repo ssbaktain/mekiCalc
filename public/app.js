@@ -240,6 +240,7 @@ function setJob(job) {
   $("job-sel").value = String(job);
   myBuffJob = job;
   if (changed) myBuffs = null;   // 직업 변경 → 스킬 선택 초기화(불변식). 일관 상태(동일 직업)면 no-op이라 선택 보존.
+  document.body.classList.toggle("job-nightlord", job === 1);   // 나이트로드=신엔진 → 구엔진 '데미지 분석(구)' 탭 숨김
   return changed;
 }
 
@@ -337,7 +338,7 @@ async function getSlots(part, grade) {
 // 기능 추가 시 여기 항목만 늘리면 됨. items 없으면 단독 메뉴, 있으면 드롭다운.
 // 하위 항목 panel="soon"이면 준비 중 패널(soon 라벨 표시).
 const MENU = [
-  { label: "데미지 분석", panel: "home", path: "/" },   // 최좌측 · 드롭다운 없음 · 로고 클릭으로도 진입. 평타/DPS + 평타/스킬/동료 딜 비중 + 동료/유물 기여
+  { label: "데미지 분석(구)", panel: "home", path: "/" },   // 최좌측 · 구엔진 대시보드. 나이트로드(신엔진)면 숨김(body.job-nightlord). 추후 관리자 전용화 예정
   { label: "타임라인", panel: "timeline", path: "/timeline" },   // 나이트로드 정밀 타임라인 시뮬(자동/수동 배치 · 버프 윈도우 간트 · 베타)
   { label: "프리셋", flat: true, divider: true, items: [   // flat: 드롭다운X·클릭 시 캐릭터 탭 진입(서브바가 세부전환). divider: 뒤에 세로 구분선
     { label: "캐릭터", panel: "presets", sub: "build", path: "/presets/build" },
@@ -448,14 +449,20 @@ function applyLeaf(leaf, item, push) {
   return true;
 }
 // 주소(path)로 이동. push=false는 초기 진입·뒤로가기(주소 안 바꿈).
+// 기본 진입/로고 목적지 — 나이트로드(신엔진)는 타임라인, 그 외는 데미지 분석(구).
+function homeLeaf() {
+  return currentJob() === 1 ? (allLeaves().find((l) => l.panel === "timeline") || MENU[0]) : MENU[0];
+}
+
 function navigate(path, push) {
-  const leaf = leafByPath(normPath(path)) || MENU[0];   // 구 경로면 정규화(캐릭터 탭으로)
+  let leaf = leafByPath(normPath(path)) || homeLeaf();   // 구 경로면 정규화(캐릭터 탭으로)
+  if (leaf === MENU[0]) leaf = homeLeaf();   // 홈(데미지 분석) 목적지는 나이트로드면 타임라인으로
   applyLeaf(leaf, null, push);
 }
 
-// 홈(=예상 데미지 탭)으로 이동. 로고 클릭·기본 진입 공용.
+// 홈(=진입 탭)으로 이동. 로고 클릭·기본 진입 공용. 나이트로드면 타임라인.
 function goHome() {
-  if (!applyLeaf(MENU[0], null, true)) return;
+  if (!applyLeaf(homeLeaf(), null, true)) return;
   window.scrollTo({ top: 0 });
 }
 
@@ -556,6 +563,7 @@ function buildMenu() {
   routeItemEls = new Map();
   for (const m of MENU) {
     const el = makeMenuItem(m); left.appendChild(el); itemEls.push([m, el]);
+    if (m.panel === "home") el.classList.add("menu-home");   // 나이트로드(신엔진)면 CSS로 숨김
     if (m.items) for (const it of m.items) routeItemEls.set(it.path, el);
     else if (m.path) routeItemEls.set(m.path, el);
     if (m.divider) { const d = document.createElement("span"); d.className = "menu-divider"; d.setAttribute("aria-hidden", "true"); left.appendChild(d); }
@@ -575,8 +583,11 @@ function buildMenu() {
   const activeItem = (menuLeaf && routeItemEls.get(menuLeaf.path)) || left.querySelector(".menu-item");
   if (activeItem) setActiveMenu(activeItem);
   syncMobileActive(menuLeaf || MENU[0]);   // 모바일 메뉴 활성도 현재 경로 기준(깜빡임 방지)
-  // 홈 패널은 현재 경로가 홈일 때만 노출(딥링크면 여기서 홈으로 덮지 않음 → 패널 깜빡임 방지).
-  if (location.pathname === "/" || location.pathname === "") showPanel("home");
+  // 홈 패널은 현재 경로가 홈일 때만 노출(딥링크면 여기서 홈으로 덮지 않음 → 패널 깜빡임 방지). 나이트로드는 타임라인으로.
+  if (location.pathname === "/" || location.pathname === "") {
+    const hl = homeLeaf();
+    if (hl === MENU[0]) showPanel("home"); else applyLeaf(hl, null, false);
+  }
 }
 
 // 모바일(좁은 화면) 햄버거 메뉴. 모든 항목을 펼친 세로 목록으로 → 한 번 터치로 이동(호버 불필요).
@@ -608,7 +619,8 @@ function buildMobileMenu(itemEls) {
 
   const addLeaf = (label, leaf, desktopItem, isTop) => {
     const btn = document.createElement("button");
-    btn.className = "m-leaf" + (isTop ? " m-leaf-top" : "");   // isTop=최상위 단독(프리셋)=대분류 크기
+    btn.className = "m-leaf" + (isTop ? " m-leaf-top" : "") + (leaf && leaf.panel === "home" ? " menu-home" : "");   // isTop=최상위 단독(프리셋)=대분류 크기. home=나이트로드면 숨김
+
     btn.type = "button"; btn.textContent = label;
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1437,6 +1449,7 @@ async function calcEvaluate() {
       slot: slotRaw === "" ? null : parseInt(slotRaw, 10),
       ...targetForApi(), ...companionParams(),
       stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
+      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     evResults = data.results;
     renderEval();
@@ -1646,6 +1659,7 @@ async function runRecommend(useSliderMax) {
       sliderValue: parseInt($("rc-slider").value, 10) || 0,
       sortKey: parseInt($("rc-sort").value, 10) || 0,
       upper: $("rc-upper").checked, lower: $("rc-lower").checked,
+      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 추천. 실험실과 동일 sim 길이(순환/파생 유물 sim 의존)
     });
     const slider = $("rc-slider");
     slider.max = Math.max(0, data.maxDivisions - 1);
@@ -1766,6 +1780,7 @@ async function runOptCompare() {
       left: { part: $("oc-l-part").value, grade: $("oc-l-grade").value, opts: ocCollect("oc-l") },
       right: { part: $("oc-r-part").value, grade: $("oc-r-grade").value, opts: ocCollect("oc-r") },
       stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(), buffs: activeBuffs(), hitInterval: myHitInterval,
+      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     $("oc-l-result").innerHTML = ocResultHtml(data.left);
     $("oc-r-result").innerHTML = ocResultHtml(data.right);
@@ -1815,13 +1830,14 @@ let scSource = null;   // {statId, value} 현재 기준
 let scTimer = null;
 
 function scStatDefs() {
-  return (statDefs || []).filter((d) => !d.hidden && d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+  const base = (statDefs || []).filter((d) => !d.hidden && d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+  return [...base, { id: "ATK_PCT_SKILL", name: EXP_SYNTH.ATK_PCT_SKILL, unit: "PCT" }];   // 합성: 스킬/유물 유래 공격력%(프리셋 공%와 별도 곱)
 }
 
 // 스탯 비교 전용 소분류(종류별로 묶어 한눈에 보이게). stats.json 순서는 캐릭터 폼이 '스탯창 순서'로 쓰므로 건드리지 않고 여기서만 그룹핑.
 const SC_GROUPS = [
   { title: "+ 스탯", ids: ["ATK_FLAT", "MAIN_STAT_FLAT", "SUB_STAT_FLAT", "DEFENSE"] },
-  { title: "% 스탯", ids: ["ATK_PCT", "MAIN_STAT_PCT", "STAT_PROP_DMG", "CRIT_RATE", "CRIT_DMG", "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "BOSS_DMG", "NORMAL_DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
+  { title: "% 스탯", ids: ["ATK_PCT", "ATK_PCT_SKILL", "MAIN_STAT_PCT", "STAT_PROP_DMG", "CRIT_RATE", "CRIT_DMG", "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "BOSS_DMG", "NORMAL_DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
   { title: "곱연산 스탯", ids: ["DEF_PEN", "ATK_SPEED", "FINAL_DMG"] },
   { title: "기타 스탯", ids: ["COOLDOWN_REDUCTION_PCT", "COOLDOWN_REDUCTION", "SUMMON_DURATION", "BUFF_DURATION"] },
   { title: "스킬 레벨", ids: ["SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "SKILL_LEVELS"] },
@@ -1925,6 +1941,7 @@ async function runStatCompare() {
       stats: collectStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       buffs: activeBuffs(), hitInterval: myHitInterval,
       refStatId: src.statId, refValue: src.value,
+      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
   } catch (e) {
     const h = $("sc-head"); h.hidden = false;
@@ -2154,8 +2171,9 @@ async function runGearCompare() {
   try {
     const data = await postJson("/api/gear-compare", Object.assign(
       { leftOpts: gcCollect("gc-l"), rightOpts: gcCollect("gc-r"),
-        stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval },
-      targetForApi(), companionParams()));
+        stats: collectStats(), conversions: myConv, buffs: activeBuffs(), hitInterval: myHitInterval,
+        simMs: tlSimMs() },   // 나이트로드=신엔진(유물 조립) 딜 기준, 실험실과 동일 sim
+      relicCtxPayload(), targetForApi(), companionParams()));
     $("gc-delta").innerHTML = gcDeltaHtml(data);
     $("gc-status").textContent = "";
   } catch (e) { $("gc-status").textContent = "오류: " + e.message; }
@@ -2190,8 +2208,8 @@ async function runGearApply() {
 
 // ──────────────────── 내 옵션 비교 ────────────────────
 
-function statLabel(id) { const d = statDefs.find((x) => x.id === id); return d ? d.name : id; }
-function statUnit(id) { const d = statDefs.find((x) => x.id === id); return d ? d.unit : ""; }
+function statLabel(id) { const d = statDefs.find((x) => x.id === id); return d ? d.name : (EXP_SYNTH[id] || id); }
+function statUnit(id) { const d = statDefs.find((x) => x.id === id); return d ? d.unit : (EXP_SYNTH[id] ? "PCT" : ""); }
 
 // 옵션 박스 안 내용(읽기전용). 노랑은 금색 글씨 + 배지.
 // 옵션 표기: 이름에서 단위(%·(+)·(+초)) 떼고 값 뒤에 단위 붙임 (예: "공격 속도 10%").
@@ -2276,6 +2294,7 @@ async function runCompare() {
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       part: $("cmp-part").value, upper: $("cmp-line").value === "upper",
       rightGrade: $("cmp-right-grade").value, rightOpts,
+      ...relicCtxPayload(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 딜 기준
     });
     if (!data.valid) { $("cmp-status").textContent = "현재(내 큐브 옵션)가 비어 있어 비교할 수 없습니다. '내 큐브' 탭에서 입력하세요."; return; }
     $("cmp-status").textContent = "";
@@ -4632,19 +4651,30 @@ function runTimelineIfActive() {
   if (p && !p.hidden && currentJob() === 1) runTimeline();
 }
 // 타임라인 계산 payload(runTimeline·변경실험 공용). stats는 collectStats() 원본.
-function tlPayload() {
-  const t = currentTargetSel(), ch = t && t.ch, sv = t && t.stage;
+// 유물·컨텐츠 설정 payload(타임라인 탭 UI 기준) — 타임라인/큐브 추천이 공유(같은 빌드 기준 딜).
+function relicCtxPayload() {
+  const p = { artifacts: activeRelic(), potentials: activePotentials() };
+  const enemies = parseInt($("tl-enemies").value, 10); if (!isNaN(enemies)) p.enemies = enemies;   // 마리수 M
+  const kills = parseFloat($("tl-kills").value); if (!isNaN(kills)) p.kills = kills;               // 분당 처치수 K
+  const content = $("tl-content").value; if (content) p.content = content;                          // 컨텐츠 C
+  p.artOffsetSec = parseFloat($("tl-artoffset").value) || 0;                                        // 유물 사전활성(초)
+  if ($("tl-preact").checked) p.preActivateProc = true;                                             // 확률형 유물 사전활성
+  if (tlSkillsOff.size) p.skillsOff = [...tlSkillsOff];                                              // 사용 해제 스킬
+  return p;
+}
+
+// 시뮬 길이(ms) — 타임라인 탭 설정. 큐브 계산도 동일 값을 써 실험실과 딜 기준을 맞춘다(순환/파생 유물은 sim 길이 의존).
+function tlSimMs() {
   let simSec = parseFloat($("tl-simsec").value) || 90;
   if (simSec > 600) { simSec = 600; $("tl-simsec").value = 600; }   // 시뮬 상한 600초
   if (simSec < 1) simSec = 1;
-  const simMs = Math.round(simSec * 1000);
-  const payload = { stats: collectStats(), mode: tlMode, chapter: ch || "", target: sv || "", simMs, artifacts: activeRelic(), potentials: activePotentials() };
-  const enemies = parseInt($("tl-enemies").value, 10); if (!isNaN(enemies)) payload.enemies = enemies;   // 마리수 M
-  const kills = parseFloat($("tl-kills").value); if (!isNaN(kills)) payload.kills = kills;               // 분당 처치수 K
-  const content = $("tl-content").value; if (content) payload.content = content;                          // 컨텐츠 C
-  payload.artOffsetSec = parseFloat($("tl-artoffset").value) || 0;                                        // 유물 사전활성(초)
-  if ($("tl-preact").checked) payload.preActivateProc = true;                                             // 확률형 유물 사전활성
-  if (tlSkillsOff.size) payload.skillsOff = [...tlSkillsOff];                                              // 사용 해제 스킬
+  return Math.round(simSec * 1000);
+}
+
+function tlPayload() {
+  const t = currentTargetSel(), ch = t && t.ch, sv = t && t.stage;
+  const simMs = tlSimMs();
+  const payload = { stats: collectStats(), mode: tlMode, chapter: ch || "", target: sv || "", simMs, ...relicCtxPayload() };
   if (tlMode === "manual") {
     payload.autoFillBasic = tlAutoFill;
     payload.fillSkills = tlFillSkills;
@@ -4972,7 +5002,7 @@ function renderTimelineResult(d) {
       `<span class="tl-exp-apply-lbl">실험값 적용</span></label>`
     : "";
   const gantt = `<div class="card"><div class="dash-head"><h2>타임라인</h2><div class="tl-head-ctrls">${expCtrl}${dpsCtrl}</div></div>` +
-    `<div class="dash-sub tl-legend">액션(▮ 스킬 · 평타) · <b class="tl-lg-dot">지속딜</b> · <b class="tl-lg-buff">버프</b> · <b class="tl-lg-art">유물</b></div>${tlGantt(d)}${tlArtStatus(d)}</div>`;
+    `<div class="dash-sub tl-legend">액션(▮ 스킬 · 평타) · <b class="tl-lg-dot">지속딜/패시브딜</b> · <b class="tl-lg-buff">버프</b> · <b class="tl-lg-art">유물</b></div>${tlGantt(d)}${tlArtStatus(d)}</div>`;
   const brk = `<div class="card"><div class="dash-head"><h2>스킬별 기여</h2></div>${tlDonutHtml(d.perSkill)}</div>`;
   // 순서: 간트(내부 하단=미반영 유물) → 헤드라인(종합 DPS·전체 데미지) → 스킬별 기여(도넛)
   $("tl-result").innerHTML = gantt + head + brk;
@@ -5352,6 +5382,7 @@ function tlMergeSegs(segs, T) {
   return out;
 }
 function tlBuffLanes(byKey, pct, isArt, lanes, T) {
+  const built = [];   // 딜 기여 근사 점수로 정렬 후 push
   for (const key of Object.keys(byKey)) {
     const { label, segs } = byKey[key];
     const merged = tlMergeSegs(segs, T);   // 그리기 전에 동일 계수끼리 묶어 변화 구간마다 분리(순환의 고리 형식)
@@ -5359,6 +5390,12 @@ function tlBuffLanes(byKey, pct, isArt, lanes, T) {
     const sumOf = (w) => (w.effects || []).reduce((s, e) => s + (e.value || 0), 0);
     const vals = merged.map(sumOf);
     const vmin = vals.length ? Math.min(...vals) : 0, vmax = vals.length ? Math.max(...vals) : 0, range = vmax - vmin;
+    // 딜 기여 근사 점수 = Σ(효과값 × 구간 가동비율). 큰 효과·오래 가는 버프 우선(무실효 dormant 제외). 곱스탯은 값 그대로, 크뎀/크확 등 얽힌 건 근사.
+    let score = 0;
+    for (const w of merged) {
+      const dur = (w.end - w.start) / T;
+      for (const e of (w.effects || [])) if (!e.dormant) score += Math.abs(e.value || 0) * dur;
+    }
     let bars = "";
     for (let i = 0; i < merged.length; i++) {
       const w = merged[i];
@@ -5369,8 +5406,10 @@ function tlBuffLanes(byKey, pct, isArt, lanes, T) {
       const num = (w.stacks != null && width > 3) ? `<b>${w.stacks}</b>` : "";   // 중첩=숫자로만(높이 표현 폐지)
       bars += `<span class="tl-win${isArt ? " art" : ""}" style="${style}" data-tip="${title}">${num}</span>`;
     }
-    lanes.push({ label, labelCls: isArt ? "tl-glabel-art" : "tl-glabel-buff", trackCls: "tl-track tl-buff", bars });
+    built.push({ score, lane: { label, labelCls: isArt ? "tl-glabel-art" : "tl-glabel-buff", trackCls: "tl-track tl-buff", bars } });
   }
+  built.sort((a, b) => b.score - a.score);   // 딜 기여 높은 순
+  for (const b of built) lanes.push(b.lane);
 }
 
 /** 지속딜(도트·장판) 레인 — 시전 시각부터 지속시간만큼 바로 표시. 스킬별 한 레인. */

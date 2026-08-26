@@ -73,13 +73,23 @@ public class ApiController {
         return service.buffList(toDoubleMap(req.get("stats")));
     }
 
+    /** 큐브 계산 공통 유물·컨텐츠 설정(신엔진 타임라인 조립용) — 타임라인 payload와 동일 필드. */
+    private CalcService.CubeCtx cubeCtx(Map<String, Object> req) {
+        return new CalcService.CubeCtx(mapList(req.get("artifacts")), mapList(req.get("potentials")),
+                intOrNull(req, "enemies"), req.get("kills") instanceof Number ? num(req, "kills", 0) : null,
+                strOpt(req, "content"), (int) Math.round(num(req, "artOffsetSec", 0) * 1000),
+                bool(req, "preActivateProc", false), bool(req, "autoFillBasic", true), toIntSet(req.get("skillsOff")),
+                bool(req, "fillSkills", false), bool(req, "optimize", false), (int) num(req, "simMs", 0));
+    }
+
     @PostMapping("/api/evaluate")
     public Object evaluate(@RequestBody Map<String, Object> req) {
         return service.evaluate(
                 str(req, "part"), str(req, "grade"), intOrNull(req, "slot"),
                 toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
-                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                cubeCtx(req));
     }
 
     @PostMapping("/api/recommend")
@@ -89,7 +99,8 @@ public class ApiController {
                 req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                 (int) num(req, "sliderValue", 0), (int) num(req, "sortKey", 0),
                 bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
-                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                cubeCtx(req));
     }
 
     @PostMapping("/api/compare")
@@ -99,7 +110,8 @@ public class ApiController {
                 req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                 str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
-                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                cubeCtx(req));
     }
 
     @PostMapping("/api/slotdraws")
@@ -121,7 +133,8 @@ public class ApiController {
                 str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
                 toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
-                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                cubeCtx(req));
     }
 
     @PostMapping("/api/stat-compare")
@@ -130,7 +143,7 @@ public class ApiController {
                 toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
-                str(req, "refStatId"), num(req, "refValue", 0));
+                str(req, "refStatId"), num(req, "refValue", 0), cubeCtx(req));
     }
 
     @PostMapping("/api/gear-compare")
@@ -139,7 +152,8 @@ public class ApiController {
                 toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 mapList(req.get("leftOpts")), mapList(req.get("rightOpts")),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
-                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
+                strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
+                cubeCtx(req));
     }
 
     @PostMapping("/api/gear-ocr")

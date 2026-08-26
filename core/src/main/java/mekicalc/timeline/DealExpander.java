@@ -44,6 +44,8 @@ public final class DealExpander {
     /** onAttack 인스턴스 스트림(비-dot 딜 + 프록 cascade) — expand 후 유물 onAttack 확률 누산이 소비. */
     private List<Integer> attackInstances = java.util.List.of();
     /** 도트/지속딜 스킬 idx → 실제 지속 윈도우[발동, 발동+effDur] 목록(마스터리 반영). 딜 라인 막대용. */
+    // ★규약: 지속딜(form:dot 또는 tickMs+durationMs)을 방출하는 모든 경로는 반드시 여기 dotWindows에 [start,end] 창을 넣는다(배경 막대 표시).
+    //   현재 dot 방출 경로 = emitSkillDeals(캐스트·periodic·충전형, isDot()) + onAttack dot(베놈, e.isDot()) 둘뿐. 새 dot 방출 경로 추가 시 이 dotWindows 채움 필수.
     private final Map<Integer, List<int[]>> dotWindows = new HashMap<>();
 
     /** 도트/지속딜 실제 지속 윈도우(발동~발동+지속, 마스터리 반영). 마지막 틱 이후 유지시간도 포함. expand() 후 유효. */
@@ -135,9 +137,11 @@ public final class DealExpander {
                 if (e.isDot()) {                                   // 상태 도트(베놈): 누산기 윈도우 내 틱
                     List<int[]> windows = onAttackWindows.get(s.idx());
                     int tick = effTick(s.idx(), e);
-                    if (windows != null) for (int[] w : windows)
+                    if (windows != null) for (int[] w : windows) {
+                        dotWindows.computeIfAbsent(s.idx(), k -> new ArrayList<>()).add(new int[]{w[0], Math.min(w[1], simMs)});   // 지속 배경 막대(베놈도 지속딜)
                         for (int t = w[0] + tick; t <= w[1]; t += tick)
                             tl.addDeal(t, deal(s.idx(), e, frac, true));
+                    }
                 } else {                                           // 즉발 프록(쉐도우·페이탈)
                     int chance = effChancePermille(s);
                     double acc = 0;

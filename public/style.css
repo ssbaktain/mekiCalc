@@ -216,6 +216,8 @@ main {
 .menu-group { display: flex; flex-wrap: wrap; }   /* 좁은 폭에서 네비가 넘치지 않고 줄바꿈(가로 오버플로 방지) */
 /* 프리셋 뒤 세로 구분선: 입력(데미지 분석·프리셋) ↔ 도구(큐브·비교·공지) 성격 구분. 살짝만. */
 .menu-divider { align-self: center; width: 2px; height: 24px; background: var(--muted); opacity: 0.6; border-radius: 1px; margin: 0 9px; flex: 0 0 auto; }
+/* 나이트로드(신엔진)면 구엔진 '데미지 분석(구)' 탭 숨김(데스크톱 메뉴·모바일 드로어 공통) */
+body.job-nightlord .menu-home { display: none !important; }
 .menu-item { position: relative; }
 .menu-label {
   background: none; border: none; cursor: pointer;

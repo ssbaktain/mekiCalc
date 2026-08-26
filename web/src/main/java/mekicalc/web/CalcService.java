@@ -39,8 +39,14 @@ import mekicalc.timeline.Analyzer;
 import mekicalc.timeline.ArtifactAssembler;
 import mekicalc.timeline.BuffAccumulator;
 import mekicalc.timeline.BuffSource;
+import mekicalc.timeline.DamageFormula;
+import mekicalc.timeline.DealEvent;
 import mekicalc.timeline.DealExpander;
+import mekicalc.timeline.DmgType;
+import mekicalc.timeline.ModState;
 import mekicalc.timeline.Preset;
+import mekicalc.timeline.Slot;
+import mekicalc.timeline.Stat;
 import mekicalc.timeline.Schedule;
 import mekicalc.timeline.Scheduler;
 import mekicalc.timeline.Timeline;
@@ -781,19 +787,26 @@ public final class CalcService {
     }
 
     /**
-     * 나이트로드 정밀 타임라인 엔진 실행(스킬 전용, 유물·동료 미조립). 자동/수동 배치를 시뮬해
-     * 종합 DPS·스킬별 기여·액션 시퀀스·버프 윈도우(간트 시각화용)를 반환한다.
-     *
-     * @param mode    "manual"이면 casts대로 배치, 그 외 자동 로테이션
-     * @param casts   수동 배치 [{timeMs, skillIdx}] (자동이면 무시)
-     * @param simMs   시뮬 길이(ms). 0이면 일반몹 90초/보스 70초 기본.
+     * {@link #buildTimeline}의 산출물 묶음 — 유물까지 구운 Timeline과 표시에 쓰는 중간 결과들.
+     * nlTimeline(표시)과 TimelineDealModel(딜 재평가)이 공유한다.
      */
-    public Map<String, Object> nlTimeline(Map<String, Double> stats, String mode,
-                                          List<Map<String, Object>> casts, String chapter, String target, int simMs,
-                                          List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
-                                          Integer enemies, Double kills, String contentOverride, int artOffsetMs,
-                                          boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
-                                          boolean fillSkills, boolean optimize) {
+    record TimelineBuild(
+            Timeline tl, Preset preset, double monDef, boolean boss, int simMs,
+            Scheduler sched, Schedule schedule, DealExpander de, SkillBook book,
+            ArtifactAssembler.Result artRes, List<BuffSource> sources,
+            List<Map<String, Object>> cycleRows, List<Map<String, Object>> derivedRows,
+            List<ArtifactAssembler.StackSeg> stackSegs) {}
+
+    /**
+     * stats(유물 딜 미포함 프리셋) + artifacts/potentials로 유물까지 구운 Timeline을 만든다.
+     * nlTimeline의 tl 생성부(스케줄→전개→버프누적→유물조립)를 추출한 것 — 딜 재평가(큐브 추천)에서 재사용한다.
+     */
+    TimelineBuild buildTimeline(Map<String, Double> stats, String mode,
+                                List<Map<String, Object>> casts, String chapter, String target, int simMs,
+                                List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                                Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                                boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                                boolean fillSkills, boolean optimize) {
         boolean boss = isBossTarget(target);
         Double def = targetDef(chapter, target);
         double monDef = def == null ? 0 : def;
@@ -854,6 +867,41 @@ public final class CalcService {
         asm.accumulateUptime(tl, de.attackInstances(), preActivateProc, artRes);   // 은펜던트·천도명약(onAttack 약화 확률누산, 베놈과 동일 스트림)
         // 성배(onKill)는 이제 assemble에서 확률누산 발동 창을 sources로 만들어 accumulate에서 반영됨
         List<ArtifactAssembler.StackSeg> stackSegs = asm.stackSegments(artRes, boss, artOffsetMs, de.attackInstances(), preActivateProc, simMs);
+
+        return new TimelineBuild(tl, preset, monDef, boss, simMs, sched, schedule, de, book,
+                artRes, sources, cycleRows, derivedRows, stackSegs);
+    }
+
+    /**
+     * 나이트로드 정밀 타임라인 엔진 실행(스킬 전용, 유물·동료 미조립). 자동/수동 배치를 시뮬해
+     * 종합 DPS·스킬별 기여·액션 시퀀스·버프 윈도우(간트 시각화용)를 반환한다.
+     *
+     * @param mode    "manual"이면 casts대로 배치, 그 외 자동 로테이션
+     * @param casts   수동 배치 [{timeMs, skillIdx}] (자동이면 무시)
+     * @param simMs   시뮬 길이(ms). 0이면 일반몹 90초/보스 70초 기본.
+     */
+    public Map<String, Object> nlTimeline(Map<String, Double> stats, String mode,
+                                          List<Map<String, Object>> casts, String chapter, String target, int simMs,
+                                          List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                                          Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                                          boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                                          boolean fillSkills, boolean optimize) {
+        TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
+                enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
+        Timeline tl = tb.tl();
+        Preset preset = tb.preset();
+        double monDef = tb.monDef();
+        boolean boss = tb.boss();
+        simMs = tb.simMs();
+        Scheduler sched = tb.sched();
+        Schedule schedule = tb.schedule();
+        DealExpander de = tb.de();
+        SkillBook book = tb.book();
+        ArtifactAssembler.Result artRes = tb.artRes();
+        List<BuffSource> sources = tb.sources();
+        List<Map<String, Object>> cycleRows = tb.cycleRows();
+        List<Map<String, Object>> derivedRows = tb.derivedRows();
+        List<ArtifactAssembler.StackSeg> stackSegs = tb.stackSegs();
 
         Analyzer an = new Analyzer(tl, preset, monDef, boss, simMs);
 
@@ -1328,10 +1376,11 @@ public final class CalcService {
     public Map<String, Object> evaluate(String part, String grade, Integer slot,
                                         Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                         Set<String> buffs, double hitInterval,
-                                        String companionId, String companionGrade, int companionLevel, double ratio) {
+                                        String companionId, String companionGrade, int companionLevel, double ratio, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, boss, buffs, hitInterval, chapter, target,
+                companionId, companionGrade, companionLevel, ratio, ctx);
         List<CubeEvaluator.Result> res = (slot == null)
                 ? CubeEvaluator.evaluate(content.equip, dm, current, part, grade)
                 : CubeEvaluator.evaluateSlot(content.equip, dm, current, part, grade, slot);
@@ -1364,6 +1413,213 @@ public final class CalcService {
     // ──────────────────── 큐브 우선순위 추천 ────────────────────
 
     /**
+     * 신엔진(timeline) 딜 모델 — 큐브 추천/비교의 output을 종합 DPS(타임라인 총딜)로 준다.
+     * baseline 타임라인을 1회 만들어 캐시하고, 상시 스탯 델타는 재sim 없이 base 프리셋만 갈아끼워 Analyzer로 재평가한다.
+     * 스케줄에 영향을 주는 스탯(공속·쿨감·벞지·소지·스킬레벨)이 바뀔 때만 타임라인을 다시 만든다.
+     * 스탯 합성(combine/uncombine/aggregate)·정성 판정은 구엔진 {@link DamageModel} 규칙을 그대로 위임(큐브 합성 규칙 동일).
+     */
+    final class TimelineDealModel implements DealModel {
+        private static final java.util.Set<String> RESIM_STATS = java.util.Set.of(
+                "ATK_SPEED", "COOLDOWN_REDUCTION", "COOLDOWN_REDUCTION_PCT",
+                "BUFF_DURATION", "SUMMON_DURATION", "SKILL_LEVELS",
+                "SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4");   // 개별 스킬레벨도 계수 변경 → 재sim
+        private static final String BASIC_ATK_TARGETS = "BASIC_ATK_TARGETS";
+
+        private final DamageModel dm;
+        private final String chapter, target, contentOverride;
+        private final boolean boss;
+        private final double monDef;
+        private final int simMs, artOffsetMs;
+        private final List<Map<String, Object>> artifacts, potentials;
+        private final Integer enemies;
+        private final Double kills;
+        private final boolean preActivateProc, autoFillBasic, fillSkills, optimize;
+        private final java.util.Set<Integer> skillsOff;
+
+        // 대표 딜(계수·타수·마스터리=1·1·0) — 그룹 딜 = perHit(BASIC1)×basicW + perHit(SKILL1)×skillW.
+        private static final DealEvent BASIC1 = new DealEvent(-1, DmgType.BASIC, 1.0, 1, 0.0, false);
+        private static final DealEvent SKILL1 = new DealEvent(-1, DmgType.SKILL, 1.0, 1, 0.0, false);
+
+        private ArtifactAssembler.Result baseArt;  // 유물 조립(스케줄 기여분 + 파생 입력 스탯 판정용)
+        private java.util.Set<String> resimStats = RESIM_STATS;  // 재sim 트리거 = 스케줄 스탯 + 유물 파생 입력(크확/DMG 등, baseArt 확정 후 확장)
+        private StatBlock curRef; private double curOut; private List<GroupAgg> curGroups;      // 전체 현재 스탯(부위마다 curFull 호출) 캐시
+        private StatBlock cachedBaseRef; private double cachedBaseOut; private List<GroupAgg> cachedBaseGroups;  // 부위 baseline 캐시
+        private final Map<String, List<GroupAgg>> schedDeltaCache = new java.util.HashMap<>();  // 현재 baseline 내 스케줄 delta 재sim 캐시(baseline 갱신 시 clear)
+
+        /** 같은 버프상태(ModState)를 공유하는 타격들의 집계 — basicW/skillW = Σ 계수×타수×(1+마스터리). */
+        record GroupAgg(ModState m, double basicW, double skillW) {}
+
+        TimelineDealModel(DamageModel dm, String chapter, String target,
+                          List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                          Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                          boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                          boolean fillSkills, boolean optimize, int simMs) {
+            this.dm = dm;
+            this.chapter = chapter; this.target = target;
+            this.boss = isBossTarget(target);
+            Double d = targetDef(chapter, target);
+            this.monDef = d == null ? 0 : d;
+            this.artifacts = artifacts; this.potentials = potentials;
+            this.enemies = enemies; this.kills = kills;
+            this.contentOverride = contentOverride; this.artOffsetMs = artOffsetMs;
+            this.preActivateProc = preActivateProc; this.autoFillBasic = autoFillBasic;
+            this.skillsOff = skillsOff; this.fillSkills = fillSkills; this.optimize = optimize;
+            this.simMs = simMs <= 0 ? (int) ((boss ? BOSS_SECONDS : NORMAL_SECONDS) * 1000) : simMs;
+        }
+
+        @Override public double output(StatBlock b) {
+            if (curRef == null) {                 // 첫 호출 = 전체 현재 스탯(curFull) → 캐시
+                curRef = b; curGroups = groupsFor(b.asMap()); curOut = evalGroups(curGroups, b.asMap());
+                return curOut;
+            }
+            if (b == curRef) return curOut;
+            if (b != cachedBaseRef) {             // 부위 baseline 갱신(부위당 1회 재sim) → 스케줄 delta 캐시 무효화
+                cachedBaseRef = b; cachedBaseGroups = groupsFor(b.asMap()); cachedBaseOut = evalGroups(cachedBaseGroups, b.asMap());
+                schedDeltaCache.clear();
+            }
+            return cachedBaseOut;
+        }
+
+        @Override public double increase(StatBlock current, StatBlock delta) {
+            double before = output(current);      // baseline(또는 전체) 재sim·캐시
+            if (before <= 0) return 0;
+            Map<String, Double> cur = current.asMap();
+            Map<String, Double> cm = combine(current, delta).asMap();
+            // 스케줄 불변(로테이션·타수 동일)이면 baseline 그룹 재평가(곱배수 닫힌식) — mods 스탯의존은 delta 규모라 무시.
+            List<GroupAgg> g;
+            if (sameSched(cur, cm)) {
+                g = (current == cachedBaseRef) ? cachedBaseGroups : (current == curRef) ? curGroups : groupsFor(cm);
+            } else if (current == cachedBaseRef) {
+                // 스케줄이 바뀌는 delta(공속/쿨감/스킬레벨/벞지/소지 옵션) → 스케줄만 반영한 재sim, baseline 내 조합값별 캐시.
+                String key = schedTuple(cm);
+                g = schedDeltaCache.get(key);
+                if (g == null) { g = groupsFor(schedApplied(cur, cm)); schedDeltaCache.put(key, g); }
+            } else {
+                g = groupsFor(cm);
+            }
+            return evalGroups(g, cm) / before - 1.0;
+        }
+
+        /** baseline에 combined의 재sim스탯값만 적용(그 외 델타는 그룹 무관 → evalGroups 프리셋에서 반영). */
+        private Map<String, Double> schedApplied(Map<String, Double> base, Map<String, Double> combined) {
+            Map<String, Double> m = new LinkedHashMap<>(base);
+            for (String s : resimStats) m.put(s, combined.getOrDefault(s, 0.0));
+            return m;
+        }
+
+        /** 재sim스탯값 튜플(재sim 캐시 키). */
+        private String schedTuple(Map<String, Double> m) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : resimStats) sb.append(s).append('=').append(m.getOrDefault(s, 0.0)).append(',');
+            return sb.toString();
+        }
+
+        /** 타임라인 생성 + 버프상태 그룹 집계(재sim). */
+        private List<GroupAgg> groupsFor(Map<String, Double> map) {
+            TimelineBuild bt = buildTimeline(map, "auto", null, chapter, target, simMs,
+                    artifacts, potentials, enemies, kills, contentOverride, artOffsetMs,
+                    preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
+            if (baseArt == null) {                        // 첫 호출(현재 스탯) = 유물 조립·파생 입력 스탯 확정
+                baseArt = bt.artRes();
+                java.util.Set<String> rs = new java.util.HashSet<>(RESIM_STATS);
+                for (Stat st : ArtifactAssembler.derivedInputStats(baseArt)) rs.add(st.name());   // 순환 고리=크확, 육각=DMG, 헬레나=크확 등
+                resimStats = rs;
+            }
+            return buildGroups(bt.tl());
+        }
+
+        /** 그룹 집계 + 프리셋으로 종합 딜(= Analyzer.totalDamage와 동일값, 슬롯 순회 없이 그룹 순회). */
+        private double evalGroups(List<GroupAgg> groups, Map<String, Double> map) {
+            Preset preset = presetFor(map);
+            double dmg = 0;
+            for (GroupAgg g : groups) {
+                double pb = DamageFormula.perHit(preset, g.m(), BASIC1, monDef, boss);
+                double ps = DamageFormula.perHit(preset, g.m(), SKILL1, monDef, boss);
+                dmg += pb * g.basicW() + ps * g.skillW();
+            }
+            return dmg;
+        }
+
+        /** 재sim이 필요한 스탯(스케줄·계수·유물 파생 입력)이 모두 같은가(같으면 그룹 재사용). */
+        private boolean sameSched(Map<String, Double> a, Map<String, Double> b) {
+            for (String s : resimStats)
+                if (Math.abs(a.getOrDefault(s, 0.0) - b.getOrDefault(s, 0.0)) > 1e-9) return false;
+            return true;
+        }
+
+        /** baseline 타임라인의 타격을 버프상태(ModState)별로 묶어 basic/skill 가중치(Σ 계수×타수×(1+마스터리))로 집계. */
+        private List<GroupAgg> buildGroups(Timeline tl) {
+            Map<String, ModState> reps = new LinkedHashMap<>();
+            Map<String, double[]> ws = new LinkedHashMap<>();
+            for (Slot s : tl.slots().values()) {
+                String key = modKey(s.mods());
+                reps.putIfAbsent(key, s.mods());
+                double[] w = ws.computeIfAbsent(key, k -> new double[2]);
+                for (DealEvent d : s.deals()) {
+                    double cw = d.coeffFrac() * d.hits() * (1 + d.skillMastery());
+                    if (d.dmgType() == DmgType.BASIC) w[0] += cw; else w[1] += cw;
+                }
+            }
+            List<GroupAgg> out = new ArrayList<>(ws.size());
+            for (Map.Entry<String, double[]> e : ws.entrySet())
+                out.add(new GroupAgg(reps.get(e.getKey()), e.getValue()[0], e.getValue()[1]));
+            return out;
+        }
+
+        /** ModState 동치 키 — factor에 쓰이는 합풀 값 + 최종뎀 곱만 반영(같으면 같은 factor). */
+        private static String modKey(ModState m) {
+            StringBuilder sb = new StringBuilder();
+            for (Stat s : Stat.values()) { double v = m.get(s); if (v != 0) sb.append(s.ordinal()).append(':').append(v).append(','); }
+            return sb.append('|').append(m.finalDmgMult()).toString();
+        }
+
+        /** buildTimeline과 동일한 프리셋(유물 잠재 합성 + 유물 스케줄 기여분 가산)을 재현 — 캐시/재sim 경로 공통. */
+        private Preset presetFor(Map<String, Double> map) {
+            Map<String, Double> s = withPotential(map, potentials);
+            if (baseArt != null) {
+                double sp = baseArt.artSpeed(), cd = baseArt.artCdrPct(), bd = baseArt.artBuffDurPct(), sd = baseArt.artSummonDurPct();
+                if (sp != 0 || cd != 0 || bd != 0 || sd != 0) {
+                    s = new LinkedHashMap<>(s);
+                    if (sp != 0) s.merge("ATK_SPEED", sp, Double::sum);
+                    if (cd != 0) s.merge("COOLDOWN_REDUCTION_PCT", cd, Double::sum);
+                    if (bd != 0) s.merge("BUFF_DURATION", bd, Double::sum);
+                    if (sd != 0) s.merge("SUMMON_DURATION", sd, Double::sum);
+                }
+            }
+            return new Preset(s);
+        }
+
+        @Override public StatBlock combine(StatBlock current, StatBlock delta) { return dm.combine(current, delta); }
+        @Override public StatBlock uncombine(StatBlock r, StatBlock delta) { return dm.uncombine(r, delta); }
+        @Override public double aggregate(String statId, double a, double b) { return dm.aggregate(statId, a, b); }
+
+        @Override public boolean hasQualitative(StatBlock delta) {
+            for (String id : delta.asMap().keySet()) {
+                if (dm.isCustomConv(id)) continue;             // 사용자 지정 환산이 있으면 수치로 환산됨
+                if (id.equals(BASIC_ATK_TARGETS)) return true; // 대상수: 단일대상 timeline이라 상황 의존 → 미환산
+            }
+            return false;
+        }
+    }
+
+    /** 큐브 계산(추천/기댓값/비교)의 유물·컨텐츠 설정 묶음 — 나이트로드 신엔진 타임라인 조립에 쓴다(구엔진은 무시). */
+    public record CubeCtx(List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                          Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                          boolean preActivateProc, boolean autoFillBasic, Set<Integer> skillsOff,
+                          boolean fillSkills, boolean optimize, int simMs) {}
+
+    /** 나이트로드(신엔진 구현 직업) → 타임라인 종합 DPS 모델, 그 외 → 구엔진(1타×공속/종합 DPS 해석식). */
+    private DealModel cubeDealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval,
+                                    String chapter, String target, String companionId, String companionGrade, int companionLevel, double ratio,
+                                    CubeCtx ctx) {
+        if ((int) current.get("JOB") == JOB_NIGHTLORD)
+            return new TimelineDealModel(content.damageModel(conv), chapter, target, ctx.artifacts(), ctx.potentials(),
+                    ctx.enemies(), ctx.kills(), ctx.contentOverride(), ctx.artOffsetMs(), ctx.preActivateProc(),
+                    ctx.autoFillBasic(), ctx.skillsOff(), ctx.fillSkills(), ctx.optimize(), ctx.simMs());
+        return dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+    }
+
+    /**
      * 내 큐브(cubeState) 전체를 분석해 슬라이더 한 지점의 추천을 반환한다.
      * @param ranges      추천 옵션 수치 범위(statId→Range)
      * @param sliderValue 0 ~ maxDivisions-1
@@ -1374,10 +1630,11 @@ public final class CalcService {
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
                                          int sliderValue, int sortKey, boolean upper, boolean lower,
                                          Set<String> buffs, double hitInterval,
-                                         String companionId, String companionGrade, int companionLevel, double ratio) {
+                                         String companionId, String companionGrade, int companionLevel, double ratio, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, boss, buffs, hitInterval, chapter, target,
+                companionId, companionGrade, companionLevel, ratio, ctx);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
         double upPrice = content.currency.getOrDefault("미라클큐브", 1.0);
@@ -1503,10 +1760,11 @@ public final class CalcService {
                                           String rPart, String rGrade, List<Map<String, Object>> rOpts,
                                           Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                           Set<String> buffs, double hitInterval,
-                                          String companionId, String companionGrade, int companionLevel, double ratio) {
+                                          String companionId, String companionGrade, int companionLevel, double ratio, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, boss, buffs, hitInterval, chapter, target,
+                companionId, companionGrade, companionLevel, ratio, ctx);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("left", sideEval(lPart, lGrade, lOpts, current, dm));
         out.put("right", sideEval(rPart, rGrade, rOpts, current, dm));
@@ -1548,10 +1806,10 @@ public final class CalcService {
     public Map<String, Object> gearCompare(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                            List<Map<String, Object>> leftOpts, List<Map<String, Object>> rightOpts,
                                            Set<String> buffs, double hitInterval,
-                                           String companionId, String companionGrade, int companionLevel, double ratio) {
+                                           String companionId, String companionGrade, int companionLevel, double ratio, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, boss, buffs, hitInterval, chapter, target, companionId, companionGrade, companionLevel, ratio, ctx);
         StatBlock lDelta = deltaOfReq(dm, leftOpts);
         StatBlock rDelta = deltaOfReq(dm, rightOpts);
         StatBlock base = dm.uncombine(current, lDelta);       // 현재 장비(왼쪽) 제거
@@ -1590,19 +1848,19 @@ public final class CalcService {
     public Map<String, Object> statCompare(Map<String, Double> stats, Map<String, Double> conv, String chapter, String target,
                                            Set<String> buffs, double hitInterval,
                                            String companionId, String companionGrade, int companionLevel, double ratio,
-                                           String refStatId, double refValue) {
+                                           String refStatId, double refValue, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean curBoss = isBossTarget(target);
         // 동료 포함(정확): 소환 가동률로 플레이어 버프가 블렌딩되므로 동소지도 플레이어 평균 DPS를 올린다.
-        DealModel dm = dealModel(current, conv, curBoss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, curBoss, buffs, hitInterval, chapter, target, companionId, companionGrade, companionLevel, ratio, ctx);
 
         // 보뎀/일뎀은 현재 스테이지 유형과 반대라 그대로면 딜 0 → 사용자 지정 교차 기준으로 평가한다.
         //  · 현재 일반몹 스테이지 → 보뎀은 그 챕터 '보스' 기준으로 계산
         //  · 현재 보스 스테이지 → 일뎀은 '바로 직전 스테이지'(그 챕터 최고 일반 스테이지) 기준으로 계산
         DealModel dmBossDmg = curBoss ? dm
-                : dealModel(current, conv, true, buffs, hitInterval, targetDef(chapter, "boss"), companionId, companionGrade, companionLevel, ratio);
+                : cubeDealModel(current, conv, true, buffs, hitInterval, chapter, "boss", companionId, companionGrade, companionLevel, ratio, ctx);
         DealModel dmNormalDmg = !curBoss ? dm
-                : dealModel(current, conv, false, buffs, hitInterval, targetDef(chapter, prevStageTarget(chapter)), companionId, companionGrade, companionLevel, ratio);
+                : cubeDealModel(current, conv, false, buffs, hitInterval, chapter, prevStageTarget(chapter), companionId, companionGrade, companionLevel, ratio, ctx);
 
         // 기준 스탯도 자기 컨텍스트에서 D를 측정(보뎀/일뎀을 기준으로 잡아도 딜 0이 되지 않게).
         DealModel refDm = effDm(refStatId, dm, dmBossDmg, dmNormalDmg);
@@ -1638,6 +1896,8 @@ public final class CalcService {
                 row.put("reachable", Double.isFinite(w));
             }
             rows.add(row);
+            // 프리셋 공%(ATK_PCT) 바로 아래에 '스킬/유물 유래 공격력%'(별도 곱 pool) — 실험실 합성 옵션과 동일
+            if ("ATK_PCT".equals(d.id)) rows.add(statCmpRow("ATK_PCT_SKILL", dm, current, D, refStatId, refValue));
         }
 
         Map<String, Object> out = new LinkedHashMap<>();
@@ -1646,6 +1906,22 @@ public final class CalcService {
         out.put("refQual", refQual);
         out.put("rows", rows);
         return out;
+    }
+
+    /** 스탯 비교 한 행 — 기준 대비 등가수치(self/딜미환산 포함). StatDef에 없는 합성 옵션(ATK_PCT_SKILL 등)도 동일 규칙으로 평가. */
+    private Map<String, Object> statCmpRow(String sid, DealModel dm, StatBlock current, double D, String refStatId, double refValue) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("statId", sid);
+        boolean qual = dm.hasQualitative(new StatBlock().with(sid, 1));
+        if (sid.equals(refStatId)) {
+            row.put("qual", qual); row.put("self", true); row.put("value", safe(refValue)); row.put("reachable", true);
+        } else {
+            row.put("self", false);
+            double w = (D > 1e-12 && !qual) ? solveEquivalent(dm, current, sid, D) : Double.NaN;
+            if (!qual && !Double.isFinite(w) && !convertsToDamage(dm, current, sid)) qual = true;
+            row.put("qual", qual); row.put("value", safe(w)); row.put("reachable", Double.isFinite(w));
+        }
+        return row;
     }
 
     /** 보뎀은 보스 컨텍스트 모델로, 일뎀은 일반 컨텍스트 모델로, 그 외는 현재 모델로 평가(스테이지 교차 기준). */
@@ -2100,10 +2376,11 @@ public final class CalcService {
                                          Object cubeStateJson, Map<String, RangeIO.Range> ranges,
                                          String part, boolean upper, String rightGrade,
                                          List<Map<String, Object>> rightOpts, Set<String> buffs, double hitInterval,
-                                         String companionId, String companionGrade, int companionLevel, double ratio) {
+                                         String companionId, String companionGrade, int companionLevel, double ratio, CubeCtx ctx) {
         StatBlock current = block(stats);
         boolean boss = isBossTarget(target);
-        DealModel dm = dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
+        DealModel dm = cubeDealModel(current, conv, boss, buffs, hitInterval, chapter, target,
+                companionId, companionGrade, companionLevel, ratio, ctx);
         Map<String, CubeStateIO.PartCube> cubeState = CubeStateIO.parse(cubeStateJson);
         Map<String, double[]> offsets = rangeOffsets(ranges);
 

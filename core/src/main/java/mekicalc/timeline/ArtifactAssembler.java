@@ -648,6 +648,19 @@ public final class ArtifactAssembler {
     private static Stat derivedInputStat(String from) {
         return "CriticalChance".equals(from) ? Stat.CRIT_RATE : "AttackSpeed".equals(from) ? Stat.ATK_SPEED : null;
     }
+
+    /**
+     * 파생·순환·육각이 <b>입력</b>으로 쓰는 스탯 집합. 이 스탯들은 유물 효과(mods)를 통해 딜에 재반영되므로,
+     * 큐브 옵션 등으로 이 스탯을 바꾸면 유물까지 다시 조립(재sim)해야 정확하다(그룹 캐시 재평가로는 못 잡음).
+     * 헬레나·물병(파생)=from, 순환의 고리(사이클)=크확, 육각 목걸이(dmgMult)=DMG.
+     */
+    public static java.util.Set<Stat> derivedInputStats(Result r) {
+        java.util.Set<Stat> s = java.util.EnumSet.noneOf(Stat.class);
+        for (DerivedSpec d : r.derived()) { Stat in = derivedInputStat(d.from()); if (in != null) s.add(in); }
+        if (!r.cycles().isEmpty()) s.add(Stat.CRIT_RATE);   // 순환의 고리 = 라이브 크확 파티션 입력
+        if (!r.dmgMults().isEmpty()) s.add(Stat.DMG);        // 육각 수정 목걸이 = 현재 DMG% 기반 곱
+        return s;
+    }
     /** 파생 입력 프리셋 base(%). */
     private static double derivedInputBase(String from, Preset preset) {
         return "CriticalChance".equals(from) ? preset.critRate() : "AttackSpeed".equals(from) ? preset.atkSpeed() : 0;
