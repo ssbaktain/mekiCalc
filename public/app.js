@@ -715,15 +715,8 @@ function mkInfo(label, bodyEl, small) {
   const pop = document.createElement("span");
   pop.className = "info-pop";
   pop.appendChild(bodyEl);
-  // 팝업이 화면 오른쪽/왼쪽 경계를 넘으면 그만큼 밀어 넣어 잘리지 않게(모바일에서 버튼이 오른쪽에 있을 때).
-  const fitPop = () => {
-    pop.style.left = "0px";
-    const r = pop.getBoundingClientRect(), m = 8;
-    let dx = 0;
-    if (r.right > window.innerWidth - m) dx = (window.innerWidth - m) - r.right;   // 오른쪽 넘침 → 왼쪽으로
-    if (r.left + dx < m) dx = m - r.left;                                          // 왼쪽 넘침 → 오른쪽으로
-    if (dx) pop.style.left = dx + "px";
-  };
+  // 위치 보정은 공용 positionPop에 위임(호버·고정 표시 중 스크롤/리사이즈에도 버튼에 재정렬 — 아래 전역 리스너).
+  const fitPop = () => positionPop(wrap);
   wrap.addEventListener("mouseenter", () => requestAnimationFrame(fitPop));   // 호버 표시(데스크톱)
   btn.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -738,6 +731,30 @@ function mkInfo(label, bodyEl, small) {
 }
 // 바깥 클릭 시 고정된 툴팁 해제.
 document.addEventListener("click", () => { document.querySelectorAll(".info-help.pin").forEach((w) => w.classList.remove("pin")); });
+// 팝업(position:fixed)을 버튼 기준으로 배치 + 좌우 뷰포트 clamp(가로 스크롤 방지).
+function positionPop(wrap) {
+  const btn = wrap.querySelector(".info-btn"), pop = wrap.querySelector(".info-pop");
+  if (!btn || !pop) return;
+  const bt = btn.getBoundingClientRect(), m = 8, vw = document.documentElement.clientWidth;
+  pop.style.top = (bt.bottom + 6) + "px";
+  // 모바일(≤640)에선 최상단 도움말(.info-block) 팝업을 좌우 여백 m만 두고 꽉 채움(원래 모바일 풀폭 복원). max-width 캡 해제 필요.
+  if (wrap.classList.contains("info-block") && vw <= 640) {
+    pop.style.maxWidth = "none";
+    pop.style.width = (vw - 2 * m) + "px";
+    pop.style.left = m + "px";
+    return;
+  }
+  pop.style.maxWidth = ""; pop.style.width = "";   // 데스크톱/인라인: CSS 기본 복귀(max-content, max-width min(92vw,440px))
+  pop.style.left = Math.max(m, Math.min(bt.left, vw - m - pop.offsetWidth)) + "px";   // 버튼 왼쪽 기준, 뷰포트 안으로 clamp
+}
+// fixed 팝업은 스크롤을 안 따라가므로, 표시 중(고정 .pin 또는 호버)엔 스크롤/리사이즈마다 버튼에 재정렬(버튼이 화면 밖이면 자연히 사라짐).
+function repositionInfoPops() {
+  document.querySelectorAll(".info-help").forEach((w) => {
+    if (w.classList.contains("pin") || w.matches(":hover")) positionPop(w);
+  });
+}
+window.addEventListener("scroll", repositionInfoPops, true);   // capture: 중첩 스크롤 컨테이너 스크롤도 포착
+window.addEventListener("resize", repositionInfoPops);
 // 설명글(접이식 panel-about + 인라인 힌트·안내 status/hint)을 i 버튼 호버 툴팁으로 접어 화면을 깔끔하게.
 // 경고성(.deal-warning·.relic-notice)·동적 상태(#id 있는 status)는 제외.
 function toInfoHelp() {

@@ -233,7 +233,8 @@ body.job-nightlord .menu-home { display: none !important; }
 .info-btn { display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); color: var(--muted); cursor: help; font-size: 12px; line-height: 1; padding: 4px 10px; border-radius: 12px; white-space: nowrap; }
 .info-btn-sm { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; font-size: 12px; border-radius: 50%; }
 .info-help:hover .info-btn, .info-btn:focus-visible, .info-help.pin .info-btn { color: var(--accent); border-color: var(--accent); }
-.info-pop { display: none; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: max-content; max-width: min(92vw, 440px); background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+/* position:fixed — 문서 폭에 영향 0(가로 스크롤 방지). top/left는 JS(fitPop)가 버튼 기준으로 뷰포트 안에 배치. */
+.info-pop { display: none; position: fixed; z-index: 40; left: -9999px; width: max-content; max-width: min(92vw, 440px); box-sizing: border-box; background: #20242d; border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45); }
 /* 버튼↔팝업 사이 투명 브릿지 — 마우스가 틈을 지날 때 호버가 끊기지 않게 */
 .info-pop::before { content: ""; position: absolute; top: -8px; left: 0; right: 0; height: 8px; }
 .info-help:hover .info-pop, .info-btn:focus-visible + .info-pop, .info-pop:hover, .info-help.pin .info-pop { display: block; }

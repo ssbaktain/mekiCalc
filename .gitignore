@@ -8,6 +8,7 @@ out/
 
 ### Claude Code ###
 .claude/
+CLAUDE.md
 
 ### Build output ###
 dist/
