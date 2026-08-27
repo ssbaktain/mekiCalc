@@ -667,6 +667,15 @@
       </div>
     </section>
 
+    <!-- 업데이트 내역(패치노트) — 전체 히스토리. 데이터=public/patchnotes.json(최신순) -->
+    <section id="panel-updates" class="panel" hidden>
+      <div class="card">
+        <div class="dash-head"><h2>업데이트 내역</h2></div>
+        <p class="dash-sub">MekiCalc에 추가·개선·수정된 내용이에요.</p>
+        <div id="pn-list" class="pn-list"></div>
+      </div>
+    </section>
+
     <!-- 하단 배너 광고 자리. 승인 후: hidden 제거 + 아래 ins의 data-ad-client/slot 채우고 주석 해제. -->
     <div class="ad-slot ad-bottom" hidden>
       <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0000000000" data-ad-format="auto" data-full-width-responsive="true"></ins>
@@ -691,6 +700,14 @@
 
   <div id="toast" class="toast"></div>
   <div id="tl-tip" class="tl-tip" hidden></div>
+
+  <!-- 새 소식(What's New): 안 본 새 업데이트가 있을 때만 좌하단에 뜨고, 닫으면 사라짐(localStorage로 본 버전 기록) -->
+  <div id="whatsnew" class="whatsnew" hidden>
+    <div class="wn-head"><span class="wn-title">🎉 새 소식</span>
+      <button id="whatsnew-close" class="wn-x" type="button" aria-label="닫기">✕</button></div>
+    <div id="whatsnew-body" class="wn-body"></div>
+    <a id="whatsnew-open" class="wn-more route-link" href="/updates">전체 업데이트 내역 →</a>
+  </div>
 
   <!-- 계정 정지 오버레이: 정지 계정은 로그인 시 전체 기능 차단 + 안내문 표시 -->
   <div id="ban-overlay" class="ban-overlay" hidden>

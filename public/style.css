@@ -1822,3 +1822,34 @@ body.notices-active .ad-slot { display: none !important; }
 .ban-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
 .ban-sub a { color: var(--accent2, #ffb454); }
 body.banned { overflow: hidden; }
+
+/* ──────────────── 업데이트 내역(패치노트) + 새 소식 플로팅 ──────────────── */
+.pn-list { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.pn-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--panel-2, rgba(127,127,127,.04)); }
+.pn-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pn-date { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 700; }
+.pn-tag { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
+.pn-tag-feature { background: rgba(79,209,161,.16); color: #4fd1a1; }
+.pn-tag-improve { background: rgba(76,141,255,.16); color: #6fa3ff; }
+.pn-tag-fix { background: rgba(255,180,84,.16); color: #e0a45a; }
+.pn-title { font-weight: 700; font-size: 15px; margin: 6px 0 4px; }
+.pn-items { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.pn-items li { font-size: 13.5px; line-height: 1.55; color: var(--text); }
+
+/* 메뉴 '업데이트 내역'의 새 소식 점 */
+.menu-new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #e5484d; margin-left: 5px; vertical-align: top; }
+
+/* 새 소식 플로팅(좌하단) — 안 본 새 버전 있을 때만 */
+.whatsnew { position: fixed; left: 16px; bottom: 16px; z-index: 60; width: 320px; max-width: calc(100vw - 32px);
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); padding: 12px 14px; }
+.whatsnew[hidden] { display: none; }
+.wn-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.wn-title { font-weight: 800; font-size: 14px; }
+.wn-x { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 15px; padding: 2px 4px; line-height: 1; }
+.wn-x:hover { color: var(--text); }
+.wn-body { display: flex; flex-direction: column; gap: 10px; max-height: 46vh; overflow-y: auto; }
+.wn-body .pn-card { background: var(--panel-2, rgba(127,127,127,.05)); padding: 9px 11px; }
+.wn-body .pn-title { font-size: 14px; }
+.wn-body .pn-items li { font-size: 12.5px; }
+.wn-more { display: inline-block; margin-top: 10px; font-size: 12.5px; color: var(--accent, #4c8dff); font-weight: 700; }
+@media (max-width: 640px) { .whatsnew { left: 8px; right: 8px; bottom: 8px; width: auto; } }

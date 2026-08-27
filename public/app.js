@@ -356,6 +356,7 @@ const MENU = [
   { label: "스탯 비교", panel: "statcompare", path: "/stat-compare" },   // 최상위 단독 · 스탯 등가 환산(한 스탯↔다른 스탯 필요량)
   { label: "장비 비교", panel: "gear", path: "/gear/compare" },   // 최상위 단독 · 프리셋 없이 단발 비교/변경
   { label: "공지사항", panel: "notices", path: "/notices" },      // 계산 아닌 첫 기능 · 넥슨 포럼 공지 크롤링·요약
+  { label: "업데이트 내역", panel: "updates", path: "/updates" },  // MekiCalc 자체 패치노트(public/patchnotes.json)
 ];
 const MENU_RIGHT = [];   // (비움)
 // 설정: 메뉴바 항목이 아니라 상단 톱니(데스크톱=로그인 우측, 모바일=드로어 첫 줄)로 진입하는 독립 패널.
@@ -384,6 +385,7 @@ function showPanel(name) {
   if (name === "statcompare") renderStatCompare();  // 스탯 비교(등가 환산) UI 구성
   if (name === "gear") renderGear();               // 장비 비교 UI 구성
   if (name === "notices") renderNotices();         // 공지 탭(넥슨 포럼 크롤링·요약)
+  if (name === "updates") renderUpdates();         // 업데이트 내역(패치노트)
   if (name === "settings") renderLoginUI();        // 설정(계정 카드·내보내기/불러오기·환산·범위) — 계정 카드 갱신
 }
 
@@ -3952,6 +3954,77 @@ function initInquiry() {
   }
 }
 initInquiry();
+
+// ──────────────────── 업데이트 내역(패치노트) + 새 소식 플로팅 ────────────────────
+const PATCH_SEEN_KEY = "mekicalc.patch.lastSeen.v1";
+let patchNotes = null;
+const PATCH_TAG_KO = { feature: "신기능", improve: "개선", fix: "수정" };
+
+async function loadPatchNotes() {
+  if (patchNotes) return patchNotes;
+  try {
+    const r = await fetch("/patchnotes.json", { cache: "no-store" });   // 배포 즉시 최신 반영(캐시 안 씀)
+    const d = await r.json();
+    patchNotes = Array.isArray(d) ? d : (d && d.notes) || [];
+  } catch { patchNotes = []; }
+  return patchNotes;
+}
+function patchLatestId() {
+  if (!patchNotes || !patchNotes[0]) return null;
+  const n = patchNotes[0]; return String(n.id != null ? n.id : n.date);
+}
+function patchHasUnseen() { const l = patchLatestId(); return !!l && loadJSON(PATCH_SEEN_KEY, null) !== l; }
+function markPatchSeen() { const l = patchLatestId(); if (l) saveJSON(PATCH_SEEN_KEY, l); updatePatchBadge(); hideWhatsNew(); }
+
+function patchTagsHtml(tags) {
+  return (tags || []).map((t) => `<span class="pn-tag pn-tag-${escapeHtml(String(t))}">${escapeHtml(PATCH_TAG_KO[t] || t)}</span>`).join("");
+}
+function patchCardHtml(n) {
+  return `<div class="pn-card">
+    <div class="pn-head"><span class="pn-date">${escapeHtml(n.date || "")}</span>${patchTagsHtml(n.tags)}</div>
+    <div class="pn-title">${escapeHtml(n.title || "")}</div>
+    ${(n.items && n.items.length) ? `<ul class="pn-items">${n.items.map((it) => `<li>${escapeHtml(it)}</li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+
+// 전체 히스토리 탭 렌더 + 열면 '다 본 것'으로 표시.
+async function renderUpdates() {
+  const box = $("pn-list"); if (!box) return;
+  box.innerHTML = `<p class="hint">불러오는 중…</p>`;
+  await loadPatchNotes();
+  box.innerHTML = patchNotes.length ? patchNotes.map(patchCardHtml).join("") : `<p class="hint">아직 업데이트 내역이 없어요.</p>`;
+  markPatchSeen();
+}
+
+// 메뉴 '업데이트 내역'에 새 소식 점(●) 토글.
+function updatePatchBadge() {
+  const on = patchHasUnseen();
+  const item = (routeItemEls && routeItemEls.get) ? routeItemEls.get("/updates") : null;
+  const lbl = item && item.querySelector(".menu-label");
+  if (lbl) {
+    let dot = lbl.querySelector(".menu-new-dot");
+    if (on && !dot) { dot = document.createElement("span"); dot.className = "menu-new-dot"; dot.title = "새 소식"; lbl.appendChild(dot); }
+    else if (!on && dot) dot.remove();
+  }
+}
+
+function hideWhatsNew() { const w = $("whatsnew"); if (w) w.hidden = true; }
+function showWhatsNewIfNeeded() {
+  if (!patchHasUnseen()) return;
+  if (location.pathname === "/updates") { markPatchSeen(); return; }   // 이미 업데이트 페이지면 플로팅 불필요
+  const wrap = $("whatsnew"), body = $("whatsnew-body"); if (!wrap || !body) return;
+  body.innerHTML = patchNotes.slice(0, 3).map(patchCardHtml).join("");
+  wrap.hidden = false;
+}
+
+async function initPatchNotes() {
+  await loadPatchNotes();
+  const close = $("whatsnew-close"); if (close && !close._wired) { close._wired = true; close.addEventListener("click", markPatchSeen); }
+  const open = $("whatsnew-open"); if (open && !open._wired) { open._wired = true; open.addEventListener("click", markPatchSeen); }   // 이동은 route-link가 처리, 여기선 본 것 표시만
+  updatePatchBadge();
+  showWhatsNewIfNeeded();
+}
+initPatchNotes();
 
 // ──────────────────── 초기화 ────────────────────
 
