@@ -4774,6 +4774,7 @@ function bpApply(name) {
   const setv = (id, val, dflt) => { const e = $(id); if (e) e.value = (val != null ? val : dflt); };
   setv("tl-simsec", b.sim, 90); setv("tl-enemies", b.enemies, ""); setv("tl-kills", b.kills, "");
   setv("tl-content", b.content, ""); setv("tl-artoffset", b.artOffset, 0);
+  { const cs = $("tl-content"); if (cs && cs.options[cs.selectedIndex] && cs.options[cs.selectedIndex].disabled) cs.value = ""; }   // 미개발 컨텐츠가 저장돼 있으면 자동으로 보정
   if ($("tl-preact")) $("tl-preact").checked = !!b.preAct;
   const af = $("tl-autofill"); if (af) af.checked = tlAutoFill;
   const removed = tlCleanupLevel();
