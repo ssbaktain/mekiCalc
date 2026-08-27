@@ -5528,7 +5528,7 @@ function tlArtStatus(d) {
 // 유물 미반영 내부 사유(raw) → 사용자 친화 문구.
 function tlFriendlyReason(raw) {
   const r = String(raw || "");
-  if (/companion|동료/.test(r)) return "동료가 쓰는 유물이라 타임라인엔 미포함이에요(동료 미지원)";
+  if (/companion|동료/.test(r)) return "동료가 쓰는 유물이라 타임라인엔 아직 반영되지 않아요(동료 엔진 개발 중)";
   if (/content/.test(r)) return "현재 컨텐츠에선 효과가 없는 유물이에요";
   if (/마리수 M/.test(r)) return "‘마리수(적)’를 입력하면 반영돼요";
   if (/처치수 K/.test(r)) return "‘분당 처치수’를 입력하면 반영돼요";
