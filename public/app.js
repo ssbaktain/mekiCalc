@@ -5848,7 +5848,7 @@ function tlBuffLanes(byKey, pct, isArt, lanes, T) {
       const title = tlBuffTitle(label, w);
       const width = pct(w.end - w.start);   // 정확한 폭(최소폭 없음 — 은펜던트 등 짧은 유지도 실제 길이로, 확대하면 보임)
       let style = `left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%`;
-      if (range > 0.01) style += `;opacity:${(0.45 + 0.5 * ((vals[i] - vmin) / range)).toFixed(2)}`;   // 낮으면 옅게, 높으면 진하게
+      if (range > 0.01) style += `;--a:${(0.45 + 0.5 * ((vals[i] - vmin) / range)).toFixed(2)}`;   // 낮으면 옅게, 높으면 진하게(배경 알파 — opacity 속성 대신, 확대 시 미표시 방지)
       const num = (w.stacks != null && width > 3) ? `<b>${w.stacks}</b>` : "";   // 중첩=숫자로만(높이 표현 폐지)
       bars += `<span class="tl-win${isArt ? " art" : ""}" style="${style}" data-tip="${title}">${num}</span>`;
     }

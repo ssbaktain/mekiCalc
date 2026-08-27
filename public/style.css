@@ -1623,12 +1623,16 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-track { position: relative; flex: 1 1 auto; height: 20px; background: var(--card2); border-radius: 5px; }   /* clip 안 함(막대·스택숫자 잘림 방지) */
 .tl-track.tl-buff { height: 16px; }
 .tl-track-sharp { border-radius: 0; }   /* 액션바 컨테이너는 각지게(정확한 시각 정렬) */
-.tl-tick { position: absolute; top: 4px; width: 2px; height: 12px; background: var(--muted); opacity: .5; transform: translateX(-1px); }
-.tl-cast { position: absolute; top: 0; width: 4px; height: 20px; background: var(--accent2); transform: translateX(-2px); cursor: help; }
+/* 중심 정렬은 margin으로(transform 대신) — transform은 GPU 레이어를 만들어 모바일에서 접기 시 특정 크기에 일부 막대 페인트 누락 유발. margin은 동일 위치 + 레이어 없음. */
+.tl-tick { position: absolute; top: 4px; width: 2px; height: 12px; background: var(--muted); opacity: .5; margin-left: -1px; }
+.tl-cast { position: absolute; top: 0; width: 4px; height: 20px; background: var(--accent2); margin-left: -2px; cursor: help; }
 .tl-cast:hover { background: #fff; box-shadow: 0 0 0 2px var(--accent2); z-index: 2; }
-.tl-win { position: absolute; top: 0; height: 16px; background: linear-gradient(180deg, #4a90d9, #2f6fb0); border: 1px solid rgba(0, 0, 0, .3); box-sizing: border-box; border-radius: 3px; opacity: .82; cursor: help; }
-.tl-win:hover { opacity: 1 !important; z-index: 2; }   /* 인라인 농도(값 비례)를 호버 시 덮어씀 */
-.tl-win.art { background: linear-gradient(180deg, #e0a94a, #c07f22); }  /* 유물=황금색 바(스킬 파랑과 구분) */
+/* 농도는 opacity 속성 대신 배경 rgba 알파(--a)로 표현 — CSS opacity<1은 요소를 오프스크린 버퍼로 그룹 렌더하는데,
+   확대 시 상시(전 구간) 막대는 폭이 수만 px가 돼 그 버퍼가 브라우저 최대 크기를 넘어 통째로 안 그려짐(막대 사라짐).
+   rgba 배경은 요소의 일반 타일 페인트로 그려져 아무리 넓어도 정상 표시된다. */
+.tl-win { position: absolute; top: 0; height: 16px; --a: .82; background: linear-gradient(180deg, rgba(74,144,217,var(--a)), rgba(47,111,176,var(--a))); border: 1px solid rgba(0, 0, 0, .3); box-sizing: border-box; border-radius: 3px; cursor: help; }
+.tl-win:hover { --a: 1 !important; z-index: 2; }   /* 인라인 농도(값 비례)를 호버 시 덮어씀 */
+.tl-win.art { background: linear-gradient(180deg, rgba(224,169,74,var(--a)), rgba(192,127,34,var(--a))); }  /* 유물=황금색 바(스킬 파랑과 구분) */
 .tl-tip s { color: #e0716a; text-decoration-thickness: 1.5px; opacity: .85; }  /* 툴팁 무실효 옵션=취소선(딜 미적용, 대상 불일치 등) */
 .tl-win b { font-size: 9px; color: #fff; line-height: 14px; padding-left: 3px; font-weight: 700; }  /* 중첩(스택) 숫자 */
 .tl-lg-art { color: #c07f22; }
