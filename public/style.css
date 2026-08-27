@@ -219,6 +219,7 @@ main {
 .menu-divider { align-self: center; width: 2px; height: 24px; background: var(--muted); opacity: 0.6; border-radius: 1px; margin: 0 9px; flex: 0 0 auto; }
 /* 나이트로드(신엔진)면 구엔진 '데미지 분석(구)' 탭 숨김(데스크톱 메뉴·모바일 드로어 공통) */
 body.job-nightlord .menu-home { display: none !important; }
+body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스킬 프리셋 미사용 → 스탯/스킬 토글 숨김(스탯 뷰만) */
 /* 실험값 적용 중 각 탭 메인 컨테이너 우측 상단 '실험실' 태그(실험값 적용 토글 ON 색과 동일) */
 .exp-host { position: relative; }
 .exp-tag { position: absolute; top: 10px; right: 12px; z-index: 6; background: #4fd1a1; color: #08312a; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 11px; letter-spacing: .02em; pointer-events: none; }

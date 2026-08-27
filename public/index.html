@@ -77,10 +77,8 @@
       <p id="status" class="status home-status"></p>
 
       <details class="panel-about">
-        <summary>데미지 분석, 어떻게 보나요?</summary>
-        <div class="about-body">
-          <p>현재 프리셋(스탯·스킬·동료·유물) 기준으로 상단에 <b>세 숫자</b>를 보여줍니다 — <b>평타 한줄 평균딜</b>, <b>DPS</b>(고른 토글 상태의 초당 딜), <b>DPS(n초 측정)</b>(전투 한 판을 동료 소환 가동률까지 반영한 실측 평균 · 보스 70초·사냥 90초). 실전 결과를 한 숫자로 보려면 <b>DPS(n초 측정)</b>을 보세요. 아래로는 <b>평타·스킬·동료 딜 비중</b>과 <b>동료·유물 기여</b>가 이어집니다. 위 토글로 <b>일반몹/보스</b>·<b>동료 미소환/소환</b>을 바꿔 비교하고, 챕터는 우하단 ⚡에서 바꿉니다. 표시 수치는 절대값이 아니라 세팅 간 <b>상대 비교</b>용이에요. 자세한 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>.</p>
-        </div>
+        <summary>데미지 분석이란?</summary>
+        <div class="about-body"><p>현재 프리셋(스탯·큐브·유물·동료) 기준으로 <b>예상 데미지·DPS</b>와 스테이지·보스별 <b>절대 데미지</b>를 한눈에 보여주는 대시보드입니다. 일반몹/보스·동료 소환 여부를 토글로 바꿔 비교합니다. 표시 수치는 절대값이 아니라 세팅 간 <b>상대 비교</b>용입니다.</p></div>
       </details>
 
       <!-- 데미지 정확도 경고(인포와 구분·최상단 강조). 절대 수치가 아니라 비율만 참고. -->
@@ -134,10 +132,8 @@
     <!-- 정밀 타임라인 (나이트로드 · 베타) -->
     <section id="panel-timeline" class="panel" hidden>
       <details class="panel-about">
-        <summary>정밀 타임라인이란?</summary>
-        <div class="about-body">
-          <p>나이트로드 스킬을 시간축에 배치해 <b>이벤트 기반</b>으로 시뮬레이션합니다. 아드레날린·퍼지·다크사이트 같은 <b>버프 윈도우가 어떤 딜과 겹치는지</b>까지 반영한 정밀 DPS예요. <b>자동</b>은 최적 로테이션, <b>수동</b>은 시간표대로 배치(빈 시간은 평타·쿨 안 돌면 지연)합니다. 대상 챕터는 데미지 분석 탭과 동일하게 우하단 ⚡에서 바꿉니다.</p>
-        </div>
+        <summary>빌드란?</summary>
+        <div class="about-body"><p>스킬 배치(로테이션)와 스탯·동료·유물 프리셋을 <b>한 벌</b>로 묶어, 시간축 기반 정밀 시뮬레이션으로 실제 전투 DPS를 계산하는 화면입니다. 버프가 어떤 딜과 겹치는지까지 반영합니다. <b>자동</b>은 최적 로테이션, <b>수동</b>은 시간표대로 배치합니다.</p></div>
       </details>
       <div class="deal-warning" role="note">
         <span class="dw-icon" aria-hidden="true">⚠️</span>
@@ -255,8 +251,8 @@
       <!-- 빌드 (스탯 + 스킬 통합) -->
       <div id="sub-build" class="subpanel">
         <details class="panel-about">
-          <summary>캐릭터(스탯·스킬) 입력은?</summary>
-          <div class="about-body"><p>게임 스탯 창의 값과 사용하는 스킬을 한 화면에서 입력합니다. <b>직업</b>을 고르면 스탯 계산과 스킬 목록이 함께 그 직업 기준이 돼요(직업은 여기 하나에서만 바꿉니다). 왼쪽은 <b>스탯</b>(스탯창 순서 그대로), 오른쪽은 <b>딜/버프 스킬</b> 선택이에요. 체크한 스킬만 계산에 반영되고, 입력값은 이 브라우저(로그인 시 계정)에 자동 저장됩니다. <b>스탯은 유물을 해제한 값</b>으로 넣어야 정확해요 — 게임 값을 옮기는 방법은 <a href="/guide/stat-input.html">스탯 입력 가이드(사진 설명)</a>를, 전체 사용법은 <a href="/guide/how-to.html">사용법 가이드</a>를 참고하세요.</p></div>
+          <summary>캐릭터 입력이란?</summary>
+          <div class="about-body"><p>게임 스탯 창의 값과 사용 스킬을 입력하는 화면입니다. <b>직업</b>을 고르면 스탯·스킬이 그 직업 기준이 됩니다. ★<b>스탯은 유물을 해제한 값</b>으로 넣어야 정확합니다 — <a href="/guide/stat-input.html">스탯 입력 가이드</a> · <a href="/guide/how-to.html">사용법 가이드</a> 참고.</p></div>
         </details>
         <!-- 캐릭터 프리셋: 제목 첫 줄 + 오른쪽 밀착 컨트롤(다른 프리셋 탭과 통일) -->
         <div class="card build-header">
@@ -295,22 +291,21 @@
           <div id="stat-form">불러오는 중…</div>
         </div>
         <div id="bv-skill" class="card" hidden>
-          <div class="card-head"><h2>스킬</h2></div>
+          <div class="card-head"><h2>스킬 <span class="hint">체크한 스킬만 데미지 분석·추천·평가에 반영됩니다. 딜·버프를 함께 가진 스킬은 한쪽을 끄면 양쪽 다 꺼집니다. 표시 수치는 마스터리 미반영(레벨에 따라 내부 자동 적용).</span></h2></div>
           <div class="skill-views">
             <button class="skill-view active" data-view="deal" type="button">딜 스킬</button>
             <button class="skill-view" data-view="buff" type="button">버프 스킬</button>
           </div>
           <div id="deal-list">불러오는 중…</div>
           <div id="buff-list" hidden>불러오는 중…</div>
-          <p class="status">체크한 스킬만 데미지 분석·추천·평가에 반영돼요. 표시 수치는 마스터리 미반영(레벨에 따라 내부 자동 적용).<br>딜과 버프를 함께 가진 스킬은 한쪽에서 끄면 양쪽 다 꺼집니다.</p>
         </div>
       </div>
 
       <!-- 큐브 -->
       <div id="sub-cube" class="subpanel" hidden>
         <details class="panel-about">
-          <summary>큐브 입력은 무엇인가요?</summary>
-          <div class="about-body"><p>부위별로 현재 장착한 큐브 잠재 옵션을 입력하는 화면입니다. 여기 입력한 큐브가 <a class="route-link" href="/cube">큐브 기댓값</a>·<a class="route-link" href="/cube/my-options">내 옵션 비교</a>·<a class="route-link" href="/cube/recommend">우선순위 추천</a> 계산의 기준이 되며, 이 브라우저에 자동 저장됩니다.</p></div>
+          <summary>큐브 입력이란?</summary>
+          <div class="about-body"><p>부위별로 현재 장착한 큐브 잠재 옵션을 입력하는 화면입니다. 여기 입력이 <a class="route-link" href="/cube">큐브 기댓값</a>·<a class="route-link" href="/cube/my-options">내 옵션 변경</a>·<a class="route-link" href="/cube/recommend">우선순위 추천</a> 계산의 기준이 됩니다.</p></div>
         </details>
         <div class="card">
           <div class="card-head">
@@ -329,7 +324,6 @@
             <button id="mc-add" class="mini-btn" type="button">추가</button>
           </div>
           <div id="mc-list"></div>
-          <p class="status">입력한 큐브는 이 브라우저에 자동 저장됩니다.</p>
         </div>
       </div>
 
@@ -338,12 +332,12 @@
       <!-- 동료 -->
       <div id="sub-ally" class="subpanel" hidden>
         <details class="panel-about">
-          <summary>동료 입력은 무엇인가요?</summary>
-          <div class="about-body"><p>메인 동료의 종류·등급·레벨·계승 비율을 입력하는 화면입니다. 서브 동료와 장착 효과는 이미 스탯 입력에 포함되므로 메인 동료만 넣으면 됩니다. 입력값은 예상 데미지의 동료 소환 기여도 계산에 쓰입니다.</p></div>
+          <summary>동료 입력이란?</summary>
+          <div class="about-body"><p>메인 동료의 종류·등급·레벨·계승 비율을 입력하는 화면입니다. 입력값은 예상 데미지의 동료 소환 기여도 계산에 쓰입니다.</p></div>
         </details>
         <div class="card">
           <div class="card-head">
-            <h2>동료 (메인)</h2>
+            <h2>동료 (메인) <span class="hint">서브 동료·장착 효과는 스탯에 이미 포함되므로 메인 동료만 입력합니다.</span></h2>
             <div class="preset-ctrls">
               <select id="ap-sel"></select>
               <button id="ap-save" class="mini-btn" type="button" disabled>저장</button>
@@ -353,15 +347,14 @@
             </div>
           </div>
           <div id="ally-body">불러오는 중…</div>
-          <p class="status">서브 동료·장착 효과는 이미 스탯 입력에 포함돼서, <b>메인 동료</b>만 입력해요. 저장하면 (캐릭터 레벨·동료 레벨·계승 비율)이 데이터로 수집됩니다(공격력 계승 공식 자동화 전 임시).</p>
         </div>
       </div>
 
       <!-- 유물 -->
       <div id="sub-relic" class="subpanel" hidden>
         <details class="panel-about">
-          <summary>유물 입력은 무엇인가요?</summary>
-          <div class="about-body"><p>보유 유물의 각성도를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위쪽 장착에서 고른 유물만 예상 데미지에 반영됩니다. 대부분의 유물은 딜에 반영되며 뱃지가 없습니다. 주의가 필요한 유물만 뱃지로 표시돼요 — 컨텐츠 전용(해당 컨텐츠 선택 시 반영), 딜 미반영(생존·유틸형), 지원 예정(상태·동료 유물, 아직 미구현).</p></div>
+          <summary>유물 입력이란?</summary>
+          <div class="about-body"><p>보유 유물의 <b>각성도</b>를 입력하면 총합으로 장착 슬롯 수가 정해지고, 위에서 고른 유물이 딜에 반영되는 화면입니다. 주의가 필요한 유물만 뱃지로 표시됩니다 — 컨텐츠 전용·딜 미반영·지원 예정.</p></div>
         </details>
         <div class="card">
           <div class="card-head">
@@ -386,7 +379,6 @@
               <div id="relic-grid" class="relic-grid"></div>
             </div>
           </div>
-          <p class="status">그리드에 보유 유물의 각성도를 입력하세요 — <b>미보유</b>(보유 X) / <b>0각</b>(보유·각성 X) / 1~5각. 각성 총합으로 장착 슬롯 수(10미만 1칸·30미만 2칸·50미만 3칸·50이상 4칸)가 정해지고, 위쪽 장착에서 슬롯 수만큼 고른 유물만 예상 데미지에 반영됩니다. 대부분 유물은 딜에 반영돼 뱃지가 없고, 주의가 필요한 것만 표시돼요 — <b>컨텐츠 전용</b>(해당 컨텐츠 선택 시 반영) / <b>딜 미반영</b>(생존·유틸형) / <b>지원 예정</b>(상태·동료 유물, 아직 미구현).</p>
         </div>
       </div>
 
@@ -395,8 +387,8 @@
     <!-- 설정: 상단 톱니(로그인 우측 · 모바일 드로어 첫 줄)로 진입하는 독립 패널 -->
     <section id="panel-settings" class="panel" hidden>
         <details class="panel-about">
-          <summary>설정에는 무엇이 있나요?</summary>
-          <div class="about-body"><p>프리셋 내보내기/불러오기(다른 기기로 세팅 이동), 계산이 안 되는 스탯(방어 관통력·쿨감 등)의 딜 환산율 직접 지정, 우선순위 추천에서 고려할 옵션과 허용 범위 설정을 모아둔 화면입니다.</p></div>
+          <summary>설정이란?</summary>
+          <div class="about-body"><p>프리셋 내보내기/불러오기, 계산되지 않는 스탯(방어 관통력·쿨감 등)의 딜 환산율 지정, 우선순위 추천의 고려 옵션·허용 범위 설정을 모아둔 화면입니다.</p></div>
         </details>
         <div class="card" id="account-card" hidden>
           <h2>계정</h2>
@@ -438,12 +430,12 @@
       <div class="subtabs cube-subtabs" role="tablist">
         <a class="subtab route-link active" href="/cube" role="tab">큐브 기댓값</a>
         <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
-        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 변경</a>
         <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
       </div>
       <details class="panel-about">
         <summary>큐브 기댓값이란?</summary>
-        <div class="about-body"><p>큐브 잠재능력의 각 옵션이 <b>내 딜을 몇 % 올려주는지</b>, 그리고 옵션의 등장 확률까지 함께 고려한 <b>큐브 한 개당 기댓값</b>을 계산합니다. 딜 증가량은 <b>현재 스탯</b>을 기준으로 하므로, 같은 옵션이라도 사람마다·부위마다 순위가 달라집니다. 예를 들어 크리티컬 배수가 이미 높은 캐릭터는 크리티컬 옵션의 한계 효율이 낮아지고, 대신 데미지%나 최대/최소 데미지% 쪽이 더 이득일 수 있습니다. 자세한 개념은 <a href="/guide/cube-value.html">큐브 잠재능력 기댓값 이해</a>를 참고하세요.</p></div>
+        <div class="about-body"><p>큐브 잠재 옵션이 <b>내 딜을 몇 % 올려주는지</b>와 등장 확률을 함께 고려한 <b>큐브 한 개당 기대 상승량</b>을 계산합니다. 현재 스탯 기준이라 사람·부위마다 순위가 달라집니다. <a href="/guide/cube-value.html">개념 가이드</a> 참고.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -479,12 +471,12 @@
       <div class="subtabs cube-subtabs" role="tablist">
         <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
         <a class="subtab route-link active" href="/cube/option-compare" role="tab">옵션 비교</a>
-        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 변경</a>
         <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
       </div>
       <details class="panel-about">
-        <summary>옵션 비교는 어떻게 쓰나요?</summary>
-        <div class="about-body"><p>서로 다른 두 큐브 잠재 옵션 조합을 좌우에 놓고, 어느 쪽이 현재 스탯에서 딜에 더 유리한지 나란히 비교합니다. "데미지% 3줄"과 "크리 데미지% + 최대 데미지% 조합"처럼 성격이 다른 세팅을 직접 견줘보고 싶을 때 사용하세요. 결과는 각 옵션의 딜 기여와 두 조합의 차이를 함께 보여줍니다.</p></div>
+        <summary>옵션 비교란?</summary>
+        <div class="about-body"><p>서로 다른 두 큐브 잠재 옵션 조합을 좌우에 놓고, 현재 스탯에서 어느 쪽이 딜에 더 유리한지 나란히 비교하는 화면입니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -520,12 +512,12 @@
       <div class="subtabs cube-subtabs" role="tablist">
         <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
         <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
-        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link" href="/cube/my-options" role="tab">내 옵션 변경</a>
         <a class="subtab route-link active" href="/cube/recommend" role="tab">우선순위 추천</a>
       </div>
       <details class="panel-about">
-        <summary>우선순위 추천은 어떻게 정해지나요?</summary>
-        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여줍니다. 각 추천에는 그 옵션을 얻기까지 <b>평균 몇 개의 큐브</b>가 드는지를 함께 표시하며(승급 추천은 승급에 드는 큐브까지 포함), 딜 증가량·평균 큐브 수·1회 리롤 비용을 종합한 "최종 효율" 기준으로도 정렬할 수 있어 실제 큐브를 돌릴 때의 가성비를 판단하는 데 도움이 됩니다. 딜 순위 슬라이더로 목표 수준(가성비 ~ 종결)을 조절하면 그 목표에 맞춘 추천으로 바뀝니다.</p></div>
+        <summary>우선순위 추천이란?</summary>
+        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여주는 화면입니다. 옵션마다 필요한 평균 큐브 수와 리롤 비용까지 종합한 "최종 효율"로 가성비를 판단할 수 있습니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -559,12 +551,12 @@
       <div class="subtabs cube-subtabs" role="tablist">
         <a class="subtab route-link" href="/cube" role="tab">큐브 기댓값</a>
         <a class="subtab route-link" href="/cube/option-compare" role="tab">옵션 비교</a>
-        <a class="subtab route-link active" href="/cube/my-options" role="tab">내 옵션 비교</a>
+        <a class="subtab route-link active" href="/cube/my-options" role="tab">내 옵션 변경</a>
         <a class="subtab route-link" href="/cube/recommend" role="tab">우선순위 추천</a>
       </div>
       <details class="panel-about">
-        <summary>내 옵션 비교·변경은 무엇인가요?</summary>
-        <div class="about-body"><p>현재 장착한 큐브 옵션과 바꾸려는 옵션의 <b>딜 차이</b>를 계산해, 실제로 갈아탈 가치가 있는지 판단합니다. 지금 세팅을 왼쪽에 두고 가정할 옵션을 오른쪽에 입력하면 변경 시 딜이 얼마나 오르거나 내리는지 바로 확인할 수 있고, 마음에 들면 그 옵션을 현재 큐브 프리셋에 그대로 반영할 수도 있습니다.</p></div>
+        <summary>내 옵션 변경은 무엇인가요?</summary>
+        <div class="about-body"><p>현재 장착 큐브 옵션(왼쪽)을 바꿀 옵션(오른쪽)과 비교해 <b>딜 차이</b>를 확인하고, 원하면 그 옵션을 <b>큐브·캐릭터 프리셋에 바로 반영·저장</b>하는 화면입니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -586,8 +578,8 @@
     <!-- 스탯 비교(등가 환산: 한 스탯 ↔ 다른 스탯 필요량) -->
     <section id="panel-statcompare" class="panel" hidden>
       <details class="panel-about">
-        <summary>스탯 비교는 어떻게 쓰나요?</summary>
-        <div class="about-body"><p>데미지에 영향을 주는 스탯 중 <b>하나에 값을 입력</b>하면, 그 스탯이 올려주는 딜과 <b>똑같은 만큼</b> 딜을 올리려면 다른 스탯이 각각 얼마나 필요한지(등가 증가량)를 보여줍니다. 예를 들어 주스탯%에 12를 넣으면, 그 12%가 올려주는 딜과 같은 딜을 내는 크리티컬 데미지%·데미지%·공격력% 등의 필요량이 한눈에 나옵니다. 계산은 <b>현재 스탯·대상 기준</b>이라 캐릭터마다 결과가 다릅니다. 방어 관통력처럼 <b>대상이 있어야 딜로 환산되는 스탯</b>이나, 현재 설정에서 딜로 환산되지 않는 스탯은 <b>딜 미환산</b>으로 표시됩니다.</p></div>
+        <summary>스탯 비교란?</summary>
+        <div class="about-body"><p>한 스탯에 값을 넣으면, 그 스탯이 올려주는 딜과 <b>똑같은 만큼</b> 딜을 올리려면 다른 스탯이 각각 얼마나 필요한지(등가 증가량)를 보여주는 화면입니다. 현재 스탯·대상 기준이라 캐릭터마다 결과가 다릅니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -602,8 +594,8 @@
     <!-- 장비 비교(프리셋 없음, 단발 비교/변경) -->
     <section id="panel-gear" class="panel" hidden>
       <details class="panel-about">
-        <summary>장비 비교는 어떻게 쓰나요?</summary>
-        <div class="about-body"><p>지금 장착한 장비와 새로 얻은 장비의 옵션을 좌우에 입력하면, 어느 쪽이 현재 스탯에서 딜에 더 유리한지 바로 계산합니다. 장비는 <b>주 옵션</b>(공격력·최대HP 등)과 <b>부 옵션</b>(크리 데미지·데미지 등 %옵션)으로 나뉘며, 딜 차이는 주로 부 옵션에서 크게 납니다. 최대HP·방어력처럼 딜과 무관한 옵션은 입력만 받고 계산에는 넣지 않습니다. 큐브처럼 재화를 쌓아 리롤하는 요소가 아니라 단발적인 교체 판단이므로 프리셋으로 저장하지 않습니다.</p></div>
+        <summary>장비 비교란?</summary>
+        <div class="about-body"><p>프리셋 없이 현재 장비와 새 장비의 옵션을 좌우에 입력해, 현재 스탯에서 어느 쪽이 딜에 더 유리한지 바로 비교하는 화면입니다. 딜 차이는 주로 부 옵션에서 나며, 단발 판단이라 저장하지 않습니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
@@ -650,8 +642,8 @@
 
     <section id="panel-notices" class="panel" hidden>
       <details class="panel-about">
-        <summary>공지사항은 무엇인가요?</summary>
-        <div class="about-body"><p>「메이플 키우기」 공식 포럼의 <b>공지사항·패치노트·이벤트·확인 중인 현상</b>을 자동으로 모아 <b>핵심 요약</b>과 함께 보여줍니다. 자세한 내용과 이미지·표는 각 글의 <b>‘원문 보기’</b>에서 확인하세요. 이벤트의 <b>쿠폰</b>은 코드와 사용 기한을 함께 표시합니다. 새 글은 빠르게 반영되며, 지난 글은 순차적으로 채워집니다.</p></div>
+        <summary>공지사항이란?</summary>
+        <div class="about-body"><p>「메이플 키우기」 공식 <b>공지·패치노트·이벤트</b>를 핵심 요약과 함께 모아 보여주고, 사용 가능한 <b>쿠폰</b>을 함께 안내하는 화면입니다.</p></div>
       </details>
       <aside id="nt-coupon-banner" class="nt-coupon-banner" hidden></aside>
       <div class="card notices-card">

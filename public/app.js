@@ -245,7 +245,12 @@ function setJob(job) {
   $("job-sel").value = String(job);
   myBuffJob = job;
   if (changed) myBuffs = null;   // 직업 변경 → 스킬 선택 초기화(불변식). 일관 상태(동일 직업)면 no-op이라 선택 보존.
-  document.body.classList.toggle("job-nightlord", job === 1);   // 나이트로드=신엔진 → 구엔진 '데미지 분석(구)' 탭 숨김
+  document.body.classList.toggle("job-nightlord", job === 1);   // 나이트로드=신엔진 → 구엔진 '데미지 분석(구)' 탭 숨김 + 스킬 프리셋 숨김(빌드 타임라인에서 스킬 배치)
+  if (job === 1) {   // 나이트로드는 스킬 프리셋 미사용 → 스탯 뷰로 고정(스탯/스킬 토글은 CSS로 숨김)
+    document.querySelectorAll(".bv-tab").forEach((b) => b.classList.toggle("active", b.dataset.bv === "stat"));
+    const bk = $("bv-skill"); if (bk) bk.hidden = true;
+    const bs = $("bv-stat"); if (bs) bs.hidden = false;
+  }
   try { localStorage.setItem("mekicalc.job", String(job)); } catch (e) {}   // 다음 로드 첫 페인트 진입탭 결정용(head 스크립트가 읽음)
   return changed;
 }
