@@ -671,7 +671,7 @@
     <section id="panel-updates" class="panel" hidden>
       <div class="card">
         <div class="dash-head"><h2>업데이트 내역</h2></div>
-        <p class="dash-sub">MekiCalc에 추가·개선·수정된 내용이에요.</p>
+        <p class="dash-sub">MekiCalc에 추가·개선·수정된 내용입니다.</p>
         <div id="pn-list" class="pn-list"></div>
       </div>
     </section>
@@ -703,10 +703,12 @@
 
   <!-- 새 소식(What's New): 안 본 새 업데이트가 있을 때만 좌하단에 뜨고, 닫으면 사라짐(localStorage로 본 버전 기록) -->
   <div id="whatsnew" class="whatsnew" hidden>
-    <div class="wn-head"><span class="wn-title">🎉 새 소식</span>
-      <button id="whatsnew-close" class="wn-x" type="button" aria-label="닫기">✕</button></div>
-    <div id="whatsnew-body" class="wn-body"></div>
-    <a id="whatsnew-open" class="wn-more route-link" href="/updates">전체 업데이트 내역 →</a>
+    <div class="wn-card">
+      <div class="wn-head"><span class="wn-title">🎉 새 소식</span>
+        <button id="whatsnew-close" class="wn-x" type="button" aria-label="닫기">✕</button></div>
+      <div id="whatsnew-body" class="wn-body"></div>
+      <a id="whatsnew-open" class="wn-more route-link" href="/updates">전체 업데이트 내역 →</a>
+    </div>
   </div>
 
   <!-- 계정 정지 오버레이: 정지 계정은 로그인 시 전체 기능 차단 + 안내문 표시 -->

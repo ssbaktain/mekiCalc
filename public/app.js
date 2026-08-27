@@ -3992,7 +3992,7 @@ async function renderUpdates() {
   const box = $("pn-list"); if (!box) return;
   box.innerHTML = `<p class="hint">불러오는 중…</p>`;
   await loadPatchNotes();
-  box.innerHTML = patchNotes.length ? patchNotes.map(patchCardHtml).join("") : `<p class="hint">아직 업데이트 내역이 없어요.</p>`;
+  box.innerHTML = patchNotes.length ? patchNotes.map(patchCardHtml).join("") : `<p class="hint">아직 업데이트 내역이 없습니다.</p>`;
   markPatchSeen();
 }
 
@@ -4021,6 +4021,7 @@ async function initPatchNotes() {
   await loadPatchNotes();
   const close = $("whatsnew-close"); if (close && !close._wired) { close._wired = true; close.addEventListener("click", markPatchSeen); }
   const open = $("whatsnew-open"); if (open && !open._wired) { open._wired = true; open.addEventListener("click", markPatchSeen); }   // 이동은 route-link가 처리, 여기선 본 것 표시만
+  const wrap = $("whatsnew"); if (wrap && !wrap._wiredBd) { wrap._wiredBd = true; wrap.addEventListener("click", (e) => { if (e.target === wrap) markPatchSeen(); }); }   // 모바일: 배경 탭 시 닫기(데스크톱은 pointer-events:none이라 발동 안 함)
   updatePatchBadge();
   showWhatsNewIfNeeded();
 }
