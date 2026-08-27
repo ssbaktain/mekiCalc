@@ -4470,9 +4470,9 @@ function tlInitHandlers() {
 
 // 간트 커스텀 툴팁(네이티브 title 대신 — 마우스에 안 가리게 바 위에, 즉시 표시). #tl-result에 위임.
 // x=마우스 위치 추적(확대 시 넓은 바에서 고정 좌표가 넘치는 문제 방지), y=바 위 고정.
-// 간트 막대/마커의 툴팁을 배치. anchor=기준 막대. y는 간트 최상단(시각 가이드 태그 높이) 위 — 어떤 막대와도 안 겹침.
-// x는 막대 중앙 정렬을 기본으로 하되, 박스가 결과 영역 경계를 넘으면 그쪽을 한계로 두고 반대 방향으로 늘린다(폭 제한 없이).
-function tlPlaceTip(res, tip, anchor) {
+// 간트 막대/마커의 툴팁을 배치. anchor=기준 막대. anchorX=시간선(커서/탭) x — 있으면 그 기준, 없으면 막대 중앙.
+// y는 간트 최상단(시각 가이드 태그 높이) 위 — 어떤 막대와도 안 겹침. x는 좌우 뷰포트 경계에 닿으면 그걸 한계로 clamp.
+function tlPlaceTip(res, tip, anchor, anchorX) {
   tip.hidden = false;
   tip.style.transform = "none";   // left/top을 박스 좌상단 기준으로 직접 배치(중앙 translate 안 씀)
   const rBar = anchor.getBoundingClientRect();
@@ -4480,10 +4480,11 @@ function tlPlaceTip(res, tip, anchor) {
   const yTop = (gantt || anchor).getBoundingClientRect().top;   // 간트 최상단(막대들보다 위)
   const vw = document.documentElement.clientWidth;              // 스크롤바 제외 뷰포트 폭(가로 스크롤 방지 기준)
   const margin = 8, tw = tip.offsetWidth, th = tip.offsetHeight;
-  let left = rBar.left + rBar.width / 2 - tw / 2;               // 막대 중앙 정렬
+  const centerX = (anchorX != null) ? anchorX : (rBar.left + rBar.width / 2);   // 시간선 기준(폴백=막대 중앙)
+  let left = centerX - tw / 2;
   const maxL = vw - margin - tw, minL = margin;
-  if (left > maxL) left = maxL;                                  // 오른쪽 경계 넘음 → 왼쪽으로 늘어남
-  if (left < minL) left = minL;                                  // 왼쪽 경계 넘음 → 오른쪽으로 늘어남
+  if (left > maxL) left = maxL;                                  // 오른쪽 경계 한계(더 안 넘어감)
+  if (left < minL) left = minL;                                  // 왼쪽 경계 한계(더 안 넘어감)
   tip.style.left = left + "px";
   tip.style.top = (yTop - 6 - th) + "px";                        // 간트 상단 위에 박스가 얹히도록(높이만큼 올림)
 }
@@ -4496,7 +4497,7 @@ function tlWireTooltip() {
     const el = e.target.closest("[data-tip]");
     if (!el) { tip.hidden = true; return; }
     tip.innerHTML = el.getAttribute("data-tip");
-    tlPlaceTip(res, tip, el);
+    tlPlaceTip(res, tip, el, e.clientX);   // 시간선(커서) 위치 기준
   });
   res.addEventListener("mouseout", (e) => {
     if (tip.dataset.pinned) return;
@@ -4511,7 +4512,7 @@ function tlWireTooltip() {
     if (!bar) { tip.hidden = true; delete tip.dataset.pinned; return; }
     tip.innerHTML = bar.getAttribute("data-tip");
     tip.dataset.pinned = "1";
-    tlPlaceTip(res, tip, bar);
+    tlPlaceTip(res, tip, bar, t.clientX);   // 시간선(탭 지점) 기준
   }, { passive: true });
   document.addEventListener("touchend", (e) => {
     if (!tip.dataset.pinned) return;

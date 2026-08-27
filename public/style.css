@@ -1591,6 +1591,11 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-labels-toggle:active { transform: scale(.9); }
 .tl-gantt.collapsed .tl-gantt-labels { max-width: 0; }
 .tl-gantt.collapsed .tl-labels-toggle::before { content: "›"; }
+/* 이름(라벨) 접기 버튼은 모바일 전용 — PC는 폭이 넓어 불필요. 접힘 상태로 저장돼 있어도 PC에선 라벨을 항상 노출. */
+@media (min-width: 641px) {
+  .tl-labels-toggle-col { display: none; }
+  .tl-gantt.collapsed .tl-gantt-labels { max-width: min(45%, 300px); }
+}
 .tl-gantt-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: var(--border) transparent; touch-action: pan-x pan-y; }   /* 핀치는 JS가 가로 배율로 처리(브라우저 전체 줌 대신), 팬은 스크롤 */
 .tl-gantt-scroll::-webkit-scrollbar { height: 8px; }
 .tl-gantt-scroll::-webkit-scrollbar-track { background: transparent; }
