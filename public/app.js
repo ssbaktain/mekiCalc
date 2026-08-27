@@ -3749,6 +3749,7 @@ async function loadMe(pre) {
   saveJSON(CACHE_ME, meCache);
   renderLoginUI();
   applyBanState();
+  if (typeof refreshPatchForAccount === "function") refreshPatchForAccount();   // 계정 확정 후 새 소식 재평가(계정별)
 }
 
 async function doLogout() {
@@ -3973,8 +3974,16 @@ function patchLatestId() {
   if (!patchNotes || !patchNotes[0]) return null;
   const n = patchNotes[0]; return String(n.id != null ? n.id : n.date);
 }
-function patchHasUnseen() { const l = patchLatestId(); return !!l && loadJSON(PATCH_SEEN_KEY, null) !== l; }
-function markPatchSeen() { const l = patchLatestId(); if (l) saveJSON(PATCH_SEEN_KEY, l); updatePatchBadge(); hideWhatsNew(); }
+// 본 기록은 계정(이메일) 단위 — 로그아웃(익명)·다른 계정 로그인 시 각각 처음이면 다시 뜸.
+function patchSeenKey() { return PATCH_SEEN_KEY + ":" + ((me && me.loggedIn && me.email) ? me.email.toLowerCase() : "anon"); }
+function patchHasUnseen() { const l = patchLatestId(); return !!l && loadJSON(patchSeenKey(), null) !== l; }
+function markPatchSeen() { const l = patchLatestId(); if (l) saveJSON(patchSeenKey(), l); updatePatchBadge(); hideWhatsNew(); }
+// 로그인 상태가 확정된 뒤(loadMe) 계정 키 기준으로 새 소식 재평가.
+async function refreshPatchForAccount() {
+  await loadPatchNotes();
+  updatePatchBadge();
+  if (patchHasUnseen()) showWhatsNewIfNeeded(); else hideWhatsNew();
+}
 
 function patchTagsHtml(tags) {
   return (tags || []).map((t) => `<span class="pn-tag pn-tag-${escapeHtml(String(t))}">${escapeHtml(PATCH_TAG_KO[t] || t)}</span>`).join("");
