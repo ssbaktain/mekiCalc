@@ -355,7 +355,7 @@ const MENU = [
   { label: "큐브", flat: true, items: [   // flat: 드롭다운X·클릭 시 큐브 기댓값 진입(세부전환=각 큐브 패널 상단 서브바)
     { label: "큐브 기댓값", panel: "cube", path: "/cube" },
     { label: "옵션 비교", panel: "optcompare", path: "/cube/option-compare" },
-    { label: "내 옵션 비교/변경", panel: "compare", path: "/cube/my-options" },
+    { label: "내 옵션 변경", panel: "compare", path: "/cube/my-options" },
     { label: "우선순위 추천", panel: "recommend", path: "/cube/recommend" },
   ]},
   { label: "스탯 비교", panel: "statcompare", path: "/stat-compare" },   // 최상위 단독 · 스탯 등가 환산(한 스탯↔다른 스탯 필요량)
@@ -2448,7 +2448,7 @@ async function runApply() {
   const oldOpts = (line && line.slots) ? line.slots.filter(Boolean).map((s) => ({ statId: s.stat, value: s.value })) : [];
   const newOpts = rightSlots.filter(Boolean).map((s) => ({ statId: s.stat, value: s.value }));
   if (!newOpts.length && !oldOpts.length) { toast("적용할 옵션이 없습니다."); return; }
-  if (!confirm(`${part} ${lineName}을(를) 오른쪽(가정) 옵션으로 변경하고 스탯·큐브 프리셋에 저장할까요?`)) return;
+  if (!confirm(`${part} ${lineName}의 현재(왼쪽) 옵션을 새(오른쪽) 옵션으로 바꾸고, 저장된 ‘${cubePresets.active}’ 큐브 프리셋과 ‘${statPresets.active}’ 캐릭터 프리셋에 반영·저장할까요?`)) return;
 
   $("cmp-status").textContent = "적용 중…";
   try {
