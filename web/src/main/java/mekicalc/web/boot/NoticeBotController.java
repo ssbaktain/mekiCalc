@@ -91,6 +91,7 @@ public class NoticeBotController {
             m.put("id", raw.get("id"));
             m.put("text", raw.get("text"));
             m.put("rooms", target);
+            m.put("images", raw.get("images"));   // 함께 보낼 이미지 절대경로(없으면 null)
             msgs.add(m);
         }
         Map<String, Object> out = new LinkedHashMap<>();

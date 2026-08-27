@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class InquiryController {
 
     private static final int DAILY_LIMIT = 20;
+    private static final int MAX_IMAGES = 5;                   // 1회 첨부 이미지 최대 장수(카톡 발송 캡과 동일)
     private static final long MAX_TOTAL = 20L * 1024 * 1024;   // 이미지+내용 합계 20MB
     private static final Set<String> ALLOWED_MIME = Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
     private static final Set<String> TYPES = Set.of("bug", "suggest", "etc");
@@ -101,6 +102,7 @@ public class InquiryController {
             total += f.getSize();
             ups.add(new InquiryStore.Upload(f.getOriginalFilename(), mime, f.getBytes()));
         }
+        if (ups.size() > MAX_IMAGES) return err(400, "이미지는 최대 " + MAX_IMAGES + "장까지 첨부할 수 있어요.");
         if (total > MAX_TOTAL) return err(413, "1회 제보/문의 최대 용량(20MB)을 초과했어요. 이미지 수·크기를 줄여 주세요.");
 
         Object bundleObj = null, buildObj = null;
@@ -150,7 +152,13 @@ public class InquiryController {
             if (q.title != null && !q.title.isBlank()) t.append("제목: ").append(q.title).append("\n");
             t.append("내용: ").append(preview(q.body, 140));
             if (!q.attachments.isEmpty()) t.append("\n📷 첨부 ").append(q.attachments.size()).append("장");
-            outbox.enqueue(t.toString(), "inquiry:" + q.id, targets);
+            // 첨부 이미지 절대경로(최대 MAX_IMAGES장) — 봇이 읽어 카톡으로 함께 발송. 이미지는 봇=서버 같은 미니PC 디스크에 있음.
+            List<String> imgs = new ArrayList<>();
+            for (int i = 0; i < q.attachments.size() && imgs.size() < MAX_IMAGES; i++) {
+                Path p = inquiries.attachmentFile(q.id, i);
+                if (p != null) imgs.add(p.toAbsolutePath().toString());
+            }
+            outbox.enqueue(t.toString(), "inquiry:" + q.id, targets, imgs);
         } catch (Exception ignore) { }
     }
 

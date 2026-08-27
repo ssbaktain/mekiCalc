@@ -35,6 +35,7 @@ public final class BotOutbox {
         public long leasedAt, createdAt, sentAt;
         public long discordAt;               // 디스코드 발송 시각(0=미발송). 카톡 status와 완전 독립.
         public List<String> targetRooms;    // null=notify 권한 방 전체, 아니면 특정 chatId 목록(개인 공지/테스트)
+        public List<String> images;         // 함께 보낼 이미지 파일 절대경로(봇=서버 같은 미니PC 디스크). 없으면 null.
 
         Map<String, Object> toMap() {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -47,6 +48,7 @@ public final class BotOutbox {
             m.put("sentAt", (double) sentAt);
             m.put("discordAt", (double) discordAt);
             m.put("targetRooms", targetRooms);   // null이면 그대로 null 저장
+            m.put("images", images);
             return m;
         }
         static Msg fromMap(Map<String, Object> m) {
@@ -60,6 +62,7 @@ public final class BotOutbox {
             x.sentAt = (long) Json.num(m, "sentAt", 0);
             x.discordAt = (long) Json.num(m, "discordAt", 0);
             x.targetRooms = strList(m.get("targetRooms"));
+            x.images = strList(m.get("images"));
             return x;
         }
         private static String str(Map<String, Object> m, String k) { Object v = m.get(k); return v == null ? null : v.toString(); }
@@ -105,14 +108,19 @@ public final class BotOutbox {
 
     /** 큐에 적재(전체 notify 권한 방 대상). dedupKey가 이미 있으면 무시(-1 반환). 성공 시 새 id. */
     public synchronized long enqueue(String text, String dedupKey) {
-        return enqueue(text, dedupKey, null);
+        return enqueue(text, dedupKey, null, null);
+    }
+
+    /** 큐에 적재(특정 방 대상, 이미지 없음). */
+    public synchronized long enqueue(String text, String dedupKey, List<String> targetRooms) {
+        return enqueue(text, dedupKey, targetRooms, null);
     }
 
     /**
      * 큐에 적재. {@code targetRooms}가 null이면 발송 시 notify 권한 방 전체, 아니면 그 chatId 방들만
-     * (개인 공지·테스트). dedupKey가 이미 있으면 무시(-1 반환). 성공 시 새 id.
+     * (개인 공지·테스트). {@code images}=함께 보낼 이미지 절대경로(봇이 읽어 발송). dedupKey가 이미 있으면 무시(-1). 성공 시 새 id.
      */
-    public synchronized long enqueue(String text, String dedupKey, List<String> targetRooms) {
+    public synchronized long enqueue(String text, String dedupKey, List<String> targetRooms, List<String> images) {
         if (text == null || text.isBlank()) return -1;
         if (dedupKey != null && dedup.contains(dedupKey)) return -1;
         Msg x = new Msg();
@@ -120,6 +128,7 @@ public final class BotOutbox {
         x.text = text;
         x.dedupKey = dedupKey;
         x.targetRooms = targetRooms;
+        x.images = (images != null && !images.isEmpty()) ? images : null;
         x.createdAt = System.currentTimeMillis() / 1000;
         msgs.add(x);
         if (dedupKey != null) dedup.add(dedupKey);
@@ -142,6 +151,7 @@ public final class BotOutbox {
             m.put("id", (double) x.id);
             m.put("text", x.text);
             m.put("targetRooms", x.targetRooms);
+            m.put("images", x.images);
             out.add(m);
             if (out.size() >= limit) break;
         }

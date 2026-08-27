@@ -3796,6 +3796,7 @@ function renderAccountInto(el) {
 // ──────────────────── 제보/문의(인웹) + 계정 정지 ────────────────────
 let inqFiles = [];                          // 선택한 이미지 File 목록
 const INQ_MAX = 20 * 1024 * 1024;           // 1회 합계 20MB
+const INQ_MAX_IMAGES = 5;                   // 이미지 최대 장수(서버·카톡 발송 캡과 동일)
 const INQ_STATUS_USER = { new: "접수됨", seen: "확인 중", resolved: "처리 완료" };
 
 // 정지 계정: 전체 기능 차단 오버레이 + 안내문. me.banned 기준(서버 /api/me).
@@ -3928,7 +3929,11 @@ function initInquiry() {
   if (link) link.addEventListener("click", (e) => { e.preventDefault(); openInquiry(); });
   const fi = $("inq-file-input");
   if (fi) fi.addEventListener("change", () => {
-    for (const f of fi.files) if (f && f.type && f.type.startsWith("image/")) inqFiles.push(f);
+    for (const f of fi.files) {
+      if (!f || !f.type || !f.type.startsWith("image/")) continue;
+      if (inqFiles.length >= INQ_MAX_IMAGES) { inqShowMsg(`이미지는 최대 ${INQ_MAX_IMAGES}장까지 첨부할 수 있어요.`, true); break; }
+      inqFiles.push(f);
+    }
     fi.value = ""; inqRenderFiles();
   });
   const form = $("inq-form"); if (form) form.addEventListener("submit", submitInquiry);
