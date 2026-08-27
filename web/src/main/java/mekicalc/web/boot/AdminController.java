@@ -81,10 +81,11 @@ public class AdminController {
         return rooms.addManual(chatId.trim(), strOpt(req, "name"), Instant.now().getEpochSecond()).toMap();
     }
 
-    /** 방 권한/이름 수정. body: {name?, notify, reply}. */
+    /** 방 권한/이름 수정. body: {name?, notify, reply, inquiry}. */
     @PutMapping("/rooms/{chatId}")
     public Object updateRoom(@PathVariable String chatId, @RequestBody Map<String, Object> req) {
-        RoomStore.Room r = rooms.update(chatId, strOpt(req, "name"), bool(req, "notify", false), bool(req, "reply", false));
+        RoomStore.Room r = rooms.update(chatId, strOpt(req, "name"), bool(req, "notify", false),
+                bool(req, "reply", false), bool(req, "inquiry", false));
         if (r == null) throw new IllegalArgumentException("존재하지 않는 방: " + chatId);
         return r.toMap();
     }

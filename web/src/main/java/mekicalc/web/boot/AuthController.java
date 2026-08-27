@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import mekicalc.json.Json;
 import mekicalc.web.AuthService;
+import mekicalc.web.BanStore;
 import mekicalc.web.CalcService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,10 +26,12 @@ public class AuthController {
 
     private final CalcService service;
     private final AuthService auth;
+    private final BanStore bans;
 
-    public AuthController(CalcService service, AuthService auth) {
+    public AuthController(CalcService service, AuthService auth, BanStore bans) {
         this.service = service;
         this.auth = auth;
+        this.bans = bans;
     }
 
     // ──────────────── OAuth 로그인 ────────────────
@@ -150,6 +153,13 @@ public class AuthController {
         m.put("loggedIn", s != null);
         if (s != null) { m.put("name", s.name()); m.put("email", s.email()); }
         m.put("isAdmin", auth.isAdmin(s));
+        // 계정 정지 상태(계정 단위 차단). 정지 중이면 프론트가 전체 기능 차단 + 안내문 표시, 로그인 기능은 서버가 거부.
+        BanStore.Ban ban = s == null ? null : bans.activeBan(s.sub(), s.email());
+        m.put("banned", ban != null);
+        if (ban != null) {
+            m.put("banMessage", ban.displayMessage());
+            m.put("banUntil", ban.banUntil == 0 ? null : (double) ban.banUntil);
+        }
         return m;
     }
 

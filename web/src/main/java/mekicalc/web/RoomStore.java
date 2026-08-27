@@ -28,6 +28,7 @@ public final class RoomStore {
         public String origName;  // 봇이 감지한 실제 카톡 방 이름(private_meta.name 등). 커스텀을 지웠을 때 회색 안내로 노출.
         public boolean notify;   // 공지·리마인더 발송 권한
         public boolean reply;    // 명령 응답 권한
+        public boolean inquiry;  // 유저 제보/문의 접수 알림 발송 권한(새 문의 들어오면 이 방들로 알림)
         public long lastSeen;    // 마지막 감지(자동등록/갱신) epoch sec
         public String source = "auto";   // "auto"(브릿지 감지) | "manual"(관리자 수동)
 
@@ -38,6 +39,7 @@ public final class RoomStore {
             m.put("origName", origName);
             m.put("notify", notify);
             m.put("reply", reply);
+            m.put("inquiry", inquiry);
             m.put("lastSeen", (double) lastSeen);
             m.put("source", source);
             return m;
@@ -50,6 +52,7 @@ public final class RoomStore {
             if (r.origName == null || r.origName.isBlank()) r.origName = r.name;   // origName 없는 옛 데이터 보정(다음 sync에서 실제 이름으로 갱신)
             r.notify = Boolean.TRUE.equals(m.get("notify"));
             r.reply = Boolean.TRUE.equals(m.get("reply"));
+            r.inquiry = Boolean.TRUE.equals(m.get("inquiry"));
             r.lastSeen = (long) Json.num(m, "lastSeen", 0);
             r.source = m.get("source") == null ? "auto" : m.get("source").toString();
             return r;
@@ -144,12 +147,13 @@ public final class RoomStore {
      * 관리자 권한/이름 수정. 존재하지 않으면 null. name이 <b>빈 문자열</b>이면 커스텀 표시명을 지운다
      * (그러면 UI는 origName을 회색 안내로 노출). name이 null(미전송)이면 이름은 손대지 않는다.
      */
-    public synchronized Room update(String chatId, String name, boolean notify, boolean reply) {
+    public synchronized Room update(String chatId, String name, boolean notify, boolean reply, boolean inquiry) {
         Room r = rooms.get(chatId);
         if (r == null) return null;
         if (name != null) r.name = name.isBlank() ? null : name;   // 빈 값 = 커스텀 지우기
         r.notify = notify;
         r.reply = reply;
+        r.inquiry = inquiry;
         save();
         return r;
     }
@@ -158,6 +162,13 @@ public final class RoomStore {
     public synchronized List<String> notifyRooms() {
         List<String> out = new ArrayList<>();
         for (Room r : rooms.values()) if (r.notify) out.add(r.chatId);
+        return out;
+    }
+
+    /** inquiry(문의 알림) 권한 있는 방 chatId 목록(새 제보/문의 접수 시 발송 대상). */
+    public synchronized List<String> inquiryRooms() {
+        List<String> out = new ArrayList<>();
+        for (Room r : rooms.values()) if (r.inquiry) out.add(r.chatId);
         return out;
     }
 

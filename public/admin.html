@@ -77,6 +77,42 @@
       .add-form .btn { width: 100%; padding: 9px; }
       .send-actions .btn { flex: 1 1 auto; }
     }
+
+    /* ── 제보/문의 관리 ── */
+    .inq-filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .inq-filters input, .inq-filters select { background:#0f131b; border:1px solid var(--border,#2a3140); color:inherit; border-radius:6px; padding:6px 9px; font-size:13px; color-scheme: dark; }
+    .inq-filters input[type="date"] { cursor: pointer; min-width: 150px; }
+    .inq-adm-list { display: flex; flex-direction: column; gap: 8px; }
+    .inq-adm-item { border:1px solid var(--border,#2a3140); border-radius:9px; padding:10px 12px; background:#0f131b; cursor:pointer; }
+    .inq-adm-item:hover { border-color:#3a4256; }
+    .inq-adm-top { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted,#8a94a6); flex-wrap:wrap; }
+    .inq-adm-when { margin-left:auto; }
+    .inq-adm-preview { font-size:13px; margin-top:4px; color:#cbd3df; }
+    .badge { display:inline-block; padding:1px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+    .badge.new { background:rgba(229,72,77,.18); color:#e5717a; }
+    .badge.seen { background:rgba(255,180,84,.18); color:#e0a45a; }
+    .badge.resolved { background:rgba(79,209,161,.18); color:#4fd1a1; }
+    .badge.ban-on { background:rgba(229,72,77,.18); color:#e5717a; }
+    .badge.ban-off { background:rgba(127,127,127,.18); color:var(--muted,#8a94a6); }
+    .err { color:#f56565; font-size:13px; margin:8px 0; }
+
+    .adm-modal { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.62); display:flex; align-items:flex-start; justify-content:center; padding:24px 12px; overflow:auto; }
+    .adm-modal[hidden] { display:none; }   /* display:flex가 hidden을 덮어쓰지 않도록 명시 */
+    .adm-modal .box { background:var(--card,#171b24); border:1px solid var(--border,#2a3140); border-radius:12px; max-width:640px; width:100%; padding:18px 20px; }
+    .adm-modal h3 { margin:0 0 8px; }
+    .adm-kv { font-size:13px; color:var(--muted,#8a94a6); margin:2px 0; }
+    .adm-body { white-space:pre-wrap; word-break:break-word; font-size:14px; background:#0f131b; border:1px solid var(--border,#2a3140); border-radius:8px; padding:10px; margin:8px 0; }
+    .adm-imgs { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+    .adm-imgs img { width:96px; height:96px; object-fit:cover; border-radius:8px; border:1px solid var(--border,#2a3140); cursor:pointer; }
+    .adm-stats { max-height:200px; overflow:auto; font-family:monospace; font-size:11px; white-space:pre-wrap; word-break:break-all; background:#0f131b; border:1px solid var(--border,#2a3140); border-radius:8px; padding:8px; }
+    .adm-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0; }
+    .adm-sec { border-top:1px solid var(--border,#2a3140); margin-top:14px; padding-top:12px; }
+    .adm-sec h4 { margin:0 0 8px; font-size:14px; }
+    .ban-presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+    .ban-presets button { font-size:12px; }
+    #banReason, #banMessage { width:100%; box-sizing:border-box; background:#0f131b; border:1px solid var(--border,#2a3140); color:inherit; border-radius:6px; padding:7px 9px; font-size:13px; font-family:inherit; margin-top:4px; }
+    #banDays { background:#0f131b; border:1px solid var(--border,#2a3140); color:inherit; border-radius:6px; padding:6px 9px; }
+    .btn.danger { background:#c53030; } .btn.danger:hover { background:#e53e3e; }
   </style>
 </head>
 <body>
@@ -112,6 +148,7 @@
             <th>chatId</th>
             <th class="center">공지·리마인더</th>
             <th class="center">명령 응답</th>
+            <th class="center">문의 알림</th>
             <th class="center"></th>
           </tr>
         </thead>
@@ -120,7 +157,7 @@
       <div class="empty" id="roomsEmpty" hidden>아직 등록된 방이 없습니다. <b>방 새로고침</b>을 누르면 봇이 참여한 오픈채팅 방을 자동 인식합니다.</div>
       <div id="roomsErr" hidden></div>
 
-      <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다. <b>이름을 비우고 저장</b>하면 실제 카톡 방 이름(회색)이 표시됩니다.</div>
+      <div class="muted-note">권한을 바꾼 뒤 각 행의 <b>저장</b>을 눌러야 반영됩니다. <b>문의 알림</b>을 켠 방으로 새 제보/문의가 들어올 때 요약이 전송됩니다(예: 테스트 방). 방 이름은 사이트에서 바꾼 값이 우선이며, 새로고침해도 덮이지 않습니다. <b>이름을 비우고 저장</b>하면 실제 카톡 방 이름(회색)이 표시됩니다.</div>
 
       <div class="send-box">
         <h3>개인 공지 / 테스트 발송</h3>
@@ -169,6 +206,33 @@
       </div>
       <div class="muted-note">라벨·활성을 바꾼 뒤 각 행의 <b>저장</b>을 누르세요. <b>테스트</b>는 해당 채널로 확인 메시지를 즉시 보냅니다. 보안을 위해 URL 토큰은 마스킹되어 표시됩니다.</div>
     </section>
+
+    <section class="admin-card" id="inqCard">
+      <h2>제보 / 문의 <span id="inqUnread" class="soon" hidden></span></h2>
+      <p>유저 인웹 제보/문의. 상태: <b>미확인</b>(안 읽음) · <b>확인 중</b>(읽음, 미해결) · <b>해결</b>. 항목을 누르면 상세(내용·첨부 스탯·이미지·IP·시각)와 정지 조치를 볼 수 있어요.</p>
+      <div class="inq-filters">
+        <input id="fUser" placeholder="유저(이메일/이름/sub) 검색">
+        <input id="fDate" type="date" title="접수 날짜(KST)">
+        <select id="fStatus"><option value="">전체 상태</option><option value="new">미확인</option><option value="seen">확인 중</option><option value="resolved">해결</option></select>
+        <button class="btn ghost" id="inqReload">조회</button>
+      </div>
+      <div id="inqErr" class="err" hidden></div>
+      <div id="inqList" class="inq-adm-list"></div>
+      <div class="empty" id="inqEmpty" hidden>조건에 맞는 문의가 없습니다.</div>
+    </section>
+
+    <section class="admin-card" id="banCard">
+      <h2>계정 정지 관리</h2>
+      <p>정지는 <b>구글 계정(sub)</b> 기준이라 탈퇴·재가입해도 유지됩니다(재가입 차단). IP는 참고용입니다. 활성 정지는 여기서 해제할 수 있어요.</p>
+      <div id="banErr" class="err" hidden></div>
+      <div id="banList" class="inq-adm-list"></div>
+      <div class="empty" id="banEmpty" hidden>정지 이력이 없습니다.</div>
+    </section>
+
+    <!-- 문의 상세 + 정지 모달 -->
+    <div id="inqModal" class="adm-modal" hidden>
+      <div class="box" id="inqModalBox"></div>
+    </div>
   </div>
 
   <script>
@@ -195,6 +259,7 @@
         <td data-label="chatId"><span class="cid">${cid}</span><span class="src">${room.source === 'manual' ? '수동' : '자동'}</span></td>
         <td class="center" data-label="공지·리마인더"><input type="checkbox" class="notify" ${room.notify ? 'checked' : ''}></td>
         <td class="center" data-label="명령 응답"><input type="checkbox" class="reply" ${room.reply ? 'checked' : ''}></td>
+        <td class="center" data-label="문의 알림"><input type="checkbox" class="inquiry" ${room.inquiry ? 'checked' : ''}></td>
         <td class="center act"><button class="btn save">저장</button></td>
       </tr>`;
     }
@@ -252,6 +317,7 @@
           name: $('.name', tr).value.trim(),
           notify: $('.notify', tr).checked,
           reply: $('.reply', tr).checked,
+          inquiry: $('.inquiry', tr).checked,
         });
         btn.textContent = '저장됨'; btn.classList.add('saved');
         setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 1200);
@@ -380,6 +446,183 @@
     }
     $('#addHookBtn').addEventListener('click', addHook);
     loadHooks();
+
+    // ──────────────── 제보/문의 + 정지 관리 ────────────────
+    const STATUS_KO = { new: '미확인', seen: '확인 중', resolved: '해결' };
+    const TYPE_KO = { bug: '버그 제보', suggest: '기능 건의', etc: '기타 문의' };
+    const fmtWhen = ms => new Date(ms).toLocaleString('ko-KR');
+
+    async function admCopy(text, msgId) {
+      try { await navigator.clipboard.writeText(text); }
+      catch { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); }
+      const m = document.getElementById(msgId); if (m) { m.textContent='복사됨!'; setTimeout(()=>{ m.textContent=''; }, 1500); }
+    }
+
+    function inqErr(m){ const e=$('#inqErr'); e.textContent=m; e.hidden=!m; }
+
+    async function loadInquiries() {
+      inqErr('');
+      const u = $('#fUser').value.trim(), d = $('#fDate').value, s = $('#fStatus').value;
+      const qs = new URLSearchParams();
+      if (u) qs.set('user', u); if (d) qs.set('date', d); if (s) qs.set('status', s);
+      try {
+        const data = await api('GET', '/api/admin/inquiries?' + qs.toString());
+        renderInqList(data.inquiries || []);
+        const un = $('#inqUnread');
+        if (data.unread > 0) { un.textContent = '미확인 ' + data.unread; un.hidden = false; } else un.hidden = true;
+      } catch(e){ inqErr('불러오기 실패: ' + e.message); }
+    }
+    function inqItemHtml(q) {
+      return `<div class="inq-adm-item" data-id="${q.id}">
+        <div class="inq-adm-top">
+          <span class="badge ${q.status}">${STATUS_KO[q.status]||q.status}</span>
+          <span>${esc(TYPE_KO[q.type]||q.type)}</span>
+          <span>${esc(q.name||'')} · ${esc(q.email||'')}</span>
+          ${q.attachmentCount ? `<span>📷${q.attachmentCount}</span>`:''}
+          ${q.hasStats ? `<span title="스탯 첨부">📊</span>`:''}
+          <span class="inq-adm-when">${fmtWhen(q.createdAt)}</span>
+        </div>
+        ${q.title ? `<div class="inq-adm-preview"><b>${esc(q.title)}</b></div>`:''}
+        <div class="inq-adm-preview">${esc(q.preview||'')}</div>
+      </div>`;
+    }
+    function renderInqList(list) {
+      const box=$('#inqList'), empty=$('#inqEmpty');
+      box.innerHTML = list.map(inqItemHtml).join('');
+      empty.hidden = list.length !== 0;
+      box.querySelectorAll('.inq-adm-item').forEach(el =>
+        el.addEventListener('click', () => openInqDetail(el.dataset.id)));
+    }
+
+    async function openInqDetail(id) {
+      try { renderInqDetail(await api('GET', '/api/admin/inquiries/' + id)); $('#inqModal').hidden = false; }
+      catch(e){ alert('상세 조회 실패: ' + e.message); }
+    }
+    function renderInqDetail(q) {
+      const imgs = (q.attachments||[]).map((a,i) =>
+        `<img src="/api/admin/inquiries/${q.id}/attachments/${i}" title="${esc(a.name||'')}" onclick="window.open('/api/admin/inquiries/${q.id}/attachments/${i}','_blank')">`).join('');
+      const attach = `<div class="adm-sec"><h4>첨부 데이터</h4><div class="adm-row">
+        ${q.presetBundle ? `<button class="btn" id="copyBundle">전체 프리셋 복사</button>` : `<span class="muted-note">전체 프리셋 없음</span>`}
+        ${q.build ? `<button class="btn ghost" id="copyBuild">현재 빌드 복사</button>` : `<span class="muted-note">빌드 없음</span>`}
+        <span id="copyMsg" style="color:#48bb78;font-size:12px"></span>
+      </div><div class="muted-note">복사 후 사이트의 <b>불러오기</b>에 붙여넣으면 그대로 재현돼요.</div></div>`;
+      const replies = (q.messages||[]).map(m => `<div class="adm-kv"><b>${m.author==='admin'?'운영자':'유저'}</b> ${esc(m.body)} <span style="color:#8a94a6;font-size:11px">${fmtWhen(m.at)}</span></div>`).join('');
+      $('#inqModalBox').innerHTML = `
+        <div class="admin-top"><h3>문의 #${q.id} <span class="badge ${q.status}">${STATUS_KO[q.status]||q.status}</span></h3>
+          <button class="btn ghost" onclick="document.getElementById('inqModal').hidden=true">닫기</button></div>
+        <div class="adm-kv">유형: <b>${esc(TYPE_KO[q.type]||q.type)}</b></div>
+        <div class="adm-kv">계정: <b>${esc(q.name||'')}</b> · ${esc(q.email||'')}</div>
+        <div class="adm-kv">sub: <code>${esc(q.sub||'')}</code></div>
+        <div class="adm-kv">IP: <b>${esc(q.ip||'')}</b> · 접수: ${fmtWhen(q.createdAt)}</div>
+        ${q.title ? `<div class="adm-kv">제목: <b>${esc(q.title)}</b></div>`:''}
+        <div class="adm-body">${esc(q.body||'')}</div>
+        ${imgs ? `<div class="adm-imgs">${imgs}</div>`:''}
+        ${attach}
+        <div class="adm-sec"><h4>상태</h4>
+          <div class="adm-row">
+            <button class="btn ghost" data-st="new">미확인</button>
+            <button class="btn ghost" data-st="seen">확인 중</button>
+            <button class="btn" data-st="resolved">해결</button>
+            <button class="btn ghost danger" id="inqDel">삭제</button>
+          </div>
+        </div>
+        ${replies ? `<div class="adm-sec"><h4>대화</h4>${replies}</div>`:''}
+        <div class="adm-sec"><h4>답장(유저의 '내 문의 내역'에 표시)</h4>
+          <textarea id="inqReplyBody" rows="2" style="width:100%;box-sizing:border-box;background:#0f131b;border:1px solid var(--border,#2a3140);color:inherit;border-radius:6px;padding:7px 9px;font-family:inherit"></textarea>
+          <div class="adm-row"><button class="btn" id="inqReplyBtn">답장 보내기</button></div>
+        </div>
+        <div class="adm-sec"><h4>계정 정지</h4>
+          <div class="adm-row">
+            <label>기간 <select id="banDays">
+              <option value="1">1일</option><option value="3">3일</option><option value="7">7일</option>
+              <option value="15">15일</option><option value="31">31일</option><option value="0">영구</option>
+            </select></label>
+          </div>
+          <div class="ban-presets">
+            <button class="btn ghost" data-msg="제보/문의 악용으로 {until} 계정을 이용하실 수 없습니다.">기본</button>
+            <button class="btn ghost" data-msg="제보/문의 도배로 {until} 계정을 이용하실 수 없습니다.">도배/스팸</button>
+            <button class="btn ghost" data-msg="허위 제보로 {until} 계정을 이용하실 수 없습니다.">허위제보</button>
+          </div>
+          <textarea id="banMessage" rows="2" placeholder="유저 안내문">제보/문의 악용으로 {until} 계정을 이용하실 수 없습니다.</textarea>
+          <div class="muted-note">{until} 자리에 정지 종료 일시(또는 '영구적으로')가 자동으로 들어갑니다.</div>
+          <input id="banReason" placeholder="관리자 사유(유저 비공개, 선택)">
+          <div class="adm-row"><button class="btn danger" id="banBtn">이 계정 정지</button></div>
+        </div>`;
+      const cpb = $('#copyBundle'); if (cpb) cpb.addEventListener('click', () => admCopy(JSON.stringify(q.presetBundle, null, 2), 'copyMsg'));
+      const cpd = $('#copyBuild'); if (cpd) cpd.addEventListener('click', () => admCopy(JSON.stringify(q.build, null, 2), 'copyMsg'));
+      $('#inqModalBox').querySelectorAll('[data-st]').forEach(b => b.addEventListener('click', () => setInqStatus(q.id, b.dataset.st)));
+      $('#inqDel').addEventListener('click', () => delInquiry(q.id));
+      $('#inqReplyBtn').addEventListener('click', () => replyInquiry(q.id));
+      $('#inqModalBox').querySelectorAll('.ban-presets [data-msg]').forEach(b => b.addEventListener('click', () => { $('#banMessage').value = b.dataset.msg; }));
+      $('#banBtn').addEventListener('click', () => doBan(q));
+    }
+
+    async function setInqStatus(id, st) {
+      try { await api('POST', '/api/admin/inquiries/'+id+'/status', { status: st }); await loadInquiries(); openInqDetail(id); }
+      catch(e){ alert('상태 변경 실패: '+e.message); }
+    }
+    async function delInquiry(id) {
+      if (!confirm('이 문의를 삭제할까요? (첨부 이미지도 함께 삭제)')) return;
+      try { await api('DELETE', '/api/admin/inquiries/'+id); $('#inqModal').hidden=true; await loadInquiries(); }
+      catch(e){ alert('삭제 실패: '+e.message); }
+    }
+    async function replyInquiry(id) {
+      const body = $('#inqReplyBody').value.trim();
+      if (!body) return;
+      try { await api('POST', '/api/admin/inquiries/'+id+'/reply', { body }); openInqDetail(id); await loadInquiries(); }
+      catch(e){ alert('답장 실패: '+e.message); }
+    }
+    async function doBan(q) {
+      const days = parseInt($('#banDays').value,10);
+      const message = $('#banMessage').value.trim();
+      const reason = $('#banReason').value.trim();
+      const label = days===0?'영구':days+'일';
+      if (!confirm(`${q.email||q.sub} 계정을 ${label} 정지할까요?`)) return;
+      try {
+        await api('POST','/api/admin/bans',{ sub:q.sub, email:q.email, days, reason, message });
+        alert('정지 처리됐습니다.');
+        $('#inqModal').hidden=true; await loadBans();
+      } catch(e){ alert('정지 실패: '+e.message); }
+    }
+
+    function banErr(m){ const e=$('#banErr'); e.textContent=m; e.hidden=!m; }
+    async function loadBans() {
+      banErr('');
+      try { renderBans((await api('GET','/api/admin/bans')).bans||[]); }
+      catch(e){ banErr('불러오기 실패: '+e.message); }
+    }
+    function banItemHtml(b) {
+      const active = b.active && (b.permanent || b.banUntil > Date.now());
+      const until = b.permanent ? '영구' : fmtWhen(b.banUntil);
+      return `<div class="inq-adm-item">
+        <div class="inq-adm-top">
+          <span class="badge ${active?'ban-on':'ban-off'}">${active?'정지 중':'해제/만료'}</span>
+          <span>${esc(b.email||'')}</span>
+          <span>~ ${until}</span>
+          <span class="inq-adm-when">${fmtWhen(b.bannedAt)}</span>
+        </div>
+        <div class="inq-adm-preview">사유: ${esc(b.reason||'(없음)')} · by ${esc(b.createdBy||'')} · IP ${esc(b.lastIp||'-')}</div>
+        <div class="inq-adm-preview" style="color:#8a94a6">${esc(b.displayMessage||'')}</div>
+        ${active ? `<div class="adm-row"><button class="btn ghost" data-rel="${esc(b.sub)}">정지 해제</button></div>`:''}
+      </div>`;
+    }
+    function renderBans(list) {
+      const box=$('#banList'), empty=$('#banEmpty');
+      box.innerHTML = list.map(banItemHtml).join('');
+      empty.hidden = list.length !== 0;
+      box.querySelectorAll('[data-rel]').forEach(b => b.addEventListener('click', () => releaseBan(b.dataset.rel)));
+    }
+    async function releaseBan(sub) {
+      if (!confirm('이 계정의 정지를 해제할까요?')) return;
+      try { await api('DELETE','/api/admin/bans/'+encodeURIComponent(sub)); await loadBans(); }
+      catch(e){ alert('해제 실패: '+e.message); }
+    }
+
+    $('#inqReload').addEventListener('click', loadInquiries);
+    $('#fUser').addEventListener('keydown', e => { if (e.key==='Enter') loadInquiries(); });
+    $('#inqModal').addEventListener('click', (e)=>{ if (e.target.id==='inqModal') e.target.hidden=true; });
+    loadInquiries();
+    loadBans();
   </script>
 </body>
 </html>

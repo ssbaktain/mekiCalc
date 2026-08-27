@@ -3381,13 +3381,14 @@ function uniqueName(name, existing) {
 function mergePresetCollection(into, from) {
   if (!from || !from.presets) return into;
   if (!into) into = { active: null, presets: {} };
-  let last = into.active;
+  let last = into.active, importedActiveKey = null;
   for (const [name, val] of Object.entries(from.presets)) {
     const key = uniqueName(name, into.presets);
     into.presets[key] = val;
     last = key;
+    if (from.active && name === from.active) importedActiveKey = key;   // 번들의 장착(active) 프리셋 → 불러온 뒤에도 그대로 장착
   }
-  into.active = last;   // 마지막 불러온 걸 활성으로
+  into.active = importedActiveKey || into.active || last;   // 장착 프리셋을 불러왔으면 그걸, 아니면 기존 장착 유지(없으면 마지막)
   return into;
 }
 
@@ -3606,11 +3607,12 @@ function liveCollections() {
 }
 let pendingBundle = null;   // 선택 대기 중인 파싱된 번들
 
-// 컬렉션({active,presets})에서 선택된 이름만 남긴다(활성=선택 중 마지막).
+// 컬렉션({active,presets})에서 선택된 이름만 남긴다. 장착(active) 프리셋이 선택에 포함되면 그대로 유지,
+// 포함 안 되면 선택된 것 중 첫 번째를 장착으로(불러올 때 원래 장착이 그대로 복원되도록).
 function filterCollection(coll, nameSet) {
   const presets = {};
-  let active = coll.active;
-  for (const [n, v] of Object.entries(coll.presets || {})) if (nameSet.has(n)) { presets[n] = v; active = n; }
+  for (const [n, v] of Object.entries(coll.presets || {})) if (nameSet.has(n)) presets[n] = v;
+  const active = (coll.active && nameSet.has(coll.active)) ? coll.active : Object.keys(presets)[0];
   return { active, presets };
 }
 
@@ -3740,8 +3742,11 @@ $("import-text-load").addEventListener("click", () => {
 
 async function loadMe(pre) {
   try { me = pre || await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
-  saveJSON(CACHE_ME, me);
+  // 정지 상태(banned/banMessage/banUntil)는 캐시에 남기지 않는다 — 오버레이는 항상 서버 진실로만 결정(스테일 오탐 방지).
+  const meCache = Object.assign({}, me); delete meCache.banned; delete meCache.banMessage; delete meCache.banUntil;
+  saveJSON(CACHE_ME, meCache);
   renderLoginUI();
+  applyBanState();
 }
 
 async function doLogout() {
@@ -3787,6 +3792,161 @@ function renderAccountInto(el) {
     el.innerHTML = `<a class="login-btn" href="/auth/login"><span class="g-mark">G</span> 로그인</a>`;
   }
 }
+
+// ──────────────────── 제보/문의(인웹) + 계정 정지 ────────────────────
+let inqFiles = [];                          // 선택한 이미지 File 목록
+const INQ_MAX = 20 * 1024 * 1024;           // 1회 합계 20MB
+const INQ_STATUS_USER = { new: "접수됨", seen: "확인 중", resolved: "처리 완료" };
+
+// 정지 계정: 전체 기능 차단 오버레이 + 안내문. me.banned 기준(서버 /api/me).
+function applyBanState() {
+  const ov = $("ban-overlay"); if (!ov) return;
+  const lo = $("ban-logout");   // 오버레이 로그아웃 = doLogout(캐시·로컬데이터 정리 후 리로드). 서버 리다이렉트만으론 캐시가 안 지워짐.
+  if (lo && !lo.dataset.wired) { lo.dataset.wired = "1"; lo.addEventListener("click", (e) => { e.preventDefault(); doLogout(); }); }
+  if (me && me.banned) {
+    const m = $("ban-message"); if (m) m.textContent = me.banMessage || "계정 이용이 제한되었습니다.";
+    ov.hidden = false; document.body.classList.add("banned");
+  } else {
+    ov.hidden = true; document.body.classList.remove("banned");
+  }
+}
+
+function openInquiry() { const m = $("modal-inquiry"); if (!m) return; m.hidden = false; inqSwitch("new"); }
+
+// 로그인 여부에 따라 게이트/폼/내역 전환.
+function inqSwitch(tab) {
+  const gate = $("inq-login-gate"), form = $("inq-form"), mine = $("inq-mine");
+  const tabNew = $("inq-tab-new"), tabMine = $("inq-tab-mine");
+  if (!gate) return;
+  if (!me.loggedIn) { gate.hidden = false; form.hidden = true; mine.hidden = true; tabNew.hidden = true; tabMine.hidden = true; return; }
+  gate.hidden = true; tabNew.hidden = false; tabMine.hidden = false;
+  tabNew.classList.toggle("ghost", tab !== "new");
+  tabMine.classList.toggle("ghost", tab !== "mine");
+  if (tab === "mine") { form.hidden = true; mine.hidden = false; loadMyInquiries(); }
+  else { form.hidden = false; mine.hidden = true; inqLoadQuota(); }
+}
+
+async function inqLoadQuota() {
+  const el = $("inq-quota"); if (el) el.textContent = "";
+  try {
+    const q = await (await fetch("/api/inquiries/quota")).json();
+    if (q.banned) { if (el) el.textContent = q.banMessage || "계정 이용이 제한되었습니다."; return; }
+    if (el) el.textContent = `오늘 ${q.usedToday}/${q.limit}건 접수 · 남은 ${q.remaining}건`;
+  } catch { }
+}
+
+function inqSizeBytes() {
+  let n = 0; for (const f of inqFiles) n += f.size;
+  const body = $("inq-body"); if (body) n += new Blob([body.value || ""]).size;
+  return n;
+}
+function inqRenderFiles() {
+  const box = $("inq-previews"); if (!box) return;
+  box.innerHTML = "";
+  inqFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const d = document.createElement("div");
+    d.className = "inq-prev";
+    d.innerHTML = `<img src="${url}" alt=""><button type="button" class="inq-prev-x" aria-label="삭제">✕</button>`;
+    d.querySelector(".inq-prev-x").addEventListener("click", () => { inqFiles.splice(i, 1); inqRenderFiles(); });
+    box.appendChild(d);
+  });
+  inqUpdateSize();
+}
+function inqUpdateSize() {
+  const el = $("inq-size"); if (!el) return;
+  const n = inqSizeBytes();
+  el.textContent = `${(n / 1048576).toFixed(1)} / 20MB`;
+  el.classList.toggle("over", n > INQ_MAX);
+  const sub = $("inq-submit"); if (sub) sub.disabled = n > INQ_MAX;
+}
+function inqShowMsg(text, err) {
+  const m = $("inq-msg"); if (!m) return;
+  m.textContent = text; m.hidden = false; m.className = "inq-msg " + (err ? "err" : "ok");
+}
+
+async function submitInquiry(e) {
+  e.preventDefault();
+  const m = $("inq-msg"); if (m) { m.hidden = true; }
+  const title = ($("inq-title").value || "").trim();
+  const body = ($("inq-body").value || "").trim();
+  if (!title) { inqShowMsg("제목을 입력해 주세요.", true); return; }
+  if (!body) { inqShowMsg("내용을 입력해 주세요.", true); return; }
+  if (inqSizeBytes() > INQ_MAX) { inqShowMsg("최대 용량(20MB)을 초과했어요.", true); return; }
+  const fd = new FormData();
+  fd.append("type", $("inq-type").value);
+  fd.append("title", title);
+  fd.append("body", body);
+  fd.append("bundle", bundleString());   // 전체 프리셋(항상 첨부)
+  try { const bx = buildExportBundle(); if (bx) fd.append("build", bx); } catch { }   // 현재 빌드(나이트로드 등, 있으면)
+  for (const f of inqFiles) fd.append("files", f);
+  const sub = $("inq-submit"); sub.disabled = true;
+  try {
+    const r = await fetch("/api/inquiries", { method: "POST", body: fd });
+    const data = await r.json().catch(() => null);
+    if (!r.ok) {
+      inqShowMsg((data && data.error) || ("오류 " + r.status), true);
+      if (data && data.banned) { me.banned = true; me.banMessage = data.error; applyBanState(); }
+      return;
+    }
+    inqShowMsg(`접수됐어요. 소중한 제보 감사합니다! (오늘 남은 ${data.remainingToday}건)`, false);
+    $("inq-form").reset(); inqFiles = []; inqRenderFiles(); inqLoadQuota();
+  } catch (err) { inqShowMsg("전송 실패: " + err.message, true); }
+  finally { sub.disabled = false; }
+}
+
+async function loadMyInquiries() {
+  const box = $("inq-mine-list"); if (!box) return;
+  box.innerHTML = `<p class="hint">불러오는 중…</p>`;
+  try {
+    const data = await (await fetch("/api/inquiries/mine")).json();
+    const list = (data && data.inquiries) || [];
+    box.innerHTML = list.length ? list.map(inqMineRow).join("") : `<p class="hint">아직 문의 내역이 없어요.</p>`;
+  } catch { box.innerHTML = `<p class="hint">불러오지 못했어요.</p>`; }
+}
+function inqTypeLabel(t) { return t === "bug" ? "버그 제보" : t === "suggest" ? "기능 건의" : "기타 문의"; }
+function inqMineRow(q) {
+  const st = INQ_STATUS_USER[q.status] || q.status;
+  const when = new Date(q.createdAt).toLocaleString("ko-KR");
+  const thumbs = (q.attachments || []).map((a, i) =>
+    `<a href="/api/inquiries/mine/${q.id}/attachments/${i}" target="_blank" rel="noopener"><img class="inq-mine-thumb" src="/api/inquiries/mine/${q.id}/attachments/${i}" alt=""></a>`).join("");
+  const replies = (q.messages || []).filter((m) => m.author === "admin").map((m) =>
+    `<div class="inq-reply"><b>운영자</b> ${escapeHtml(m.body || "")}</div>`).join("");
+  return `<div class="inq-mine-item">
+    <div class="inq-mine-top"><span class="inq-badge s-${q.status}">${st}</span>
+      <span class="inq-mine-type">${escapeHtml(inqTypeLabel(q.type))}</span>
+      <span class="inq-mine-when">${when}</span></div>
+    ${q.title ? `<div class="inq-mine-title">${escapeHtml(q.title)}</div>` : ""}
+    <div class="inq-mine-body">${escapeHtml(q.body || "")}</div>
+    ${thumbs ? `<div class="inq-mine-thumbs">${thumbs}</div>` : ""}
+    ${replies ? `<div class="inq-replies">${replies}</div>` : ""}
+  </div>`;
+}
+
+function initInquiry() {
+  const link = $("footer-inquiry");
+  if (link) link.addEventListener("click", (e) => { e.preventDefault(); openInquiry(); });
+  const fi = $("inq-file-input");
+  if (fi) fi.addEventListener("change", () => {
+    for (const f of fi.files) if (f && f.type && f.type.startsWith("image/")) inqFiles.push(f);
+    fi.value = ""; inqRenderFiles();
+  });
+  const form = $("inq-form"); if (form) form.addEventListener("submit", submitInquiry);
+  const body = $("inq-body"); if (body) body.addEventListener("input", inqUpdateSize);
+  const tn = $("inq-tab-new"); if (tn) tn.addEventListener("click", () => inqSwitch("new"));
+  const tm = $("inq-tab-mine"); if (tm) tm.addEventListener("click", () => inqSwitch("mine"));
+  const ec = $("inq-email-copy");   // 비로그인 이메일: mailto 대신 클릭하면 주소 복사
+  if (ec) {
+    const doCopy = async () => {
+      const ok = await copyToClipboard("mekicalc@gmail.com");
+      const hint = ec.querySelector(".inq-email-hint");
+      if (hint) { const prev = hint.textContent; hint.textContent = ok ? "복사됨!" : "복사 실패"; ec.classList.add("copied"); setTimeout(() => { hint.textContent = prev; ec.classList.remove("copied"); }, 1500); }
+    };
+    ec.addEventListener("click", doCopy);
+    ec.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doCopy(); } });
+  }
+}
+initInquiry();
 
 // ──────────────────── 초기화 ────────────────────
 
@@ -5743,7 +5903,7 @@ function tlDealLines(dealLines, pct, lanes) {
       try {
         statDefs = cStats; renderForm();
         applyMeta(cMeta);
-        const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }
+        const cMe = loadJSON(CACHE_ME, null); if (cMe) { me = cMe; renderLoginUI(); }   // 정지 오버레이는 캐시로 띄우지 않음(서버 /api/me 진실만) — 스테일 캐시 오탐 방지
         initStatPresets();                  // localStorage 프리셋으로 폼 값 채움(booting=true → 재계산 안 함)
         renderConvSettings(); renderRangeSettings();
         // 홈 차트도 캐시로 즉시 그림(서버 대기 0). 방어배수까지 직전 값을 복원해 신선값과 서명이 일치 →

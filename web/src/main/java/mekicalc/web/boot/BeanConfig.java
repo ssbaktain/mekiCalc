@@ -106,10 +106,22 @@ public class BeanConfig {
         return new BotOutbox(dataDir);
     }
 
-    /** 카카오봇 방 레지스트리(방별 공지/응답 권한). */
+    /** 카카오봇 방 레지스트리(방별 공지/응답/문의 권한). */
     @Bean
     public RoomStore roomStore(Path dataDir) {
         return new RoomStore(dataDir);
+    }
+
+    /** 유저 제보/문의 저장소(파일: data/inquiries.json + 첨부 data/inquiries/&lt;id&gt;/). */
+    @Bean
+    public mekicalc.web.InquiryStore inquiryStore(Path dataDir) {
+        return new mekicalc.web.InquiryStore(dataDir);
+    }
+
+    /** 계정 정지 레지스트리(data/bans.json). */
+    @Bean
+    public mekicalc.web.BanStore banStore(Path dataDir) {
+        return new mekicalc.web.BanStore(dataDir);
     }
 
     /** 디스코드 웹훅 레지스트리(data/discord_webhooks.json). */

@@ -685,12 +685,88 @@
       </div>
     </nav>
     <p class="footer-disclaimer">메키칼크(MekiCalc)는 「메이플 키우기」의 스탯·딜 효율을 계산하는 비공식 팬 사이트입니다. 「메이플 키우기」 및 게임 내 콘텐츠의 저작권은 NEXON Korea / NEXON GAMES에 있으며, 본 사이트는 넥슨과 무관합니다.</p>
-    <p class="footer-links"><a href="/privacy.html">개인정보처리방침</a> · <a href="mailto:mekicalc@gmail.com">문의</a></p>
+    <p class="footer-links"><a href="/privacy.html">개인정보처리방침</a> · <a href="/terms.html">운영정책</a> · <a href="mailto:mekicalc@gmail.com" id="footer-inquiry">문의</a></p>
     <p class="footer-copy">© 2026 MekiCalc · 프리셋·설정은 이 브라우저(로그인 시 계정)에 저장됩니다.</p>
   </footer>
 
   <div id="toast" class="toast"></div>
   <div id="tl-tip" class="tl-tip" hidden></div>
+
+  <!-- 계정 정지 오버레이: 정지 계정은 로그인 시 전체 기능 차단 + 안내문 표시 -->
+  <div id="ban-overlay" class="ban-overlay" hidden>
+    <div class="ban-box">
+      <div class="ban-icon">🚫</div>
+      <h2>계정 이용이 제한되었습니다</h2>
+      <p id="ban-message" class="ban-message"></p>
+      <p class="ban-sub">문의: <a href="mailto:mekicalc@gmail.com">mekicalc@gmail.com</a> · <a href="/terms.html">운영정책</a></p>
+      <a class="mini-btn ghost" id="ban-logout" href="/auth/logout">로그아웃</a>
+    </div>
+  </div>
+
+  <!-- 제보/문의: 로그인 유저 인웹 접수(이미지 다중 첨부·현재 스탯 자동첨부). 비로그인은 이메일 안내. -->
+  <div id="modal-inquiry" class="modal-overlay" hidden>
+    <div class="modal inquiry-modal" role="dialog" aria-modal="true" aria-labelledby="modal-inquiry-title">
+      <div class="modal-head">
+        <h3 id="modal-inquiry-title">제보 / 문의</h3>
+        <div class="modal-head-actions">
+          <button id="inq-tab-new" class="mini-btn" type="button">새 문의</button>
+          <button id="inq-tab-mine" class="mini-btn ghost" type="button">내 내역</button>
+          <button class="modal-x" type="button" data-close aria-label="닫기">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- 비로그인 안내 -->
+        <div id="inq-login-gate" hidden>
+          <p class="inq-gate-desc">인웹 제보/문의는 <b>로그인 계정만</b> 이용할 수 있어요. 비로그인 문의는 아래 이메일로 보내주세요.</p>
+          <div class="inq-gate-actions">
+            <a class="primary-btn google-btn" href="/auth/login">Google로 로그인</a>
+          </div>
+          <div class="inq-email-copy" id="inq-email-copy" role="button" tabindex="0" title="클릭하면 이메일 주소가 복사돼요">
+            <span class="inq-email-addr">mekicalc@gmail.com</span>
+            <span class="inq-email-hint">클릭하면 복사</span>
+          </div>
+        </div>
+
+        <!-- 새 문의 폼 -->
+        <form id="inq-form" hidden>
+          <div class="inq-warn">
+            ⚠️ 허위·악의적 제보는 <a href="/terms.html" target="_blank" rel="noopener">운영정책</a>에 따라 계정 이용이 제한될 수 있어요.
+            접수 시 <b>작성 시각·IP·현재 스탯</b>이 함께 기록됩니다.
+          </div>
+          <label class="inq-row">유형
+            <select id="inq-type">
+              <option value="bug">버그 제보</option>
+              <option value="suggest">기능 건의</option>
+              <option value="etc">기타 문의</option>
+            </select>
+          </label>
+          <label class="inq-row">제목
+            <input id="inq-title" type="text" maxlength="80" placeholder="한 줄 요약" required>
+          </label>
+          <label class="inq-row">내용
+            <textarea id="inq-body" rows="6" placeholder="어떤 상황에서 무엇이 어떻게 되었는지 적어주세요. 버그라면 재현 방법도 함께요."></textarea>
+          </label>
+          <p class="inq-attach-note">📎 접수 시 <b>전체 프리셋</b>과 <b>현재 빌드</b>(있는 경우)가 자동으로 함께 첨부돼 버그 재현에 활용됩니다.</p>
+          <div class="inq-files">
+            <label class="mini-btn ghost" for="inq-file-input">＋ 이미지 첨부</label>
+            <input id="inq-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+            <span id="inq-size" class="inq-size">0 / 20MB</span>
+          </div>
+          <div id="inq-previews" class="inq-previews"></div>
+          <div class="inq-foot">
+            <span id="inq-quota" class="hint"></span>
+            <button id="inq-submit" class="primary-btn" type="submit">보내기</button>
+          </div>
+          <div id="inq-msg" class="inq-msg" hidden></div>
+        </form>
+
+        <!-- 내 문의 내역 -->
+        <div id="inq-mine" hidden>
+          <div id="inq-mine-list" class="inq-mine-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 내보내기: 백업 텍스트 팝업(열면 자동 복사, 우상단 복사 버튼) -->
   <div id="modal-export" class="modal-overlay" hidden>

@@ -1743,3 +1743,73 @@ body.notices-active .ad-slot { display: none !important; }
 .exp-delta { margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--border); font-size: 1.05em; }
 .exp-up .exp-delta b { color: #4fd1a1; }
 .exp-down .exp-delta b { color: #e0716a; }
+
+/* ──────────────── 제보/문의 모달 + 계정 정지 오버레이 ──────────────── */
+.inquiry-modal { max-width: 560px; }
+.inq-row { display: block; margin: 10px 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+.inq-row input, .inq-row select, .inq-row textarea {
+  display: block; width: 100%; box-sizing: border-box; margin-top: 5px; padding: 8px 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-family: inherit; font-size: 14px; font-weight: 400; }
+.inq-row textarea { resize: vertical; }
+.inq-opt { color: var(--muted); font-weight: 400; }
+.inq-warn { font-size: 12.5px; line-height: 1.5; color: var(--text); background: rgba(255,180,84,.10);
+  border: 1px solid rgba(255,180,84,.35); border-radius: 8px; padding: 9px 11px; margin-bottom: 4px; }
+.inq-warn a { color: var(--accent2, #ffb454); }
+.inq-attach-check { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); margin: 10px 0; cursor: pointer; }
+.inq-attach-check input { flex: 0 0 auto; }
+.inq-files { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
+.inq-size { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.inq-size.over { color: #e5484d; font-weight: 700; }
+.inq-previews { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.inq-prev { position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.inq-prev img { width: 100%; height: 100%; object-fit: cover; }
+.inq-prev-x { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; line-height: 18px; text-align: center;
+  border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; font-size: 12px; padding: 0; }
+.inq-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.inq-msg { margin-top: 10px; font-size: 13px; padding: 8px 10px; border-radius: 8px; }
+.inq-msg.ok { color: #2f9e6f; background: rgba(79,209,161,.10); border: 1px solid rgba(79,209,161,.3); }
+.inq-msg.err { color: #e5484d; background: rgba(229,72,77,.08); border: 1px solid rgba(229,72,77,.3); }
+.inq-gate-desc { font-size: 13.5px; line-height: 1.65; color: var(--text); margin: 4px 0 0; }
+.inq-gate-actions { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.inq-attach-note { font-size: 12.5px; color: var(--muted); background: var(--panel-2, rgba(127,127,127,.05)); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
+/* 비로그인: 이메일 주소 클릭 복사 칩(mailto 대신) */
+.inq-email-copy { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; padding: 8px 12px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px; user-select: all; transition: border-color .15s; }
+.inq-email-copy:hover { border-color: var(--accent, #4c8dff); }
+.inq-email-copy.copied { border-color: #4fd1a1; }
+.inq-email-addr { font-weight: 700; font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+.inq-email-hint { font-size: 11.5px; color: var(--muted); }
+.inq-email-copy.copied .inq-email-hint { color: #4fd1a1; font-weight: 700; }
+
+/* 상태 배지(접수됨/확인 중/처리 완료) — 관리자 미확인/확인중/해결과 색 공유 */
+.inq-badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.inq-badge.s-new { background: rgba(229,72,77,.15); color: #e5717a; }
+.inq-badge.s-seen { background: rgba(255,180,84,.15); color: #e0a45a; }
+.inq-badge.s-resolved { background: rgba(79,209,161,.15); color: #4fd1a1; }
+
+/* 내 문의 내역 */
+.inq-mine-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
+.inq-mine-item { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--panel-2, rgba(127,127,127,.04)); }
+.inq-mine-top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.inq-mine-when { margin-left: auto; }
+.inq-mine-title { font-weight: 700; margin: 6px 0 2px; }
+.inq-mine-body { font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+.inq-mine-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.inq-mine-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.inq-replies { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.inq-reply { font-size: 13px; background: rgba(43,108,176,.10); border-radius: 7px; padding: 6px 9px; }
+.inq-reply b { color: var(--accent, #4c8dff); margin-right: 6px; }
+
+/* 계정 정지 오버레이(전체 차단) */
+.ban-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(8,10,14,.86); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 20px; }
+.ban-overlay[hidden] { display: none; }   /* display:flex가 hidden을 덮어쓰지 않도록 명시(기존 .modal-overlay와 동일 패턴) */
+.ban-box { max-width: 420px; text-align: center; background: var(--card, #171b24); border: 1px solid var(--border);
+  border-radius: 14px; padding: 28px 24px; }
+.ban-box .ban-icon { font-size: 40px; }
+.ban-box h2 { margin: 10px 0 8px; font-size: 20px; }
+.ban-message { font-size: 14px; color: var(--text); line-height: 1.6; margin: 0 0 14px; }
+.ban-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
+.ban-sub a { color: var(--accent2, #ffb454); }
+body.banned { overflow: hidden; }

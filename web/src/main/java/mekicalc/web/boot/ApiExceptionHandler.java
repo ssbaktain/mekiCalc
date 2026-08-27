@@ -28,6 +28,12 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(400).body(Map.of("error", String.valueOf(e.getMessage())));
     }
 
+    /** 첨부 업로드가 서버 한도를 넘으면 413(친화 메시지). 제보/문의 첨부 20MB 초과 등. */
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> tooLarge(Exception e) {
+        return ResponseEntity.status(413).body(Map.of("error", "1회 제보/문의 최대 용량(20MB)을 초과했어요. 이미지 수·크기를 줄여 주세요."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> serverError(Exception e, HttpServletRequest req) {
         log.error(req.getMethod(), req.getRequestURI(), AccessLogInterceptor.userOf(req, auth), e);
