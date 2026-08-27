@@ -5270,6 +5270,7 @@ function tlWireGuide() {
     if (contentW <= 0) return;
     const x = e.clientX - inner.getBoundingClientRect().left;   // inner(패딩박스) 기준 px
     const cx = Math.max(0, Math.min(contentW, x - pad));        // 트랙 콘텐츠 기준
+    guide.dataset.frac = cx / contentW;   // 시각 비율로 저장 → 줌 시 폭 변해도 재계산(applyTlZoom)
     guide.style.left = (cx + pad) + "px";
     const tms = cx / contentW * tlGuideMs;
     let label = (tms / 1000).toFixed(1) + "s";
@@ -5552,6 +5553,22 @@ let tlShowDps = false, tlDpsAgg = 30, tlDpsShownPts = null;
 function applyTlZoom() {
   const inner = document.querySelector("#tl-result .tl-gantt-inner");
   if (inner) inner.style.setProperty("--tl-zoom", tlZoom);
+  repositionTlGuide(inner);   // 줌으로 콘텐츠 폭이 바뀌면 시간선도 같은 시각을 가리키도록 재배치
+}
+// 시간선(호버/터치로 만든 세로 가이드)을 저장된 시각 비율 기준으로 현재 콘텐츠 폭에 맞춰 다시 위치. 줌 시 어긋남 방지.
+function repositionTlGuide(inner) {
+  inner = inner || document.querySelector("#tl-result .tl-gantt-inner");
+  if (!inner) return;
+  const guide = inner.querySelector(".tl-guide");
+  if (!guide || guide.hidden) return;
+  const frac = parseFloat(guide.dataset.frac);
+  if (!isFinite(frac)) return;
+  const pad = 4, contentW = inner.clientWidth - pad * 2;
+  if (contentW <= 0) return;
+  const left = frac * contentW + pad;
+  guide.style.left = left + "px";
+  const scroll = inner.parentElement, chip = guide.querySelector(".tl-guide-time");
+  if (scroll && chip) chip.classList.toggle("flip", left > scroll.scrollLeft + scroll.clientWidth - 90);
 }
 function tlWireZoom() {
   const box = $("tl-result");

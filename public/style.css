@@ -1708,6 +1708,10 @@ body.notices-active .ad-slot { display: none !important; }
 /* 가상 스탯 실험 select/input — 배치표(tl-skill/tl-time) 드롭다운 UI와 통일 */
 .tl-table select.tl-exp-stat { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); min-width: 160px; }
 .tl-table input.tl-exp-amt { width: 140px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); }
+/* 좁은 폭(모바일)에서 스탯 표가 카드를 밀어 가로 스크롤이 생기지 않도록: 폭을 카드에 맞춰 압축 */
+#tl-exp-table { table-layout: fixed; }
+#tl-exp-table th:last-child, #tl-exp-table td:last-child { width: 34px; }
+#tl-exp-table select.tl-exp-stat, #tl-exp-table input.tl-exp-amt { width: 100%; min-width: 0; box-sizing: border-box; }
 /* 유물 실험 */
 .tl-exp-relic-head { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; font-size: 13.5px; font-weight: 600; color: var(--text); }
 .tl-mini-btn { padding: 3px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--card); color: var(--muted); font-size: .82em; cursor: pointer; }
@@ -1721,6 +1725,7 @@ body.notices-active .ad-slot { display: none !important; }
 .exp-relic-pot-line { display: flex; gap: 6px; flex-wrap: wrap; }
 .exp-relic-pot-line select { padding: 5px 7px; border: 1px solid var(--border); border-radius: 7px; background: var(--card); color: var(--text); font-size: .9em; }
 .exp-relic-pot-line select.tl-exp-pot-type { min-width: 130px; }
+#tl-exp-relic-list select { max-width: 100%; }   /* 좁은 폭에서 유물 셀렉트가 카드를 밀지 않도록 */
 .exp-relic-nopot, .exp-relic-empty { font-size: .86em; }
 .exp-relic .exp-tag { display: inline-block; padding: 0 6px; margin-right: 2px; border-radius: 6px; background: rgba(127,127,127,.18); color: var(--muted); font-size: .8em; font-weight: 600; vertical-align: middle; }
 .exp-box { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2, rgba(127,127,127,.05)); }
