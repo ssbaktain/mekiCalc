@@ -65,6 +65,11 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 // ── 계정/서버 동기화 상태 ──
 const PRESET_KEYS = new Set([STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, RELICP_KEY, BUILDP_KEY, CONV_KEY, RANGE_KEY]);
+// 계정 격리: 현재 localStorage 프리셋의 '소유 계정'(이메일 or "anon"). 계정이 바뀌면 이전 계정 데이터를 지운다(교차 오염 방지).
+const PRESET_OWNER_KEY = "mekicalc.presets.owner.v1";
+// 계정 전환/로그아웃 시 지울 유저 데이터 키(정적 캐시·패치본기록은 제외).
+const USER_DATA_KEYS = [STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, RELICP_KEY, RELIC_KEY, BUILDP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_SKILLS];
+function clearUserData() { USER_DATA_KEYS.forEach((k) => localStorage.removeItem(k)); }
 let me = { oauthEnabled: false, loggedIn: false, name: null, email: null };
 let suppressSync = false;     // 서버에서 받아 적용하는 동안 push 막기(에코 방지)
 let booting = true;           // 초기화 중에는 재계산(refreshQual·calcDamage)을 미뤄 맨 끝에서 1번만
@@ -3744,6 +3749,12 @@ $("import-text-load").addEventListener("click", () => {
 
 async function loadMe(pre) {
   try { me = pre || await (await fetch("/api/me")).json(); } catch { me = { oauthEnabled: false, loggedIn: false }; }
+  // ★계정 격리: 로그인 계정이 직전 소유자와 다르면 이전 계정의 로컬 프리셋을 지운다(새 계정에 이전 데이터가 새지 않도록).
+  // 이 loadMe는 부팅에서 init*·pullPresets 앞에서 await되므로, 여기서 지우면 이후 init이 빈 상태로 시작해 서버 데이터로만 채워진다.
+  const presetOwner = (me && me.loggedIn && me.email) ? String(me.email).toLowerCase() : "anon";
+  const prevPresetOwner = localStorage.getItem(PRESET_OWNER_KEY);
+  if (prevPresetOwner !== null && prevPresetOwner !== presetOwner) clearUserData();
+  localStorage.setItem(PRESET_OWNER_KEY, presetOwner);
   // 정지 상태(banned/banMessage/banUntil)는 캐시에 남기지 않는다 — 오버레이는 항상 서버 진실로만 결정(스테일 오탐 방지).
   const meCache = Object.assign({}, me); delete meCache.banned; delete meCache.banMessage; delete meCache.banUntil;
   saveJSON(CACHE_ME, meCache);
@@ -3754,8 +3765,10 @@ async function loadMe(pre) {
 
 async function doLogout() {
   try { await fetch("/auth/logout", { method: "POST" }); } catch {}
-  // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터·캐시 제거(정적 캐시는 유지).
-  [STATP_KEY, CUBEP_KEY, BUFFP_KEY, ALLYP_KEY, CONV_KEY, RANGE_KEY, CUBE_KEY, CACHE_DMG, CACHE_ME, CACHE_SKILLS].forEach((k) => localStorage.removeItem(k));
+  // 계정 격리: 다음 로그인 계정에 이전 계정 데이터가 안 보이도록 로컬 유저데이터 전부 제거(유물·빌드 포함) + 캐시·소유자 초기화(정적 캐시는 유지).
+  clearUserData();
+  localStorage.removeItem(CACHE_ME);
+  localStorage.setItem(PRESET_OWNER_KEY, "anon");
   location.reload();
 }
 
