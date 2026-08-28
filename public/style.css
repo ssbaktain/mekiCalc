@@ -170,6 +170,12 @@ main {
 
 /* ── 빌드 화면(스탯+스킬 통합, B안: 내부 토글) ── */
 /* 820px 폭 그대로. 직업·대상·빌드 프리셋 공용 헤더 아래 [스탯/스킬] 토글로 한 번에 하나만(항상 짧게). */
+/* 첫 입력(스탯 미입력) 안내 배너 — 스탯 입력 가이드로 유도. 전체가 클릭 가능한 링크. */
+.stat-guide-hint { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding: 12px 15px; border-radius: 11px; border: 1px solid var(--accent); background: rgba(124,156,255,.10); color: var(--text); text-decoration: none; font-size: 13px; line-height: 1.45; }
+.stat-guide-hint:hover { background: rgba(124,156,255,.16); }
+.stat-guide-hint .sgh-txt b { color: var(--accent); }
+.stat-guide-hint .sgh-go { flex: 0 0 auto; font-weight: 700; color: var(--accent); white-space: nowrap; }
+@media (max-width: 480px) { .stat-guide-hint { flex-direction: column; align-items: flex-start; gap: 6px; } }
 .build-header { margin-bottom: 16px; }
 .build-header .card-head { margin-bottom: 0; }   /* 프리셋 바만 담는 카드 → 하단 여백 제거 */
 .bh-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
@@ -1031,9 +1037,13 @@ html.deep-route #panel-home { display: none !important; }
 /* 미입력 시 탭 게이트: 카드만 블러(서브탭은 클릭 가능하게 유지) + 중앙 입력 CTA */
 .panel.char-gated { position: relative; }
 .panel.char-gated > .card { filter: blur(3px); opacity: .35; pointer-events: none; user-select: none; }
-/* 오버레이는 클릭을 통과시켜 뒤의 서브탭/설명이 눌리게 하고, 버튼만 클릭 대상으로 */
-.char-gate { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; pointer-events: none; }
-.char-gate .locked-btn { pointer-events: auto; }
+/* 오버레이는 클릭을 통과시켜 뒤의 서브탭/설명이 눌리게 하고, 버튼만 클릭 대상으로.
+   home/빌드처럼 직접 .card 자식이 없어 블러가 안 먹는 패널도 깔끔히 덮이도록 반투명 스크림+백드롭 블러. */
+.char-gate { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; pointer-events: none; background: rgba(28,31,38,.62); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.char-gate .locked-btn, .char-gate .gate-faq { pointer-events: auto; }
+/* 사용법·FAQ = CTA 위 보조(고스트) 버튼 */
+.gate-faq { display: inline-block; padding: 8px 15px; border-radius: 10px; background: transparent; color: var(--accent); border: 1px solid var(--accent); font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.gate-faq:hover { background: rgba(124,156,255,.12); }
 .locked-blur { filter: blur(3px); opacity: .32; pointer-events: none; user-select: none; }
 .locked-blur .bar-fill { background: var(--muted); }
 .locked-cta { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 10px; }

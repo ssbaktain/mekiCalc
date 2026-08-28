@@ -250,6 +250,11 @@
 
       <!-- 빌드 (스탯 + 스킬 통합) -->
       <div id="sub-build" class="subpanel">
+        <!-- 첫 입력(스탯 미입력) 안내: 스탯 입력 가이드로 유도. 값이 채워지면 JS가 숨김(refreshStatGuideHint). 정적 가이드 → route-link 아님. -->
+        <a id="stat-guide-hint" class="stat-guide-hint" href="/guide/stat-input.html" hidden>
+          <span class="sgh-txt">📘 처음이신가요? <b>스탯 입력 가이드</b>를 먼저 보면 어떤 값을 넣는지 쉽게 알 수 있어요.</span>
+          <span class="sgh-go">가이드 보기 →</span>
+        </a>
         <details class="panel-about">
           <summary>캐릭터 입력이란?</summary>
           <div class="about-body"><p>게임 스탯 창의 값과 사용 스킬을 입력하는 화면입니다. <b>직업</b>을 고르면 스탯·스킬이 그 직업 기준이 됩니다. ★<b>스탯은 유물을 해제한 값</b>으로 넣어야 정확합니다 — <a href="/guide/stat-input.html">스탯 입력 가이드</a> · <a href="/guide/how-to.html">사용법 가이드</a> 참고.</p></div>

@@ -372,8 +372,9 @@ const MENU_RIGHT = [];   // (비움)
 // 설정: 메뉴바 항목이 아니라 상단 톱니(데스크톱=로그인 우측, 모바일=드로어 첫 줄)로 진입하는 독립 패널.
 const SETTINGS_LEAF = { label: "설정", panel: "settings", path: "/settings" };
 
-// 캐릭터 스탯이 있어야 계산되는 탭 — 미입력이면 블러+CTA 게이트(정상 렌더 스킵). 홈은 박스별로 따로 처리.
-const CHAR_GATED_PANELS = new Set(["cube", "optcompare", "compare", "recommend", "statcompare", "gear"]);
+// 캐릭터 스탯이 있어야 계산되는 탭 — 미입력이면 블러+CTA 게이트(정상 렌더 스킵).
+// home(데미지 분석 구)·timeline(빌드)도 포함 — 스탯 미입력 신규/비로그인 유저에게 동일한 캐릭터 입력 CTA 노출.
+const CHAR_GATED_PANELS = new Set(["home", "timeline", "cube", "optcompare", "compare", "recommend", "statcompare", "gear"]);
 
 let tlExpApply = false;   // 실험값 전체 적용(실험실 토글). buildMenu가 상단 실행에서 참조 → showPanel 위에 선언(TDZ 방지).
 
@@ -557,6 +558,7 @@ function selectSub(name) {
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
   if (name === "build" && !booting) renderBuffs();   // 빌드 화면 스킬 목록 최신화(초기 pre-set 땐 미룸 — init 끝 refreshSkillData가 처리)
+  if (name === "build") refreshStatGuideHint();       // 첫 입력이면 스탯 입력 가이드 배너 노출
   if (name === "ally") renderAlly();
   if (name === "relic") renderRelic();
 }
@@ -888,10 +890,11 @@ function renderForm() {
     input.addEventListener("change", () => {
       truncStatInput(input);                              // 게임 표기 규칙(소수 2자리부터 버림)
       if (STAT_PROP_TRIGGERS.has(id)) deriveStatProp();   // 트리거값 확정 시 재파생
-      setStatDirty(true); calcDamage();
+      setStatDirty(true); calcDamage(); refreshStatGuideHint();
     });
   }
   applyQualMarkers();
+  refreshStatGuideHint();
 }
 
 // 게임 스탯 표기 규칙(전역): +옵션(FLAT·LEVEL)은 자연수, %·초는 소수 1자리까지, 소수 2자리부터는 버림(내림).
@@ -1250,6 +1253,12 @@ function characterEmpty() {
   return !((s.ATK_FLAT > 0) || (s.MAIN_STAT_FLAT > 0) || (s.DEFENSE > 0));
 }
 
+// 캐릭터 프리셋 첫 입력(스탯 미입력) 시 상단 '스탯 입력 가이드' 배너 노출, 값이 채워지면 숨김.
+function refreshStatGuideHint() {
+  const el = $("stat-guide-hint");
+  if (el) el.hidden = !characterEmpty();
+}
+
 // 큐브 프리셋에 입력된 잠재 옵션(스탯 있는 슬롯)이 하나도 없으면 미작성.
 function cubeEmpty() {
   if (!myCube || typeof myCube !== "object") return true;
@@ -1270,7 +1279,10 @@ function applyGate(panel, reqs) {
   let gate = panel.querySelector(":scope > .char-gate");
   if (fail) {
     if (!gate) { gate = document.createElement("div"); gate.className = "char-gate"; panel.appendChild(gate); }
-    gate.innerHTML = `<p class="locked-msg">${fail.msg}</p><a class="route-link locked-btn" href="${fail.path}">${fail.cta} →</a>`;
+    // 사용법·FAQ 버튼을 캐릭터 입력 CTA 위에 함께 노출(정적 guide 페이지 → route-link 아님, 기본 이동).
+    gate.innerHTML = `<p class="locked-msg">${fail.msg}</p>` +
+      `<a class="gate-faq" href="/guide/how-to.html">📖 사용법 · FAQ</a>` +
+      `<a class="route-link locked-btn" href="${fail.path}">${fail.cta} →</a>`;
   } else if (gate) {
     gate.remove();
   }
@@ -1638,6 +1650,7 @@ $("stat-reset").addEventListener("click", () => {
   for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) { input.value = "0"; delete input.dataset.full; }   // 헤더 레벨 포함
   setStatDirty(true);
   calcDamage();
+  refreshStatGuideHint();   // 0으로 초기화 → 가이드 배너 다시 노출
 });
 
 // 슬롯 select 채우기(중복 옵션 제거, "비움" 포함). 노란 옵션은 금색, 흰 옵션은 기본색으로 구분.
@@ -2509,6 +2522,7 @@ function fillStats(stats) {
     const v = stats[input.dataset.statId];
     setStatValue(input, v == null ? null : v, def ? def.unit : "FLAT");   // 화면=표기(버림), 계산 원본=풀값 보존
   }
+  refreshStatGuideHint();   // 프리셋 적용 후 미입력/입력 여부 재판정
 }
 
 // 서버에 저장된 내 데이터(스탯·환산·큐브)를 불러온다.
