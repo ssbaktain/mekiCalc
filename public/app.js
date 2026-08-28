@@ -4054,7 +4054,7 @@ function showWhatsNewIfNeeded() {
   if (!patchHasUnseen()) return;
   if (location.pathname === "/updates") { markPatchSeen(); return; }   // 이미 업데이트 페이지면 플로팅 불필요
   const wrap = $("whatsnew"), body = $("whatsnew-body"); if (!wrap || !body) return;
-  body.innerHTML = patchNotes.slice(0, 3).map(patchCardHtml).join("");
+  body.innerHTML = patchNotes.slice(0, 1).map(patchCardHtml).join("");   // 새 소식 = 최근 1건만(전체는 '업데이트 내역' 탭)
   wrap.hidden = false;
 }
 
