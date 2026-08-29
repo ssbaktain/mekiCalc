@@ -32,7 +32,9 @@ public final class SupporterEngine {
             List<int[]> summonWindows,             // 소환창 [start,end] 절대(간트 표시용)
             Map<Integer, List<double[]>> dealTicks, // 동료 스킬 idx → [{t절대, dmg}] (간트 딜 라인용)
             Map<Integer, Long> perSkillHits,       // 동료 스킬 idx → 전 구간 총 타수(한줄 데미지 산출용)
-            Map<Integer, Long> perSkillCasts       // 동료 스킬 idx → 전 구간 시전 횟수
+            Map<Integer, Long> perSkillCasts,      // 동료 스킬 idx → 전 구간 시전 횟수
+            Timeline reprTl,                       // 대표(첫) 소환 서브타임라인(적 디버프 반영) — 큐브 닫힌식 동료 자체딜 평가용
+            ModState reprSnapshot                  // 대표 소환 시점 플레이어 버프 상태 — 계승 base를 map별로 재도출(동료도 같은 공식 직접 평가)
     ) {}
 
     /**
@@ -45,8 +47,9 @@ public final class SupporterEngine {
                                       int firstSummonMs, int simMs, boolean boss, double monsterDef,
                                       SupporterBook book) {
         SupporterIR sup = book.supporter(companionCode);
-        if (sup == null) return new CompanionResult(Map.of(), 0, 0, List.of(), 0, List.of(), Map.of(), Map.of(), Map.of());
+        if (sup == null) return new CompanionResult(Map.of(), 0, 0, List.of(), 0, List.of(), Map.of(), Map.of(), Map.of(), null, null);
         int cd = sup.summonCooldownMs();
+        Timeline reprTl = null; ModState reprSnapshot = null;   // 대표(첫) 소환 — 큐브 닫힌식 동료 자체딜 평가용
 
         Map<Integer, Double> per = new HashMap<>();
         Map<Integer, Long> hitsPer = new HashMap<>();
@@ -59,7 +62,8 @@ public final class SupporterEngine {
 
         for (int s = Math.max(0, firstSummonMs); s < simMs; s += (cd > 0 ? cd : simMs)) {
             // 동적 스냅샷(B): 소환 시점 s의 플레이어 실효 스탯
-            Preset playerEff = effectivePlayerPreset(playerBase, modStateAt(playerBuffs, s));
+            ModState snap = modStateAt(playerBuffs, s);
+            Preset playerEff = effectivePlayerPreset(playerBase, snap);
             Preset cbase = SupporterInherit.build(playerEff, sup, companionLevel, book);
             int W = SupporterInherit.windowMs(playerEff, sup);
             int usableW = Math.min(W, simMs - s);
@@ -68,6 +72,7 @@ public final class SupporterEngine {
             SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, book, boss);
             // 적 받피증(Weakness) → 동료 딜에도 적용(적에 붙은 디버프=모든 공격자 수혜, §5). 소스: 플레이어 Weakness(절대시각) + 동료 자기 enemy 디버프.
             applyEnemyRecvDmg(r.timeline(), r.playerBuffs(), playerBuffs, s);
+            if (reprTl == null) { reprTl = r.timeline(); reprSnapshot = snap; }   // 첫 소환 = 큐브 닫힌식 평가 대표
             Analyzer an = new Analyzer(r.timeline(), cbase, monsterDef, boss, usableW);
             for (Map.Entry<Integer, Double> e : an.perSkillDamage().entrySet()) {
                 per.merge(e.getKey(), e.getValue(), Double::sum);
@@ -89,7 +94,7 @@ public final class SupporterEngine {
         }
 
         double dps = simMs > 0 ? total / (simMs / 1000.0) : 0;
-        return new CompanionResult(per, total, dps, injections, count, summonWindows, dealTicks, hitsPer, castsPer);
+        return new CompanionResult(per, total, dps, injections, count, summonWindows, dealTicks, hitsPer, castsPer, reprTl, reprSnapshot);
     }
 
     /**
@@ -188,7 +193,7 @@ public final class SupporterEngine {
      * 소환 시점 플레이어 실효 프리셋 = base + 그 시점 ModState(버프) 접기.
      * 공격력%는 곱(base×(1+공%)×(1+버프공%)), 나머지 %스탯은 합, 최종뎀은 (1+base)×Π소스를 등가 합%로 접음.
      */
-    static Preset effectivePlayerPreset(Preset b, ModState m) {
+    public static Preset effectivePlayerPreset(Preset b, ModState m) {
         Map<String, Double> s = new HashMap<>();
         double effAtk = b.atkFlat() * (1 + b.atkPct() / 100.0) * (1 + m.get(Stat.ATK_PCT) / 100.0);
         s.put("ATK_FLAT", effAtk);

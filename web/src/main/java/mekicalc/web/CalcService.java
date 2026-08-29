@@ -1617,6 +1617,7 @@ public final class CalcService {
         private final Double kills;
         private final boolean preActivateProc, autoFillBasic, fillSkills, optimize;
         private final java.util.Set<Integer> skillsOff;
+        private final String companionCode; private final int companionLevel, firstSummonMs;   // 동료(빌드의 한 축) — 큐브 딜에도 반영
 
         // 대표 딜(계수·타수·마스터리=1·1·0) — 그룹 딜 = perHit(BASIC1)×basicW + perHit(SKILL1)×skillW.
         private static final DealEvent BASIC1 = new DealEvent(-1, DmgType.BASIC, 1.0, 1, 0.0, false);
@@ -1624,18 +1625,29 @@ public final class CalcService {
 
         private ArtifactAssembler.Result baseArt;  // 유물 조립(스케줄 기여분 + 파생 입력 스탯 판정용)
         private java.util.Set<String> resimStats = RESIM_STATS;  // 재sim 트리거 = 스케줄 스탯 + 유물 파생 입력(크확/DMG 등, baseArt 확정 후 확장)
-        private StatBlock curRef; private double curOut; private List<GroupAgg> curGroups;      // 전체 현재 스탯(부위마다 curFull 호출) 캐시
-        private StatBlock cachedBaseRef; private double cachedBaseOut; private List<GroupAgg> cachedBaseGroups;  // 부위 baseline 캐시
-        private final Map<String, List<GroupAgg>> schedDeltaCache = new java.util.HashMap<>();  // 현재 baseline 내 스케줄 delta 재sim 캐시(baseline 갱신 시 clear)
+        private StatBlock curRef; private double curOut;   // 마지막 output(increase의 before 재사용)
+        // ★재sim 결과(Sim)=resimStats(스케줄+유물 파생입력) 값에만 의존 → 그 튜플로 전역 캐시. 동료 재sim도 여기 1회(같은 스케줄 재사용).
+        private final Map<String, Sim> simBySched = new java.util.HashMap<>();
+        private boolean primed;   // 첫 호출로 baseArt·resimStats 확정(sched-tuple 키 확정) 후부터 캐시
+
+        // ── 동료(빌드의 한 축) — 동료는 소환창·계승 스냅샷=★스케줄 스탯(RESIM_STATS)에만 의존(크확·DMG 등 파생 입력엔 스케줄 불변).
+        // 그래서 동료 계산은 RESIM_STATS 튜플로 별도 캐시 → 파생 옵션(크확/DMG) 재sim에선 동료 재sim 스킵(닫힌식 반응). ──
+        private mekicalc.timeline.ir.SupporterIR compSup; private int compLvl; private boolean compResolved;
+        private final Map<String, CompCache> compCache = new java.util.HashMap<>();   // RESIM_STATS 튜플 → 동료 계산(재sim 최소화)
+        /** 한 스케줄의 동료 계산 — 플레이어 주입 버프(cb/cs) + 자체딜 대표 그룹·스냅샷·기준값. 非스케줄 델타는 evalGroups에서 inheritedFor로 스케일. */
+        record CompCache(List<BuffSource> cb, List<double[]> cs, List<GroupAgg> compGroups, double compBase, double compRefResponse, mekicalc.timeline.ModState snapshot) {}
 
         /** 같은 버프상태(ModState)를 공유하는 타격들의 집계 — basicW/skillW = Σ 계수×타수×(1+마스터리). */
         record GroupAgg(ModState m, double basicW, double skillW) {}
+        /** 한 번 재sim한 결과 — 플레이어 그룹(동료 버프 반영) + 동료 자체딜(그 스케줄 기준: 대표 소환 그룹·스냅샷·총딜). */
+        record Sim(List<GroupAgg> player, List<GroupAgg> comp, double compBase, double compRefResponse, mekicalc.timeline.ModState snapshot) {}
 
         TimelineDealModel(DamageModel dm, String chapter, String target,
                           List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                           boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
-                          boolean fillSkills, boolean optimize, int simMs) {
+                          boolean fillSkills, boolean optimize, int simMs,
+                          String companionCode, int companionLevel, int firstSummonMs) {
             this.dm = dm;
             this.chapter = chapter; this.target = target;
             this.boss = isBossTarget(target);
@@ -1647,72 +1659,120 @@ public final class CalcService {
             this.preActivateProc = preActivateProc; this.autoFillBasic = autoFillBasic;
             this.skillsOff = skillsOff; this.fillSkills = fillSkills; this.optimize = optimize;
             this.simMs = simMs <= 0 ? (int) ((boss ? BOSS_SECONDS : NORMAL_SECONDS) * 1000) : simMs;
+            this.companionCode = companionCode; this.companionLevel = companionLevel; this.firstSummonMs = firstSummonMs;
         }
 
         @Override public double output(StatBlock b) {
-            if (curRef == null) {                 // 첫 호출 = 전체 현재 스탯(curFull) → 캐시
-                curRef = b; curGroups = groupsFor(b.asMap()); curOut = evalGroups(curGroups, b.asMap());
-                return curOut;
-            }
             if (b == curRef) return curOut;
-            if (b != cachedBaseRef) {             // 부위 baseline 갱신(부위당 1회 재sim) → 스케줄 delta 캐시 무효화
-                cachedBaseRef = b; cachedBaseGroups = groupsFor(b.asMap()); cachedBaseOut = evalGroups(cachedBaseGroups, b.asMap());
-                schedDeltaCache.clear();
-            }
-            return cachedBaseOut;
+            Map<String, Double> m = b.asMap();
+            double o = evalGroups(simFor(m), m);
+            curRef = b; curOut = o;
+            return o;
         }
 
         @Override public double increase(StatBlock current, StatBlock delta) {
-            double before = output(current);      // baseline(또는 전체) 재sim·캐시
+            double before = output(current);
             if (before <= 0) return 0;
-            Map<String, Double> cur = current.asMap();
             Map<String, Double> cm = combine(current, delta).asMap();
-            // 스케줄 불변(로테이션·타수 동일)이면 baseline 그룹 재평가(곱배수 닫힌식) — mods 스탯의존은 delta 규모라 무시.
-            List<GroupAgg> g;
-            if (sameSched(cur, cm)) {
-                g = (current == cachedBaseRef) ? cachedBaseGroups : (current == curRef) ? curGroups : groupsFor(cm);
-            } else if (current == cachedBaseRef) {
-                // 스케줄이 바뀌는 delta(공속/쿨감/스킬레벨/벞지/소지 옵션) → 스케줄만 반영한 재sim, baseline 내 조합값별 캐시.
-                String key = schedTuple(cm);
-                g = schedDeltaCache.get(key);
-                if (g == null) { g = groupsFor(schedApplied(cur, cm)); schedDeltaCache.put(key, g); }
-            } else {
-                g = groupsFor(cm);
-            }
-            return evalGroups(g, cm) / before - 1.0;
+            return evalGroups(simFor(cm), cm) / before - 1.0;   // 비스케줄 델타=같은 sched-tuple 재사용(닫힌식), 스케줄 델타=새 튜플 1회 재sim
         }
 
-        /** baseline에 combined의 재sim스탯값만 적용(그 외 델타는 그룹 무관 → evalGroups 프리셋에서 반영). */
-        private Map<String, Double> schedApplied(Map<String, Double> base, Map<String, Double> combined) {
-            Map<String, Double> m = new LinkedHashMap<>(base);
-            for (String s : resimStats) m.put(s, combined.getOrDefault(s, 0.0));
-            return m;
+        /** map의 재sim(Sim)을 sched-tuple 캐시에서 — resimStats 값이 같으면 재sim 안 하고 재사용(동료 포함). 비스케줄 차이는 evalGroups에서 프리셋으로. */
+        private Sim simFor(Map<String, Double> map) {
+            if (!primed) { Sim s = groupsFor(map); primed = true; simBySched.put(schedTuple(map), s); return s; }   // 첫 호출=resimStats 확정
+            return simBySched.computeIfAbsent(schedTuple(map), k -> groupsFor(map));
         }
 
-        /** 재sim스탯값 튜플(재sim 캐시 키). */
+        /** 재sim스탯값 튜플(재sim 캐시 키) = 스케줄 스탯 + 유물 파생 입력. 이 값들이 같으면 Sim(플레이어 그룹·동료) 동일. */
         private String schedTuple(Map<String, Double> m) {
             StringBuilder sb = new StringBuilder();
             for (String s : resimStats) sb.append(s).append('=').append(m.getOrDefault(s, 0.0)).append(',');
             return sb.toString();
         }
 
-        /** 타임라인 생성 + 버프상태 그룹 집계(재sim). */
-        private List<GroupAgg> groupsFor(Map<String, Double> map) {
+        /**
+         * 한 스탯셋(map)의 재sim — 플레이어 그룹(동료 버프 반영) + 동료 자체딜 상태(그 스케줄 기준).
+         * ★동료는 스케줄 의존(소환창·계승 스냅샷)이라 재sim마다 갱신(직업 부분과 같은 캐시 경로). 실험실과 동일 계산.
+         * 비용 = 실험실 nlTimeline과 동일: 1차(스냅샷)→SupporterEngine.run→2차(동료 버프 반영). 재sim은 부위/스케줄 델타에만.
+         */
+        private Sim groupsFor(Map<String, Double> map) {
+            if (supporterAvailable(companionCode)) {
+                // 동료 계산은 RESIM_STATS(스케줄) 튜플에만 의존 → 파생(크확/DMG) 옵션 재sim에선 재사용(재sim 스킵). 非스케줄 차이는 inheritedFor 스케일.
+                CompCache cc = compCache.computeIfAbsent(compTuple(map), k -> buildCompanion(map));
+                // ── 2차: 동료 버프(캐시분) 반영 플레이어(파생 유물·공격 빈도) ──
+                TimelineBuild bt2 = buildTimeline(map, "auto", null, chapter, target, simMs,
+                        artifacts, potentials, enemies, kills, contentOverride, artOffsetMs,
+                        preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize, cc.cs(), cc.cb());
+                return new Sim(buildGroups(bt2.tl()), cc.compGroups(), cc.compBase(), cc.compRefResponse(), cc.snapshot());
+            }
+            // 동료 없음 = 플레이어 단독
             TimelineBuild bt = buildTimeline(map, "auto", null, chapter, target, simMs,
                     artifacts, potentials, enemies, kills, contentOverride, artOffsetMs,
                     preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
-            if (baseArt == null) {                        // 첫 호출(현재 스탯) = 유물 조립·파생 입력 스탯 확정
-                baseArt = bt.artRes();
-                java.util.Set<String> rs = new java.util.HashSet<>(RESIM_STATS);
-                for (Stat st : ArtifactAssembler.derivedInputStats(baseArt)) rs.add(st.name());   // 순환 고리=크확, 육각=DMG, 헬레나=크확 등
-                resimStats = rs;
-            }
-            return buildGroups(bt.tl());
+            if (baseArt == null) { baseArt = bt.artRes(); expandResimStats(); }
+            return new Sim(buildGroups(bt.tl()), null, 0, 0, null);
         }
 
-        /** 그룹 집계 + 프리셋으로 종합 딜(= Analyzer.totalDamage와 동일값, 슬롯 순회 없이 그룹 순회). */
-        private double evalGroups(List<GroupAgg> groups, Map<String, Double> map) {
-            Preset preset = presetFor(map);
+        /** 동료 1회 계산(RESIM_STATS 튜플별) — 스냅샷용 1차 빌드→SupporterEngine.run→주입버프·대표 그룹·기준값. 실험실 nlTimeline과 동일 경로. */
+        private CompCache buildCompanion(Map<String, Double> map) {
+            TimelineBuild bt1 = buildTimeline(map, "auto", null, chapter, target, simMs,   // 스냅샷용(동료 버프 미주입)
+                    artifacts, potentials, enemies, kills, contentOverride, artOffsetMs,
+                    preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
+            if (baseArt == null) { baseArt = bt1.artRes(); expandResimStats(); }
+            if (!compResolved) { compSup = supBook().supporter(companionCode); compLvl = companionLevel <= 0 ? 1 : companionLevel; compResolved = true; }
+            List<BuffSource> playerSrc = new ArrayList<>(bt1.sources());   // 플레이어-only(동료버프는 슬롯에만) → 계승 스냅샷
+            playerSrc.addAll(bt1.artRes().sources());
+            mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
+                    bt1.preset(), playerSrc, companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
+            List<BuffSource> cb = new ArrayList<>();
+            List<double[]> cs = new ArrayList<>();
+            for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
+                if ("companion".equals(pb.target())) continue;   // 동료 자기버프는 플레이어 미반영
+                cb.add(mekicalc.timeline.SupporterEngine.toBuffSource(pb));
+                if ("AttackSpeed".equals(pb.stat()) && !pb.toEnemy()) cs.add(new double[]{pb.startMs(), pb.endMs(), pb.value() / 10.0});
+            }
+            List<GroupAgg> cg = comp.reprTl() != null ? buildGroups(comp.reprTl()) : null;
+            mekicalc.timeline.ModState snap = comp.reprSnapshot();
+            double refResp = cg != null ? evalWith(cg, inheritedFor(snap, map)) : 0;
+            return new CompCache(cb, cs, cg, comp.totalDamage(), refResp, snap);
+        }
+
+        /** baseArt 확정 후 재sim 트리거 스탯 = 스케줄(RESIM_STATS) + 유물 파생 입력(크확·DMG 등). */
+        private void expandResimStats() {
+            java.util.Set<String> rs = new java.util.HashSet<>(RESIM_STATS);
+            for (Stat st : ArtifactAssembler.derivedInputStats(baseArt)) rs.add(st.name());
+            resimStats = rs;
+        }
+
+        /** 동료 재sim 캐시 키 = 스케줄 스탯(RESIM_STATS)만(파생 입력 제외 — 동료 스케줄은 파생과 무관). */
+        private String compTuple(Map<String, Double> m) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : RESIM_STATS) sb.append(s).append('=').append(m.getOrDefault(s, 0.0)).append(',');
+            return sb.toString();
+        }
+
+        /** map 스탯에서의 동료 계승 base — 소환 스냅샷(그 스케줄의 고정 버프상태)에 map 실효스탯을 접어 계승(엔진과 동일 경로). */
+        private Preset inheritedFor(mekicalc.timeline.ModState snapshot, Map<String, Double> map) {
+            Preset playerEff = mekicalc.timeline.SupporterEngine.effectivePlayerPreset(presetFor(map), snapshot);
+            return mekicalc.timeline.SupporterInherit.build(playerEff, compSup, compLvl, supBook());
+        }
+
+        /**
+         * 종합 딜 = 플레이어 그룹×프리셋 + 동료 자체딜. 동료 자체딜은 그 스케줄의 대표 그룹을 "동료 자기 스탯"으로 같은 공식 평가.
+         * baseline 내 非스케줄 델타(크뎀·최종뎀 등)는 inheritedFor로 동료가 자기 구조대로 반응(닫힌식·정확). 스케줄 델타는 Sim 자체가 재sim돼 반영.
+         */
+        private double evalGroups(Sim sim, Map<String, Double> map) {
+            double playerDmg = evalWith(sim.player(), presetFor(map));
+            double compDmg = 0;
+            if (sim.compBase() > 0)
+                compDmg = (sim.comp() != null && sim.compRefResponse() > 0)
+                        ? sim.compBase() * (evalWith(sim.comp(), inheritedFor(sim.snapshot(), map)) / sim.compRefResponse())
+                        : sim.compBase();
+            return playerDmg + compDmg;
+        }
+
+        /** 그룹×프리셋 → 종합 딜(= Analyzer.totalDamage와 동일값, 슬롯 순회 없이 그룹 순회). */
+        private double evalWith(List<GroupAgg> groups, Preset preset) {
             double dmg = 0;
             for (GroupAgg g : groups) {
                 double pb = DamageFormula.perHit(preset, g.m(), BASIC1, monDef, boss);
@@ -1720,13 +1780,6 @@ public final class CalcService {
                 dmg += pb * g.basicW() + ps * g.skillW();
             }
             return dmg;
-        }
-
-        /** 재sim이 필요한 스탯(스케줄·계수·유물 파생 입력)이 모두 같은가(같으면 그룹 재사용). */
-        private boolean sameSched(Map<String, Double> a, Map<String, Double> b) {
-            for (String s : resimStats)
-                if (Math.abs(a.getOrDefault(s, 0.0) - b.getOrDefault(s, 0.0)) > 1e-9) return false;
-            return true;
         }
 
         /** baseline 타임라인의 타격을 버프상태(ModState)별로 묶어 basic/skill 가중치(Σ 계수×타수×(1+마스터리))로 집계. */
@@ -1788,7 +1841,8 @@ public final class CalcService {
     public record CubeCtx(List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                           boolean preActivateProc, boolean autoFillBasic, Set<Integer> skillsOff,
-                          boolean fillSkills, boolean optimize, int simMs) {}
+                          boolean fillSkills, boolean optimize, int simMs,
+                          String tlCompanion, int tlCompanionLevel, int tlFirstSummonMs) {}   // 빌드의 동료(신엔진) — 큐브 딜에도 반영
 
     /** 나이트로드(신엔진 구현 직업) → 타임라인 종합 DPS 모델, 그 외 → 구엔진(1타×공속/종합 DPS 해석식). */
     private DealModel cubeDealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval,
@@ -1797,7 +1851,8 @@ public final class CalcService {
         if ((int) current.get("JOB") == JOB_NIGHTLORD)
             return new TimelineDealModel(content.damageModel(conv), chapter, target, ctx.artifacts(), ctx.potentials(),
                     ctx.enemies(), ctx.kills(), ctx.contentOverride(), ctx.artOffsetMs(), ctx.preActivateProc(),
-                    ctx.autoFillBasic(), ctx.skillsOff(), ctx.fillSkills(), ctx.optimize(), ctx.simMs());
+                    ctx.autoFillBasic(), ctx.skillsOff(), ctx.fillSkills(), ctx.optimize(), ctx.simMs(),
+                    ctx.tlCompanion(), ctx.tlCompanionLevel(), ctx.tlFirstSummonMs());
         return dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
     }
 

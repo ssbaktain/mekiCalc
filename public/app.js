@@ -5195,6 +5195,8 @@ function effRelicCtx() {
     const rm = tlExpRelicPayload();
     if (rm) { p.artifacts = rm.artifacts; p.potentials = rm.potentials; }
   }
+  const cb = tlCompanionBuild();   // 빌드 동료(신엔진) → 큐브·비교·추천 딜에도 반영(구 ally와 충돌 없게 tl* 필드)
+  if (cb) { p.tlCompanion = cb.code; p.tlCompanionLevel = cb.level; p.tlFirstSummonMs = Math.round((cb.firstSummon || 0) * 1000); }
   return p;
 }
 
