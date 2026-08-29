@@ -77,7 +77,7 @@ public final class SupporterEngine {
             }
             for (SupporterTimeline.PlayerBuff b : r.playerBuffs())
                 injections.add(new SupporterTimeline.PlayerBuff(b.skillIdx(), b.skillName(),
-                        b.stat(), b.value(), s + b.startMs(), Math.min(s + b.endMs(), simMs), b.toEnemy()));
+                        b.stat(), b.value(), s + b.startMs(), Math.min(s + b.endMs(), simMs), b.toEnemy(), b.target()));
             // 간트용: 소환창 + 스킬별 딜 틱(절대 시각)
             summonWindows.add(new int[]{s, s + usableW});
             for (int idx : r.timeline().dealingSkills()) {
@@ -112,7 +112,8 @@ public final class SupporterEngine {
             case "Weakness", "RECV_DMG"   -> src.add(Stat.WEAKNESS, pb.value() / 10.0);        // 받피증(적 디버프)
             case "EnemyCritResist", "CriticalResist", "CRIT_RESIST" -> src.add(Stat.CRIT_RATE_ENEMY, pb.value() / 10.0); // 적 크저감
             case "EnemyRecvCritDmg"       -> src.add(Stat.CRIT_DMG_ENEMY, pb.value() / 10.0); // 적 받크뎀↑
-            default -> { }   // AttackSpeed 등 스케줄 변수는 슬롯딜에 무효
+            case "AttackSpeed"            -> src.add(Stat.ATK_SPEED, pb.value() / 10.0);       // 슬롯딜엔 무효지만 파생-공속 입력 + 스케줄 창(별도)용
+            default -> { }
         }
         return src;
     }
@@ -121,6 +122,15 @@ public final class SupporterEngine {
      * 동료→플레이어 버프 주입(3단계) — 플레이어 타임라인의 각 슬롯 ModState에 반영해 플레이어 딜을 높인다.
      * 기존 슬롯(딜 시각)에만 적용(BuffAccumulator.accumulate와 동일 방식).
      */
+    /** BuffSource 목록을 타임라인 슬롯에 반영(파생/순환 계산 전 동료 버프 슬롯 주입용 — buildTimeline에서 호출). */
+    public static void accumulateBuffSources(Timeline tl, List<BuffSource> sources, int simMs) {
+        for (BuffSource cs : sources) {
+            if (cs.dormant()) continue;
+            boolean incl = cs.endMs() >= simMs;
+            for (Slot slot : tl.slots().subMap(cs.startMs(), true, cs.endMs(), incl).values()) cs.applyTo(slot.mods());
+        }
+    }
+
     public static void injectBuffs(Timeline tl, List<SupporterTimeline.PlayerBuff> injections, int simMs) {
         for (SupporterTimeline.PlayerBuff pb : injections) {
             BuffSource src = toBuffSource(pb);
@@ -185,7 +195,7 @@ public final class SupporterEngine {
         s.put("ATK_PCT", 0.0);
         s.put("CRIT_RATE", b.critRate() + m.get(Stat.CRIT_RATE) + m.get(Stat.CRIT_RATE_ENEMY));
         s.put("CRIT_DMG", b.critDmg() + m.get(Stat.CRIT_DMG) + m.get(Stat.CRIT_DMG_ENEMY));
-        s.put("ATK_SPEED", b.atkSpeed() + m.get(Stat.ATK_SPEED));
+        s.put("ATK_SPEED", Stat.ATK_SPEED.combine(b.atkSpeed(), m.get(Stat.ATK_SPEED)));   // ★공속 체감(선형합 금지)
         s.put("DMG", b.dmg() + b.dmgAdd() + m.get(Stat.DMG));
         s.put("DMG_AMP", b.dmgAmp() + m.get(Stat.DMG_AMP));
         s.put("STAT_PROP_DMG", b.statProp() + m.get(Stat.STAT_PROP));

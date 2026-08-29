@@ -747,11 +747,11 @@
               "role": "statUp",
               "stat": "AttackSpeed",
               "value": 200,
-              "target": "player",
+              "target": "both",
               "perHpRatio": true,
               "assumeMax": true,
               "_seed": "806480 op2 ModStat AttackSpeed dyn=HpRatio/100*20 → HP100%=200(20%)",
-              "_note": "현재HP 10%마다 공속 2%, HP100%=20%. AttackSpeed=고유체감·상한150%"
+              "_note": "현재HP 10%마다 공속 2%, HP100%=20%. AttackSpeed=고유체감·상한150%. ★인게임 버그(op1 크뎀과 동일): 레전 비숍 패시브4가 동료 자신에게도 적용 → target both(동료 자기 공격속도도 상승). 버그 반영."
             }
           ]
         }

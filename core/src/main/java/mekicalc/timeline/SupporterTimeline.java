@@ -27,8 +27,16 @@ public final class SupporterTimeline {
 
     private SupporterTimeline() {}
 
-    /** 동료→플레이어(또는 적) 버프 1건(소환 시작 상대 시각). 소스 스킬별로 구분(타이밍·지속·수치가 스킬마다 다름). stat=clt 원본명, value=‰. */
-    public record PlayerBuff(int skillIdx, String skillName, String stat, double value, int startMs, int endMs, boolean toEnemy) {}
+    /** 동료 버프 1건(소환 시작 상대 시각). stat=clt 원본명, value=‰. target=대상: player/both/companion/enemy(표시용·주입 게이팅). */
+    public record PlayerBuff(int skillIdx, String skillName, String stat, double value, int startMs, int endMs, boolean toEnemy, String target) {}
+
+    /** effect 대상 → 표시/주입용 target 문자열. player=소환주, companion=동료자기, both=양쪽, enemy=적. */
+    private static String effTarget(SupporterEffectIR e, boolean enemy) {
+        if (enemy) return "enemy";
+        if (e.toPlayer() && e.toCompanion()) return "both";
+        if (e.toCompanion()) return "companion";
+        return "player";
+    }
 
     /** 빌드 결과: 동료 딜 타임라인 + base 프리셋(Analyzer용) + 플레이어 버프 창. */
     public record Result(Timeline timeline, Preset companionBase, List<PlayerBuff> playerBuffs, int windowMs) {}
@@ -40,7 +48,7 @@ public final class SupporterTimeline {
         List<Integer> attackTimes = new ArrayList<>();   // 동료 공격 시각(proc 트리거)
 
         // 공속 = 계승 공속 + 동료 자기 공속(상수, target:companion). 슬롯(모션 간격) = 1000/(1+공속/100).
-        double spd = companionBase.atkSpeed() + selfAtkSpeed(skills);
+        double spd = Stat.ATK_SPEED.combine(companionBase.atkSpeed(), selfAtkSpeed(skills));   // ★공속 체감(선형합 금지)
         double slotMs = 1000.0 / (1 + spd / 100.0);
         if (slotMs < 1) slotMs = 1;
 
@@ -96,7 +104,7 @@ public final class SupporterTimeline {
                 if (e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
                 boolean enemy = e.toEnemy() || "debuff".equals(e.role());
                 if (!e.toPlayer() && !enemy) continue;   // companion 자기버프 제외
-                pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, windowMs, enemy));
+                pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, windowMs, enemy, effTarget(e, enemy)));
             }
         }
 
@@ -119,6 +127,22 @@ public final class SupporterTimeline {
 
         // ── 동료 자기버프(상수 ModState): gradeBonus FinalDamage + target:companion statUp(onStart) ──
         applySelfBuffs(tl, sup, companionLevel, skills, book);
+
+        // ── 동료 자기버프 '표시용' 창(딜은 applySelfBuffs로 이미 반영, 여기선 간트 바 target=companion만) ──
+        for (SupporterSkillIR s : skills)
+            for (SupporterEffectIR e : s.effects()) {
+                if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null) continue;
+                if (e.toPlayer() || e.toEnemy() || !e.toCompanion()) continue;   // player/both/enemy는 위에서 수집됨 — 여기선 순수 동료
+                int end = e.durationMs() != null ? Math.min(e.durationMs(), windowMs) : windowMs;
+                pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, end, false, "companion"));
+            }
+        SupporterBook.GradeBonus gb = book.gradeBonus();   // 유니크/레전 동료자기 최종뎀(+25%×도달레벨) — 표시
+        if (gb != null && "FinalDamage".equals(gb.stat()) && "companion".equals(gb.target())
+                && (gb.grades() == null || gb.grades().contains(sup.grade()))) {
+            double sumPermille = 0;
+            for (int[] lvVal : gb.byLevel()) if (companionLevel >= lvVal[0]) sumPermille += lvVal[1];
+            if (sumPermille > 0) pbuffs.add(new PlayerBuff(-1, "등급 보너스", "FinalDamage", sumPermille, 0, windowMs, false, "companion"));
+        }
 
         return new Result(tl, companionBase, pbuffs, windowMs);
     }
@@ -161,7 +185,7 @@ public final class SupporterTimeline {
             boolean enemy = e.toEnemy() || "debuff".equals(e.role());
             if (!e.toPlayer() && !enemy) continue;   // companion 자기버프는 applySelfBuffs
             int useEnd = e.durationMs() != null ? (startMs + e.durationMs()) : windowMs;   // 시한부=지속만큼 / 무기한(상시)=소환창 끝
-            out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), startMs, useEnd, enemy));
+            out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), startMs, useEnd, enemy, effTarget(e, enemy)));
         }
     }
 
@@ -174,10 +198,10 @@ public final class SupporterTimeline {
             boolean enemy = e.toEnemy();
             if (dur >= period) {   // 갱신형: 단일 창(스택X), 마지막 갱신(≤소환창) 후 dur까지 유지(종료 후에도)
                 int lastGrant = period > 0 ? (windowMs / period) * period : windowMs;
-                out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, lastGrant + dur, enemy));
+                out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, lastGrant + dur, enemy, effTarget(e, enemy)));
             } else {   // dur<period: 각 갱신 창(비겹침), 지속만큼 유지
                 for (int t = period; t <= windowMs; t += period)
-                    out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), t, t + dur, enemy));
+                    out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), t, t + dur, enemy, effTarget(e, enemy)));
             }
         }
     }

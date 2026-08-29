@@ -20,9 +20,10 @@ public final class ModState {
     private final EnumMap<Stat, Double> add = new EnumMap<>(Stat.class);
     private final List<Double> finalDmgSources = new ArrayList<>();
 
-    /** 합풀에 % 포인트 누적. */
+    /** 스탯 풀에 누적 — ★스탯 고유 합성 규칙 적용({@link Stat#combine}): 공속/방관/쿨감%는 체감(상한), 그 외 합산.
+     *  체감은 가환·결합이라 0에서부터 순차 누적해도 최종 결과가 결합 순서와 무관(preset 합성도 같은 규칙). */
     public void addStat(Stat s, double pct) {
-        add.merge(s, pct, Double::sum);
+        add.merge(s, pct, s::combine);
     }
 
     /** 최종뎀 곱소스 추가(분율). 소스별로 개별 곱하므로 push. */

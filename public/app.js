@@ -6331,7 +6331,7 @@ function tlCompanionLanes(c, pct, lanes, T) {
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
-  // 3) 동료→플레이어 버프 lanes(★스킬별 — 스킬마다 시전 타이밍·지속·수치가 다름. 같은 창은 스탯 나열)
+  // 3) 동료 버프 lanes — 스킬별(라벨=타입 이름만). 대상(플레이어/동료/…)은 호버 툴팁에만 표기.
   const bySkill = {};
   for (const b of (c.buffs || [])) {
     const k = b.skillIdx;
@@ -6346,11 +6346,19 @@ function tlCompanionLanes(c, pct, lanes, T) {
       const w = byWin[wk];
       const width = pct(w.end - w.start);
       const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
-      const statTxt = w.stats.map((b) => `${b.toEnemy ? "적 " : ""}${COMPANION_STAT_LABEL[b.stat] || b.stat} +${(b.value / 10).toFixed(1)}%`).join(", ");
-      bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${g.name} → 나 · ${statTxt} · ${when}"></span>`;
+      const statLines = w.stats.map((b) => {   // 효과별 줄바꿈 + 대상 태그(툴팁에만)
+        const tgt = b.toEnemy ? "enemy" : (b.target || "player");
+        return `${COMPANION_STAT_LABEL[b.stat] || b.stat} +${(b.value / 10).toFixed(1)}% · ${compBuffTargetLabel(tgt)}`;
+      });
+      const tip = [g.name, ...statLines, when].join("\n");
+      bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tip}"></span>`;
     }
-    lanes.push({ label: `→나 ${g.name}`, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
+    lanes.push({ label: g.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
+}
+// 동료 버프 대상 라벨(툴팁 태그용) — 플레이어/동료/플레이어·동료/적.
+function compBuffTargetLabel(t) {
+  return t === "both" ? "플레이어·동료 적용" : t === "companion" ? "동료 적용" : t === "enemy" ? "적 디버프" : "플레이어 적용";
 }
 
 (async function init() {

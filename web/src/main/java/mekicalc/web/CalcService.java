@@ -852,6 +852,22 @@ public final class CalcService {
                                 Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                                 boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
                                 boolean fillSkills, boolean optimize) {
+        return buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials, enemies, kills,
+                contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize,
+                java.util.List.of(), java.util.List.of());
+    }
+
+    /**
+     * @param compSpdWindows  동료→플레이어 시간창 공속 {start,end,pct} — 스케줄 공격빈도에 반영(2패스, 없으면 비움)
+     * @param compBuffSources 동료→플레이어 버프 소스 — 파생/순환/육각 유물 계산 전에 슬롯 반영(없으면 비움)
+     */
+    TimelineBuild buildTimeline(Map<String, Double> stats, String mode,
+                                List<Map<String, Object>> casts, String chapter, String target, int simMs,
+                                List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                                Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                                boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                                boolean fillSkills, boolean optimize,
+                                List<double[]> compSpdWindows, List<BuffSource> compBuffSources) {
         boolean boss = isBossTarget(target);
         Double def = targetDef(chapter, target);
         double monDef = def == null ? 0 : def;
@@ -869,8 +885,9 @@ public final class CalcService {
         ArtifactAssembler.Result artRes = asm.assemble(equips, artCtx, simMs);
         if (artRes.artSpeed() != 0 || artRes.artCdrPct() != 0 || artRes.artBuffDurPct() != 0 || artRes.artSummonDurPct() != 0) {
             stats = new LinkedHashMap<>(stats);
-            if (artRes.artSpeed() != 0) stats.merge("ATK_SPEED", artRes.artSpeed(), Double::sum);              // 헬레나 등 공속→공격빈도
-            if (artRes.artCdrPct() != 0) stats.merge("COOLDOWN_REDUCTION_PCT", artRes.artCdrPct(), Double::sum); // 영혼계약서 쿨감→발동빈도
+            // ★공속·쿨감은 고유 산식(체감)으로 합성 — 유저 입력(유물 미포함) base에 유물 상시분을 체감 합성. 선형합 금지.
+            if (artRes.artSpeed() != 0) stats.put("ATK_SPEED", Stat.ATK_SPEED.combine(stats.getOrDefault("ATK_SPEED", 0.0), artRes.artSpeed()));                          // 헬레나 등 공속→공격빈도
+            if (artRes.artCdrPct() != 0) stats.put("COOLDOWN_REDUCTION_PCT", Stat.COOLDOWN_REDUCTION_PCT.combine(stats.getOrDefault("COOLDOWN_REDUCTION_PCT", 0.0), artRes.artCdrPct())); // 영혼계약서 쿨감→발동빈도
             if (artRes.artBuffDurPct() != 0) stats.merge("BUFF_DURATION", artRes.artBuffDurPct(), Double::sum);  // 무녀구슬 버프지속
             if (artRes.artSummonDurPct() != 0) stats.merge("SUMMON_DURATION", artRes.artSummonDurPct(), Double::sum); // 유리구두 동료소환지속(동료엔진서 반영)
         }
@@ -878,6 +895,7 @@ public final class CalcService {
         SkillBook book = nlBook();
         Scheduler sched = new Scheduler(book, preset, skillsOff == null ? java.util.Set.of() : skillsOff);
         sched.setOptimize("manual".equals(mode) ? optimize : true);   // 자동=항상 최적화, 수동=토글
+        for (double[] w : compSpdWindows) sched.addExternalSpeedWindow((int) w[0], (int) w[1], w[2]);   // 동료 소환창 공속 → 공격빈도
 
         Schedule schedule;
         if ("manual".equals(mode) && casts != null) {
@@ -904,9 +922,12 @@ public final class CalcService {
 
         // 위에서 미리 assemble한 유물 결과를 슬롯에 반영(상시/시간창·성배 발동창).
         asm.accumulate(tl, artRes, simMs);
+        // ★동료→플레이어 버프를 순환·파생·육각 계산 '전에' 슬롯에 반영 — 동료 버프가 파생 유물 입력(크확·공속)·데미지에 포함되도록.
+        mekicalc.timeline.SupporterEngine.accumulateBuffSources(tl, compBuffSources, simMs);
         List<Map<String, Object>> cycleRows = asm.accumulateCycle(tl, preset, artRes, simMs);   // 순환(크확 파티션) — base 뒤·파생 앞(순환 크확이 파생 입력에 반영). 창별 실제효과 행 반환(간트 툴팁)
         List<BuffSource> allSrc = new ArrayList<>(sources);   // 스킬+유물 소스 = 파생 입력(크확·공속) 경계의 원천
         allSrc.addAll(artRes.sources());
+        allSrc.addAll(compBuffSources);   // 동료 버프도 파생 입력 경계(표시 세그먼트) 원천
         List<Map<String, Object>> derivedRows = asm.accumulateDerived(tl, preset, artRes, simMs, allSrc);   // derived 표시행 — 입력 버프의 실제 경계(정확한 시간) 기준
         asm.accumulateDmgMult(tl, preset, artRes, boss, artOffsetMs);   // 육각(DMG 곱중첩) — 스택(사전활성 offset 반영)
         asm.accumulateUptime(tl, de.attackInstances(), preActivateProc, artRes);   // 은펜던트·천도명약(onAttack 약화 확률누산, 베놈과 동일 스트림)
@@ -932,8 +953,31 @@ public final class CalcService {
                                           boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
                                           boolean fillSkills, boolean optimize,
                                           String companionCode, int companionLevel, int firstSummonMs) {
+        // ── 동료(v3.1): 스냅샷용 1차 빌드 → 동료 확정 → 동료 공속(스케줄)·버프(파생/순환/육각 입력)를 반영해 2차 재조립 ──
         TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
                 enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
+        simMs = tb.simMs();   // 기본(0)→실제 시뮬 길이 확정(동료·2차에 동일 적용)
+
+        mekicalc.timeline.SupporterEngine.CompanionResult comp = null;
+        if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
+            List<BuffSource> playerSrc = new ArrayList<>(tb.sources());
+            playerSrc.addAll(tb.artRes().sources());
+            comp = mekicalc.timeline.SupporterEngine.run(tb.preset(), playerSrc, companionCode,
+                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook());
+            // 동료→플레이어 버프 소스(파생 입력·데미지) + 공속 시간창(스케줄 공격빈도)
+            List<BuffSource> compBuffs = new ArrayList<>();
+            List<double[]> compSpd = new ArrayList<>();
+            for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
+                if ("companion".equals(pb.target())) continue;   // 동료 자기버프(표시용)는 플레이어에 주입 안 함
+                compBuffs.add(mekicalc.timeline.SupporterEngine.toBuffSource(pb));
+                if ("AttackSpeed".equals(pb.stat()) && !pb.toEnemy())
+                    compSpd.add(new double[]{pb.startMs(), pb.endMs(), pb.value() / 10.0});
+            }
+            tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
+                    enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize,
+                    compSpd, compBuffs);   // 2차: 동료 반영본
+        }
+
         Timeline tl = tb.tl();
         Preset preset = tb.preset();
         double monDef = tb.monDef();
@@ -948,16 +992,6 @@ public final class CalcService {
         List<Map<String, Object>> cycleRows = tb.cycleRows();
         List<Map<String, Object>> derivedRows = tb.derivedRows();
         List<ArtifactAssembler.StackSeg> stackSegs = tb.stackSegs();
-
-        // ── 동료(v3.1): 다중 소환·동적 스냅샷·플레이어 버프 주입(3단계). 동료 버프 주입 후 Analyzer가 플레이어 딜을 재계산. ──
-        mekicalc.timeline.SupporterEngine.CompanionResult comp = null;
-        if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
-            List<BuffSource> playerSrc = new ArrayList<>(sources);
-            playerSrc.addAll(artRes.sources());
-            comp = mekicalc.timeline.SupporterEngine.run(preset, playerSrc, companionCode,
-                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
-            mekicalc.timeline.SupporterEngine.injectBuffs(tl, comp.playerBuffInjections(), simMs);
-        }
 
         Analyzer an = new Analyzer(tl, preset, monDef, boss, simMs);
 
@@ -1066,6 +1100,7 @@ public final class CalcService {
         List<Map<String, Object>> buffs = new ArrayList<>();
         for (BuffSource bs : sources) buffs.add(buffRow(bs, simMs, false));
         for (BuffSource bs : artRes.sources()) buffs.add(buffRow(bs, simMs, true));
+        for (BuffSource bs : artRes.speedDisplay()) buffs.add(buffRow(bs, simMs, true));   // 유물 상시공속 표시(딜엔 preset으로 반영, 여기선 간트 바만)
         buffs.addAll(derivedRows);   // 파생(라이브 크확·공속 후처리) 대표 효과 행
         buffs.addAll(cycleRows);     // 순환(크확 파티션) 창별 표시행 — 각 창의 실제 적용 효과(effects) 포함
         // 스택 세그먼트의 실효 효과값(스택 반영). 라벨→원본 스펙 매칭. 약화=value(‰)×스택, 육각=preset.dmg×value(‰)×스택.
@@ -1184,6 +1219,7 @@ public final class CalcService {
                 m.put("start", b.startMs());
                 m.put("end", b.endMs());
                 m.put("toEnemy", b.toEnemy());
+                m.put("target", b.target());   // player/both/companion/enemy → 프론트 라벨(플레이어/동료/플레이어·동료 적용)
                 cBuffs.add(m);
             }
             c.put("buffs", cBuffs);
@@ -1726,10 +1762,10 @@ public final class CalcService {
                 double sp = baseArt.artSpeed(), cd = baseArt.artCdrPct(), bd = baseArt.artBuffDurPct(), sd = baseArt.artSummonDurPct();
                 if (sp != 0 || cd != 0 || bd != 0 || sd != 0) {
                     s = new LinkedHashMap<>(s);
-                    if (sp != 0) s.merge("ATK_SPEED", sp, Double::sum);
-                    if (cd != 0) s.merge("COOLDOWN_REDUCTION_PCT", cd, Double::sum);
-                    if (bd != 0) s.merge("BUFF_DURATION", bd, Double::sum);
-                    if (sd != 0) s.merge("SUMMON_DURATION", sd, Double::sum);
+                    if (sp != 0) s.put("ATK_SPEED", Stat.ATK_SPEED.combine(s.getOrDefault("ATK_SPEED", 0.0), sp));   // ★공속 체감(선형합 금지)
+                    if (cd != 0) s.put("COOLDOWN_REDUCTION_PCT", Stat.COOLDOWN_REDUCTION_PCT.combine(s.getOrDefault("COOLDOWN_REDUCTION_PCT", 0.0), cd));   // ★쿨감 체감
+                    if (bd != 0) s.merge("BUFF_DURATION", bd, Double::sum);      // 버프지속 = 합산(고유 체감식 없음)
+                    if (sd != 0) s.merge("SUMMON_DURATION", sd, Double::sum);    // 소환지속 = 합산
                 }
             }
             return new Preset(s);

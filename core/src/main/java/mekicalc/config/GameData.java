@@ -52,6 +52,13 @@ public final class GameData {
             StatDef d = StatDef.fromJson(Json.asMap(o));
             stats.put(d.id, d);
         }
+        // ★신엔진(timeline.Stat) 체감 상한 = stats.json의 DIMINISHING max를 단일 소스로 주입(하드코딩 중복 제거).
+        Map<mekicalc.timeline.Stat, Double> dimCaps = new java.util.EnumMap<>(mekicalc.timeline.Stat.class);
+        for (StatDef d : stats.values())
+            if (d.combine == StatDef.Combine.DIMINISHING) {
+                try { dimCaps.put(mekicalc.timeline.Stat.valueOf(d.id), d.max); } catch (IllegalArgumentException ignore) {}
+            }
+        mekicalc.timeline.Stat.configureDiminishCaps(dimCaps);
 
         Profile profile = Profile.fromJson(Json.asMap(read(dataDir, "profile.json")));
 

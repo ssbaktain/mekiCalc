@@ -83,7 +83,9 @@ public final class ArtifactAssembler {
      */
     public record Result(List<BuffSource> sources, List<Skip> skips, List<DerivedSpec> derived,
                          List<CycleSpec> cycles, List<DmgMultSpec> dmgMults, List<UptimeSpec> uptimes,
+                         List<BuffSource> speedDisplay,
                          double artSpeed, double artCdrPct, double artBuffDurPct, double artSummonDurPct) {}
+    // speedDisplay = 유물 상시공속 '표시 전용' 소스(간트 버프바용). 공속은 preset에 이미 반영돼 딜 슬롯(mods)엔 안 넣음(파생 이중 방지).
 
     private final ArtifactBook book;
     /** 이번 assemble의 총 벞지(%) = 유저 프리셋 + 유물 BuffDurationRatio(무녀구슬). 시간창 '버프' 유물 지속에만 적용. */
@@ -107,6 +109,7 @@ public final class ArtifactAssembler {
         List<CycleSpec> cycles = new ArrayList<>();
         List<DmgMultSpec> dmgMults = new ArrayList<>();
         List<UptimeSpec> uptimes = new ArrayList<>();
+        List<BuffSource> speedDisplay = new ArrayList<>();   // 유물 상시공속 표시 전용(딜 미반영)
         double artSpeed = 0, artCdr = 0, artBuffDur = 0, artSummonDur = 0;
         java.util.Map<Integer, Integer> dupCount = new java.util.HashMap<>();   // 같은 유물 중복 장착 순번(간트 행 구분용)
 
@@ -131,16 +134,16 @@ public final class ArtifactAssembler {
             for (int ei = 0; ei < a.effects().size(); ei++) {
                 ArtifactIR.Effect e = a.effects().get(ei);
 
-                // 유물 상시 공속(헬레나 등) — 데미지 풀 아님(스케줄 변수)이나 파생 입력용으로 합산.
-                // ★공속의 공격빈도(스케줄) 반영은 미구현 → 파생 기여만 계산(v2b 예정).
+                // 유물 상시 공속(헬레나 등) = 상시 base 스탯 → artSpeed로 모아 preset 공속에 체감 합성(buildTimeline).
+                // ★슬롯 mods엔 넣지 않는다 — preset에 이미 있어, 넣으면 파생 liveOf(preset+mods)가 이중으로 읽음.
                 if ("AttackSpeed".equals(e.stat()) && !e.hasDerived() && baseTrigger(a, e) == null) {
                     Double sp = e.valueAt(eq.awaken());
                     if (sp != null) {
-                        artSpeed += sp / 10.0;
-                        BuffSource src = new BuffSource(name, 0, simMs);
-                        src.inst = inst;
-                        src.add(Stat.ATK_SPEED, sp / 10.0);   // 표시 전용(딜 미사용) — 툴팁 '공격 속도 +X%'
-                        sources.add(src);
+                        artSpeed = Stat.ATK_SPEED.combine(artSpeed, sp / 10.0);   // ★공속 체감 합성(여러 상시공속 유물도) → preset
+                        BuffSource disp = new BuffSource(name, 0, simMs);         // 표시 전용(간트 바). 딜 슬롯엔 안 넣음(speedDisplay)
+                        disp.inst = inst;
+                        disp.add(Stat.ATK_SPEED, sp / 10.0);
+                        speedDisplay.add(disp);
                     }
                     continue;
                 }
@@ -157,7 +160,7 @@ public final class ArtifactAssembler {
                         BuffSource src = new BuffSource(name, 0, simMs);
                         src.inst = inst;
                         switch (e.stat()) {   // 계산은 스케줄 경로(artXxx), 소스엔 표시 전용 실값을 담는다(딜 미사용)
-                            case "COOLDOWN_REDUCTION_PCT" -> { artCdr += v / 10.0; src.add(Stat.COOLDOWN_REDUCTION_PCT, v / 10.0); }
+                            case "COOLDOWN_REDUCTION_PCT" -> { artCdr = Stat.COOLDOWN_REDUCTION_PCT.combine(artCdr, v / 10.0); src.add(Stat.COOLDOWN_REDUCTION_PCT, v / 10.0); }   // ★쿨감 = 체감(상한100)
                             case "BuffDurationRatio"      -> { artBuffDur += v / 10.0; src.add(Stat.BUFF_DURATION, v / 10.0); }
                             default                        -> { artSummonDur += v / 10.0; src.add(Stat.SUMMON_DURATION, v / 10.0); }   // SupporterDurationRatio(유리구두)
                         }
@@ -245,7 +248,7 @@ public final class ArtifactAssembler {
                 }
             }
         }
-        return new Result(sources, skips, derived, cycles, dmgMults, uptimes, artSpeed, artCdr, artBuffDur, artSummonDur);
+        return new Result(sources, skips, derived, cycles, dmgMults, uptimes, speedDisplay, artSpeed, artCdr, artBuffDur, artSummonDur);
     }
 
     /**
@@ -632,8 +635,8 @@ public final class ArtifactAssembler {
             double cur = 0; int segStart = lo; boolean has = false;
             for (int i = 0; i < pts.size() - 1; i++) {
                 int t1 = pts.get(i), t2 = pts.get(i + 1);
-                double live = base;                                     // 이 구간에 활성인 입력 버프 스탯 합
-                for (BuffSource s : inputs) if (s.startMs() <= t1 && s.endMs() >= t2) live += s.adds().get(inStat);
+                double live = base;                                     // 이 구간 활성 입력 버프를 ★스탯 규칙대로 합성(공속=체감) — liveOf(딜)와 일치
+                for (BuffSource s : inputs) if (s.startMs() <= t1 && s.endMs() >= t2) live = inStat.combine(live, s.adds().get(inStat));
                 double disp = Math.round(derivedCalc(ds, live) * 10) / 10.0;
                 if (!has || disp != cur) {
                     if (has && cur != 0) rows.add(derivedRow(ds, segStart, t1, cur, simMs));   // 값 바뀌는 지점에서 자름
@@ -689,11 +692,11 @@ public final class ArtifactAssembler {
         return row;
     }
 
-    /** 파생 입력 라이브값(%) = 프리셋 + 슬롯 mods(유물·스킬 버프). 그 시점까지 반영된 총 스탯을 읽는다. */
+    /** 파생 입력 라이브값(%) = 프리셋 ↔ 슬롯 mods를 ★스탯 규칙대로 합성(공속=체감150, 크확=합). 그 시점까지 반영된 총 스탯. */
     private static double liveOf(String from, Preset preset, ModState mods) {
         return switch (from) {
-            case "CriticalChance" -> preset.critRate() + mods.get(Stat.CRIT_RATE);
-            case "AttackSpeed"    -> preset.atkSpeed() + mods.get(Stat.ATK_SPEED);   // 슬롯 공속(유물 상시+스킬 버프) 반영
+            case "CriticalChance" -> Stat.CRIT_RATE.combine(preset.critRate(), mods.get(Stat.CRIT_RATE));
+            case "AttackSpeed"    -> Stat.ATK_SPEED.combine(preset.atkSpeed(), mods.get(Stat.ATK_SPEED));   // 슬롯 공속(유물 상시+스킬+동료) 체감 합성
             default -> 0;
         };
     }

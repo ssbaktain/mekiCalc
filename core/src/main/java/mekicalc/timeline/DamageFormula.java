@@ -54,8 +54,8 @@ public final class DamageFormula {
 
         double fWeak = 1 + m.get(Stat.WEAKNESS) / 100.0;
 
-        // 방관은 소스끼리 곱연산 합성(체감): 1-(1-프리셋방관)(1-유물등 추가방관). 단순 합이면 과대평가.
-        double defPenFrac = 1 - (1 - b.defPen() / 100.0) * (1 - m.get(Stat.DEF_PEN) / 100.0);
+        // 방관 = 체감 합성(★스탯 규칙 Stat.DEF_PEN.combine, 상한100). preset ↔ 슬롯 방관을 곱연산 합성(1-(1-a)(1-b) 등가). 단순 합이면 과대.
+        double defPenFrac = Stat.DEF_PEN.combine(b.defPen(), m.get(Stat.DEF_PEN)) / 100.0;
         double defF = 5000.0 / (6000.0 + monsterDef * (1 - defPenFrac));
 
         return baseAtk * fDmg * fStat * fCrit * fRange * fFinal * tf * fTgt * fWeak * defF * d.coeffFrac();

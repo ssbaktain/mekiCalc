@@ -47,6 +47,12 @@ public final class Scheduler {
     private boolean optimize = false;
     public void setOptimize(boolean o) { this.optimize = o; }
 
+    /** 외부(동료 등) 시간창 공속 — 스케줄 슬롯 간격(공격 빈도)에 반영. {start,end,pct,idx=-1}. 스킬 시전형과 동일 취급. */
+    private final List<double[]> externalSpdWindows = new ArrayList<>();
+    public void addExternalSpeedWindow(int startMs, int endMs, double pct) {
+        if (pct != 0 && endMs > startMs) externalSpdWindows.add(new double[]{startMs, endMs, pct, -1});
+    }
+
     public Scheduler(SkillBook book, Preset preset) { this(book, preset, java.util.Set.of()); }
 
     public Scheduler(SkillBook book, Preset preset, java.util.Set<Integer> disabled) {
@@ -131,7 +137,7 @@ public final class Scheduler {
         Map<Integer, Integer> nextReady = new HashMap<>();
         for (SkillIR s : actives) nextReady.put(s.idx(), 0);
 
-        List<double[]> spdWindows = new ArrayList<>();   // 시전형 공속(민첩): {start, end, pct}
+        List<double[]> spdWindows = new ArrayList<>(externalSpdWindows);   // 시전형 공속(민첩): {start, end, pct}
         double baseSpd = preset.atkSpeed();
 
         List<Action> out = new ArrayList<>();
@@ -140,9 +146,7 @@ public final class Scheduler {
             int ti = (int) Math.round(t);
 
             // 현재 공속 = base + 시전형 공속윈도우 + 이벤트형 공속(아드, 과거로 확정)
-            double spd = baseSpd + activeAtkSpeed(spdWindows, ti);
-            for (EventBuff eb : evtBuffs) spd += eb.spdAt(ti);
-            double slot = 1000.0 / (1.0 + spd / 100.0);
+            double slot = 1000.0 / (1.0 + curSpd(ti, spdWindows, baseSpd, evtBuffs) / 100.0);
 
             // 우선순위대로 쿨 완료된 첫 액티브
             SkillIR chosen = null;
@@ -242,7 +246,7 @@ public final class Scheduler {
         Map<Integer, Integer> nextReady = new HashMap<>();       // 자동채움 재사용(reuseInterval: 설치/버프는 지속 끝나야)
         Map<Integer, Integer> nextReadyCd = new HashMap<>();     // 쿨만(핀=강제용: reuseInterval 무시, 쿨만 지킴)
         for (SkillIR s : actives) { nextReady.put(s.idx(), 0); nextReadyCd.put(s.idx(), 0); }
-        List<double[]> spdWindows = new ArrayList<>();
+        List<double[]> spdWindows = new ArrayList<>(externalSpdWindows);
         double baseSpd = preset.atkSpeed();
 
         List<Action> out = new ArrayList<>();
@@ -361,7 +365,7 @@ public final class Scheduler {
         SkillIR basic = pickBasic();
         List<EventBuff> evtBuffs = buildEventBuffs();
         Map<Integer, Integer> nextReady = new HashMap<>();
-        List<double[]> spdWindows = new ArrayList<>();
+        List<double[]> spdWindows = new ArrayList<>(externalSpdWindows);
         double baseSpd = preset.atkSpeed();
 
         List<Action> out = new ArrayList<>();
@@ -418,7 +422,7 @@ public final class Scheduler {
         SkillIR basic = pickBasic();
         List<EventBuff> evtBuffs = buildEventBuffs();
         Map<Integer, Integer> nextReady = new HashMap<>();
-        List<double[]> spdWindows = new ArrayList<>();
+        List<double[]> spdWindows = new ArrayList<>(externalSpdWindows);
         double baseSpd = preset.atkSpeed();
 
         List<Action> out = new ArrayList<>();
@@ -449,9 +453,11 @@ public final class Scheduler {
     }
 
     /** 시각 ti의 현재 공속(%) = base + 시전형 공속윈도우 + 이벤트형 공속. */
+    /** 시각 ti의 실효 공속(%) = base ↔ 활성 공속창(스킬 민첩·동료 등) ↔ 이벤트 공속을 ★체감(상한150)으로 합성. */
     private double curSpd(int ti, List<double[]> spdWindows, double baseSpd, List<EventBuff> evtBuffs) {
-        double spd = baseSpd + activeAtkSpeed(spdWindows, ti);
-        for (EventBuff eb : evtBuffs) spd += eb.spdAt(ti);
+        double spd = baseSpd;
+        for (double[] w : spdWindows) if (w[0] <= ti && ti < w[1]) spd = Stat.ATK_SPEED.combine(spd, w[2]);
+        for (EventBuff eb : evtBuffs) { double v = eb.spdAt(ti); if (v != 0) spd = Stat.ATK_SPEED.combine(spd, v); }
         return spd;
     }
 
@@ -546,13 +552,6 @@ public final class Scheduler {
         return false;
     }
 
-    /** 시점 ti에 활성인 공속버프 합(%). */
-    private double activeAtkSpeed(List<double[]> windows, int ti) {
-        double sum = 0;
-        for (double[] w : windows) if (w[0] <= ti && ti < w[1]) sum += w[2];
-        return sum;
-    }
-
     /** 스킬의 공속 버프%(선반영 아닌 것만). 없으면 0. */
     private double atkSpeedBuffPct(SkillIR s) {
         for (EffectIR e : s.effects()) {
@@ -581,7 +580,7 @@ public final class Scheduler {
      * ★적용 대상 = "자동으로 채택된 스킬"(placeAuto + 수동 스킬자동채움 — 자동 스킬 선택 로직을 그대로 쓴 것).
      *   유저가 직접 찍은 핀 = 강제 사용이라 이 간격을 무시(기존 설치/버프를 지우고 즉시 재발동).
      */
-    /** 공속버프 창 추가 — 같은 스킬이 재발동하면 이전 창을 그 시각에 잘라낸다(강제 재설치=덮어씀). curSpd가 합산이라 겹치면 이중이 되므로 필수. */
+    /** 공속버프 창 추가 — 같은 스킬이 재발동하면 이전 창을 그 시각에 잘라낸다(강제 재설치=덮어씀). curSpd가 창별 체감 합성이라 겹치면 이중 적용되므로 필수. */
     private static void addSpdWindow(List<double[]> spdWindows, int st, double dur, double pct, int idx) {
         for (double[] w : spdWindows) if ((int) w[3] == idx && w[1] > st) w[1] = st;
         spdWindows.add(new double[]{st, st + dur, pct, idx});
