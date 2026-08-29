@@ -462,7 +462,8 @@ body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스�
   .header-right { display: none; }
 
   /* 헤더: 우상단을 햄버거로 통일 + 폰트 축소. 로그인 버튼이 빠져 부제목 공간 확보됨 */
-  header { padding: 16px 14px 6px; flex-wrap: nowrap; }
+  /* 상단 여백 확대 = 좌상단 고정 문의 버튼(FAB)과 로고가 세로로 겹치지 않도록 */
+  header { padding: 50px 14px 6px; flex-wrap: nowrap; }
   header h1 { font-size: 24px; }
   .brand-logo { width: 36px; height: 36px; }
   .brand { gap: 10px; }
@@ -765,6 +766,14 @@ body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스�
 /* 모달(팝업) 공용 */
 .modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, 0.55); }
 .modal-overlay[hidden] { display: none; }
+.modal-overlay.modal-blur { background: rgba(8, 10, 14, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+
+/* 빌드 박스 순서 변경(드래그) */
+.box-order-hint { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.box-order-list { display: flex; flex-direction: column; gap: 8px; }
+.box-order-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text); user-select: none; cursor: grab; touch-action: none; }
+.box-order-item .bo-grip { color: var(--muted); font-size: 16px; line-height: 1; }
+.box-order-item.bo-lift { border-color: var(--accent); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); position: relative; z-index: 2; cursor: grabbing; }
 .modal { display: flex; flex-direction: column; width: 100%; max-width: 460px; max-height: 85vh; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5); }
 .modal-wide { max-width: 660px; }
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
@@ -929,6 +938,32 @@ html.deep-route #panel-home { display: none !important; }
 .inapp-x { background: none; border: none; color: #f0e3c0; cursor: pointer; font-size: 14px; padding: 4px; }
 
 /* 프리셋 빠른 전환(플로팅) */
+/* 좌상단 고정 문의 버튼(모든 화면·스크롤 위치에서 항상 노출) */
+.inquiry-fab {
+  position: fixed; top: 12px; left: 12px; z-index: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px 8px 12px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff; border: none; border-radius: 999px;
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.inquiry-fab:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); filter: brightness(1.06); }
+.inquiry-fab:active { transform: translateY(0); }
+.inquiry-fab .inq-fab-ico { font-size: 15px; line-height: 1; }
+/* 운영자 답장 도착 알림 점(우상단) */
+.inq-fab-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #e5484d; border: 2px solid var(--bg); }
+.inq-fab-dot[hidden] { display: none; }
+/* 모달 '내 내역' 탭 옆 답장 알림 점 */
+.inq-tab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #e5484d; margin-left: 5px; vertical-align: top; }
+.inq-tab-dot[hidden] { display: none; }
+@media (max-width: 640px) {
+  .inquiry-fab { top: 8px; left: 8px; padding: 7px 12px 7px 10px; font-size: 12.5px; }
+}
+/* 헤더가 아직 전체폭이라(중앙 여백 없음) FAB와 로고가 겹치는 구간 → 헤더 상단 여백 확보 */
+@media (max-width: 900px) { header { padding-top: 50px; } }
+
 .quick-presets { position: fixed; right: 18px; bottom: 18px; z-index: 200; }
 .qp-fab {
   width: 54px; height: 54px; border-radius: 50%; cursor: pointer;
@@ -1567,8 +1602,10 @@ body.notices-active .ad-slot { display: none !important; }
 /* 저장 버튼: 변경 없으면 비활성(흐리게) */
 .mini-btn:disabled { opacity: .45; cursor: default; }
 /* 사용 스킬 체크리스트 */
-.tl-skillsel > summary { cursor: pointer; font-weight: 600; color: var(--text); list-style: revert; }
-.tl-skillsel > summary .tl-ro-hint { font-weight: 400; margin-left: 6px; }
+.tl-skillsel > summary, .tl-relic-opts > summary, .tl-companion-opts > summary { cursor: pointer; font-weight: 600; color: var(--text); list-style: revert; }
+.tl-relic-opts > summary, .tl-companion-opts > summary { font-size: 17px; }   /* 옛 h2 크기 유지 */
+.tl-skillsel > summary .tl-ro-hint, .tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint { font-weight: 400; margin-left: 6px; }
+.tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint { font-size: 12px; }
 .tl-skillsel-bar { display: flex; gap: 8px; margin: 10px 0 6px; }
 .tl-skill-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; }
 .tl-skill-cb { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text); cursor: pointer; }
@@ -1653,24 +1690,41 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-sk-chart { flex: 0 0 230px; }
 .tl-sk-chart .donut-svg { width: 230px; height: 230px; }
 .tl-sk-legend { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.tl-sk-row { display: grid; grid-template-columns: 14px 1fr auto auto; align-items: center; gap: 8px; font-size: 13px; padding: 4px 8px; border-radius: 6px; cursor: default; transition: background .1s; }
+.tl-sk-row { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 8px; font-size: 13px; padding: 4px 8px; border-radius: 6px; cursor: default; transition: background .1s; }
 .tl-sk-row.active { background: var(--card2); }
+.tl-sk-meta { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 8px; font-variant-numeric: tabular-nums; }
 .tl-sk-chart .pie-seg { cursor: pointer; }
 .tl-sk-dot { width: 11px; height: 11px; border-radius: 3px; }
-.tl-sk-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tl-sk-pct { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.tl-sk-per { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.tl-sk-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tl-sk-pct { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; min-width: 46px; }
+.tl-sk-per { color: var(--muted); font-size: 12px; white-space: nowrap; text-align: right; }
 @media (max-width: 560px) {
   .tl-sk-body { flex-direction: column; gap: 12px; }
   .tl-sk-chart { flex-basis: 190px; } .tl-sk-chart .donut-svg { width: 190px; height: 190px; }
   .tl-sk-legend { width: 100%; }
-  .tl-sk-per { display: none; }
+  .tl-sk-row { gap: 6px; }                          /* 모바일도 한줄 데미지·회 표시 — 여백만 축소 */
+  .tl-sk-meta { gap: 6px; }
+  .tl-sk-per { font-size: 11px; }
+  .tl-sk-pct { min-width: 40px; }
 }
 /* 타임라인 헤드라인(종합 DPS · 총 딜) */
 .tl-headline { background: linear-gradient(160deg, var(--card2), var(--card)); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 18px; }
 .tl-hl-ctx { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .tl-hl-chip { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
 .tl-hl-tiles { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; }
+/* 동료(v3.1) 결과 카드 — 스킬별 딜 막대 */
+.tl-comp-card .tl-comp-list { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+.tl-comp-row { display: grid; grid-template-columns: minmax(84px, 1.1fr) minmax(30px, 1.4fr) max-content; align-items: center; gap: 10px; }
+.tl-comp-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-comp-track { height: 9px; background: var(--card2); border-radius: 5px; overflow: hidden; }
+.tl-comp-fill { display: block; height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 5px; }
+.tl-comp-val { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 8px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.tl-comp-meta { color: var(--muted); }
+.tl-comp-pct { font-size: 13px; color: var(--accent); font-weight: 700; text-align: right; min-width: 46px; }
+@media (max-width: 560px) { .tl-comp-row { grid-template-columns: 1fr max-content; } .tl-comp-track { display: none; } }
+/* 스킬별 기여 '동료 포함' 토글(카드 헤더 우측) */
+.tl-brk-toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+
 .tl-hl-tile { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
 .tl-hl-tile.primary { border-color: var(--accent2); box-shadow: inset 0 0 0 1px rgba(74, 144, 217, .18); }
 .tl-hl-label { font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -1693,6 +1747,14 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-dtick.strong { width: 6px; transform: translateX(-3px); background: linear-gradient(180deg, #9e423b, #78322d); }   /* 즉발 첫 타격(강타) — 굵고 진하게 */
 .tl-dtick:hover { background: #fff; box-shadow: 0 0 0 1px #9e423b; z-index: 2; }
 .tl-lg-dot { color: #c4736c; }
+
+/* 동료(v3.1) 간트 — 보라 계열. 소환창 막대 + 스킬별 딜 틱 + 동료→플레이어 버프 */
+.tl-glabel-comp { color: #a879e0; }
+.tl-glabel-sub { font-size: 11px; opacity: .82; padding-left: 9px; }
+.tl-cwin { position: absolute; top: 2px; height: 12px; background: linear-gradient(180deg, rgba(168,121,224,.3), rgba(138,92,196,.3)); border: 1px solid rgba(168,121,224,.55); border-radius: 3px; box-sizing: border-box; cursor: help; }
+.tl-ctick { position: absolute; top: 0; width: 4px; height: 16px; background: linear-gradient(180deg, #b98ae0, #9061c4); margin-left: -2px; cursor: help; }
+.tl-ctick:hover { background: #fff; box-shadow: 0 0 0 1px #9061c4; z-index: 2; }
+.tl-cbuff { background: linear-gradient(180deg, rgba(168,121,224,var(--a)), rgba(130,86,190,var(--a))); border-color: rgba(0,0,0,.3); }
 
 /* 미반영 유물 안내 — 타임라인 카드 내부 하단 서브섹션 */
 .tl-unreflected { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--card2); }
@@ -1747,7 +1809,6 @@ body.notices-active .ad-slot { display: none !important; }
 .exp-relic-pot-line select.tl-exp-pot-type { min-width: 130px; }
 #tl-exp-relic-list select { max-width: 100%; }   /* 좁은 폭에서 유물 셀렉트가 카드를 밀지 않도록 */
 .exp-relic-nopot, .exp-relic-empty { font-size: .86em; }
-.exp-relic .exp-tag { display: inline-block; padding: 0 6px; margin-right: 2px; border-radius: 6px; background: rgba(127,127,127,.18); color: var(--muted); font-size: .8em; font-weight: 600; vertical-align: middle; }
 .exp-box { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2, rgba(127,127,127,.05)); }
 .exp-head { font-weight: 700; margin-bottom: 8px; color: var(--muted); font-size: .92em; }
 .exp-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; }

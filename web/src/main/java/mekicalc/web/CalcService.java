@@ -81,6 +81,7 @@ public final class CalcService {
     private final VisionOcr ocr;
     private volatile SkillBook nlBook;   // 나이트로드 IR(타임라인 엔진용), 최초 요청 시 지연 로딩
     private volatile ArtifactBook nlArtBook;   // 유물 IR(타임라인 조립용), 최초 요청 시 지연 로딩
+    private volatile mekicalc.timeline.ir.SupporterBook supBook;   // 동료 IR(v3.1 동료 엔진용), 최초 요청 시 지연 로딩
     private volatile Map<String, Integer> nlArtSlugToIdx;   // 카탈로그 슬러그id → manual idx(이름 조인), 지연 구축
 
     public CalcService(GameContent content) {
@@ -775,6 +776,50 @@ public final class CalcService {
         return b;
     }
 
+    private mekicalc.timeline.ir.SupporterBook supBook() {
+        mekicalc.timeline.ir.SupporterBook b = supBook;
+        if (b == null) {
+            synchronized (this) {
+                if (supBook == null) supBook = mekicalc.timeline.ir.SupporterBook.load(
+                        content.dataDir.resolve("skills_calc/supporter_manual.json"),
+                        content.dataDir.resolve("skills_calc/supporter_seed.json"));
+                b = supBook;
+            }
+        }
+        return b;
+    }
+
+    /** 사용 가능한 동료 목록(supporter_manual.json 등록분) — 프론트 선택 드롭다운용. */
+    // ★배포 게이트: 인게임 실측 검증이 끝난 동료만 노출·계산. 미검증(나이트로드 등)은 데이터는 보유하되 숨김 — 검증 후 클래스 추가.
+    private static final java.util.Set<String> AVAILABLE_SUPPORTER_CLASSES = java.util.Set.of("Bishop");
+    private boolean supporterAvailable(String code) {
+        if (code == null || code.isEmpty()) return false;
+        mekicalc.timeline.ir.SupporterIR s = supBook().supporter(code);
+        return s != null && AVAILABLE_SUPPORTER_CLASSES.contains(s.clazz());
+    }
+
+    public List<Map<String, Object>> supporters() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (mekicalc.timeline.ir.SupporterIR s : supBook().all()) {
+            if (!AVAILABLE_SUPPORTER_CLASSES.contains(s.clazz())) continue;   // 미검증 동료 숨김(비숍만 노출)
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("code", s.code());
+            m.put("name", s.name());
+            m.put("class", s.clazz());
+            m.put("grade", s.grade());
+            m.put("levelCap", supGradeLevelCap(s.grade()));
+            out.add(m);
+        }
+        return out;
+    }
+
+    private static int supGradeLevelCap(String grade) {
+        return switch (grade == null ? "" : grade) {
+            case "cadet" -> 100; case "rare" -> 50; case "epic" -> 30; case "unique" -> 10; case "legend" -> 16;
+            default -> 1;
+        };
+    }
+
     private ArtifactBook nlArtBook() {
         ArtifactBook b = nlArtBook;
         if (b == null) {
@@ -885,7 +930,8 @@ public final class CalcService {
                                           List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
                                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                                           boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
-                                          boolean fillSkills, boolean optimize) {
+                                          boolean fillSkills, boolean optimize,
+                                          String companionCode, int companionLevel, int firstSummonMs) {
         TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
                 enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
         Timeline tl = tb.tl();
@@ -902,6 +948,16 @@ public final class CalcService {
         List<Map<String, Object>> cycleRows = tb.cycleRows();
         List<Map<String, Object>> derivedRows = tb.derivedRows();
         List<ArtifactAssembler.StackSeg> stackSegs = tb.stackSegs();
+
+        // ── 동료(v3.1): 다중 소환·동적 스냅샷·플레이어 버프 주입(3단계). 동료 버프 주입 후 Analyzer가 플레이어 딜을 재계산. ──
+        mekicalc.timeline.SupporterEngine.CompanionResult comp = null;
+        if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
+            List<BuffSource> playerSrc = new ArrayList<>(sources);
+            playerSrc.addAll(artRes.sources());
+            comp = mekicalc.timeline.SupporterEngine.run(preset, playerSrc, companionCode,
+                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
+            mekicalc.timeline.SupporterEngine.injectBuffs(tl, comp.playerBuffInjections(), simMs);
+        }
 
         Analyzer an = new Analyzer(tl, preset, monDef, boss, simMs);
 
@@ -941,6 +997,7 @@ public final class CalcService {
             row.put("pct", safe(total > 0 ? e.getValue() / total * 100 : 0));
             row.put("hits", hits);
             row.put("per1", safe(hits > 0 ? e.getValue() / hits : 0));
+            row.put("casts", an.skillCasts(idx));   // 시전 횟수(도트 틱 제외)
             perSkill.add(row);
         }
         out.put("perSkill", perSkill);
@@ -1046,6 +1103,95 @@ public final class CalcService {
             artSkips.add(m);
         }
         out.put("artifactSkips", artSkips);
+
+        // ── 동료 출력(스킬별 딜 + 종합) ──
+        if (comp != null) {
+            mekicalc.timeline.ir.SupporterIR sup = supBook().supporter(companionCode);
+            // 표시 이름 = 타입 기반(평타·액티브N·패시브N·소환). 동료 스킬은 인게임 표시명이 없어 임의명 대신 유형으로.
+            Map<Integer, String> dispName = new LinkedHashMap<>();
+            if (sup != null) {
+                int na = 0, np = 0;
+                for (var sk : sup.skills()) {
+                    String nm;
+                    if (sk.isBasicAttack()) nm = "평타";
+                    else if (sk.isEnter()) nm = "소환";
+                    else if (sk.isActive()) nm = "액티브 " + (++na);
+                    else nm = "패시브 " + (++np);   // onStart/periodic/onAttack
+                    dispName.put(sk.idx(), nm);
+                }
+            }
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("code", companionCode);
+            c.put("name", sup == null ? companionCode : sup.name());
+            c.put("level", companionLevel <= 0 ? 1 : companionLevel);
+            c.put("summonCount", comp.summonCount());
+            c.put("dps", safe(comp.dps()));
+            c.put("total", safe(comp.totalDamage()));
+            List<Map<String, Object>> cps = new ArrayList<>();
+            double cTotal = comp.totalDamage();
+            for (Map.Entry<Integer, Double> e : comp.perSkillDamage().entrySet()) {
+                long hits = comp.perSkillHits().getOrDefault(e.getKey(), 0L);
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("idx", e.getKey());
+                row.put("name", dispName.getOrDefault(e.getKey(), String.valueOf(e.getKey())));
+                row.put("damage", safe(e.getValue()));
+                row.put("dps", safe(simMs > 0 ? e.getValue() / (simMs / 1000.0) : 0));
+                row.put("pct", safe(cTotal > 0 ? e.getValue() / cTotal * 100 : 0));
+                row.put("hits", hits);
+                row.put("per1", safe(hits > 0 ? e.getValue() / hits : 0));       // 한줄 데미지
+                row.put("casts", comp.perSkillCasts().getOrDefault(e.getKey(), 0L));   // 시전 횟수
+                cps.add(row);
+            }
+            cps.sort((x, y) -> Double.compare((Double) y.get("damage"), (Double) x.get("damage")));
+            c.put("perSkill", cps);
+
+            // 간트: 소환창 [start,end]
+            List<Map<String, Object>> summons = new ArrayList<>();
+            for (int[] w : comp.summonWindows()) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("start", w[0]); m.put("end", w[1]);
+                summons.add(m);
+            }
+            c.put("summons", summons);
+
+            // 간트: 동료 스킬별 딜 틱(절대 시각)
+            List<Map<String, Object>> cLines = new ArrayList<>();
+            for (Map.Entry<Integer, List<double[]>> e : comp.dealTicks().entrySet()) {
+                String nm = dispName.getOrDefault(e.getKey(), String.valueOf(e.getKey()));
+                List<Map<String, Object>> ticks = new ArrayList<>();
+                double sum = 0;
+                for (double[] tk : e.getValue()) {
+                    Map<String, Object> t = new LinkedHashMap<>();
+                    t.put("t", (int) tk[0]); t.put("dmg", safe(tk[1]));
+                    ticks.add(t); sum += tk[1];
+                }
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("idx", e.getKey()); row.put("name", nm); row.put("ticks", ticks); row.put("_dmg", sum);
+                cLines.add(row);
+            }
+            cLines.sort((x, y) -> Double.compare((Double) y.get("_dmg"), (Double) x.get("_dmg")));
+            for (Map<String, Object> r : cLines) r.remove("_dmg");
+            c.put("dealLines", cLines);
+
+            // 간트: 동료→플레이어 버프 창(스탯별)
+            List<Map<String, Object>> cBuffs = new ArrayList<>();
+            for (mekicalc.timeline.SupporterTimeline.PlayerBuff b : comp.playerBuffInjections()) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("skillIdx", b.skillIdx());
+                m.put("skillName", dispName.getOrDefault(b.skillIdx(), b.skillName()));
+                m.put("stat", b.stat());
+                m.put("value", b.value());
+                m.put("start", b.startMs());
+                m.put("end", b.endMs());
+                m.put("toEnemy", b.toEnemy());
+                cBuffs.add(m);
+            }
+            c.put("buffs", cBuffs);
+
+            out.put("companion", c);
+            out.put("dpsWithCompanion", safe(an.dps() + comp.dps()));       // 플레이어(동료버프 반영)+동료
+            out.put("totalWithCompanion", safe(total + comp.totalDamage()));
+        }
         return out;
     }
 

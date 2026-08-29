@@ -1,0 +1,1511 @@
+{
+  "_comment": "동료 계산 IR manual(손작업본). seed(supporter_seed.json)에서 동료 하나씩 옮기며 정립. 규약=data/skills_calc/md/_clt2_SUPPORTER_TAGS.md. seed↔companions.json(구 검증데이터, ally.txt) 대조. _로 시작하는 필드(_seed/_note/_cltStat)=참고 힌트(확정 후 삭제 가능). ★비숍이 첫 표준 — 다른 동료도 이 규칙에 맞춘다.",
+  "_conventions": {
+    "value": "천분율 원본(÷10=표시%). coeff·value 동일. 예 coeff 2900=290%, value 240=24%.",
+    "child": "자식 딜 본체는 부모 effect로 통합. targetCount = 자식(또는 부모 op) maxHitCount. (예 에너지볼트 targetCount 2 = 자식806111 maxHitCount)",
+    "stat": "clt 원본명 유지. preset키 예외3: Attack→ATK_PCT / MainStat→MAIN_STAT_FLAT / AttackPower→DMG. MaxDamageRatio·FinalDamage(고유곱)·CriticalPower(합산크뎀)·AttackSpeed(고유체감·상한150%)·SkillPower 등은 원본명.",
+    "target": "clt op target → 대상: Parent/Target(SkillTargetType Friend)=player(소환주) · Myself=companion(동료자기) · enemy=적. 버프는 소환창(30s) 동안만 적용.",
+    "trigger": "basicAttack=평타(replaceBaseAttack) · active=쿨 있는 액티브 · onStart=소환중 상시패시브 · periodic=주기(periodMs) · onAttack=동료 공격 편승(triggerBy)+chance. enter=소환 순간 1회(EnterSkillIndex).",
+    "attackTriggerSeparation": "★동료 공격은 별개 스트림 — 플레이어측 onAttack/onHit 판정(유물 은펜던트·돼지리본 등, 직업 '공격 시/타격 시' 스킬)은 동료 공격에 발동하지 않음(예전 확정 규칙, 플레이어 본인 공격에만). 반대로 동료 자신의 onAttack proc(triggerBy:companionAttack/companionBasicAttack)은 동료 자기 공격에만 편승. 상호 미교차.",
+    "cond": "★기본 정책: 우리가 별도로 정하지 않은 모든 조건(cond)은 상시=충족으로 가정하고 계산(효과 활성). 예외(적용 안 함)만 개별 명시. 조건 주체는 그 effect의 target 기준(예 hpRatio>=30·mpRatio>=50 = 플레이어의 HP/MP). cond 필드는 문서화·향후 정밀모델용으로 보존.",
+    "perHpRatio_assumeMax": "현재HP 비례 스탯(크뎀/공속)은 HP100%=최대치로 계산(assumeMax). value=HP100% 환산값.",
+    "used": "used:false = 딜무관(HP/MP회복·클렌즈·터프니스·이속 등 생존/편의). 누락 방지 위해 보존하되 딜 계산 제외.",
+    "options": "collection/equip 옵션 = 계정전역 상시스탯 → 소환딜과 분리(딜 계산 제외, used:false). 이미 프리셋 스탯창 반영(이중계산 방지). ★값 성장: 실제값 = base(여기 value) × SupporterLevelStatFactorTable.Factor[옵션Factor컬럼][동료레벨]/1000 (Factor컬럼=seed options.factor: collection 1/4/5/6·equip 7/13, Lv1=1.0×). 계승과 같은 테이블·동료레벨 축, 90% 캡 없음. 성장은 '옵션→플레이어 스탯 기여' 기능용(소환딜 무관).",
+    "inherit": "공격력만 inheritFactor[동료레벨][levelFactor]/10 부분계승(만렙 90%캡)+compareLevel 플레이어보정. 나머지 스탯 100% 계승. 쿨감·1~4스렙·모스렙 미적용."
+  },
+  "_gradeBonus": {
+    "uniqueLegendaryOwnFinalDamage": {
+      "grades": [
+        "unique",
+        "legend"
+      ],
+      "byCompanionLevel": [
+        {
+          "level": 5,
+          "value": 250
+        },
+        {
+          "level": 8,
+          "value": 250
+        },
+        {
+          "level": 10,
+          "value": 250
+        }
+      ],
+      "stat": "FinalDamage",
+      "target": "companion",
+      "_note": "유니크/레전더리 동료 공통 — 동료레벨 5/8/10 각각 동료 자기 최종뎀 +25%(누적 최대 +75%). 전 유니크/레전 동료 동일(companions.json uniqueLegendaryFinalDmg). seed엔 각 동료 passiveSkills에 ModStat FinalDamage250 target Myself ×3(비숍 806370/371/372·806490/491/492)로 존재하나, 공통 규칙이라 여기서 일괄 처리."
+    }
+  },
+  "supporters": [
+    {
+      "code": "SUPPORTER_6_1",
+      "class": "Bishop",
+      "name": "비숍(1차)",
+      "grade": "rare",
+      "creatureIndex": "9106",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, level1=50% ~ 만렙50=90%캡). compareLevel 보정 없음.",
+      "skills": [
+        {
+          "idx": "806100",
+          "name": "소환 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 15000,
+              "used": false,
+              "_seed": "806100 GetHotByMaxHpR 1%/s×15s"
+            }
+          ]
+        },
+        {
+          "idx": "806110",
+          "name": "에너지 볼트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 2,
+              "_seed": "806110 coeff260/hits2 + 자식806111 maxHitCount2"
+            }
+          ]
+        },
+        {
+          "idx": "806120",
+          "name": "최대 데미지 배율 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "MaxDamageRatio",
+              "value": 120,
+              "target": "player",
+              "_seed": "806120 ModStat MaxDamageRatio120 OnStart(소환중 상시)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack",
+            "_note": "계정전역·딜분리(깡공)"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_6_2",
+      "class": "Bishop",
+      "name": "비숍(2차)",
+      "grade": "epic",
+      "creatureIndex": "9206",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, level1=50% ~ 만렙30=90%캡). compareLevel=30.",
+      "skills": [
+        {
+          "idx": "806200",
+          "name": "소환 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 20000,
+              "used": false,
+              "_seed": "806200 GetHotByMaxHpR 1%/s×20s"
+            }
+          ]
+        },
+        {
+          "idx": "806210",
+          "name": "홀리 애로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "806210 GetDamageR coeff400/hits3/maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "806220",
+          "name": "힐",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "cond": "hpRatio>=30",
+              "_seed": "806220 op2 ModStatR Attack150 target Parent, HpRatio>=300, watchOp1(dur10s)"
+            },
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "806220 op1 GetHotByMaxHpR 1%/s×10s"
+            }
+          ]
+        },
+        {
+          "idx": "806230",
+          "name": "최대 데미지 배율 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "MaxDamageRatio",
+              "value": 180,
+              "target": "player",
+              "_seed": "806230 ModStat MaxDamageRatio180 OnStart"
+            }
+          ]
+        },
+        {
+          "idx": "806240",
+          "name": "MP 회복 · 최종 데미지 증가",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 2000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 80,
+              "target": "player",
+              "durationMs": 5000,
+              "cond": "mpRatio>=50",
+              "_seed": "806240 op2 ModStat FinalDamage80 target Parent, MpRatio>=500, dur5s"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 30,
+              "target": "player",
+              "used": false,
+              "_seed": "806240 op1 GetMpR 3%"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "SkillPower",
+            "value": 20,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_6_3",
+      "class": "Bishop",
+      "name": "비숍(3차)",
+      "grade": "unique",
+      "creatureIndex": "9306",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, level1=50% ~ 만렙10=90%캡). compareLevel=60.",
+      "skills": [
+        {
+          "idx": "806300",
+          "name": "소환 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 25000,
+              "used": false,
+              "_seed": "806300 GetHotByMaxHpR 1%/s×25s"
+            }
+          ]
+        },
+        {
+          "idx": "806310",
+          "name": "샤이닝 레이",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "806310 GetDamageR coeff800/hits5/maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "806320",
+          "name": "힐",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "cond": "hpRatio>=30",
+              "_seed": "806320 = 806220"
+            },
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false
+            }
+          ]
+        },
+        {
+          "idx": "806330",
+          "name": "홀리 매직 쉘",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 27000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 200,
+              "target": "player",
+              "durationMs": 15000,
+              "_seed": "806330 op3 ModStatR Attack200 target Parent, watchOp1(dur15s)"
+            },
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 50,
+              "target": "player",
+              "durationMs": 15000,
+              "used": false,
+              "_note": "방어스탯(딜무관)"
+            },
+            {
+              "role": "utility",
+              "action": "cleanse",
+              "target": "player",
+              "used": false,
+              "_seed": "806330 op2 Cleanse Random1(디버프 제거)"
+            }
+          ]
+        },
+        {
+          "idx": "806340",
+          "name": "최대 데미지 배율 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "MaxDamageRatio",
+              "value": 240,
+              "target": "player",
+              "_seed": "806340 ModStat MaxDamageRatio240 OnStart"
+            }
+          ]
+        },
+        {
+          "idx": "806350",
+          "name": "MP 회복 · 최종 데미지 증가",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 2000,
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 80,
+              "target": "player",
+              "durationMs": 5000,
+              "cond": "mpRatio>=50",
+              "_seed": "806350 = 806240"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 30,
+              "target": "player",
+              "used": false
+            }
+          ]
+        },
+        {
+          "idx": "806360",
+          "name": "추가 피해(확률)",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "triggerBy": "companionAttack",
+          "chance": 200,
+          "cooldown": 3000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "806360 OnAttack ratio200(=20%,조건없음→동료 모든공격 편승) cd3s GetDamageR coeff8000 RandomEnemy×7",
+              "_cltDamageType": "Dot",
+              "_note": "clt Dot분류지만 즉발 추가피해(companions.json=800% companionAttack)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower",
+            "_note": "AttackPower→DMG(데미지증가%)"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "SkillPower",
+            "value": 40,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_6_4",
+      "class": "Bishop",
+      "name": "비숍(4차)",
+      "grade": "legend",
+      "creatureIndex": "9406",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, level1=60% ~ 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "806400",
+          "name": "소환 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 30000,
+              "used": false,
+              "_seed": "806400 GetHotByMaxHpR 1%/s×30s"
+            }
+          ]
+        },
+        {
+          "idx": "806410",
+          "name": "빅뱅",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "806410 GetDamageR coeff2900/hits5/maxHitCount6. op6/7 BigbangEffect State/ClearState(>9)=차지연출(딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "806420",
+          "name": "힐",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "cond": "hpRatio>=30"
+            },
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 10,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false
+            }
+          ]
+        },
+        {
+          "idx": "806430",
+          "name": "홀리 매직 쉘",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 27000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 200,
+              "target": "player",
+              "durationMs": 15000,
+              "_seed": "806430 = 806330"
+            },
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 50,
+              "target": "player",
+              "durationMs": 15000,
+              "used": false
+            },
+            {
+              "role": "utility",
+              "action": "cleanse",
+              "target": "player",
+              "used": false
+            }
+          ]
+        },
+        {
+          "idx": "806440",
+          "name": "제네시스",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 11000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6500,
+              "hits": 6,
+              "targetCount": 10,
+              "_seed": "806440 UseSkillToTarget maxHitCount10 → 자식806441 GetDamageR coeff6500/hits6"
+            }
+          ]
+        },
+        {
+          "idx": "806450",
+          "name": "최대 데미지 배율 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "MaxDamageRatio",
+              "value": 240,
+              "target": "player",
+              "_seed": "806450 ModStat MaxDamageRatio240 OnStart"
+            }
+          ]
+        },
+        {
+          "idx": "806460",
+          "name": "MP 회복 · 최종 데미지 증가",
+          "role": [
+            "buff",
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 2000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 80,
+              "target": "player",
+              "durationMs": 5000,
+              "cond": "mpRatio>=50"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 30,
+              "target": "player",
+              "used": false
+            }
+          ]
+        },
+        {
+          "idx": "806470",
+          "name": "추가 피해(확률)",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "triggerBy": "companionAttack",
+          "chance": 200,
+          "cooldown": 3000,
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 26000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "806470 OnAttack ratio200 cd3s GetDamageR coeff26000 RandomEnemy×7",
+              "_cltDamageType": "Dot",
+              "_note": "즉발 추가피해(companions.json=2600% companionAttack)"
+            }
+          ]
+        },
+        {
+          "idx": "806480",
+          "name": "현재 HP 비례 크뎀·공속",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 400,
+              "target": "both",
+              "perHpRatio": true,
+              "assumeMax": true,
+              "_seed": "806480 op1 ModStat CriticalPower dyn=$CreatureFinalStat(FiredCreature;HpRatio)/100*40 → 플레이어HP100%=400(40%)",
+              "_note": "원래는 플레이어 현재HP 10%마다 크뎀 4%(HP100%=40%). ★인게임 버그: 레전 비숍 이 패시브가 실제론 HP 체크 안 하고 항상 최대치(+40%)로, 그리고 동료 자신에게도 적용됨 → target both(플레이어+동료). 유니크 이하엔 이 스킬 없음(실측 검증). 버그 반영."
+            },
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 200,
+              "target": "player",
+              "perHpRatio": true,
+              "assumeMax": true,
+              "_seed": "806480 op2 ModStat AttackSpeed dyn=HpRatio/100*20 → HP100%=200(20%)",
+              "_note": "현재HP 10%마다 공속 2%, HP100%=20%. AttackSpeed=고유체감·상한150%"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "SkillPower",
+            "value": 80,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_9_1",
+      "class": "NightLord",
+      "name": "나이트로드(1차)",
+      "grade": "rare",
+      "creatureIndex": "9109",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "809100",
+          "name": "소환 강타",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 300,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "nonBoss",
+              "_seed": "809100 op1 GetDamageR 300 hits4 maxHitCount8 (non-boss)",
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+            },
+            {
+              "role": "deal",
+              "coeff": 900,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "boss",
+              "_seed": "809100 op2 GetDamageR 900 hits4 maxHitCount8 (boss=3x)"
+            }
+          ]
+        },
+        {
+          "idx": "809110",
+          "name": "럭키 세븐",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "809110 LuckySeven GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "809120",
+          "name": "명중 증가",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HitChance",
+              "value": 6,
+              "target": "both",
+              "used": false,
+              "_seed": "809120 ModStat HitChance 6 Target+Myself(both)",
+              "_note": "명중(딜 무관)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_9_2",
+      "class": "NightLord",
+      "name": "나이트로드(2차)",
+      "grade": "epic",
+      "creatureIndex": "9209",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "809200",
+          "name": "소환 강타",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "nonBoss",
+              "_seed": "809200 op1 GetDamageR 800 hits4 maxHitCount8 (non-boss)",
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+            },
+            {
+              "role": "deal",
+              "coeff": 2400,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "boss",
+              "_seed": "809200 op2 GetDamageR 2400 hits4 maxHitCount8 (boss=3x)"
+            }
+          ]
+        },
+        {
+          "idx": "809210",
+          "name": "표창 난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 4,
+              "_seed": "809210 ShurikenBurst op1 GetDamageR 400 hits3 target Target → 자식809211 maxHitCount4"
+            }
+          ]
+        },
+        {
+          "idx": "809220",
+          "name": "윈드 탈리스만",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 11000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 1,
+              "targetCount": 6,
+              "_seed": "809220 op1 GetDamageR 3000 hits1 maxHitCount6"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "cond": "boss",
+              "used": false,
+              "_seed": "809220 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
+              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+            }
+          ]
+        },
+        {
+          "idx": "809230",
+          "name": "명중 증가",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HitChance",
+              "value": 8,
+              "target": "both",
+              "used": false,
+              "_seed": "809230 ModStat HitChance 8 Target+Myself(both)",
+              "_note": "명중(딜 무관)"
+            }
+          ]
+        },
+        {
+          "idx": "809240",
+          "name": "보스 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackPowerToBoss",
+              "value": 150,
+              "target": "player",
+              "_seed": "809240 ModStat AttackPowerToBoss 150 Friend",
+              "_note": "보스 데미지 +15%(BOSS_DMG)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 50.0,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_9_3",
+      "class": "NightLord",
+      "name": "나이트로드(3차)",
+      "grade": "unique",
+      "creatureIndex": "9309",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "809300",
+          "name": "소환 강타",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2800,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "nonBoss",
+              "_seed": "809300 op1 GetDamageR 2800 hits4 maxHitCount8 (non-boss)",
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+            },
+            {
+              "role": "deal",
+              "coeff": 8400,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "boss",
+              "_seed": "809300 op2 GetDamageR 8400 hits4 maxHitCount8 (boss=3x)"
+            }
+          ]
+        },
+        {
+          "idx": "809310",
+          "name": "표창 도전",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "809310 ShurikenChallenge GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "809320",
+          "name": "윈드 탈리스만",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 11000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 9000,
+              "hits": 1,
+              "targetCount": 6,
+              "_seed": "809320 op1 GetDamageR 9000 hits1 maxHitCount6"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "cond": "boss",
+              "used": false,
+              "_seed": "809320 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
+              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+            }
+          ]
+        },
+        {
+          "idx": "809330",
+          "name": "트리플 스로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3500,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "809330 TripleThrow op1 GetDamageR 3500 hits3 target Target. op2-4 EffectOnly(연출)"
+            }
+          ]
+        },
+        {
+          "idx": "809340",
+          "name": "명중 증가",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HitChance",
+              "value": 10,
+              "target": "both",
+              "used": false,
+              "_seed": "809340 ModStat HitChance 10 Target+Myself(both)",
+              "_note": "명중(딜 무관)"
+            }
+          ]
+        },
+        {
+          "idx": "809350",
+          "name": "보스 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackPowerToBoss",
+              "value": 150,
+              "target": "player",
+              "_seed": "809350 ModStat AttackPowerToBoss 150 Friend",
+              "_note": "보스 데미지 +15%(BOSS_DMG)"
+            }
+          ]
+        },
+        {
+          "idx": "809360",
+          "name": "최종 데미지 스택",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 3,
+          "periodMs": 1000,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 15,
+              "target": "companion",
+              "maxStacks": 15,
+              "_seed": "809360 OnTimer 1s ModStat FinalDamage 15 Myself, enableCond StateCount<15",
+              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 미지원: applySelfBuffs가 target:companion를 상수 1소스로만 반영 → 램프업(스택 성장) 엔진 처리 필요. periodMs/maxStacks 필드는 확장 대비 보존."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 100.0,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_9_4",
+      "class": "NightLord",
+      "name": "나이트로드(4차)",
+      "grade": "legend",
+      "creatureIndex": "9409",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "809400",
+          "name": "소환 강타",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "nonBoss",
+              "_seed": "809400 op1 GetDamageR 8000 hits4 maxHitCount8 (non-boss)",
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+            },
+            {
+              "role": "deal",
+              "coeff": 24000,
+              "hits": 4,
+              "targetCount": 8,
+              "cond": "boss",
+              "_seed": "809400 op2 GetDamageR 24000 hits4 maxHitCount8 (boss=3x)"
+            }
+          ]
+        },
+        {
+          "idx": "809410",
+          "name": "쇼다운 챌린지",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "809410 ShowDownChallenge GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "809420",
+          "name": "서든 레이드",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 11000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 11000,
+              "hits": 3,
+              "targetCount": 10,
+              "_seed": "809420 op1 GetDamageR 11000 hits3 maxHitCount10"
+            },
+            {
+              "role": "deal",
+              "coeff": 1000,
+              "hits": 1,
+              "form": "dot",
+              "tickMs": 1000,
+              "durationMs": 10000,
+              "_seed": "809420 op2 GetDotR 1000 dur10000 tick1000 (10틱×100%)"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "cond": "boss",
+              "used": false,
+              "_seed": "809420 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
+              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+            }
+          ]
+        },
+        {
+          "idx": "809430",
+          "name": "쿼드러플 스로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 10000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 13000,
+              "hits": 4,
+              "targetCount": 1,
+              "_seed": "809430 QuadrupleThrow op1 GetDamageR 13000 hits4 target Target. op2-5 EffectOnly(연출)"
+            }
+          ]
+        },
+        {
+          "idx": "809440",
+          "name": "퍼지 에어리어",
+          "role": [
+            "debuff",
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 100,
+              "target": "enemy",
+              "durationMs": 20000,
+              "cond": "nonBoss",
+              "_seed": "809440→투사체809440(20s)→자식809441 op1 ModStat Weakness 100 (non-boss)",
+              "_note": "결계 받피증 +10%(20초). 컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 200,
+              "target": "enemy",
+              "durationMs": 20000,
+              "cond": "boss",
+              "_seed": "809441 op3 ModStat Weakness 200 (boss=2x)"
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "value": -100,
+              "target": "enemy",
+              "used": false,
+              "_seed": "809441 op2 ModStatR RunSpeedMms -100 (non-boss, 이속감소)",
+              "_note": "이속 감소(딜 무관)"
+            }
+          ]
+        },
+        {
+          "idx": "809450",
+          "name": "명중 증가",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HitChance",
+              "value": 10,
+              "target": "both",
+              "used": false,
+              "_seed": "809450 ModStat HitChance 10 Target+Myself(both)",
+              "_note": "명중(딜 무관)"
+            }
+          ]
+        },
+        {
+          "idx": "809460",
+          "name": "보스 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackPowerToBoss",
+              "value": 150,
+              "target": "player",
+              "_seed": "809460 ModStat AttackPowerToBoss 150 Friend",
+              "_note": "보스 데미지 +15%(BOSS_DMG)"
+            }
+          ]
+        },
+        {
+          "idx": "809470",
+          "name": "최종 데미지 스택",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 2,
+          "periodMs": 1000,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 15,
+              "target": "companion",
+              "maxStacks": 15,
+              "_seed": "809470 OnTimer 1s ModStat FinalDamage 15 Myself, enableCond StateCount<15",
+              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 미지원: applySelfBuffs가 target:companion를 상수 1소스로만 반영 → 램프업(스택 성장) 엔진 처리 필요. periodMs/maxStacks 필드는 확장 대비 보존."
+            }
+          ]
+        },
+        {
+          "idx": "809480",
+          "name": "보스 공격 추가피해",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 0,
+          "openLevel": 3,
+          "triggerBy": "companionAttack",
+          "chance": 350,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 1,
+              "targetCount": 1,
+              "cond": "boss",
+              "_seed": "809480 OnAttack ratio350 boss-only GetDamageR 10000 hits1 target Target",
+              "_note": "동료가 보스 공격 시 35% 확률 1000% 추가피해. ★boss 전용(cond boss) — 엔진이 cond 미평가라 일반몹에도 발동함(보스게이팅 필요)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 200.0,
+            "used": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -43,6 +43,11 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5018626409439701" crossorigin="anonymous"></script>
 </head>
 <body>
+  <!-- 좌상단 고정 문의 버튼: 모든 화면·스크롤 위치에서 항상 노출 -->
+  <button id="inquiry-fab" class="inquiry-fab" type="button" aria-label="제보 / 문의">
+    <span class="inq-fab-ico" aria-hidden="true">📝</span><span class="inq-fab-txt">문의</span><span id="inq-fab-dot" class="inq-fab-dot" hidden></span>
+  </button>
+
   <header>
     <div class="brand" title="홈으로">
       <img class="brand-logo" src="/icon/mekicalc.png" alt="MekiCalc 로고" width="44" height="44" />
@@ -137,7 +142,7 @@
       </details>
       <div class="deal-warning" role="note">
         <span class="dw-icon" aria-hidden="true">⚠️</span>
-        <span><b>현재 나이트로드 지원 · 베타.</b> 스킬 + <b>유물(잠재 포함)</b>을 계산합니다. 다른 직업은 순차적으로 추가될 예정이며, <b>동료는 아직 미지원</b>(동료 엔진 개발 중)이에요. 절대 수치가 아니라 세팅·배치 간 상대 비교용이에요.</span>
+        <span><b>현재 나이트로드 지원 · 베타.</b> 스킬 + <b>유물(잠재 포함)</b> + <b>동료(비숍)</b>를 계산합니다. 다른 직업·동료는 순차적으로 추가될 예정이에요. 절대 수치가 아니라 세팅·배치 간 상대 비교용이에요.</span>
       </div>
 
       <!-- 빌드 프리셋(타임라인 전용): 스킬 배치(로테이션)+자동채움+스탯·동료·유물 로드아웃을 빌드로 저장. 저장 버튼으로만 반영(미저장 유실). -->
@@ -151,18 +156,18 @@
             <button id="tb-rename" class="mini-btn ghost" type="button">이름변경</button>
             <button id="tb-del" class="mini-btn ghost" type="button">삭제</button>
             <button id="tb-reset" class="mini-btn ghost" type="button">초기화</button>
+            <button id="tb-boxorder" class="mini-btn ghost" type="button" title="빌드 박스 순서를 드래그로 변경(이 빌드에만 저장)">⇅ 박스 순서</button>
           </div>
         </div>
         <div class="tl-build-presets">
           <label>스탯 <select id="tb-stat"></select></label>
-          <label>동료 <select id="tb-ally"></select></label>
           <label>유물 <select id="tb-relic"></select></label>
         </div>
-        <div class="tl-build-hint">빌드 = <b>스킬 배치 + 스탯·동료·유물 프리셋</b> 한 벌. 빌드를 고르면 그 프리셋이 전역에 적용돼요. 변경 후 <b>저장</b>을 눌러야 반영됩니다(미저장 시 유실).</div>
+        <div class="tl-build-hint">빌드 = <b>스킬 배치 + 동료 + 스탯·유물 프리셋</b> 한 벌. 빌드를 고르면 그 프리셋이 전역에 적용돼요. 변경 후 <b>저장</b>을 눌러야 반영됩니다(미저장 시 유실).</div>
         <div id="tl-build-warn" class="tl-build-warn" hidden></div>
       </div>
 
-      <div class="tl-bar">
+      <div class="tl-bar" data-box="bar">
         <div class="ds-seg" id="tl-mode" role="group" aria-label="배치 모드">
           <button type="button" class="ds-seg-btn" data-v="auto">⚙️ 자동</button>
           <button type="button" class="ds-seg-btn" data-v="manual">✍️ 수동</button>
@@ -171,8 +176,8 @@
         <button type="button" id="tl-run" class="tl-run-btn">계산</button>
       </div>
 
-      <div class="card tl-relic-opts">
-        <div class="dash-head"><h2>유물 계산 설정</h2><span class="dash-sub">마리수·처치수·컨텐츠·시간 의존 유물 반영</span></div>
+      <details class="card tl-relic-opts" data-box="relic" open>
+        <summary>유물 계산 설정 <span class="tl-ro-hint">마리수·처치수·컨텐츠·시간 의존 유물 반영</span></summary>
         <div class="tl-ro-grid">
           <label><span class="ro-head">마리수(적)<span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></span><input id="tl-enemies" type="number" min="1" placeholder="미지정"></label>
           <label><span class="ro-head">분당 처치수<span class="tl-ro-hint">성배</span></span><input id="tl-kills" type="number" min="0" placeholder="미지정"></label>
@@ -189,16 +194,27 @@
           <label><span class="ro-head">유물 사전활성(초)<span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></span><input id="tl-artoffset" type="number" min="0" value="0"></label>
         </div>
         <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
-      </div>
+      </details>
+
+      <!-- 동료(v3.1): 소환 딜 + 동료→플레이어 버프 반영. 소환 30초·쿨 90초. -->
+      <details class="card tl-companion-opts" data-box="companion" open>
+        <summary>동료 <span class="tl-ro-hint">소환 딜 + 동료→플레이어 버프 반영 · 소환 30초·쿨 90초</span></summary>
+        <div class="tl-ro-grid">
+          <label><span class="ro-head">동료</span><select id="tl-companion"><option value="">없음</option></select></label>
+          <label><span class="ro-head">등급</span><select id="tl-companion-grade"></select></label>
+          <label><span class="ro-head">동료 레벨</span><input id="tl-companion-level" type="number" min="1" value="1"></label>
+          <label><span class="ro-head">첫 소환 시각(초)<span class="tl-ro-hint">기본 5초 · 이후 90초마다 자동 소환</span></span><input id="tl-first-summon" type="number" min="0" value="5"></label>
+        </div>
+      </details>
 
       <!-- 사용 스킬(액티브): 체크 해제 시 자동 로테이션·수동 스킬 자동채움에서 제외. 수동 직접 배치는 가능. 빌드에 저장. -->
-      <details class="card tl-skillsel">
+      <details class="card tl-skillsel" data-box="skillsel">
         <summary>사용 스킬 <span class="tl-ro-hint">체크 해제하면 자동·수동 자동채움에서 제외돼요(수동 직접 배치는 가능)</span></summary>
         <div class="tl-skillsel-bar"><button type="button" id="tl-skill-all" class="mini-btn ghost">전체 선택</button><button type="button" id="tl-skill-none" class="mini-btn ghost">전체 해제</button></div>
         <div id="tl-skill-list" class="tl-skill-list"></div>
       </details>
 
-      <details id="tl-manual" class="card tl-skillsel" hidden open>
+      <details id="tl-manual" class="card tl-skillsel" data-box="manual" hidden open>
         <summary>스킬 배치표 <span class="tl-ro-hint">지정 시각에 시전 · 쿨 안 돌면 지연 · 드래그로 순서 변경</span></summary>
         <label class="tl-ro-check tl-autofill"><input type="checkbox" id="tl-fillskills" checked> 스킬 자동 채움 <span class="tl-ro-hint">배치한 스킬은 그대로 두고, 빈 칸을 <b>사용 중인 스킬로 쿨 맞춰 자동 배치</b>(핵심만 배치하고 나머지는 자동)</span></label>
         <label class="tl-ro-check tl-autofill"><input type="checkbox" id="tl-autofill" checked> 기본 공격 자동 채움 <span class="tl-ro-hint">끄면 배치표에 놓은 액션만 시전 · 평타도 직접 배치 가능</span></label>
@@ -211,7 +227,7 @@
       </details>
 
       <!-- 변경 실험: 스탯을 얼마나 더/덜 얻으면 딜이 어떻게 변하는지. 프리셋 원본 불변, 이 빌드 계산에서만 옵션식대로 가산. -->
-      <details id="tl-exp" class="card tl-skillsel">
+      <details id="tl-exp" class="card tl-skillsel" data-box="exp">
         <summary>실험실 <span class="tl-ro-hint">스탯·유물을 바꿔봤을 때 딜 변화를 즉시 관측 — 프리셋 원본은 그대로, 이 빌드 계산에서만 반영. 스탯은 <b>옵션 계산식대로 가산</b>(공속·방관·쿨감%는 체감누적, 최종뎀은 곱연산). ± 모두 지원. <b>실험값 적용</b>을 켜면 타임라인·큐브·스탯비교·장비비교 등 <b>모든 계산</b>에 실험값이 반영돼요(계산되는 박스에 '실험실' 태그 표시).</span></summary>
         <label class="lab-exp-apply-row" title="켜면 이 실험값을 타임라인·큐브·스탯비교·장비비교 등 모든 엔진 계산에 반영합니다.">
           <span class="tl-switch"><input type="checkbox" id="lab-exp-apply"><span class="tl-switch-track"></span></span>
@@ -234,7 +250,11 @@
         <div id="tl-exp-result"></div>
       </details>
 
-      <div id="tl-result"></div>
+      <!-- 계산 결과 = 개별 이동 가능한 4개 박스(타임라인·종합DPS·스킬별 기여·동료 결과). 컨테이너는 고정, 내용만 매 계산 갱신. -->
+      <div id="tl-box-gantt" data-box="gantt"></div>
+      <div id="tl-box-head" data-box="head"></div>
+      <div id="tl-box-brk" data-box="brk"></div>
+      <div id="tl-box-comp" data-box="comp"></div>
     </section>
 
     <!-- 프리셋 (스탯/스킬/동료/유물/큐브/설정 — 상단 메뉴 '프리셋' 드롭다운으로 전환) -->
@@ -726,7 +746,7 @@
         <h3 id="modal-inquiry-title">제보 / 문의</h3>
         <div class="modal-head-actions">
           <button id="inq-tab-new" class="mini-btn" type="button">새 문의</button>
-          <button id="inq-tab-mine" class="mini-btn ghost" type="button">내 내역</button>
+          <button id="inq-tab-mine" class="mini-btn ghost" type="button">내 내역<span id="inq-tab-mine-dot" class="inq-tab-dot" hidden></span></button>
           <button class="modal-x" type="button" data-close aria-label="닫기">✕</button>
         </div>
       </div>
@@ -861,6 +881,25 @@
       </div>
       <div class="modal-foot">
         <button id="import-apply-btn" class="mini-btn" type="button">선택한 프리셋 불러오기</button>
+        <button class="mini-btn ghost" type="button" data-close>취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 빌드 박스 순서 변경(드래그) -->
+  <div id="modal-box-order" class="modal-overlay modal-blur" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-box-order-title">
+      <div class="modal-head">
+        <h3 id="modal-box-order-title">박스 순서 변경</h3>
+        <button class="modal-x" type="button" data-close aria-label="닫기">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="box-order-hint">박스 몸통을 잡고 드래그해 순서를 바꾸세요. 맨 위 <b>빌드</b> 박스만 고정이고, 결과(타임라인 등)를 포함한 나머지는 자유롭게 옮길 수 있어요. 이 순서는 <b>현재 빌드에만</b> 저장됩니다.</p>
+        <div id="box-order-list" class="box-order-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="box-order-apply" class="mini-btn" type="button">적용</button>
+        <button id="box-order-reset" class="mini-btn ghost" type="button">기본 순서로 초기화</button>
         <button class="mini-btn ghost" type="button" data-close>취소</button>
       </div>
     </div>

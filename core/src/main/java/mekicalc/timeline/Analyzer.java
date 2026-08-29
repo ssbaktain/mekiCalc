@@ -60,6 +60,16 @@ public final class Analyzer {
         return h;
     }
 
+    /** 특정 스킬의 시전 횟수 = 즉발(비도트) 딜이 발생한 서로 다른 시각 수. 도트/주기 틱은 제외(1회 시전으로 침). */
+    public long skillCasts(int skillIdx) {
+        long c = 0;
+        for (int t : tl.timesOf(skillIdx)) {
+            for (DealEvent d : tl.slots().get(t).deals())
+                if (d.skillIdx() == skillIdx && !d.dotTick()) { c++; break; }
+        }
+        return c;
+    }
+
     public double dps() { return totalDamage() / (simMs / 1000.0); }
 
     /** 특정 시각 t에 특정 스킬이 넣은 딜(그 슬롯의 해당 스킬 deal 합). 툴팁 순간 데미지용. */

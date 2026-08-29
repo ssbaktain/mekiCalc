@@ -3549,9 +3549,8 @@ function buildExportBundle() {
   if (!b) return null;
   const one = (coll, name) => (coll && coll.presets && coll.presets[name]) ? { active: name, presets: { [name]: coll.presets[name] } } : undefined;
   const out = { format: BACKUP_FORMAT, version: 1, buildPresets: { active: buildPresets.active, presets: { [buildPresets.active]: b } } };
-  const sp = one(statPresets, b.stat), ap = one(allyPresets, b.ally), rp = one(relicPresets, b.relic);
+  const sp = one(statPresets, b.stat), rp = one(relicPresets, b.relic);   // 동료는 빌드에 내장(별도 프리셋 아님)
   if (sp) out.statPresets = sp;
-  if (ap) out.allyPresets = ap;
   if (rp) out.relicPresets = rp;
   return JSON.stringify(out, null, 2);
 }
@@ -3780,6 +3779,7 @@ async function loadMe(pre) {
   renderLoginUI();
   applyBanState();
   if (typeof refreshPatchForAccount === "function") refreshPatchForAccount();   // 계정 확정 후 새 소식 재평가(계정별)
+  if (typeof refreshInquiryDot === "function") refreshInquiryDot();             // 계정 확정 후 운영자 답장 알림 재평가
 }
 
 async function doLogout() {
@@ -3847,7 +3847,7 @@ function applyBanState() {
   }
 }
 
-function openInquiry() { const m = $("modal-inquiry"); if (!m) return; m.hidden = false; inqSwitch("new"); }
+function openInquiry() { const m = $("modal-inquiry"); if (!m) return; m.hidden = false; inqSwitch("new"); refreshInquiryDot(); }
 
 // 로그인 여부에 따라 게이트/폼/내역 전환.
 function inqSwitch(tab) {
@@ -3938,7 +3938,35 @@ async function loadMyInquiries() {
     const data = await (await fetch("/api/inquiries/mine")).json();
     const list = (data && data.inquiries) || [];
     box.innerHTML = list.length ? list.map(inqMineRow).join("") : `<p class="hint">아직 문의 내역이 없어요.</p>`;
+    markInqRepliesSeen(inqLatestAdminAt(list));   // 내 문의(답장 포함) 열람 = 답장 확인 → 빨간 점 제거
   } catch { box.innerHTML = `<p class="hint">불러오지 못했어요.</p>`; }
+}
+
+// ── 문의 답장 알림(좌상단 FAB 빨간 점) — 업데이트 내역 새 소식과 동일 방식. 로그인 계정별로 '본 것' 기록. ──
+const INQ_REPLY_SEEN_KEY = "mekicalc.inq.replySeen.v1";
+function inqReplySeenKey() { return INQ_REPLY_SEEN_KEY + ":" + ((me && me.loggedIn && me.email) ? me.email.toLowerCase() : "anon"); }
+// 내 문의들 중 운영자(admin) 답장의 최신 시각(ms). 없으면 0.
+function inqLatestAdminAt(list) {
+  let max = 0;
+  for (const q of list || [])
+    for (const m of (q.messages || []))
+      if (m && m.author === "admin" && typeof m.at === "number" && m.at > max) max = m.at;
+  return max;
+}
+function setInqDot(on) {
+  const d = $("inq-fab-dot"); if (d) d.hidden = !on;             // 좌상단 FAB 점
+  const t = $("inq-tab-mine-dot"); if (t) t.hidden = !on;         // 모달 '내 내역' 탭 점
+}
+function markInqRepliesSeen(latest) { saveJSON(inqReplySeenKey(), latest || 0); setInqDot(false); }
+// 로그인 계정 확정 후 답장 유무 재평가(로그인 유저만 — 답장은 로그인 문의에만 옴).
+async function refreshInquiryDot() {
+  if (!(me && me.loggedIn)) { setInqDot(false); return; }
+  try {
+    const data = await (await fetch("/api/inquiries/mine")).json();
+    const latest = inqLatestAdminAt((data && data.inquiries) || []);
+    const seen = loadJSON(inqReplySeenKey(), 0) || 0;
+    setInqDot(latest > seen);
+  } catch { /* 조용히 무시 */ }
 }
 function inqTypeLabel(t) { return t === "bug" ? "버그 제보" : t === "suggest" ? "기능 건의" : "기타 문의"; }
 function inqMineRow(q) {
@@ -3962,6 +3990,8 @@ function inqMineRow(q) {
 function initInquiry() {
   const link = $("footer-inquiry");
   if (link) link.addEventListener("click", (e) => { e.preventDefault(); openInquiry(); });
+  const fab = $("inquiry-fab");   // 좌상단 고정 문의 버튼
+  if (fab) fab.addEventListener("click", (e) => { e.preventDefault(); openInquiry(); });
   const fi = $("inq-file-input");
   if (fi) fi.addEventListener("change", () => {
     for (const f of fi.files) {
@@ -4508,7 +4538,7 @@ async function renderTimeline() {
   tlBooting = false;   // 초기화(프리셋 적용) 중 발동한 runTimeline은 억제됐고, 이제부터 실계산 허용
   tlSyncMode();
   if (currentJob() !== 1) {
-    $("tl-result").innerHTML = '<div class="tl-empty">정밀 타임라인은 현재 <b>나이트로드</b>만 지원해요.<br>캐릭터 직업을 나이트로드로 두고 다시 열어주세요.</div>';
+    tlClearResult('<div class="tl-empty">정밀 타임라인은 현재 <b>나이트로드</b>만 지원해요.<br>캐릭터 직업을 나이트로드로 두고 다시 열어주세요.</div>');
     return;
   }
   runTimeline();
@@ -4518,7 +4548,7 @@ async function renderTimeline() {
 function buildJobMismatch() {
   if (activeBuildJob() === currentJob()) return false;
   const jn = JOB_NAME[activeBuildJob()] || `직업 ${activeBuildJob()}`;
-  $("tl-result").innerHTML = `<div class="tl-empty">이 빌드는 <b>${jn}</b>용이에요. 현재 직업과 달라 계산할 수 없어요.<br>직업을 맞추거나 <b>현재 직업의 빌드</b>를 선택하세요.</div>`;
+  tlClearResult(`<div class="tl-empty">이 빌드는 <b>${jn}</b>용이에요. 현재 직업과 달라 계산할 수 없어요.<br>직업을 맞추거나 <b>현재 직업의 빌드</b>를 선택하세요.</div>`);
   $("tl-manual").hidden = true;
   return true;
 }
@@ -4574,21 +4604,27 @@ function tlInitHandlers() {
   if (fs) fs.addEventListener("change", () => { tlFillSkills = fs.checked; setBuildDirty(true); runTimeline(); });
   const opt = $("tl-optimize");
   if (opt) opt.addEventListener("change", () => tlSetOptimize(opt.checked));
-  // 시뮬 길이·유물 계산 옵션도 빌드에 저장되는 선택 → 변경 즉시 저장 버튼 활성(input), 확정 시 재계산(change).
-  for (const id of ["tl-simsec", "tl-enemies", "tl-kills", "tl-content", "tl-artoffset", "tl-preact"]) {
+  // 시뮬 길이·유물 계산 옵션·동료 설정도 빌드에 저장되는 선택 → 변경 즉시 저장 버튼 활성(input), 확정 시 재계산(change).
+  for (const id of ["tl-simsec", "tl-enemies", "tl-kills", "tl-content", "tl-artoffset", "tl-preact",
+                    "tl-companion", "tl-companion-grade", "tl-companion-level", "tl-first-summon"]) {
     const e = $(id);
     if (e) {
       e.addEventListener("input", () => setBuildDirty(true));   // 타이핑 즉시 저장 버튼 활성(blur 전에도)
-      e.addEventListener("change", () => { setBuildDirty(true); runTimeline(); });
+      e.addEventListener("change", () => {
+        if (id === "tl-companion") tlFillCompanionGrades();       // 클래스 변경 → 등급 목록 재구성
+        else if (id === "tl-companion-grade") tlSyncCompanionCap();
+        setBuildDirty(true); runTimeline();
+      });
     }
   }
+  tlLoadSupporters();   // 동료 목록 채우기(비동기)
   const skAll = $("tl-skill-all"), skNone = $("tl-skill-none");
   if (skAll) skAll.addEventListener("click", () => { tlSkillsOff.clear(); tlRenderSkillList(); setBuildDirty(true); runTimeline(); });
   if (skNone) skNone.addEventListener("click", () => { tlSkillsOff = new Set((tlSkills || []).filter((s) => !s.basic).map((s) => s.idx)); tlRenderSkillList(); setBuildDirty(true); runTimeline(); });
   tlWireTooltip();
 }
 
-// 간트 커스텀 툴팁(네이티브 title 대신 — 마우스에 안 가리게 바 위에, 즉시 표시). #tl-result에 위임.
+// 간트 커스텀 툴팁(네이티브 title 대신 — 마우스에 안 가리게 바 위에, 즉시 표시). #tl-box-gantt에 위임.
 // x=마우스 위치 추적(확대 시 넓은 바에서 고정 좌표가 넘치는 문제 방지), y=바 위 고정.
 // 간트 막대/마커의 툴팁을 배치. anchor=기준 막대. anchorX=시간선(커서/탭) x — 있으면 그 기준, 없으면 막대 중앙.
 // y는 간트 최상단(시각 가이드 태그 높이) 위 — 어떤 막대와도 안 겹침. x는 좌우 뷰포트 경계에 닿으면 그걸 한계로 clamp.
@@ -4609,7 +4645,7 @@ function tlPlaceTip(res, tip, anchor, anchorX) {
   tip.style.top = (yTop - 6 - th) + "px";                        // 간트 상단 위에 박스가 얹히도록(높이만큼 올림)
 }
 function tlWireTooltip() {
-  const res = $("tl-result"), tip = $("tl-tip");
+  const res = $("tl-box-gantt"), tip = $("tl-tip");   // 간트 막대 툴팁 → 타임라인 박스에 위임
   if (!res || !tip) return;
   // 데스크톱: 호버로 표시
   res.addEventListener("mousemove", (e) => {
@@ -4711,8 +4747,9 @@ function buildPayload(wipeRotation) {
     preAct: !!($("tl-preact") && $("tl-preact").checked),   // 확률형 유물 사전활성
     job: currentJob(),
     stat: (statPresets && statPresets.active) || null,
-    ally: (allyPresets && allyPresets.active) || null,
     relic: (relicPresets && relicPresets.active) || null,
+    companion: tlCompanionBuild(),                   // 타임라인 동료(클래스/등급/레벨/첫소환) — 빌드에 저장
+    boxOrder: tlBoxOrderSnapshot(),                  // 빌드 박스 배치 순서(사용자 지정)
   };
 }
 // 활성 빌드의 저장된 직업(레거시 무태그=나이트로드).
@@ -4772,9 +4809,6 @@ function applyBuildPresets(b) {
   if (b.stat && statPresets && statPresets.presets[b.stat] && statPresets.active !== b.stat) {
     statPresets.active = b.stat; saveJSON(STATP_KEY, statPresets); spApply(b.stat); if ($("sp-sel")) $("sp-sel").value = b.stat;
   }
-  if (b.ally && allyPresets && allyPresets.presets[b.ally] && allyPresets.active !== b.ally) {
-    allyPresets.active = b.ally; saveJSON(ALLYP_KEY, allyPresets); apApply(b.ally); if ($("ap-sel")) $("ap-sel").value = b.ally;
-  }
   if (b.relic && relicPresets && relicPresets.presets[b.relic] && relicPresets.active !== b.relic) {
     relicPresets.active = b.relic; saveJSON(RELICP_KEY, relicPresets); rpApply(b.relic); if ($("rp-sel")) $("rp-sel").value = b.relic;
   }
@@ -4807,6 +4841,8 @@ function bpApply(name) {
   setv("tl-simsec", b.sim, 90); setv("tl-enemies", b.enemies, ""); setv("tl-kills", b.kills, "");
   setv("tl-content", b.content, ""); setv("tl-artoffset", b.artOffset, 0);
   { const cs = $("tl-content"); if (cs && cs.options[cs.selectedIndex] && cs.options[cs.selectedIndex].disabled) cs.value = ""; }   // 미개발 컨텐츠가 저장돼 있으면 자동으로 보정
+  tlApplyCompanionBuild(b.companion);   // 타임라인 동료 복원(목록 미로드면 보류→로드 후 적용)
+  applyBoxOrder(b.boxOrder);            // 빌드 박스 순서 복원(없으면 기본)
   if ($("tl-preact")) $("tl-preact").checked = !!b.preAct;
   const af = $("tl-autofill"); if (af) af.checked = tlAutoFill;
   const removed = tlCleanupLevel();
@@ -4821,7 +4857,6 @@ function bpApply(name) {
 function fillBuildSel() { if (buildPresets) fillPresetSel($("tb-sel"), buildPresets); }
 function fillBuildPresetSelects() {
   if (statPresets) fillPresetSel($("tb-stat"), statPresets);
-  if (allyPresets) fillPresetSel($("tb-ally"), allyPresets);
   if (relicPresets) fillPresetSel($("tb-relic"), relicPresets);
 }
 
@@ -4877,13 +4912,6 @@ $("tb-stat").addEventListener("change", () => {
   const name = $("tb-stat").value;
   if (!canLeaveStat()) { $("tb-stat").value = statPresets.active; return; }
   statPresets.active = name; saveJSON(STATP_KEY, statPresets); spApply(name); if ($("sp-sel")) $("sp-sel").value = name;
-  resetLab();   // 프리셋 변경 → 실험실 초기화
-  setBuildDirty(true); updateBuildWarn(); runTimeline();
-});
-$("tb-ally").addEventListener("change", () => {
-  const name = $("tb-ally").value;
-  if (!canLeaveAlly()) { $("tb-ally").value = allyPresets.active; return; }
-  allyPresets.active = name; saveJSON(ALLYP_KEY, allyPresets); apApply(name); if ($("ap-sel")) $("ap-sel").value = name;
   resetLab();   // 프리셋 변경 → 실험실 초기화
   setBuildDirty(true); updateBuildWarn(); runTimeline();
 });
@@ -5178,6 +5206,73 @@ function tlSimMs() {
   return Math.round(simSec * 1000);
 }
 
+// 동료(v3.1): /api/supporters로 사용 가능 동료 목록을 받아 2단 드롭다운(동료/등급)에 채움. 레벨 상한=등급별.
+let tlSupporters = null;
+let tlSupByClass = {};   // 클래스 → [엔트리...] (등급 오름차순)
+const TL_GRADE_ORDER = { cadet: 0, rare: 1, epic: 2, unique: 3, legend: 4 };
+const TL_GRADE_KO = { cadet: "노멀", rare: "레어", epic: "에픽", unique: "유니크", legend: "레전더리" };
+const TL_GRADE_UP = { cadet: "NORMAL", rare: "RARE", epic: "EPIC", unique: "UNIQUE", legend: "LEGENDARY" };
+
+// 클래스 기본 한글명 = 그 클래스 엔트리 name에서 "(N차)" 제거(예 "나이트로드(4차)" → "나이트로드").
+function tlClassKo(cls) {
+  const s = (tlSupByClass[cls] || [])[0];
+  return s ? (s.name || cls).replace(/\s*\(\d+차\)\s*$/, "") : cls;
+}
+
+async function tlLoadSupporters() {
+  const sel = $("tl-companion");
+  if (!sel) return;
+  try { if (!tlSupporters) tlSupporters = await (await fetch("/api/supporters")).json(); }
+  catch { tlSupporters = []; }
+  // 클래스별 그룹핑(첫 등장 순서 유지, 각 클래스 내부는 등급 오름차순)
+  tlSupByClass = {};
+  const classOrder = [];
+  for (const s of tlSupporters || []) {
+    const cls = s.class || s.code;
+    if (!tlSupByClass[cls]) { tlSupByClass[cls] = []; classOrder.push(cls); }
+    tlSupByClass[cls].push(s);
+  }
+  for (const cls in tlSupByClass)
+    tlSupByClass[cls].sort((a, b) => (TL_GRADE_ORDER[a.grade] ?? 9) - (TL_GRADE_ORDER[b.grade] ?? 9));
+  // 동료(클래스) 드롭다운: 값=클래스, 라벨=기본 한글명
+  const curClass = sel.dataset.cls || "";
+  sel.innerHTML = `<option value="">없음</option>` +
+    classOrder.map((cls) => `<option value="${cls}">${tlClassKo(cls)}</option>`).join("");
+  if (curClass && tlSupByClass[curClass]) sel.value = curClass;
+  tlFillCompanionGrades();
+  const applied = tlRestoreCompanion();   // 빌드 로드가 목록 로드보다 앞서 보류된 동료 선택이 있으면 지금 적용
+  // 목록이 첫 계산보다 늦게 도착해 동료가 뒤늦게 붙은 경우, 빌드 탭이 보이면 재계산.
+  const tp = $("panel-timeline");
+  if (applied && tp && !tp.hidden) runTimeline();
+}
+
+// 선택된 클래스의 등급(티어) 드롭다운 채움. 기본=최고 등급.
+function tlFillCompanionGrades(preferCode) {
+  const clsSel = $("tl-companion"), gSel = $("tl-companion-grade");
+  if (!clsSel || !gSel) return;
+  const cls = clsSel.value;
+  clsSel.dataset.cls = cls;
+  const list = tlSupByClass[cls] || [];
+  const prev = preferCode || gSel.value;
+  gSel.innerHTML = list.map((s) =>
+    `<option value="${s.code}" style="color:${gradeColor(TL_GRADE_UP[s.grade])}">${TL_GRADE_KO[s.grade] || s.grade}</option>`).join("");
+  gSel.disabled = list.length === 0;
+  if (prev && list.some((s) => s.code === prev)) gSel.value = prev;
+  else if (list.length) gSel.value = list[list.length - 1].code;   // 기본=최고 등급
+  tlSyncCompanionCap();
+}
+
+function tlSyncCompanionCap() {
+  const gSel = $("tl-companion-grade"), lvl = $("tl-companion-level");
+  if (!gSel || !lvl) return;
+  const s = (tlSupporters || []).find((x) => x.code === gSel.value);
+  const cap = s ? (s.levelCap || 1) : 1;
+  lvl.max = cap;
+  if (!$("tl-companion") || !$("tl-companion").value) return;   // '없음'이면 레벨 손대지 않음
+  const v = parseInt(lvl.value) || 0;
+  if (v > cap || v < 1) lvl.value = cap;                        // 처음 선택/범위 밖 → 만렙 기본
+}
+
 function tlPayload() {
   const t = currentTargetSel(), ch = t && t.ch, sv = t && t.stage;
   const simMs = tlSimMs();
@@ -5188,8 +5283,160 @@ function tlPayload() {
     payload.optimize = tlOptimize;
     payload.casts = tlCollectCasts();
   }
+  const cSel = $("tl-companion"), gSel = $("tl-companion-grade");   // 동료(클래스)+등급(티어) → 코드
+  if (cSel && cSel.value && gSel && gSel.value) {   // 동료(v3.1)
+    payload.companion = gSel.value;
+    payload.companionLevel = Math.max(1, parseInt(($("tl-companion-level") || {}).value) || 1);
+    payload.firstSummonMs = Math.max(0, Math.round((parseFloat(($("tl-first-summon") || {}).value) || 0) * 1000));
+  }
   return payload;
 }
+
+// ── 동료를 빌드에 저장/복원(타임라인 동료 카드 = 빌드 소유) ──
+// 빌드 저장용 동료 상태(없으면 null). code=등급 셀렉트값(SUPPORTER_9_4 등), level·firstSummon(초).
+function tlCompanionBuild() {
+  const cSel = $("tl-companion"), gSel = $("tl-companion-grade");
+  if (!cSel || !cSel.value || !gSel || !gSel.value) return null;
+  return {
+    code: gSel.value,
+    level: Math.max(1, parseInt(($("tl-companion-level") || {}).value) || 1),
+    firstSummon: Math.max(0, parseFloat(($("tl-first-summon") || {}).value) || 0),   // 초
+  };
+}
+// 빌드 복원: 저장된 동료를 2단 셀렉트+레벨+첫소환에 반영. 목록 미로드면 보류(로드 후 자동 적용).
+let tlPendingCompanion = undefined;   // undefined=미지정, null=없음, {code,...}=지정
+function tlApplyCompanionBuild(c) { tlPendingCompanion = (c === undefined ? null : c); tlRestoreCompanion(); }
+function tlRestoreCompanion() {
+  const cSel = $("tl-companion"), gSel = $("tl-companion-grade");
+  if (!cSel || !gSel || tlPendingCompanion === undefined) return false;
+  if (!tlSupporters || !Object.keys(tlSupByClass).length) return false;   // 목록 로드 후 tlLoadSupporters가 재호출
+  const c = tlPendingCompanion;
+  let hasCompanion = false;
+  if (!c || !c.code) { cSel.value = ""; cSel.dataset.cls = ""; tlFillCompanionGrades(); }
+  else {
+    const entry = (tlSupporters || []).find((x) => x.code === c.code);
+    cSel.value = entry ? (entry.class || "") : "";
+    tlFillCompanionGrades(c.code);
+    const lvl = $("tl-companion-level"); if (lvl) lvl.value = Math.max(1, c.level || 1);
+    const fs = $("tl-first-summon"); if (fs) fs.value = c.firstSummon != null ? c.firstSummon : 5;   // 기본 첫 소환 5초
+    tlSyncCompanionCap();
+    hasCompanion = !!(cSel.value && gSel.value);
+  }
+  tlPendingCompanion = undefined;
+  return hasCompanion;
+}
+
+// ── 빌드 박스 순서(사용자 지정, 빌드마다 저장) ──
+// 재배치 대상 = data-box 박스들(입력 6 + 결과 4). .tl-build-bar(빌드 헤더)만 항상 최상단 고정.
+// 결과 4박스(타임라인·종합DPS·스킬별기여·동료결과)는 컨테이너 고정·내용만 갱신이라 순서가 유지됨.
+const TL_BOX_KEYS = ["bar", "relic", "companion", "skillsel", "manual", "exp", "gantt", "head", "brk", "comp"];
+const TL_BOX_LABEL = {
+  bar: "모드 · 시뮬 · 계산", relic: "유물 계산 설정", companion: "동료 설정", skillsel: "사용 스킬",
+  manual: "스킬 배치표", exp: "실험실", gantt: "타임라인", head: "종합 DPS", brk: "스킬별 기여", comp: "동료 결과",
+};
+function tlBuildContainer() { return $("panel-timeline"); }
+// 현재 DOM의 박스 순서 스냅샷(누락 키는 뒤에 보충).
+function tlBoxOrderSnapshot() {
+  const c = tlBuildContainer();
+  const order = c ? [...c.children].map((el) => el.dataset && el.dataset.box).filter((k) => TL_BOX_KEYS.includes(k)) : [];
+  for (const k of TL_BOX_KEYS) if (!order.includes(k)) order.push(k);
+  return order;
+}
+// 저장된 순서를 DOM에 적용 — 빌드 헤더(.tl-build-bar) 뒤부터 순서대로 재배치. 소개·경고는 헤더 앞이라 그대로 유지.
+function applyBoxOrder(order) {
+  const c = tlBuildContainer(); if (!c) return;
+  const seq = (order || []).filter((k) => TL_BOX_KEYS.includes(k));
+  for (const k of TL_BOX_KEYS) if (!seq.includes(k)) seq.push(k);   // 누락(신규 박스) 보충
+  let prev = c.querySelector(":scope > .tl-build-bar");   // 고정 앵커
+  if (!prev) return;
+  for (const k of seq) {
+    const el = c.querySelector(`:scope > [data-box="${k}"]`);
+    if (!el) continue;
+    if (prev.nextElementSibling !== el) c.insertBefore(el, prev.nextElementSibling);
+    prev = el;
+  }
+}
+
+// 박스 순서 변경 모달(드래그 앤 드롭, 배치표와 동일 인터랙션)
+let boxOrderWorking = null;   // 편집 중 순서 배열
+function openBoxOrder() {
+  boxOrderWorking = tlBoxOrderSnapshot();
+  renderBoxOrderList();
+  openModal("modal-box-order");
+}
+function renderBoxOrderList() {
+  const list = $("box-order-list"); if (!list || !boxOrderWorking) return;
+  list.innerHTML = boxOrderWorking.map((k) =>
+    `<div class="box-order-item" data-k="${k}"><span class="bo-grip" title="드래그로 순서 변경">⣿</span><span>${TL_BOX_LABEL[k] || k}</span></div>`).join("");
+  [...list.children].forEach((row) => {
+    row.addEventListener("pointerdown", (e) => boxDragStart(e, row));   // 행 아무 데나 잡아도 드래그(순서변경 전용 창)
+  });
+}
+let boxDrag = null;
+function boxDragStart(e, row) {
+  if (e.button != null && e.button !== 0) return;
+  e.preventDefault();
+  const list = row.parentNode;
+  const rows = [...list.children];
+  const rects = rows.map((r) => r.getBoundingClientRect());
+  const fromIdx = rows.indexOf(row);
+  const rowH = rects[fromIdx].height + 8;   // 행높이 + .box-order-list gap
+  boxDrag = { row, rows, rects, fromIdx, rowH, startY: e.clientY, ins: fromIdx, moved: false };
+  row.classList.add("bo-lift");
+  try { e.target.setPointerCapture(e.pointerId); } catch {}
+  window.addEventListener("pointermove", boxDragMove);
+  window.addEventListener("pointerup", boxDragDrop, { once: true });
+}
+function boxDragMove(e) {
+  const g = boxDrag; if (!g) return;
+  const dy = e.clientY - g.startY;
+  if (Math.abs(dy) > 3) g.moved = true;
+  g.row.style.transition = "none";
+  g.row.style.transform = `translateY(${dy}px) scale(1.01)`;
+  let ins = 0;
+  for (let i = 0; i < g.rows.length; i++) {
+    if (i === g.fromIdx) continue;
+    if (e.clientY > g.rects[i].top + g.rects[i].height / 2) ins++;
+  }
+  g.ins = ins;
+  let k = 0;
+  for (let i = 0; i < g.rows.length; i++) {
+    if (i === g.fromIdx) continue;
+    const finalPos = (k < ins) ? k : k + 1;
+    const shift = (finalPos - i) * g.rowH;
+    g.rows[i].style.transition = "transform .16s cubic-bezier(.2,.8,.2,1)";
+    g.rows[i].style.transform = shift ? `translateY(${shift}px)` : "";
+    k++;
+  }
+}
+function boxDragDrop() {
+  const g = boxDrag; if (!g) return;
+  window.removeEventListener("pointermove", boxDragMove);
+  const commit = () => {
+    boxDrag = null;
+    if (g.moved && g.ins !== g.fromIdx) {
+      const moved = boxOrderWorking.splice(g.fromIdx, 1)[0];
+      boxOrderWorking.splice(g.ins, 0, moved);
+    }
+    renderBoxOrderList();   // 배열 기준 재렌더 → transform 초기화
+  };
+  if (!g.moved || g.ins === g.fromIdx) { commit(); return; }
+  g.row.style.transition = "transform .16s cubic-bezier(.2,.8,.2,1)";
+  g.row.style.transform = `translateY(${(g.ins - g.fromIdx) * g.rowH}px) scale(1)`;
+  let done = false;
+  const fin = () => { if (done) return; done = true; g.row.removeEventListener("transitionend", fin); commit(); };
+  g.row.addEventListener("transitionend", fin);
+  setTimeout(fin, 220);
+}
+if ($("tb-boxorder")) $("tb-boxorder").addEventListener("click", openBoxOrder);
+if ($("box-order-apply")) $("box-order-apply").addEventListener("click", () => {
+  if (boxOrderWorking) { applyBoxOrder(boxOrderWorking); setBuildDirty(true); }
+  closeModal("modal-box-order");
+});
+if ($("box-order-reset")) $("box-order-reset").addEventListener("click", () => {
+  boxOrderWorking = TL_BOX_KEYS.slice();   // 기본 순서로(적용은 '적용' 버튼으로 확정)
+  renderBoxOrderList();
+});
 
 // ── 변경 실험(스탯 델타) ──
 // 입력값 = '내가 얻는 양'. 옵션 계산식(체감누적/곱연산/합)으로 현재 프리셋값에 가산. 프리셋 원본 불변.
@@ -5436,12 +5683,14 @@ async function tlRunExperiment(baseD) {
 }
 
 function tlRenderExpDiff(box, baseD, modD, applied) {
-  const b = +baseD.dps || 0, m = +modD.dps || 0, diff = m - b;
+  // 동료가 소환됐으면 동료 포함 DPS로 비교(dpsWithCompanion), 아니면 플레이어 DPS.
+  const dpsOf = (d) => (d && d.dpsWithCompanion != null ? +d.dpsWithCompanion : (+(d && d.dps) || 0));
+  const b = dpsOf(baseD), m = dpsOf(modD), diff = m - b;
   const pct = b > 0 ? (diff / b * 100) : 0;
   const sign = diff >= 0 ? "+" : "−";
   const cls = diff >= 0 ? "exp-up" : "exp-down";
   const rows = applied.map((a) => {
-    if (a.relic) return `<li class="exp-relic"><span class="exp-tag">유물</span> <b>${a.name}</b> <span class="exp-sub">${a.note}</span></li>`;
+    if (a.relic) return `<li class="exp-relic"><b>${a.name}</b> <span class="exp-sub">${a.note}</span></li>`;
     const detail = a.note != null ? a.note : `${num1s(a.from)} → ${num1s(a.to)}`;
     return `<li><b>${a.name}</b> ${a.amount >= 0 ? "+" : ""}${a.amount} <span class="exp-sub">(${detail})</span></li>`;
   }).join("");
@@ -5481,11 +5730,35 @@ async function runTimeline() {
     if (shown.baseSlotMs > 0) tlBaseSlotMs = shown.baseSlotMs;
     renderTimelineResult(shown);
   } catch (e) {
-    $("tl-result").innerHTML = `<div class="tl-empty">계산에 실패했어요. ${(e && e.message) || ""}</div>`;
+    tlClearResult(`<div class="tl-empty">계산에 실패했어요. ${(e && e.message) || ""}</div>`);
   } finally {
     btn.disabled = false; btn.textContent = "계산";
     updateExpTags();   // 실험값 편집/토글에 따라 '실험실' 태그 갱신
   }
+}
+
+// 결과 4박스 비우기 + 메시지(빈/에러/직업불일치)는 첫 박스(타임라인)에 표시.
+function tlClearResult(msgHtml) {
+  const g = $("tl-box-gantt"); if (g) g.innerHTML = msgHtml || "";
+  for (const id of ["tl-box-head", "tl-box-brk", "tl-box-comp"]) { const e = $(id); if (e) e.innerHTML = ""; }
+}
+
+// 스킬별 기여 박스 렌더 — 동료 포함 토글(끄면 본체만, 켜면 동료 전체 딜을 한 조각으로 추가). 비중 = 전체 시뮬 기준(조각 합/전체).
+function tlRenderBrk(d) {
+  const box = $("tl-box-brk"); if (!box) return;
+  const compTotal = (d && d.companion && +d.companion.total) || 0;
+  const hasComp = compTotal > 0;
+  const items = (d.perSkill || []).map((s) => ({ name: s.name, damage: s.damage, per1: s.per1, casts: s.casts }));
+  if (hasComp && tlBrkShowComp) items.push({ name: "동료 (전체)", damage: compTotal, companion: true });   // 동료 상세는 동료 박스에서
+  const toggle = hasComp
+    ? `<label class="tl-brk-toggle" title="켜면 동료가 주는 전체 딜을 비중에 포함(동료 스킬 상세는 동료 박스)">` +
+      `<span class="tl-switch"><input type="checkbox" id="tl-brk-comp"${tlBrkShowComp ? " checked" : ""}><span class="tl-switch-track"></span></span>` +
+      `<span class="tl-brk-toggle-lbl">동료 포함</span></label>`
+    : "";
+  box.innerHTML = `<div class="card"><div class="dash-head"><h2>스킬별 기여</h2>${toggle}</div>${tlDonutHtml(items)}</div>`;
+  const cb = $("tl-brk-comp");
+  if (cb) cb.addEventListener("change", () => { tlBrkShowComp = cb.checked; tlRenderBrk(tlLastData); });
+  tlWireDonut();
 }
 
 function renderTimelineResult(d) {
@@ -5502,11 +5775,15 @@ function renderTimelineResult(d) {
     `<div class="tl-hl-tile${cls ? " " + cls : ""}"><div class="tl-hl-label">${label}</div>` +
     `<div class="tl-hl-num">${koreanUnit(val) || fmt(Math.round(val || 0))}${per ? `<span class="tl-hl-per">${per}</span>` : ""}</div>` +
     `<div class="tl-hl-full">${fmt(Math.round(val || 0))}</div></div>`;
+  const hasComp = !!d.companion;
+  const tiles = hasComp
+    ? tile("플레이어 DPS", d.dps, "primary", "/초") + tile("동료 포함 DPS", d.dpsWithCompanion, "primary", "/초") + tile("전체 데미지", d.totalWithCompanion)
+    : tile("종합 DPS", d.dps, "primary", "/초") + tile("전체 데미지", d.total);
   const head =
     `<div class="tl-headline">` +
     `<div class="tl-hl-ctx">${chips}</div>` +
-    `<div class="tl-hl-tiles">${tile("종합 DPS", d.dps, "primary", "/초")}${tile("전체 데미지", d.total)}</div>` +
-    `<div class="tl-hl-note">세팅·배치 간 상대 비교용 (이상적 상한 기준)</div>` +
+    `<div class="tl-hl-tiles">${tiles}</div>` +
+    `<div class="tl-hl-note">세팅·배치 간 상대 비교용 (이상적 상한 기준)${hasComp ? " · 플레이어 DPS엔 동료가 주는 버프가 반영됨" : ""}</div>` +
     `</div>`;
   // 타임라인 카드: 간트 + (미반영 유물 있을 때만 카드 내부 하단 서브섹션)
   const dpsCtrl = `<div class="tl-dps-ctrl">` +
@@ -5522,12 +5799,15 @@ function renderTimelineResult(d) {
     : "";
   const gantt = `<div class="card"><div class="dash-head"><h2>타임라인</h2><div class="tl-head-ctrls">${expCtrl}${dpsCtrl}</div></div>` +
     `<div class="dash-sub tl-legend">액션(▮ 스킬 · 평타) · <b class="tl-lg-dot">지속딜/패시브딜</b> · <b class="tl-lg-buff">버프</b> · <b class="tl-lg-art">유물</b></div>${tlGantt(d)}${tlArtStatus(d)}</div>`;
-  const brk = `<div class="card"><div class="dash-head"><h2>스킬별 기여</h2></div>${tlDonutHtml(d.perSkill)}</div>`;
-  // 순서: 간트(내부 하단=미반영 유물) → 헤드라인(종합 DPS·전체 데미지) → 스킬별 기여(도넛)
-  $("tl-result").innerHTML = gantt + head + brk;
+  const compTotal = (d.companion && +d.companion.total) || 0;
+  const wholeTotal = (+d.total || 0) + compTotal;   // 전체 시뮬 총딜(플레이어+동료) — 비중 분모
+  // 결과 4박스에 분산 렌더(컨테이너는 고정 → 사용자 지정 순서 유지). 내용만 갱신.
+  $("tl-box-gantt").innerHTML = gantt;
+  $("tl-box-head").innerHTML = head;
+  tlRenderBrk(d);   // 스킬별 기여(동료 포함 토글 · 도넛 · 호버 연동)
+  $("tl-box-comp").innerHTML = d.companion ? tlCompanionCard(d.companion, wholeTotal) : "";
   const expApplyEl = $("tl-exp-apply");   // 매 렌더마다 새로 생성 → 재바인딩
   if (expApplyEl) expApplyEl.addEventListener("change", () => setExpApply(expApplyEl.checked));   // 실험실 박스 토글과 공유
-  tlWireDonut();   // 도넛 호버 반응 연동
   tlWireZoom();    // Ctrl+휠 확대/축소 리스너(1회)
   tlWireGuide();   // 호버 시간 가이드선(1회)
   tlWireDpsControls();   // DPS 토글·집계 슬라이더(1회, 위임)
@@ -5537,9 +5817,32 @@ function renderTimelineResult(d) {
   applyTlZoom();   // 재렌더된 간트에 현재 배율 재적용
 }
 
+// 동료(v3.1) 결과 카드 — 스킬별 딜 막대. 비중=전체 시뮬 기준(동료딜/전체딜). 막대는 동료 스킬 간 상대(최대=꽉참).
+function tlCompanionCard(c, wholeTotal) {
+  const list = (c.perSkill || []);
+  const maxDmg = list.reduce((m, s) => Math.max(m, s.damage || 0), 0) || 1;
+  const W = wholeTotal || list.reduce((t, s) => t + (s.damage || 0), 0) || (c.total || 0);
+  const rows = list.map((s) => {
+    const pct = W > 0 ? (s.damage || 0) / W * 100 : 0;                       // 전체 시뮬에서 이 동료 스킬의 비중
+    const barW = Math.max(2, Math.min(100, (s.damage || 0) / maxDmg * 100)); // 막대=동료 스킬 간 상대(시각용)
+    const metaBits = [];   // 수치(한줄·회) 먼저, 비율은 맨 오른쪽
+    if (s.per1 > 0) metaBits.push(`${tlBig(s.per1)}/줄`);
+    if (s.casts > 0) metaBits.push(`${s.casts}회`);
+    const meta = metaBits.length ? `<span class="tl-comp-meta">${metaBits.join(" · ")}</span>` : "";
+    return `<div class="tl-comp-row"><span class="tl-comp-name">${escapeHtml(s.name)}</span>` +
+      `<span class="tl-comp-track"><span class="tl-comp-fill" style="width:${barW}%"></span></span>` +
+      `<span class="tl-comp-val">${meta}<b class="tl-comp-pct">${num1s(pct)}%</b></span></div>`;
+  }).join("");
+  const compShare = W > 0 ? (c.total || 0) / W * 100 : 0;
+  return `<div class="card tl-comp-card"><div class="dash-head"><h2>동료 · ${escapeHtml(c.name)}</h2>` +
+    `<span class="dash-sub">Lv${c.level} · 소환 ${c.summonCount}회 · 전체 딜 비중 ${num1s(compShare)}% · DPS ${koreanUnit(c.dps) || fmt(Math.round(c.dps || 0))}/s</span></div>` +
+    `<div class="tl-comp-list">${rows}</div>` +
+    `<div class="tl-hl-note">비중은 전체 시뮬 기준(플레이어+동료 총딜 대비). 동료는 소환창(30초) 동안 딜 + 플레이어 버프.</div></div>`;
+}
+
 // 간트 위 호버 시 커서 위치에 세로 가이드선 + 그 지점 시간(초) 표시. 평소엔 숨김.
 function tlWireGuide() {
-  const box = $("tl-result");
+  const box = $("tl-box-gantt");
   if (!box || box.dataset.guideWired) return;
   box.dataset.guideWired = "1";
   const hide = () => { const g = box.querySelector(".tl-guide"); if (g) g.hidden = true; };
@@ -5601,17 +5904,21 @@ function tlDonutHtml(perSkill) {
     `<g class="donut-ring">${paths}</g>` +
     `<text x="${cx}" y="${cy - 6}" class="donut-center-top">${escapeHtml(shortName(top.s.name))}</text>` +
     `<text x="${cx}" y="${cy + 14}" class="donut-center-val">${num1s(top.frac * 100)}%</text></svg></div>`;
-  const legend = `<div class="tl-sk-legend">${g.map((o, i) =>
-    `<div class="tl-sk-row" data-i="${i}"><span class="tl-sk-dot" style="background:${o.color}"></span>` +
-    `<span class="tl-sk-name">${escapeHtml(o.s.name)}</span>` +
-    `<span class="tl-sk-pct">${num1s(o.frac * 100)}%</span>` +
-    `<span class="tl-sk-per">${tlBig(o.s.per1)}/줄 · ${o.s.hits}줄</span></div>`).join("")}</div>`;
+  const legend = `<div class="tl-sk-legend">${g.map((o, i) => {
+    const bits = [];   // 동료 집계 슬라이스(companion)는 상세 없음 · 도트성(casts 0)은 회 생략
+    if (!o.s.companion && o.s.per1 > 0) bits.push(`${tlBig(o.s.per1)}/줄`);
+    if (!o.s.companion && o.s.casts > 0) bits.push(`${o.s.casts}회`);
+    const per = bits.length ? `<span class="tl-sk-per">${bits.join(" · ")}</span>` : "";
+    return `<div class="tl-sk-row" data-i="${i}"><span class="tl-sk-dot" style="background:${o.color}"></span>` +
+      `<span class="tl-sk-name">${escapeHtml(o.s.name)}</span>` +
+      `<span class="tl-sk-meta">${per}<span class="tl-sk-pct">${num1s(o.frac * 100)}%</span></span></div>`;   // 수치→비율 순, 우측 정렬
+  }).join("")}</div>`;
   return `<div class="tl-sk-body">${chart}${legend}</div>`;
 }
 
 // 스킬 도넛 호버 연동: 조각/목록 호버 시 가운데 텍스트 갱신 + 나머지 조각 흐림 + 목록 강조. innerHTML 세팅 후 호출.
 function tlWireDonut() {
-  const root = $("tl-result"); if (!root) return;
+  const root = $("tl-box-brk"); if (!root) return;   // 도넛 = 스킬별 기여 박스
   const chart = root.querySelector(".tl-sk-chart"); if (!chart) return;
   const segs = chart.querySelectorAll(".pie-seg");
   const rows = root.querySelectorAll(".tl-sk-legend .tl-sk-row");
@@ -5681,6 +5988,7 @@ function tlGantt(d) {
   tlDealLines(d.dealLines, pct, lanes);   // 도트/주기/프록 딜: 옅은 막대(활성 구간)+진한 틱(실제 타격 시각)
   tlBuffLanes(skill, pct, false, lanes, T);
   tlBuffLanes(art, pct, true, lanes, T);
+  tlCompanionLanes(d.companion, pct, lanes, T);   // 동료(v3.1): 소환창·딜·버프 lane(하단)
 
   const step = T <= 30000 ? 5000 : T <= 120000 ? 10000 : 20000;
   // 눈금(분기): 0부터 step 간격 + 끝(T)은 항상. step에 딱 안 떨어지거나 T<step여도 첫(0)·끝(T)은 반드시 찍는다.
@@ -5801,9 +6109,9 @@ function tlMonoPath(p) {
   return d;
 }
 
-// DPS 토글(켜기=재렌더로 오버레이 추가·슬라이더 활성) + 집계 슬라이더(경로만 갱신). #tl-result 위임(1회).
+// DPS 토글(켜기=재렌더로 오버레이 추가·슬라이더 활성) + 집계 슬라이더(경로만 갱신). #tl-box-gantt 위임(1회).
 function tlWireDpsControls() {
-  const box = $("tl-result");
+  const box = $("tl-box-gantt");   // DPS 토글·슬라이더 = 타임라인 카드 헤더
   if (!box || box.dataset.dpsWired) return;
   box.dataset.dpsWired = "1";
   box.addEventListener("change", (e) => {
@@ -5820,7 +6128,7 @@ function tlWireDpsControls() {
 
 // 집계 슬라이더 드래그 시 전체 재렌더 없이 곡선 경로만 교체(부드러운 반응).
 function tlUpdateDpsCurve() {
-  const svg = document.querySelector("#tl-result .tl-dps");
+  const svg = document.querySelector("#tl-box-gantt .tl-dps");
   if (!svg || !tlLastData) return;
   const tmp = document.createElement("div");
   tmp.innerHTML = tlDpsOverlay(tlLastData);
@@ -5832,14 +6140,15 @@ let tlZoom = 1, tlMaxZoom = 8, tlGuideMs = 0, tlLastData = null;
 let tlLabelsCollapsed = false;   // 간트 이름(라벨) 열 접힘 — 모바일 가로폭 확보용. 클릭 토글, 렌더 간 유지.
 // DPS 곡선 상태(타임라인 카드 헤더의 토글·슬라이더로 제어). tlDpsAgg=구간 뭉뚱그리기 강도(0~100), 곡률은 항상 최대.
 let tlShowDps = false, tlDpsAgg = 30, tlDpsShownPts = null;
+let tlBrkShowComp = false;   // 스킬별 기여: 동료 전체 딜을 비중에 포함할지(토글)
 function applyTlZoom() {
-  const inner = document.querySelector("#tl-result .tl-gantt-inner");
+  const inner = document.querySelector("#tl-box-gantt .tl-gantt-inner");
   if (inner) inner.style.setProperty("--tl-zoom", tlZoom);
   repositionTlGuide(inner);   // 줌으로 콘텐츠 폭이 바뀌면 시간선도 같은 시각을 가리키도록 재배치
 }
 // 시간선(호버/터치로 만든 세로 가이드)을 저장된 시각 비율 기준으로 현재 콘텐츠 폭에 맞춰 다시 위치. 줌 시 어긋남 방지.
 function repositionTlGuide(inner) {
-  inner = inner || document.querySelector("#tl-result .tl-gantt-inner");
+  inner = inner || document.querySelector("#tl-box-gantt .tl-gantt-inner");
   if (!inner) return;
   const guide = inner.querySelector(".tl-guide");
   if (!guide || guide.hidden) return;
@@ -5853,7 +6162,7 @@ function repositionTlGuide(inner) {
   if (scroll && chip) chip.classList.toggle("flip", left > scroll.scrollLeft + scroll.clientWidth - 90);
 }
 function tlWireZoom() {
-  const box = $("tl-result");
+  const box = $("tl-box-gantt");
   if (!box || box.dataset.zoomWired) return;
   box.dataset.zoomWired = "1";
   box.addEventListener("wheel", (e) => {
@@ -5994,6 +6303,53 @@ function tlDealLines(dealLines, pct, lanes) {
       bars += `<span class="tl-dtick${tk.strong ? " strong" : ""}" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${(tk.t / 1000).toFixed(2)}s${dmg}"></span>`;
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-dot", trackCls: "tl-track tl-buff", bars });
+  }
+}
+
+// 동료(v3.1) 간트 lane: 소환창 막대 + 스킬별 딜 틱 + 동료→플레이어 버프 막대. 시간축 공유.
+const COMPANION_STAT_LABEL = {
+  ATK_PCT: "공격력", FinalDamage: "최종뎀", MaxDamageRatio: "최대뎀배율", CriticalPower: "크뎀",
+  CriticalChance: "크확", AttackSpeed: "공속", SkillPower: "스킬뎀", DMG: "데미지",
+  AttackPowerToBoss: "보스뎀", AttackPowerExcludeBoss: "일반뎀", BaseAttackPower: "평타뎀", Weakness: "약화",
+};
+function tlCompanionLanes(c, pct, lanes, T) {
+  if (!c) return;
+  // 1) 소환창 막대(소환 타이밍=막대 시작, 소환 기간=막대 길이)
+  let sw = "";
+  for (const w of (c.summons || [])) {
+    const width = pct(w.end - w.start);
+    const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+    sw += `<span class="tl-cwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${c.name} 소환 · ${when}"></span>`;
+  }
+  lanes.push({ label: `▼ ${c.name} 소환`, labelCls: "tl-glabel-comp", trackCls: "tl-track tl-comp-lane", bars: sw });
+  // 2) 동료 딜 lanes(스킬별 틱)
+  for (const dl of (c.dealLines || [])) {
+    let bars = "";
+    for (const tk of (dl.ticks || [])) {
+      const dmg = tk.dmg > 0 ? " · " + koreanUnit(tk.dmg) : "";
+      bars += `<span class="tl-ctick" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${(tk.t / 1000).toFixed(2)}s${dmg}"></span>`;
+    }
+    lanes.push({ label: dl.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
+  }
+  // 3) 동료→플레이어 버프 lanes(★스킬별 — 스킬마다 시전 타이밍·지속·수치가 다름. 같은 창은 스탯 나열)
+  const bySkill = {};
+  for (const b of (c.buffs || [])) {
+    const k = b.skillIdx;
+    (bySkill[k] = bySkill[k] || { name: b.skillName || String(k), items: [] }).items.push(b);
+  }
+  for (const k of Object.keys(bySkill)) {
+    const g = bySkill[k];
+    const byWin = {};   // 같은 창(start-end)끼리 묶어 그 창의 스탯들 나열
+    for (const b of g.items) { const wk = b.start + "-" + b.end; (byWin[wk] = byWin[wk] || { start: b.start, end: b.end, stats: [] }).stats.push(b); }
+    let bars = "";
+    for (const wk of Object.keys(byWin)) {
+      const w = byWin[wk];
+      const width = pct(w.end - w.start);
+      const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+      const statTxt = w.stats.map((b) => `${b.toEnemy ? "적 " : ""}${COMPANION_STAT_LABEL[b.stat] || b.stat} +${(b.value / 10).toFixed(1)}%`).join(", ");
+      bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${g.name} → 나 · ${statTxt} · ${when}"></span>`;
+    }
+    lanes.push({ label: `→나 ${g.name}`, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
 }
 

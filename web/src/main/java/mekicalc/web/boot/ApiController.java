@@ -182,7 +182,13 @@ public class ApiController {
                 intOrNull(req, "enemies"), req.get("kills") instanceof Number ? num(req, "kills", 0) : null,
                 strOpt(req, "content"), (int) Math.round(num(req, "artOffsetSec", 0) * 1000),
                 bool(req, "preActivateProc", false), bool(req, "autoFillBasic", true), toIntSet(req.get("skillsOff")),
-                bool(req, "fillSkills", false), bool(req, "optimize", false));
+                bool(req, "fillSkills", false), bool(req, "optimize", false),
+                strOpt(req, "companion"), (int) num(req, "companionLevel", 1), (int) num(req, "firstSummonMs", 0));
+    }
+
+    @GetMapping("/api/supporters")
+    public Object supporters() {
+        return service.supporters();
     }
 
     @PostMapping("/api/ally-ratio")
