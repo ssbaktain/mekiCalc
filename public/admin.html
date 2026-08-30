@@ -214,7 +214,7 @@
       <div class="chart-box" style="margin-top:16px"><h3>기능 사용량</h3><div id="featChart" class="chart-empty">—</div></div>
       <div class="chart-grid two" style="margin-top:16px">
         <div class="chart-box"><h3>로그인 / 비로그인 <span style="color:#8a94a6;font-weight:400;font-size:11px">(고유 방문자)</span></h3><div id="loginChart" class="chart-empty">—</div></div>
-        <div class="chart-box"><h3>직업 분포 <span style="color:#8a94a6;font-weight:400;font-size:11px">(실사용 · 프리셋)</span></h3><div id="jobChart" class="chart-empty">—</div></div>
+        <div class="chart-box"><h3>직업 분포 <span id="jobSrc" style="color:#8a94a6;font-weight:400;font-size:11px"></span></h3><div id="jobChart" class="chart-empty">—</div></div>
       </div>
     </section>
 
@@ -800,8 +800,9 @@
     function renderLogin(d){ const l = d.login || {}; donut($('#loginChart'), [{ label: '로그인', value: l.loggedIn || 0, color: '#6fa3ff' }, { label: '비로그인', value: l.anon || 0, color: '#8a94a6' }]); }
     const JOB_COLORS = ['#8a94a6', '#e5717a', '#6fa3ff', '#6fcf97', '#e7c14a', '#c77dff'];
     function renderJobs(d){
-      let j = d.jobs || [];
-      if (!j.reduce((s, x) => s + x.count, 0)) j = d.jobsPresets || [];   // 실사용 로그 없으면 가입 프리셋으로
+      let j = d.jobs || [], src = '(실사용)';
+      if (!j.reduce((s, x) => s + x.count, 0)) { j = d.jobsPresets || []; src = '(가입 프리셋 · 실사용 데이터 수집 중)'; }   // 실사용 로그 없으면 가입 프리셋으로
+      const el = $('#jobSrc'); if (el) el.textContent = j.length ? src : '';
       donut($('#jobChart'), j.map(x => ({ label: x.name, value: x.count, color: JOB_COLORS[x.job] || '#6fa3ff' })), '아직 직업 데이터가 없습니다.');
     }
 

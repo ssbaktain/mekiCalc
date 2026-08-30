@@ -35,17 +35,17 @@ public final class StatsStore {
     private static final Map<Integer, String> JOB_NAMES = Map.of(
             0, "공용", 1, "나이트로드", 2, "다크나이트", 3, "비숍", 4, "히어로", 5, "보우마스터");
 
-    /** 기능(사용자 화면) 경로 → 라벨. 여기 있는 경로만 '기능 사용량'에 집계(인프라 호출 제외). */
+    /** 기능(사용자 화면 탭) 경로 → 앱 실제 탭 이름. 여기 있는 경로만 '기능 사용량'에 집계.
+     *  target-damage(대상 방어 배수 계산)·slotdraws(큐브 슬롯 드롭다운 데이터)·qualitative·buffs·bootstrap 등
+     *  배경/보조 호출은 사용자 기능이 아니라 제외한다. */
     private static final Map<String, String> FEATURE_LABELS = new LinkedHashMap<>();
     static {
-        FEATURE_LABELS.put("/api/target-damage", "목표 데미지");
         FEATURE_LABELS.put("/api/damage", "데미지 분석");
-        FEATURE_LABELS.put("/api/nl-timeline", "빌드·실험실");
-        FEATURE_LABELS.put("/api/slotdraws", "큐브 슬롯 조회");
-        FEATURE_LABELS.put("/api/recommend", "큐브 우선순위 추천");
+        FEATURE_LABELS.put("/api/nl-timeline", "빌드 · 실험실");
         FEATURE_LABELS.put("/api/evaluate", "큐브 기댓값");
         FEATURE_LABELS.put("/api/optcompare", "큐브 옵션 비교");
-        FEATURE_LABELS.put("/api/compare", "내 옵션 변경");
+        FEATURE_LABELS.put("/api/compare", "큐브 내 옵션 변경");
+        FEATURE_LABELS.put("/api/recommend", "큐브 우선순위 추천");
         FEATURE_LABELS.put("/api/stat-compare", "스탯 비교");
         FEATURE_LABELS.put("/api/gear-compare", "장비 비교");
         FEATURE_LABELS.put("/api/gear-ocr", "장비 인식(OCR)");
