@@ -141,6 +141,10 @@ public final class CubeRecommender {
         List<OptSet> all = new ArrayList<>();
         for (Map.Entry<String, Double> e : setDeal.entrySet()) {
             List<PotentialDraw> opts = setOpts.get(e.getKey());
+            // ★순부분집합(pure-drop) 후보 제외 — 현재 옵션에서 '빼기만' 하고 새 스탯 추가·업그레이드가 하나도 없는 세트.
+            // 단조 엔진이면 라인을 빼서 딜이 오를 수 없으므로, 이런 세트가 curDeal을 넘는 건 오직 비단조 아티팩트
+            // (동료 소환 스냅샷 지터 등)로만 생김. 리롤로 '라인이 더 적은' 잠재를 노리는 건 무의미 → 추천에서 제외.
+            if (containsAllOpts(normalCurOpts, opts)) continue;   // 현재가 opts를 모두 포함 = opts는 순부분집합
             double probExact = qualProb * arrangeSum(opts, poolTables);   // 정확구성(나머지 빈): 상호배타 '1회 리롤' 합산용
             double probApp   = qualProb * appearProb(opts, poolTables);   // 한계 등장확률: 표시·기대큐브·효율·파레토용
             Best b = bestArrange(opts, poolTables);                       // 최고 확률 배치(단일 확률용)
@@ -239,6 +243,10 @@ public final class CubeRecommender {
         if (c == 0) return null;
         int idx = (c == 1) ? 0 : (int) Math.round(f * (c - 1));
         if (idx < 0) idx = 0; if (idx > c - 1) idx = c - 1;
+        // ★안전장치: 추천 세트의 딜이 현재보다 높지 않으면(오류·비단조 아티팩트) 다음(더 높은 딜) 세트로 넘긴다.
+        // shown은 딜 오름차순이라 idx++가 더 높은 딜. 개선 세트가 하나도 없으면 null(추천 없음).
+        while (idx < c && eo.shown().get(idx).deal() <= eo.curDeal() + 1e-12) idx++;
+        if (idx >= c) return null;
         OptSet set = eo.shown().get(idx);
 
         boolean crossGrade = set.grade() != null && !set.grade().equals(eo.curGrade());

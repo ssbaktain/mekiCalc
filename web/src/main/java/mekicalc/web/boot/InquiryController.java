@@ -158,7 +158,9 @@ public class InquiryController {
                 Path p = inquiries.attachmentFile(q.id, i);
                 if (p != null) imgs.add(p.toAbsolutePath().toString());
             }
-            outbox.enqueue(t.toString(), "inquiry:" + q.id, targets, imgs);
+            // dedupKey에 createdAt(epoch ms) 포함 — 문의 데이터 초기화로 id가 재사용돼도 옛 sent 메시지 키와 충돌해
+            // 알림이 조용히 드롭되지 않도록(같은 문의의 중복 적재만 막고, id 재사용은 시각으로 구분). 과거 버그 원인.
+            outbox.enqueue(t.toString(), "inquiry:" + q.id + "@" + q.createdAt, targets, imgs);
         } catch (Exception ignore) { }
     }
 

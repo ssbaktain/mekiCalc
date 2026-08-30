@@ -1789,26 +1789,41 @@ async function renderLine(part, lineName) {
 
 // ──────────────────── 우선순위 추천 ────────────────────
 
-async function runRecommend(useSliderMax) {
-  if (!Object.keys(myCube).length) { $("rc-status").textContent = "먼저 '내 큐브' 탭에서 큐브 옵션을 입력하세요."; $("rc-list").innerHTML = ""; return; }
+// ★compute-once: 빌드가 바뀔 때만 /api/recommend 1회 호출(무거운 딜 계산). 응답의 recsBySlider(모든 슬라이더 위치×전체 추천)를
+// 캐시해두고, 슬라이더·정렬·윗/아랫 필터는 renderCurrentRecs로 재fetch 없이 즉시 처리한다.
+let rcData = null;   // { maxDivisions, recsBySlider: [[recJson,...] (슬라이더0), ...] }
+
+async function runRecommend(resetSlider) {
+  if (!Object.keys(myCube).length) { $("rc-status").textContent = "먼저 '내 큐브' 탭에서 큐브 옵션을 입력하세요."; $("rc-list").innerHTML = ""; rcData = null; return; }
   const done = deferLoading("rc-status");
   try {
     const data = await postJson("/api/recommend", {
       stats: effStats(), conversions: myConv, ...targetForApi(), ...companionParams(),
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
-      sliderValue: parseInt($("rc-slider").value, 10) || 0,
-      sortKey: parseInt($("rc-sort").value, 10) || 0,
-      upper: $("rc-upper").checked, lower: $("rc-lower").checked,
       ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 추천. 실험실과 동일 sim 길이(순환/파생 유물 sim 의존)
     });
+    rcData = { maxDivisions: data.maxDivisions || 1, recsBySlider: data.recsBySlider || [] };
     const slider = $("rc-slider");
-    slider.max = Math.max(0, data.maxDivisions - 1);
+    slider.max = Math.max(0, rcData.maxDivisions - 1);
     $("rc-slider-max").textContent = slider.max;
-    if (useSliderMax) { slider.value = 0; $("rc-slider-val").textContent = "0"; }
-    renderRecs(data.recs);
-    $("rc-status").textContent = data.recs.length ? "" : "추천할 옵션이 없습니다.";
+    if (resetSlider || (parseInt(slider.value, 10) || 0) > slider.max) { slider.value = 0; $("rc-slider-val").textContent = "0"; }
+    renderCurrentRecs();
   } catch (e) { $("rc-status").textContent = "오류: " + e.message; }
   finally { done(); }
+}
+
+// 슬라이더·정렬·윗/아랫 변경 시 재fetch 없이 캐시(recsBySlider)에서 필터·정렬·렌더. sortKey 정의는 서버 sortValue와 동일.
+function renderCurrentRecs() {
+  if (!rcData) { $("rc-list").innerHTML = ""; return; }
+  const s = Math.min(rcData.recsBySlider.length - 1, Math.max(0, parseInt($("rc-slider").value, 10) || 0));
+  let recs = (rcData.recsBySlider[s] || []).slice();
+  const up = $("rc-upper").checked, lo = $("rc-lower").checked;
+  recs = recs.filter((r) => (r.upper && up) || (!r.upper && lo));
+  const sk = parseInt($("rc-sort").value, 10) || 0;
+  const sv = (r) => sk === 1 ? r.recProbSum / r.cost : sk === 2 ? r.totalProb / r.cost : sk === 3 ? r.gainEff : r.dealDiff / r.cost;
+  recs.sort((a, b) => sv(b) - sv(a));
+  renderRecs(recs);
+  $("rc-status").textContent = recs.length ? "" : "추천할 옵션이 없습니다.";
 }
 
 // 슬롯 박스 한 칸. cls=neutral|before|after|locked. locked=true면 자물쇠 표시.
@@ -1843,17 +1858,17 @@ function renderRecs(recs) {
       `<span>딜 증가량 <b class="good">${signPct(r.dealDiff)}</b></span>` +
       `<span title="한 큐브 리롤로 지금 끼고 있는 옵션보다 딜이 높은 구성이 나올 확률">1회 리롤·현재보다↑ <b>${pct(r.totalProb)}</b></span>` +
       `<span title="한 큐브 리롤로 이 추천 옵션보다도 딜이 높은 구성이 나올 확률">1회 리롤·추천보다↑ <b>${pct(r.remainProb)}</b></span>` +
-      `<span>효율 <b>${fmtScore(r.gainEff * 1e6)}</b></span>` +
+      `<span title="딜 증가량 × 등장 확률 ÷ 큐브 가격 — 큐브 소모 대비 딜 이득(가성비)">가성비 <b>${fmtScore(r.gainEff * 1e6)}</b></span>` +
       `</div>${slotCompare(rows)}`;
     list.appendChild(card);
   });
 }
 
-$("rc-sort").addEventListener("change", () => runRecommend(false));
-$("rc-upper").addEventListener("change", () => runRecommend(false));
-$("rc-lower").addEventListener("change", () => runRecommend(false));
-$("rc-slider").addEventListener("input", () => { $("rc-slider-val").textContent = $("rc-slider").value; });
-$("rc-slider").addEventListener("change", () => runRecommend(false));
+// ★슬라이더·정렬·윗/아랫 = 이미 계산된 recsBySlider에서 즉시 재렌더(재계산·재fetch 없음).
+$("rc-sort").addEventListener("change", renderCurrentRecs);
+$("rc-upper").addEventListener("change", renderCurrentRecs);
+$("rc-lower").addEventListener("change", renderCurrentRecs);
+$("rc-slider").addEventListener("input", () => { $("rc-slider-val").textContent = $("rc-slider").value; renderCurrentRecs(); });
 
 // ──────────────────── 옵션 비교(좌/우 자유 선택) ────────────────────
 
@@ -4022,6 +4037,7 @@ initInquiry();
 const PATCH_SEEN_KEY = "mekicalc.patch.lastSeen.v1";
 let patchNotes = null;
 const PATCH_TAG_KO = { feature: "신기능", improve: "개선", fix: "수정" };
+const PATCH_TAG_ORDER = ["feature", "improve", "fix"];   // 태그 표시 순서 고정(신기능→개선→수정). 어떤 순서로 넣어도 이 순서로 정렬.
 
 async function loadPatchNotes() {
   if (patchNotes) return patchNotes;
@@ -4048,7 +4064,9 @@ async function refreshPatchForAccount() {
 }
 
 function patchTagsHtml(tags) {
-  return (tags || []).map((t) => `<span class="pn-tag pn-tag-${escapeHtml(String(t))}">${escapeHtml(PATCH_TAG_KO[t] || t)}</span>`).join("");
+  const rank = (t) => { const i = PATCH_TAG_ORDER.indexOf(t); return i < 0 ? PATCH_TAG_ORDER.length : i; };   // 미정의 태그는 뒤로
+  return (tags || []).slice().sort((a, b) => rank(a) - rank(b))
+    .map((t) => `<span class="pn-tag pn-tag-${escapeHtml(String(t))}">${escapeHtml(PATCH_TAG_KO[t] || t)}</span>`).join("");
 }
 function patchCardHtml(n) {
   return `<div class="pn-card">

@@ -1886,6 +1886,20 @@ public final class CalcService {
         int maxDivisions = 1;
         for (CubeRecommender.EquipOpts eo : rec) maxDivisions = Math.max(maxDivisions, eo.shown().size());
 
+        // ★compute-once: 모든 슬라이더 위치×전체 추천(윗/아랫 모두)을 한 번에 반환 → 슬라이더·정렬·윗/아랫 필터는
+        // 클라가 재fetch 없이 처리(recJson에 dealDiff·cost·recProbSum·totalProb·gainEff·upper 다 있음). pick은 딜 재계산 없음(값싸다).
+        List<List<Map<String, Object>>> recsBySlider = new ArrayList<>();
+        for (int s = 0; s < maxDivisions; s++) {
+            double fs = maxDivisions > 1 ? (double) s / (maxDivisions - 1) : 0;
+            List<Map<String, Object>> at = new ArrayList<>();
+            for (CubeRecommender.EquipOpts eo : rec) {
+                CubeRecommender.Rec r = CubeRecommender.pick(eo, fs);
+                if (r != null) at.add(recJson(r));
+            }
+            recsBySlider.add(at);
+        }
+
+        // 하위호환: 요청 슬라이더/정렬/윗아랫 기준 recs(구 프론트용). 신 프론트는 recsBySlider로 클라 처리.
         double f = maxDivisions > 1 ? (double) sliderValue / (maxDivisions - 1) : 0;
         List<CubeRecommender.Rec> picks = new ArrayList<>();
         for (CubeRecommender.EquipOpts eo : rec) {
@@ -1896,12 +1910,13 @@ public final class CalcService {
         }
         final int sk = sortKey;
         picks.sort((a, b) -> Double.compare(sortValue(b, sk), sortValue(a, sk)));
-
         List<Map<String, Object>> recs = new ArrayList<>();
         for (CubeRecommender.Rec r : picks) recs.add(recJson(r));
+
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("maxDivisions", maxDivisions);
         out.put("recs", recs);
+        out.put("recsBySlider", recsBySlider);
         return out;
     }
 

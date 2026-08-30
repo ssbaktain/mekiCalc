@@ -542,16 +542,16 @@
       </div>
       <details class="panel-about">
         <summary>우선순위 추천이란?</summary>
-        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여주는 화면입니다. 옵션마다 필요한 평균 큐브 수와 리롤 비용까지 종합한 "최종 효율"로 가성비를 판단할 수 있습니다.</p></div>
+        <div class="about-body"><p>지금 스탯에서 <b>어떤 큐브 옵션부터 챙기는 게 효율적인지</b> 순위로 보여주는 화면입니다. 옵션마다 필요한 큐브 소모량과 리롤 비용까지 종합한 <b>가성비</b>로 우선순위를 판단할 수 있습니다.</p></div>
       </details>
       <div class="card">
         <div class="controls">
           <label class="ctl">정렬
             <select id="rc-sort">
               <option value="0">딜 증가량</option>
-              <option value="1">평균 큐브</option>
+              <option value="1">큐브 소모량</option>
               <option value="2">1회 리롤</option>
-              <option value="3">최종 효율</option>
+              <option value="3" selected>가성비</option>
             </select>
           </label>
           <span class="ctl cube-target-hint">대상: <b class="ct-hint-val">프리셋 기준</b></span>
@@ -560,11 +560,11 @@
         </div>
         <div class="slider-ctl">
           <div class="slider-head">
-            <span class="slider-title">딜 순위 슬라이더</span>
+            <span class="slider-title">가성비 슬라이더</span>
             <span class="slider-val"><b id="rc-slider-val">0</b> / <span id="rc-slider-max">0</span></span>
           </div>
           <input type="range" id="rc-slider" min="0" max="0" value="0" />
-          <div class="slider-scale"><span>← 가성비 (낮은 순위)</span><span>종결 (높은 순위) →</span></div>
+          <div class="slider-scale"><span>← 가성비 우선</span><span>종결 우선 →</span></div>
         </div>
         <p id="rc-status" class="status"></p>
         <div id="rc-list"></div>
