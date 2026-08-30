@@ -115,6 +115,7 @@ public final class SupporterEngine {
             case "SkillPower"             -> src.add(Stat.SKILL_DMG, pb.value() / 10.0);
             case "BaseAttackPower"        -> src.add(Stat.BASIC_ATK_DMG, pb.value() / 10.0);
             case "Weakness", "RECV_DMG"   -> src.add(Stat.WEAKNESS, pb.value() / 10.0);        // 받피증(적 디버프)
+            case "Defence", "Defense", "DEF_REDUCE" -> src.add(Stat.DEF_REDUCE, pb.value() / 10.0); // 적 방어력 감소(음수, 적 디버프) → 플레이어 타임라인에도 주입
             case "EnemyCritResist", "CriticalResist", "CRIT_RESIST" -> src.add(Stat.CRIT_RATE_ENEMY, pb.value() / 10.0); // 적 크저감
             case "EnemyRecvCritDmg"       -> src.add(Stat.CRIT_DMG_ENEMY, pb.value() / 10.0); // 적 받크뎀↑
             case "AttackSpeed"            -> src.add(Stat.ATK_SPEED, pb.value() / 10.0);       // 슬롯딜엔 무효지만 파생-공속 입력 + 스케줄 창(별도)용
@@ -146,7 +147,7 @@ public final class SupporterEngine {
     }
 
     /** 적에 붙는 디버프(모든 공격자 수혜) — DamageFormula가 ModState에서 읽는 적측 항. */
-    private static final Stat[] ENEMY_DEBUFFS = { Stat.WEAKNESS, Stat.CRIT_RATE_ENEMY, Stat.CRIT_DMG_ENEMY };
+    private static final Stat[] ENEMY_DEBUFFS = { Stat.WEAKNESS, Stat.CRIT_RATE_ENEMY, Stat.CRIT_DMG_ENEMY, Stat.DEF_REDUCE };
 
     /** clt 스탯명 → 적 디버프 ModState 항(없으면 null). */
     private static Stat enemyDebuffStat(String stat) {
@@ -154,6 +155,7 @@ public final class SupporterEngine {
             case "Weakness", "RECV_DMG" -> Stat.WEAKNESS;
             case "EnemyCritResist", "CriticalResist", "CRIT_RESIST" -> Stat.CRIT_RATE_ENEMY;
             case "EnemyRecvCritDmg" -> Stat.CRIT_DMG_ENEMY;
+            case "Defence", "Defense", "DEF_REDUCE" -> Stat.DEF_REDUCE;   // 적 방어력 감소(값 음수)
             default -> null;
         };
     }

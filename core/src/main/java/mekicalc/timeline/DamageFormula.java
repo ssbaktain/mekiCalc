@@ -56,7 +56,9 @@ public final class DamageFormula {
 
         // 방관 = 체감 합성(★스탯 규칙 Stat.DEF_PEN.combine, 상한100). preset ↔ 슬롯 방관을 곱연산 합성(1-(1-a)(1-b) 등가). 단순 합이면 과대.
         double defPenFrac = Stat.DEF_PEN.combine(b.defPen(), m.get(Stat.DEF_PEN)) / 100.0;
-        double defF = 5000.0 / (6000.0 + monsterDef * (1 - defPenFrac));
+        // 적 방어력 감소(디버프, DEF_REDUCE 음수=감소, 소스 합산) → 몹방어를 먼저 깎고 방관 적용. 받피증과 별개 팩터, 함께 적용.
+        double effMonDef = monsterDef * Math.max(0.0, 1 + m.get(Stat.DEF_REDUCE) / 100.0);
+        double defF = 5000.0 / (6000.0 + effMonDef * (1 - defPenFrac));
 
         return baseAtk * fDmg * fStat * fCrit * fRange * fFinal * tf * fTgt * fWeak * defF * d.coeffFrac();
     }

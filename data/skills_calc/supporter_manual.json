@@ -969,9 +969,9 @@
               "target": "enemy",
               "durationMs": 10000,
               "cond": "boss",
-              "used": false,
+              "used": true,
               "_seed": "809220 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
-              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+              "_note": "적 방어력 -15%(보스 한정, 10초). 적 디버프=모든 공격자 수혜 → 동료+플레이어 타임라인 양쪽 적용, 다른 방깎 소스와 합산. 엔진: DamageFormula가 DEF_REDUCE로 몹방어 감소(effMonDef×(1+합/100)). 받피증과 별개 팩터로 함께 적용."
             }
           ]
         },
@@ -1124,9 +1124,9 @@
               "target": "enemy",
               "durationMs": 10000,
               "cond": "boss",
-              "used": false,
+              "used": true,
               "_seed": "809320 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
-              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+              "_note": "적 방어력 -15%(보스 한정, 10초). 적 디버프=모든 공격자 수혜 → 동료+플레이어 타임라인 양쪽 적용, 다른 방깎 소스와 합산. 엔진: DamageFormula가 DEF_REDUCE로 몹방어 감소(effMonDef×(1+합/100)). 받피증과 별개 팩터로 함께 적용."
             }
           ]
         },
@@ -1330,9 +1330,9 @@
               "target": "enemy",
               "durationMs": 10000,
               "cond": "boss",
-              "used": false,
+              "used": true,
               "_seed": "809420 op ModStatR Defence -150 Parent(enemy), boss-only, 10s",
-              "_note": "적 방어력 -15%(보스 한정). ★엔진 미모델(defF 변화는 applyEnemyRecvDmg에 없음) — companions.json 선례 따라 딜계산 제외(used:false)."
+              "_note": "적 방어력 -15%(보스 한정, 10초). 적 디버프=모든 공격자 수혜 → 동료+플레이어 타임라인 양쪽 적용, 다른 방깎 소스와 합산. 엔진: DamageFormula가 DEF_REDUCE로 몹방어 감소(effMonDef×(1+합/100)). 받피증과 별개 팩터로 함께 적용."
             }
           ]
         },

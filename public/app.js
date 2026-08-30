@@ -157,19 +157,22 @@ function fillGradeSelect(sel) {
 }
 function applyGradeColor(sel) { sel.style.color = gradeColor(sel.value); sel.style.fontWeight = "700"; }
 
-// 큰 수의 한글 단위 환산(경/조/억/만, 유효숫자 3자리). 1만 미만은 빈 문자열. (데스크톱과 동일)
+// 큰 수의 한글 단위 환산(경/조/억/만). 유효숫자 4자리 + 소수점 최소 1자리(예 418.9조·7.754조). 1만 미만은 빈 문자열.
 const KOR_UNITS = [[1e16, "경"], [1e12, "조"], [1e8, "억"], [1e4, "만"]];
 function koreanUnit(v) {
   const a = Math.abs(v);
   if (v == null || !isFinite(a) || a < 1e4) return "";
-  for (const [val, name] of KOR_UNITS) if (a >= val) return threeSig(v / val) + name;
+  for (const [val, name] of KOR_UNITS) if (a >= val) return korMantissa(v / val) + name;
   return "";
 }
-function threeSig(v) {
-  if (v === 0) return "0";
-  const digits = Math.ceil(Math.log10(Math.abs(v)));
-  const p = Math.max(0, 3 - digits);
-  return parseFloat(v.toFixed(p)).toString();
+// 만티사(단위당 1~9999.x)를 유효숫자 4자리로, 소수점은 무조건 1자리 이상 표시(불필요한 끝 0만 제거).
+function korMantissa(v) {
+  const a = Math.abs(v);
+  if (a === 0) return "0.0";
+  const intDigits = Math.floor(Math.log10(a)) + 1;   // 정수부 자릿수(1~4)
+  let s = v.toFixed(Math.max(1, 4 - intDigits));      // 4유효숫자, 최소 소수 1자리
+  if (s.indexOf(".") >= 0) { s = s.replace(/0+$/, ""); if (s.endsWith(".")) s += "0"; }   // 끝 0 제거하되 .0은 유지
+  return s;
 }
 
 // 옵션 칩. opt={name,value,yellow,special,statId} 또는 null(빈). cls=before|after|same|locked.

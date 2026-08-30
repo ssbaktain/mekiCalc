@@ -126,7 +126,7 @@ public final class SupporterTimeline {
         }
 
         // ── 동료 자기버프(상수 ModState): gradeBonus FinalDamage + target:companion statUp(onStart) ──
-        applySelfBuffs(tl, sup, companionLevel, skills, book);
+        applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs);
 
         // ── 동료 자기버프 '표시용' 창(딜은 applySelfBuffs로 이미 반영, 여기선 간트 바 target=companion만) ──
         for (SupporterSkillIR s : skills)
@@ -166,7 +166,8 @@ public final class SupporterTimeline {
                 if (tick <= 0) continue;
                 for (int k = 1; (long) tick * k <= dur; k++) {
                     int tt = t + tick * k;
-                    if (tt > windowMs) break;
+                    // ★도트는 소환창(W) 이후에도 남은 지속을 계속 입힌다(인게임: 시전된 지속딜은 소환 종료 후에도 유지).
+                    // W 초과 틱은 applySelfBuffs가 동료 자기버프(최종뎀 스택·등급보너스)를 싣지 않고, 적 디버프(받피증·방깎)는 그대로 수혜.
                     tl.addDeal(tt, new DealEvent(s.idx(), DmgType.SKILL, frac, hits, 0.0, true));
                 }
             } else {
@@ -225,7 +226,7 @@ public final class SupporterTimeline {
 
     /** 동료 자기버프를 모든 딜 슬롯에 상수 적용: gradeBonus FinalDamage + target:companion statUp(onStart). ★FinalDamage=효과별 각각 곱(별도 소스). */
     private static void applySelfBuffs(Timeline tl, SupporterIR sup, int companionLevel,
-                                       List<SupporterSkillIR> skills, SupporterBook book) {
+                                       List<SupporterSkillIR> skills, SupporterBook book, int windowMs) {
         // 1) gradeBonus 동료 자기 최종뎀 — 도달한 각 레벨(+25%씩)을 ★별도 곱소스로(합산 아님: ×1.25×1.25×1.25).
         List<Double> selfFinalSources = new ArrayList<>();
         SupporterBook.GradeBonus gb = book.gradeBonus();
@@ -256,6 +257,7 @@ public final class SupporterTimeline {
         // 3) 각 슬롯에 적용 (스택은 슬롯 시각 t의 스택수 = min(maxStacks, t/periodMs)로 램프업)
         for (java.util.Map.Entry<Integer, Slot> en : tl.slots().entrySet()) {
             int t = en.getKey();
+            if (t > windowMs) continue;   // ★소환창 이후 슬롯(연장된 도트 틱)은 동료 자기버프(최종뎀 스택·등급보너스) 미적용 — 소환 종료로 사라짐
             ModState m = en.getValue().mods();
             for (double[] a : selfAdds) m.addStat(Stat.values()[(int) a[0]], a[1]);
             for (double f : selfFinalSources) m.addFinalDmgSource(f);   // 소스별 각각 ×(1+f)
