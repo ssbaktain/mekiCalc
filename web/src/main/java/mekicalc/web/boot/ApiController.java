@@ -34,6 +34,13 @@ public class ApiController {
         this.service = service;
     }
 
+    /** stats 파싱 + 접속 통계 직업분포용으로 stats.JOB 기록(계산 요청마다). statsOf(req) 대체. */
+    private static Map<String, Double> statsOf(Map<String, Object> req) {
+        Object st = req.get("stats");
+        if (st instanceof Map) { Object j = ((Map<?, ?>) st).get("JOB"); if (j instanceof Number) AccessLogInterceptor.recordJob(((Number) j).intValue()); }
+        return toDoubleMap(req.get("stats"));
+    }
+
     @GetMapping("/api/stats")
     public Object stats() {
         return service.statDefs();
@@ -56,13 +63,14 @@ public class ApiController {
 
     @PostMapping("/api/qualitative")
     public Object qualitative(@RequestBody Map<String, Object> req) {
+        AccessLogInterceptor.recordJob((int) num(req, "job", 0));
         return service.qualitativeMarkers((int) num(req, "job", 0), toDoubleMap(req.get("conversions")));
     }
 
     @PostMapping("/api/damage")
     public Object damage(@RequestBody Map<String, Object> req) {
         Object cid = req.get("companionId"), gr = req.get("grade");
-        return service.previewDamage(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+        return service.previewDamage(statsOf(req), toDoubleMap(req.get("conversions")),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 cid == null ? null : cid.toString(), gr == null ? null : gr.toString(),
                 (int) num(req, "level", 0), num(req, "ratio", 0), toEquipList(req.get("artifacts")));
@@ -70,7 +78,7 @@ public class ApiController {
 
     @PostMapping("/api/buffs")
     public Object buffs(@RequestBody Map<String, Object> req) {
-        return service.buffList(toDoubleMap(req.get("stats")));
+        return service.buffList(statsOf(req));
     }
 
     /** 큐브 계산 공통 유물·컨텐츠 설정(신엔진 타임라인 조립용) — 타임라인 payload와 동일 필드. */
@@ -87,7 +95,7 @@ public class ApiController {
     public Object evaluate(@RequestBody Map<String, Object> req) {
         return service.evaluate(
                 str(req, "part"), str(req, "grade"), intOrNull(req, "slot"),
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
                 cubeCtx(req));
@@ -96,7 +104,7 @@ public class ApiController {
     @PostMapping("/api/recommend")
     public Object recommend(@RequestBody Map<String, Object> req) {
         return service.recommend(
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                 (int) num(req, "sliderValue", 0), (int) num(req, "sortKey", 0),
                 bool(req, "upper", true), bool(req, "lower", true), toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
@@ -107,7 +115,7 @@ public class ApiController {
     @PostMapping("/api/compare")
     public Object compare(@RequestBody Map<String, Object> req) {
         return service.myCompare(
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 req.get("cubeState"), RangeIO.parseContentMap(req.get("ranges")),
                 str(req, "part"), bool(req, "upper", true), str(req, "rightGrade"), mapList(req.get("rightOpts")),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
@@ -122,7 +130,7 @@ public class ApiController {
 
     @PostMapping("/api/applystats")
     public Object applyStats(@RequestBody Map<String, Object> req) {
-        return service.applyStats(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+        return service.applyStats(statsOf(req), toDoubleMap(req.get("conversions")),
                 mapList(req.get("oldOpts")), mapList(req.get("newOpts")));
     }
 
@@ -132,7 +140,7 @@ public class ApiController {
         return service.optCompare(
                 str(l, "part"), str(l, "grade"), mapList(l.get("opts")),
                 str(r, "part"), str(r, "grade"), mapList(r.get("opts")),
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
                 cubeCtx(req));
@@ -141,7 +149,7 @@ public class ApiController {
     @PostMapping("/api/stat-compare")
     public Object statCompare(@RequestBody Map<String, Object> req) {
         return service.statCompare(
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
                 str(req, "refStatId"), num(req, "refValue", 0), cubeCtx(req));
@@ -150,7 +158,7 @@ public class ApiController {
     @PostMapping("/api/gear-compare")
     public Object gearCompare(@RequestBody Map<String, Object> req) {
         return service.gearCompare(
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
+                statsOf(req), toDoubleMap(req.get("conversions")), str(req, "chapter"), str(req, "target"),
                 mapList(req.get("leftOpts")), mapList(req.get("rightOpts")),
                 toStrSet(req.get("buffs")), num(req, "hitInterval", 0),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"), (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0),
@@ -165,7 +173,7 @@ public class ApiController {
     @PostMapping("/api/target-damage")
     public Object targetDamage(@RequestBody Map<String, Object> req) {
         return service.targetDamage(str(req, "chapter"), str(req, "target"), num(req, "pen", 0),
-                toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+                statsOf(req), toDoubleMap(req.get("conversions")),
                 strOpt(req, "companionId"), strOpt(req, "companionGrade"),
                 (int) num(req, "companionLevel", 0), num(req, "companionRatio", 0));
     }
@@ -177,7 +185,7 @@ public class ApiController {
 
     @PostMapping("/api/nl-timeline")
     public Object nlTimeline(@RequestBody Map<String, Object> req) {
-        return service.nlTimeline(toDoubleMap(req.get("stats")), str(req, "mode"),
+        return service.nlTimeline(statsOf(req), str(req, "mode"),
                 mapList(req.get("casts")), str(req, "chapter"), str(req, "target"),
                 (int) num(req, "simMs", 0), mapList(req.get("artifacts")), mapList(req.get("potentials")),
                 intOrNull(req, "enemies"), req.get("kills") instanceof Number ? num(req, "kills", 0) : null,
@@ -199,7 +207,7 @@ public class ApiController {
 
     @PostMapping("/api/companion-dps")
     public Object companionDps(@RequestBody Map<String, Object> req) {
-        return service.companionPreview(toDoubleMap(req.get("stats")), toDoubleMap(req.get("conversions")),
+        return service.companionPreview(statsOf(req), toDoubleMap(req.get("conversions")),
                 str(req, "chapter"), str(req, "target"), str(req, "companionId"), str(req, "grade"),
                 (int) num(req, "level", 1), num(req, "ratio", 0), toStrSet(req.get("buffs")));
     }

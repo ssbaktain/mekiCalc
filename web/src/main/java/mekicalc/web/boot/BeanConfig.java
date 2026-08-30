@@ -86,6 +86,11 @@ public class BeanConfig {
     }
 
     @Bean
+    public mekicalc.web.StatsStore statsStore(Path dataDir) {
+        return new mekicalc.web.StatsStore(dataDir);
+    }
+
+    @Bean
     public NoticeStore noticeStore(Path dataDir) {
         return new NoticeStore(dataDir);
     }

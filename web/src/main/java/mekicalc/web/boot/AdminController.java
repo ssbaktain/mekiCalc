@@ -36,14 +36,22 @@ public class AdminController {
     private final BotOutbox outbox;
     private final DiscordStore discord;
     private final DiscordNotifier discordNotifier;
+    private final mekicalc.web.StatsStore stats;
 
     public AdminController(RoomStore rooms, BotBridge bridge, BotOutbox outbox,
-                           DiscordStore discord, DiscordNotifier discordNotifier) {
+                           DiscordStore discord, DiscordNotifier discordNotifier, mekicalc.web.StatsStore stats) {
         this.rooms = rooms;
         this.bridge = bridge;
         this.outbox = outbox;
         this.discord = discord;
         this.discordNotifier = discordNotifier;
+        this.stats = stats;
+    }
+
+    /** 접속 통계(최근 days일). 시간/일별 추이·기능 사용량·로그인 비율·직업 분포. */
+    @GetMapping("/stats")
+    public Object stats(@org.springframework.web.bind.annotation.RequestParam(value = "days", defaultValue = "1") int days) {
+        return stats.stats(days);
     }
 
     /** 방 목록(+권한). */

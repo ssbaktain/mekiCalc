@@ -113,30 +113,120 @@
     #banReason, #banMessage { width:100%; box-sizing:border-box; background:#0f131b; border:1px solid var(--border,#2a3140); color:inherit; border-radius:6px; padding:7px 9px; font-size:13px; font-family:inherit; margin-top:4px; }
     #banDays { background:#0f131b; border:1px solid var(--border,#2a3140); color:inherit; border-radius:6px; padding:6px 9px; }
     .btn.danger { background:#c53030; } .btn.danger:hover { background:#e53e3e; }
+
+    /* ── 레이아웃: 헤더 + 좌측 사이드바 + 본문 ── */
+    body { margin: 0; }
+    .admin-shell { min-height: 100vh; }
+    .admin-header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; background: var(--card, #171b24); border-bottom: 1px solid var(--border, #2a3140); }
+    .admin-brand { font-size: 16px; font-weight: 700; } .admin-brand b { color: #4c8dff; }
+    .admin-header .admin-links { margin-left: auto; display: flex; gap: 14px; }
+    .admin-header .admin-links a { font-size: 13px; color: var(--muted, #8a94a6); }
+    .admin-burger { display: none; background: transparent; border: 1px solid var(--border, #2a3140);
+      color: inherit; border-radius: 8px; width: 38px; height: 34px; font-size: 18px; cursor: pointer; }
+    .admin-layout { display: flex; align-items: flex-start; }
+    .admin-sidebar { flex: 0 0 210px; position: sticky; top: 59px; align-self: flex-start;
+      height: calc(100vh - 59px); overflow: auto; padding: 14px 10px; border-right: 1px solid var(--border, #2a3140);
+      background: var(--card, #171b24); display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 9px;
+      font-size: 14px; color: var(--muted, #8a94a6); cursor: pointer; user-select: none; white-space: nowrap; }
+    .nav-item:hover { background: rgba(127,127,127,.08); color: inherit; }
+    .nav-item.active { background: rgba(76,141,255,.14); color: #cfe0ff; font-weight: 700; }
+    .nav-item .nav-ico { font-size: 15px; width: 18px; text-align: center; }
+    .nav-item .nav-badge { margin-left: auto; font-size: 11px; font-weight: 800; background: #e5484d; color: #fff;
+      border-radius: 999px; padding: 0 7px; min-width: 18px; text-align: center; }
+    .nav-item .nav-badge[hidden] { display: none; }
+    .admin-main { flex: 1 1 auto; min-width: 0; max-width: 1040px; padding: 22px 22px 64px; }
+    .admin-sec[hidden] { display: none; }
+    .admin-sidebar-backdrop { display: none; }
+
+    /* ── 통계 대시보드 ── */
+    .stat-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-head h2 { margin: 0; font-size: 20px; }
+    .seg { display: inline-flex; border: 1px solid var(--border, #2a3140); border-radius: 999px; overflow: hidden; margin-left: auto; }
+    .seg button { background: transparent; border: 0; color: var(--muted, #8a94a6); padding: 6px 14px; font-size: 13px; cursor: pointer; }
+    .seg button.active { background: #2b6cb0; color: #fff; font-weight: 700; }
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-card { border: 1px solid var(--border, #2a3140); border-radius: 12px; padding: 14px 16px; background: var(--card, #171b24); }
+    .stat-card .lbl { font-size: 12.5px; color: var(--muted, #8a94a6); }
+    .stat-card .val { font-size: 26px; font-weight: 800; margin-top: 4px; letter-spacing: -.5px; }
+    .stat-card .val.a { color: #6fcf97; } .stat-card .val.b { color: #6fa3ff; } .stat-card .val.c { color: #e7c14a; }
+    .chart-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .chart-grid.two { grid-template-columns: 1fr 1fr; }
+    .chart-box { border: 1px solid var(--border, #2a3140); border-radius: 12px; padding: 14px 16px; background: var(--card, #171b24); min-width: 0; }
+    .chart-box h3 { margin: 0 0 10px; font-size: 14px; color: #cbd3df; }
+    .chart-box svg { width: 100%; display: block; overflow: visible; }
+    .chart-empty { color: var(--muted, #8a94a6); font-size: 13px; padding: 24px 4px; text-align: center; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; font-size: 12.5px; color: var(--muted, #8a94a6); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .bar-row { display: grid; grid-template-columns: 120px 1fr 54px; align-items: center; gap: 10px; margin: 7px 0; font-size: 13px; }
+    .bar-row .bl { color: #cbd3df; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-row .bt { height: 16px; border-radius: 5px; background: linear-gradient(90deg,#4c8dff,#6fa3ff); min-width: 2px; }
+    .bar-row .bn { color: var(--muted, #8a94a6); font-variant-numeric: tabular-nums; text-align: right; }
+
+    @media (max-width: 820px) {
+      .admin-burger { display: block; }
+      .admin-header .admin-brand { font-size: 15px; }
+      .admin-sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 120; flex-basis: 232px;
+        transform: translateX(-100%); transition: transform .18s ease; padding-top: 16px; }
+      .admin-sidebar.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.5); }
+      .admin-sidebar-backdrop.show { display: block; position: fixed; inset: 0; z-index: 110; background: rgba(0,0,0,.5); }
+      .admin-main { padding: 16px 14px 56px; }
+      .chart-grid.two { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 96px 1fr 46px; }
+      .stat-head h2 { font-size: 18px; }
+      .stat-head .seg { margin-left: 0; }   /* 좁은 화면에선 자동밀기 해제 → 넘침 없이 아래로 감김 */
+    }
   </style>
 </head>
 <body>
-  <div class="admin-wrap">
-    <div class="admin-top">
-      <div>
-        <h1>MekiCalc 관리자</h1>
-        <p class="admin-sub">관리자 전용 페이지 · 일반 사용자에게는 노출되지 않습니다.</p>
-      </div>
-      <div class="links">
-        <a href="/">← 메인</a>
-        <a href="/auth/logout">로그아웃</a>
-      </div>
-    </div>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <button class="admin-burger" id="burger" aria-label="메뉴 열기">☰</button>
+      <div class="admin-brand"><b>MekiCalc</b> 관리자</div>
+      <div class="admin-links"><a href="/">← 메인</a><a href="/auth/logout">로그아웃</a></div>
+    </header>
+    <div class="admin-sidebar-backdrop" id="sbBackdrop"></div>
+    <div class="admin-layout">
+      <nav class="admin-sidebar" id="sidebar">
+        <a class="nav-item active" data-sec="stats"><span class="nav-ico">📊</span>접속 통계</a>
+        <a class="nav-item" data-sec="inquiry"><span class="nav-ico">📮</span>제보 · 문의<span class="nav-badge" id="navInqBadge" hidden></span></a>
+        <a class="nav-item" data-sec="ban"><span class="nav-ico">⛔</span>계정 정지</a>
+        <a class="nav-item" data-sec="rooms"><span class="nav-ico">💬</span>카카오봇 방</a>
+        <a class="nav-item" data-sec="discord"><span class="nav-ico">🔔</span>디스코드 봇</a>
+        <a class="nav-item" data-sec="damage"><span class="nav-ico">🧮</span>예상 데미지</a>
+      </nav>
+      <main class="admin-main">
 
-    <section class="admin-card">
-      <h2>예상 데미지</h2>
-      <p>일반 페이지에서는 추후 제거될 예정이며, 관리자는 계속 사용할 수 있습니다.</p>
-      <div class="admin-actions">
-        <a href="/">예상 데미지 계산기 열기 →</a>
+    <section class="admin-sec" id="sec-stats">
+      <div class="stat-head">
+        <h2>📊 접속 통계</h2>
+        <div class="seg" id="statSeg">
+          <button data-days="1" class="active">오늘</button>
+          <button data-days="7">7일</button>
+          <button data-days="30">30일</button>
+        </div>
+      </div>
+      <div id="statErr" class="err" hidden></div>
+      <div class="stat-cards" id="statCards"></div>
+      <div class="chart-box"><h3>접속 추이 <span id="trendGran" style="color:#8a94a6;font-weight:400;font-size:12px"></span></h3><div id="trendChart" class="chart-empty">불러오는 중…</div><div class="legend" id="trendLegend"></div></div>
+      <div class="chart-box" style="margin-top:16px"><h3>기능 사용량</h3><div id="featChart" class="chart-empty">—</div></div>
+      <div class="chart-grid two" style="margin-top:16px">
+        <div class="chart-box"><h3>로그인 / 비로그인 <span style="color:#8a94a6;font-weight:400;font-size:11px">(고유 방문자)</span></h3><div id="loginChart" class="chart-empty">—</div></div>
+        <div class="chart-box"><h3>직업 분포 <span style="color:#8a94a6;font-weight:400;font-size:11px">(실사용 · 프리셋)</span></h3><div id="jobChart" class="chart-empty">—</div></div>
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card admin-sec" id="sec-damage" hidden>
+      <h2>🧮 예상 데미지</h2>
+      <p>일반 페이지에서는 추후 제거될 예정이며, 관리자는 계속 사용할 수 있습니다.</p>
+      <div class="admin-actions">
+        <a class="btn" href="/">예상 데미지 계산기 열기 →</a>
+      </div>
+    </section>
+
+    <section class="admin-card admin-sec" id="sec-rooms" hidden>
       <h2>카카오봇 방 관리</h2>
       <p>방별 권한을 켜고 끕니다. <b>공지·리마인더</b>는 새 공지·종료 임박 알림 발송, <b>명령 응답</b>은 방에서 <code>/공지</code> 등 명령에 응답합니다. <b>방 새로고침</b>을 누르면 봇이 참여한 오픈채팅 방을 자동 인식하며, 새 방은 권한이 모두 꺼진 채 등록됩니다.</p>
       <div style="margin:10px 0 4px"><button class="btn" id="reloadBtn">방 새로고침</button></div>
@@ -181,7 +271,7 @@
       </details>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card admin-sec" id="sec-discord" hidden>
       <h2>디스코드 공지 봇</h2>
       <p>디스코드 채널의 <b>웹훅 URL</b>을 등록하면 새 공지·종료 임박 안내가 그 채널로 전송됩니다(카톡과 동일 내용). 디스코드에서 <b>채널 설정 → 연동 → 웹후크 → 새 웹후크 → URL 복사</b>로 만든 주소를 붙여넣으세요.</p>
       <table class="rooms" id="hooksTable" hidden>
@@ -207,7 +297,7 @@
       <div class="muted-note">라벨·활성을 바꾼 뒤 각 행의 <b>저장</b>을 누르세요. <b>테스트</b>는 해당 채널로 확인 메시지를 즉시 보냅니다. 보안을 위해 URL 토큰은 마스킹되어 표시됩니다.</div>
     </section>
 
-    <section class="admin-card" id="inqCard">
+    <section class="admin-card admin-sec" id="sec-inquiry" hidden>
       <h2>제보 / 문의 <span id="inqUnread" class="soon" hidden></span></h2>
       <p>유저 인웹 제보/문의. 상태: <b>미확인</b>(안 읽음) · <b>확인 중</b>(읽음, 미해결) · <b>해결</b>. 항목을 누르면 상세(내용·첨부 스탯·이미지·IP·시각)와 정지 조치를 볼 수 있어요.</p>
       <div class="inq-filters">
@@ -221,7 +311,7 @@
       <div class="empty" id="inqEmpty" hidden>조건에 맞는 문의가 없습니다.</div>
     </section>
 
-    <section class="admin-card" id="banCard">
+    <section class="admin-card admin-sec" id="sec-ban" hidden>
       <h2>계정 정지 관리</h2>
       <p>정지는 <b>구글 계정(sub)</b> 기준이라 탈퇴·재가입해도 유지됩니다(재가입 차단). IP는 참고용입니다. 활성 정지는 여기서 해제할 수 있어요.</p>
       <div id="banErr" class="err" hidden></div>
@@ -229,10 +319,13 @@
       <div class="empty" id="banEmpty" hidden>정지 이력이 없습니다.</div>
     </section>
 
-    <!-- 문의 상세 + 정지 모달 -->
-    <div id="inqModal" class="adm-modal" hidden>
-      <div class="box" id="inqModalBox"></div>
-    </div>
+      </main>
+    </div><!-- /admin-layout -->
+  </div><!-- /admin-shell -->
+
+  <!-- 문의 상세 + 정지 모달 (body 레벨 오버레이) -->
+  <div id="inqModal" class="adm-modal" hidden>
+    <div class="box" id="inqModalBox"></div>
   </div>
 
   <script>
@@ -470,6 +563,8 @@
         renderInqList(data.inquiries || []);
         const un = $('#inqUnread');
         if (data.unread > 0) { un.textContent = '미확인 ' + data.unread; un.hidden = false; } else un.hidden = true;
+        const nb = $('#navInqBadge');   // 사이드바 배지
+        if (nb) { if (data.unread > 0) { nb.textContent = data.unread; nb.hidden = false; } else nb.hidden = true; }
       } catch(e){ inqErr('불러오기 실패: ' + e.message); }
     }
     function inqItemHtml(q) {
@@ -623,6 +718,95 @@
     $('#inqModal').addEventListener('click', (e)=>{ if (e.target.id==='inqModal') e.target.hidden=true; });
     loadInquiries();
     loadBans();
+
+    // ──────────────── 사이드바 네비 + 모바일 햄버거 ────────────────
+    const sidebar = $('#sidebar'), backdrop = $('#sbBackdrop');
+    function closeSidebar(){ sidebar.classList.remove('open'); backdrop.classList.remove('show'); }
+    $('#burger').addEventListener('click', () => { const o = sidebar.classList.toggle('open'); backdrop.classList.toggle('show', o); });
+    backdrop.addEventListener('click', closeSidebar);
+    let statsLoaded = false;
+    function showSection(sec){
+      document.querySelectorAll('.admin-sec').forEach(s => s.hidden = (s.id !== 'sec-' + sec));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.sec === sec));
+      closeSidebar();
+      if (sec === 'stats' && !statsLoaded) { statsLoaded = true; loadStats(curDays); }
+      window.scrollTo(0, 0);
+    }
+    document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showSection(n.dataset.sec)));
+
+    // ──────────────── 접속 통계 ────────────────
+    let curDays = 1;
+    const nf = n => (n || 0).toLocaleString('ko-KR');
+    $('#statSeg').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      curDays = parseInt(b.dataset.days, 10) || 1;
+      $('#statSeg').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+      loadStats(curDays);
+    });
+    async function loadStats(days){
+      const err = $('#statErr'); err.hidden = true;
+      const tc = $('#trendChart'); tc.className = 'chart-empty'; tc.textContent = '불러오는 중…';
+      try {
+        const d = await api('GET', '/api/admin/stats?days=' + days);
+        renderStatCards(d); renderTrend(d); renderFeatures(d); renderLogin(d); renderJobs(d);
+      } catch (e) { err.textContent = '통계를 불러오지 못했습니다: ' + e.message; err.hidden = false; tc.textContent = '—'; }
+    }
+    function renderStatCards(d){
+      const s = d.summary || {}, label = d.days <= 1 ? '오늘' : ('최근 ' + d.days + '일');
+      $('#statCards').innerHTML = [
+        ['방문자 (고유 IP)', s.visitors, 'a'], ['요청 수', s.requests, 'b'], ['로그인 방문자', s.loggedIn, 'c'],
+      ].map(([l, v, c]) => `<div class="stat-card"><div class="lbl">${l} · ${label}</div><div class="val ${c}">${nf(v)}</div></div>`).join('');
+    }
+    function renderTrend(d){
+      const b = d.buckets || [], box = $('#trendChart');
+      $('#trendGran').textContent = d.granularity === 'hour' ? '(시간별 · KST)' : '(일별 · KST)';
+      if (!b.length) { box.className = 'chart-empty'; box.textContent = '데이터가 없습니다.'; $('#trendLegend').innerHTML = ''; return; }
+      box.className = '';
+      const W = 680, H = 210, pl = 34, pr = 34, pt = 14, pb = 42, iw = W - pl - pr, ih = H - pt - pb, n = b.length;
+      const maxV = Math.max(1, ...b.map(x => x.visitors)), maxR = Math.max(1, ...b.map(x => x.requests));
+      const X = i => pl + (n === 1 ? iw / 2 : iw * i / (n - 1));
+      const YV = v => pt + ih * (1 - v / maxV), YR = v => pt + ih * (1 - v / maxR);
+      const series = (key, Y, color) => {
+        const pts = b.map((x, i) => `${X(i).toFixed(1)},${Y(x[key]).toFixed(1)}`).join(' ');
+        const dots = b.map((x, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(x[key]).toFixed(1)}" r="2.3" fill="${color}"/>`).join('');
+        return `<polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/>${dots}`;
+      };
+      const grid = [0, 0.5, 1].map(f => { const yy = (pt + ih * (1 - f)).toFixed(1);
+        return `<line x1="${pl}" y1="${yy}" x2="${W - pr}" y2="${yy}" stroke="#2a3140"/>`
+          + `<text x="${pl - 5}" y="${+yy + 3}" fill="#6fcf97" font-size="10" text-anchor="end">${Math.round(maxV * f)}</text>`
+          + `<text x="${W - pr + 5}" y="${+yy + 3}" fill="#6fa3ff" font-size="10">${Math.round(maxR * f)}</text>`; }).join('');
+      const step = Math.max(1, Math.ceil(n / 7));
+      const xl = b.map((x, i) => (i % step === 0 || i === n - 1)
+        ? `<text x="${X(i).toFixed(1)}" y="${H - pb + 16}" fill="#8a94a6" font-size="10" text-anchor="middle">${esc(x.t)}</text>` : '').join('');
+      box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}${series('requests', YR, '#6fa3ff')}${series('visitors', YV, '#6fcf97')}${xl}</svg>`;
+      $('#trendLegend').innerHTML = `<span class="lg"><span class="dot" style="background:#6fcf97"></span>방문자(고유 IP) · 왼쪽축</span><span class="lg"><span class="dot" style="background:#6fa3ff"></span>요청 수 · 오른쪽축</span>`;
+    }
+    function renderFeatures(d){
+      const f = d.features || [], box = $('#featChart');
+      if (!f.length) { box.className = 'chart-empty'; box.textContent = '데이터가 없습니다.'; return; }
+      box.className = ''; const max = Math.max(...f.map(x => x.count));
+      box.innerHTML = f.map(x => `<div class="bar-row"><span class="bl" title="${esc(x.label)}">${esc(x.label)}</span><span class="bt" style="width:${Math.max(2, 100 * x.count / max).toFixed(1)}%"></span><span class="bn">${nf(x.count)}</span></div>`).join('');
+    }
+    function donut(el, parts, empty){
+      const tot = parts.reduce((s, p) => s + (p.value || 0), 0);
+      if (!tot) { el.className = 'chart-empty'; el.textContent = empty || '데이터가 없습니다.'; return; }
+      el.className = ''; const R = 52, C = 2 * Math.PI * R, cx = 70, cy = 70; let acc = 0;
+      const segs = parts.filter(p => p.value > 0).map(p => { const frac = p.value / tot;
+        const s = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${p.color}" stroke-width="17" stroke-dasharray="${(frac * C).toFixed(2)} ${(C - frac * C).toFixed(2)}" stroke-dashoffset="${(-acc * C).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+        acc += frac; return s; }).join('');
+      const legend = parts.map(p => `<span class="lg"><span class="dot" style="background:${p.color}"></span>${esc(p.label)} <b style="color:#cbd3df">${nf(p.value)}</b> · ${Math.round(100 * p.value / tot)}%</span>`).join('');
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><svg width="140" height="140" viewBox="0 0 140 140">${segs}<text x="70" y="76" text-anchor="middle" fill="#cbd3df" font-size="17" font-weight="700">${nf(tot)}</text></svg><div class="legend" style="flex-direction:column;gap:7px;margin:0">${legend}</div></div>`;
+    }
+    function renderLogin(d){ const l = d.login || {}; donut($('#loginChart'), [{ label: '로그인', value: l.loggedIn || 0, color: '#6fa3ff' }, { label: '비로그인', value: l.anon || 0, color: '#8a94a6' }]); }
+    const JOB_COLORS = ['#8a94a6', '#e5717a', '#6fa3ff', '#6fcf97', '#e7c14a', '#c77dff'];
+    function renderJobs(d){
+      let j = d.jobs || [];
+      if (!j.reduce((s, x) => s + x.count, 0)) j = d.jobsPresets || [];   // 실사용 로그 없으면 가입 프리셋으로
+      donut($('#jobChart'), j.map(x => ({ label: x.name, value: x.count, color: JOB_COLORS[x.job] || '#6fa3ff' })), '아직 직업 데이터가 없습니다.');
+    }
+
+    loadStats(1);   // 기본 화면 = 통계
+    statsLoaded = true;
   </script>
 </body>
 </html>

@@ -33,13 +33,20 @@ public final class EventLog {
 
     /** API 요청 1건: 시각·메서드·경로·상태코드·처리시간(ms)·유저(이메일)·클라이언트 IP. */
     public void access(String method, String path, int status, long ms, String user, String ip) {
+        access(method, path, status, ms, user, ip, null);
+    }
+
+    /** API 요청 1건(+직업). job은 계산 요청의 stats.JOB(없으면 null) — 접속 통계 직업 분포용. */
+    public void access(String method, String path, int status, long ms, String user, String ip, Integer job) {
         String line = "{\"ts\":" + j(Instant.now().toString())
                 + ",\"method\":" + j(method)
                 + ",\"path\":" + j(path)
                 + ",\"status\":" + status
                 + ",\"ms\":" + ms
                 + ",\"user\":" + j(user)
-                + ",\"ip\":" + j(ip) + "}\n";
+                + ",\"ip\":" + j(ip)
+                + (job != null ? ",\"job\":" + job : "")
+                + "}\n";
         append(accessFile, line);
     }
 
