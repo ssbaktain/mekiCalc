@@ -647,6 +647,151 @@ public final class ArtifactAssembler {
         }
         return rows;
     }
+
+    // ══ WindowSet용 값-윈도우 방출(Stage 1) ══════════════════════════════════════════
+    // 순환/파생/육각/약화를 슬롯에 굽는 대신 [start,end)+값 {@link BuffSource} 윈도우로 방출한다.
+    // ★호출 시점: base(스킬+유물+동료) 슬롯 반영 직후 · accumulateCycle 이전 —
+    //   cycleWindows가 '창 첫 슬롯의 base 크확'을 읽어 accumulateCycle과 동일 발동을 재현해야 하기 때문.
+    // baseInputs와 합쳐 {@link WindowSet}으로 만들면 임의 시각 fold(at)가 딜타임 slot.mods()와 일치한다(파리티 계약).
+
+    /**
+     * 순환/육각/약화/파생을 값-윈도우로 방출(cycle→dmgMult→uptime→derived 순, accumulate* 순서와 동일).
+     * @param baseInputs 스킬버프+유물base+동료버프 소스 — 파생 입력(크확/공속). 여기에 순환 크확을 합류해 딜 경로와 일치.
+     */
+    public List<BuffSource> valueWindows(Timeline tl, Preset preset, Result r, int offsetMs, int simMs,
+                                         List<Integer> atk, boolean preActivate, List<BuffSource> baseInputs) {
+        List<BuffSource> cyc = cycleWindows(tl, preset, r, simMs);
+        List<BuffSource> out = new ArrayList<>(cyc);
+        out.addAll(dmgMultWindows(preset, r, offsetMs, simMs));
+        out.addAll(uptimeWindows(atk, r, preActivate, simMs));
+        List<BuffSource> derivedInputs = new ArrayList<>(baseInputs);
+        derivedInputs.addAll(cyc);   // 파생 입력 = base + 순환 크확(딜 경로 slot.mods와 동일)
+        out.addAll(derivedWindows(preset, r, simMs, derivedInputs));
+        return out;
+    }
+
+    private static BuffSource win(String label, int inst, int start, int end) {
+        BuffSource s = new BuffSource(label, start, end);
+        s.inst = inst;
+        return s;
+    }
+
+    /** 순환(순환의 고리) → 값-윈도우. accumulateCycle와 동일: 창 첫 슬롯 base 크확으로 lt/gte 파티션 선택. 효과별 개별 윈도우. */
+    private List<BuffSource> cycleWindows(Timeline tl, Preset preset, Result r, int simMs) {
+        List<BuffSource> out = new ArrayList<>();
+        for (CycleSpec cyc : r.cycles())
+            for (int[] w : cyc.windows()) {
+                var sub = tl.slots().subMap(w[0], true, w[1], w[1] >= simMs);
+                if (sub.isEmpty()) continue;
+                double liveCrit = preset.critRate() + sub.firstEntry().getValue().mods().get(Stat.CRIT_RATE);
+                List<CycleEffect> chosen = (liveCrit >= cyc.threshold()) ? cyc.gteEffects() : cyc.ltEffects();
+                for (CycleEffect ce : chosen) {
+                    double add = ce.value();
+                    if (ce.isExcess()) {
+                        double excess = Math.max(0, liveCrit - cyc.threshold());
+                        int count = (int) Math.floor(excess / (ce.excessStep() / 10.0));
+                        if (ce.excessMax() != null) count = Math.min(count, ce.excessMax());
+                        add = count * ce.value();
+                    }
+                    if (add == 0) continue;
+                    BuffSource s = win(cyc.label(), cyc.inst(), w[0], w[1]);
+                    boolean routed = true;
+                    switch (ce.stat()) {
+                        case "CriticalChance"  -> s.add(Stat.CRIT_RATE, add);
+                        case "SkillPower"      -> s.add(Stat.SKILL_DMG, add);
+                        case "BaseAttackPower" -> s.add(Stat.BASIC_ATK_DMG, add);
+                        case "CriticalPower"   -> s.add(Stat.CRIT_DMG, add);
+                        case "FinalDamage"     -> s.finalDmgFrac += add / 100.0;
+                        default -> routed = false;
+                    }
+                    if (routed) out.add(s);
+                }
+            }
+        return out;
+    }
+
+    /** 육각(dmgMult) → DMG 값-윈도우. accumulateDmgMult와 동일: 스택 구간마다 delta=preset.dmg×값‰×스택. */
+    private List<BuffSource> dmgMultWindows(Preset preset, Result r, int offsetMs, int simMs) {
+        List<BuffSource> out = new ArrayList<>();
+        for (DmgMultSpec dm : r.dmgMults()) {
+            int period = dm.periodMs(), max = dm.maxStacks();
+            if (period <= 0) {   // 상시 최대 스택
+                double delta = preset.dmg() * dm.value() / 1000.0 * max;
+                if (delta != 0) { BuffSource s = win(dm.label(), dm.inst(), 0, simMs); s.add(Stat.DMG, delta); out.add(s); }
+                continue;
+            }
+            for (int st = 1; st <= max; st++) {   // st스택 구간 = [st×period-offset, (st+1)×period-offset), st==max는 simMs까지
+                int start = Math.max(0, st * period - offsetMs);
+                int end = (st < max) ? Math.min((st + 1) * period - offsetMs, simMs) : simMs;
+                if (start >= end) continue;
+                double delta = preset.dmg() * dm.value() / 1000.0 * st;
+                if (delta == 0) continue;
+                BuffSource s = win(dm.label(), dm.inst(), start, end); s.add(Stat.DMG, delta); out.add(s);
+            }
+        }
+        return out;
+    }
+
+    /** 약화(uptime, 은펜던트·천도명약) → WEAKNESS 값-윈도우. accumulateUptime와 동일: 발동창 겹침 수=스택(캡). */
+    private List<BuffSource> uptimeWindows(List<Integer> atk, Result r, boolean preActivate, int simMs) {
+        List<BuffSource> out = new ArrayList<>();
+        List<Integer> atkList = atk != null ? atk : new ArrayList<>();
+        for (UptimeSpec u : r.uptimes()) {
+            if (!"Weakness".equals(u.stat())) continue;
+            List<int[]> events = new ArrayList<>();
+            for (int[] w : procWindows(atkList, u, preActivate)) { events.add(new int[]{w[0], 1}); events.add(new int[]{Math.min(w[1], simMs), -1}); }
+            events.sort((x, y) -> x[0] - y[0]);
+            int cur = 0, segStart = 0;
+            for (int[] ev : events) {
+                if (ev[0] > segStart && cur > 0) {
+                    int stacks = Math.min(cur, u.maxStacks());
+                    BuffSource s = win(u.label(), u.inst(), segStart, ev[0]); s.add(Stat.WEAKNESS, u.value() / 10.0 * stacks); out.add(s);
+                }
+                cur += ev[1]; segStart = ev[0];
+            }
+        }
+        return out;
+    }
+
+    /** 파생(헬레나 최대뎀·물병 최종뎀·고대책 크뎀) → 값-윈도우. accumulateDerived 딜경로와 동일: 입력(크확/공속) 경계마다 잘라 val=derivedCalc(live). */
+    private List<BuffSource> derivedWindows(Preset preset, Result r, int simMs, List<BuffSource> inputWindows) {
+        List<BuffSource> out = new ArrayList<>();
+        for (DerivedSpec ds : r.derived()) {
+            Stat inStat = derivedInputStat(ds.from());
+            if (inStat == null) continue;
+            double base = derivedInputBase(ds.from(), preset);
+            int lo = ds.startMs(), hi = Math.min(ds.endMs(), simMs);
+            var bounds = new java.util.TreeSet<Integer>(java.util.List.of(lo, hi));
+            var inputs = new ArrayList<BuffSource>();
+            for (BuffSource s : inputWindows) {
+                if (s.dormant()) continue;
+                Double v = s.adds().get(inStat);
+                if (v == null || v == 0) continue;
+                int st = Math.max(s.startMs(), lo), en = Math.min(s.endMs(), hi);
+                if (st >= en) continue;
+                inputs.add(s); bounds.add(st); bounds.add(en);
+            }
+            var pts = new ArrayList<>(bounds);
+            for (int i = 0; i < pts.size() - 1; i++) {
+                int t1 = pts.get(i), t2 = pts.get(i + 1);
+                double live = base;
+                for (BuffSource s : inputs) if (s.startMs() <= t1 && s.endMs() >= t2) live = inStat.combine(live, s.adds().get(inStat));
+                double val = derivedCalc(ds, live);
+                if (val == 0) continue;
+                BuffSource w = win(ds.label(), ds.inst(), t1, t2);
+                boolean routed = true;
+                switch (ds.stat()) {
+                    case "CriticalPower"  -> w.add(Stat.CRIT_DMG, val);
+                    case "MaxDamageRatio" -> w.add(Stat.MAX_DMG_MULT, val);
+                    case "FinalDamage"    -> w.finalDmgFrac += val / 100.0;
+                    default -> routed = false;
+                }
+                if (routed) out.add(w);
+            }
+        }
+        return out;
+    }
+
     /** 파생 입력 stat(from) → 슬롯 mods 키. */
     private static Stat derivedInputStat(String from) {
         return "CriticalChance".equals(from) ? Stat.CRIT_RATE : "AttackSpeed".equals(from) ? Stat.ATK_SPEED : null;

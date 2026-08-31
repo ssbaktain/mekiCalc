@@ -15,9 +15,12 @@ import static mekicalc.web.boot.Req.toStrSet;
 import java.util.Map;
 import mekicalc.config.RangeIO;
 import mekicalc.web.CalcService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -40,6 +43,13 @@ public class ApiController {
         if (st instanceof Map) { Object j = ((Map<?, ?>) st).get("JOB"); if (j instanceof Number) AccessLogInterceptor.recordJob(((Number) j).intValue()); }
         return toDoubleMap(req.get("stats"));
     }
+
+    /** 탭 진입 카운트(접속 통계 '기능 사용량'). 프론트 sendBeacon(POST, 본문 없음) → 경로만 access.jsonl에 남기고 204.
+     *  실제 집계는 {@link mekicalc.web.StatsStore}가 /api/view/{panel} 경로 수로 한다(전 탭 배경 /api/damage 오염 배제,
+     *  '데미지 분석(구)'·'빌드'로 실제 진입한 횟수를 각각 정확히 카운트). */
+    @PostMapping("/api/view/{panel}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void view(@PathVariable String panel) { /* no-op: 로깅은 AccessLogInterceptor가 처리 */ }
 
     @GetMapping("/api/stats")
     public Object stats() {

@@ -35,21 +35,22 @@ public final class StatsStore {
     private static final Map<Integer, String> JOB_NAMES = Map.of(
             0, "공용", 1, "나이트로드", 2, "다크나이트", 3, "비숍", 4, "히어로", 5, "보우마스터");
 
-    /** 기능(사용자 화면 탭) 경로 → 앱 실제 탭 이름. 여기 있는 경로만 '기능 사용량'에 집계.
-     *  target-damage(대상 방어 배수 계산)·slotdraws(큐브 슬롯 드롭다운 데이터)·qualitative·buffs·bootstrap 등
-     *  배경/보조 호출은 사용자 기능이 아니라 제외한다. */
-    private static final Map<String, String> FEATURE_LABELS = new LinkedHashMap<>();
+    /** 기능(사용자 화면 탭) 진입 카운트. 프론트가 탭 전환 시 {@code POST /api/view/{panel}} 비콘을 쏘고,
+     *  여기선 그 panel 값을 앱 실제 탭 이름으로 매핑해 '기능 사용량'을 낸다.
+     *  ★API 호출 수가 아니라 '탭 진입 횟수'로 세는 이유: /api/damage(홈 예상 데미지) 등은 스탯·유물·동료·프리셋 편집마다
+     *    어느 탭에 있든(나로 빌드 편집 중에도) 백그라운드로 재호출되는 구엔진 갱신이라 탭 사용량을 대표하지 못한다
+     *    (전 탭 배경 노이즈로 항상 1등). 진입 비콘은 '데미지 분석(구)'·'빌드'로 실제 들어간 횟수를 각각 정확히 센다.
+     *  리다이렉트 규칙: 비나이트로드 홈→home(데미지 분석 구), 나이트로드 홈→timeline(빌드). */
+    private static final Map<String, String> PANEL_LABELS = new LinkedHashMap<>();
     static {
-        FEATURE_LABELS.put("/api/damage", "데미지 분석");
-        FEATURE_LABELS.put("/api/nl-timeline", "빌드 · 실험실");
-        FEATURE_LABELS.put("/api/evaluate", "큐브 기댓값");
-        FEATURE_LABELS.put("/api/optcompare", "큐브 옵션 비교");
-        FEATURE_LABELS.put("/api/compare", "큐브 내 옵션 변경");
-        FEATURE_LABELS.put("/api/recommend", "큐브 우선순위 추천");
-        FEATURE_LABELS.put("/api/stat-compare", "스탯 비교");
-        FEATURE_LABELS.put("/api/gear-compare", "장비 비교");
-        FEATURE_LABELS.put("/api/gear-ocr", "장비 인식(OCR)");
-        FEATURE_LABELS.put("/api/companion-dps", "동료 계산");
+        PANEL_LABELS.put("home", "데미지 분석(구)");
+        PANEL_LABELS.put("timeline", "빌드");
+        PANEL_LABELS.put("cube", "큐브 기댓값");
+        PANEL_LABELS.put("optcompare", "큐브 옵션 비교");
+        PANEL_LABELS.put("compare", "큐브 내 옵션 변경");
+        PANEL_LABELS.put("recommend", "큐브 우선순위 추천");
+        PANEL_LABELS.put("statcompare", "스탯 비교");
+        PANEL_LABELS.put("gear", "장비 비교");
     }
 
     private final Path accessFile;
@@ -90,7 +91,7 @@ public final class StatsStore {
         // bootstrap을 안 부르니 자연히 제외된다. requests는 전체 비봇 요청량.
         Map<Long, long[]> bucketReq = new HashMap<>();          // bucketKey → {requests}
         Map<Long, Set<String>> bucketBoot = new HashMap<>();    // bucketKey → 방문자(bootstrap 고유 IP)
-        Map<String, Long> featureCount = new HashMap<>();       // path → count
+        Map<String, Long> featureCount = new HashMap<>();       // panel(뷰 비콘) → 진입 횟수
         Set<String> bootIps = new HashSet<>();                  // 전체 방문자(bootstrap 고유 IP)
         Set<String> loggedInIps = new HashSet<>();              // 로그인한 적 있는 IP(전체)
         Map<String, Integer> ipJob = new HashMap<>();           // IP → 마지막 직업(실사용)
@@ -111,13 +112,18 @@ public final class StatsStore {
                     if (ip == null || BOT_IPS.contains(ip)) continue;           // 봇 폴러·로컬 제외
                     String path = str(m.get("path"));
                     if (path == null || path.startsWith("/api/bot/")) continue;  // 봇 브릿지 제외
-                    String user = str(m.get("user"));
 
+                    if (path.startsWith("/api/view/")) {   // 탭 진입 비콘 → '기능 사용량'만 집계(요청/방문자/직업엔 미포함)
+                        String panel = path.substring(10);
+                        if (PANEL_LABELS.containsKey(panel)) featureCount.merge(panel, 1L, Long::sum);
+                        continue;
+                    }
+
+                    String user = str(m.get("user"));
                     long bk = bucketKey(epoch, hourly);
                     bucketReq.computeIfAbsent(bk, k -> new long[1])[0]++;
                     if (user != null) loggedInIps.add(ip);
                     if ("/api/bootstrap".equals(path)) { bucketBoot.computeIfAbsent(bk, k -> new HashSet<>()).add(ip); bootIps.add(ip); }
-                    if (FEATURE_LABELS.containsKey(path)) featureCount.merge(path, 1L, Long::sum);
                     Object jb = m.get("job");
                     if (jb instanceof Number) { int j = ((Number) jb).intValue(); if (j > 0) ipJob.put(ip, j); }
                 }
@@ -135,12 +141,12 @@ public final class StatsStore {
             buckets.add(b);
         }
 
-        // 기능 사용량(라벨, 내림차순)
+        // 기능 사용량(탭 진입 횟수, 내림차순)
         List<Map<String, Object>> features = new ArrayList<>();
         featureCount.entrySet().stream()
                 .sorted((a, c) -> Long.compare(c.getValue(), a.getValue()))
                 .forEach(e -> { Map<String, Object> f = new LinkedHashMap<>();
-                    f.put("path", e.getKey()); f.put("label", FEATURE_LABELS.get(e.getKey())); f.put("count", e.getValue());
+                    f.put("panel", e.getKey()); f.put("label", PANEL_LABELS.get(e.getKey())); f.put("count", e.getValue());
                     features.add(f); });
 
         // 직업 분포(실사용: IP별 마지막 직업)

@@ -1730,15 +1730,16 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-hl-chip { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
 .tl-hl-tiles { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; }
 /* 동료(v3.1) 결과 카드 — 스킬별 딜 막대 */
-.tl-comp-card .tl-comp-list { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
-.tl-comp-row { display: grid; grid-template-columns: minmax(84px, 1.1fr) minmax(30px, 1.4fr) max-content; align-items: center; gap: 10px; }
-.tl-comp-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 전 행이 열을 공유(그리드를 list에 두고 row=display:contents) → 트랙(막대) 시작점이 모든 행에서 동일 정렬. */
+.tl-comp-card .tl-comp-list { display: grid; grid-template-columns: minmax(84px, 1.1fr) minmax(30px, 1.4fr) max-content; align-items: center; column-gap: 10px; row-gap: 7px; margin-top: 4px; }
+.tl-comp-row { display: contents; }
+.tl-comp-name { min-width: 0; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-comp-track { height: 9px; background: var(--card2); border-radius: 5px; overflow: hidden; }
 .tl-comp-fill { display: block; height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 5px; }
 .tl-comp-val { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 8px; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
 .tl-comp-meta { color: var(--muted); }
 .tl-comp-pct { font-size: 13px; color: var(--accent); font-weight: 700; text-align: right; min-width: 46px; }
-@media (max-width: 560px) { .tl-comp-row { grid-template-columns: 1fr max-content; } .tl-comp-track { display: none; } }
+@media (max-width: 560px) { .tl-comp-card .tl-comp-list { grid-template-columns: 1fr max-content; } .tl-comp-track { display: none; } }
 /* 스킬별 기여 '동료 포함' 토글(카드 헤더 우측) */
 .tl-brk-toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
 

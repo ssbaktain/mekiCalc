@@ -38,11 +38,13 @@ public final class SupporterEngine {
     ) {}
 
     /**
-     * @param playerBase   플레이어 base 프리셋(선반영 포함)
-     * @param playerBuffs  플레이어 버프 소스(BuffAccumulator.buildSources) — 동적 스냅샷용. null=정적(base만)
+     * @param playerBase    플레이어 base 프리셋(선반영 포함)
+     * @param playerWindows 플레이어 버프/디버프 값-윈도우 집합(1차 빌드, 동료 미반영) — 소환 스냅샷·적 디버프를
+     *                      <b>정확한 시각</b>의 fold({@link WindowSet#at})로 읽는다. 딜 슬롯이 아닌 시각(소환 순간)도 정확 →
+     *                      경계에서 막 켜진 버프/유물(육각 스택 경계·버스트 버프)도 놓치지 않는다. 유물 직접누적(육각·파생·순환·약화) 전부 포함. null=정적(base만).
      * @param firstSummonMs 첫 소환 시각(유저 지정)
      */
-    public static CompanionResult run(Preset playerBase, List<BuffSource> playerBuffs,
+    public static CompanionResult run(Preset playerBase, WindowSet playerWindows,
                                       String companionCode, int companionLevel,
                                       int firstSummonMs, int simMs, boolean boss, double monsterDef,
                                       SupporterBook book) {
@@ -61,17 +63,18 @@ public final class SupporterEngine {
         Map<Integer, List<double[]>> dealTicks = new HashMap<>();
 
         for (int s = Math.max(0, firstSummonMs); s < simMs; s += (cd > 0 ? cd : simMs)) {
-            // 동적 스냅샷(B): 소환 시점 s의 플레이어 실효 스탯
-            ModState snap = modStateAt(playerBuffs, s);
+            // 동적 스냅샷(B): 소환 시점 s의 플레이어 실효 스탯 = 그 정확한 시각의 윈도우 fold(base+버프+유물 직접누적).
+            // 적 디버프는 effectivePlayerPreset이 계승에서 제외 → applyEnemyRecvDmg가 타격시 적용.
+            ModState snap = playerWindows != null ? playerWindows.at(s) : EMPTY;
             Preset playerEff = effectivePlayerPreset(playerBase, snap);
             Preset cbase = SupporterInherit.build(playerEff, sup, companionLevel, book);
             int W = SupporterInherit.windowMs(playerEff, sup);
             int usableW = Math.min(W, simMs - s);
             if (usableW <= 0) break;
 
-            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, book, boss);
-            // 적 받피증(Weakness) → 동료 딜에도 적용(적에 붙은 디버프=모든 공격자 수혜, §5). 소스: 플레이어 Weakness(절대시각) + 동료 자기 enemy 디버프.
-            applyEnemyRecvDmg(r.timeline(), r.playerBuffs(), playerBuffs, s);
+            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, simMs - s, book, boss);
+            // 적 디버프(약화·방깎·크확저항 등) → 동료 딜에도 적용(적에 붙은 디버프=모든 공격자 수혜, §5). 소스: 플레이어 윈도우 실효상태(절대시각) + 동료 자기 enemy 디버프.
+            applyEnemyRecvDmg(r.timeline(), r.playerBuffs(), playerWindows, s);
             if (reprTl == null) { reprTl = r.timeline(); reprSnapshot = snap; }   // 첫 소환 = 큐브 닫힌식 평가 대표
             Analyzer an = new Analyzer(r.timeline(), cbase, monsterDef, boss, usableW);
             for (Map.Entry<Integer, Double> e : an.perSkillDamage().entrySet()) {
@@ -165,11 +168,11 @@ public final class SupporterEngine {
      * 소스: (1) 플레이어의 적 디버프(그 절대시각 상태) (2) 동료 자기 enemy 디버프(상대시각 창).
      */
     private static void applyEnemyRecvDmg(Timeline ctl, List<SupporterTimeline.PlayerBuff> compBuffs,
-                                          List<BuffSource> playerSrc, int summonStart) {
+                                          WindowSet playerWindows, int summonStart) {
         for (Map.Entry<Integer, Slot> en : ctl.slots().entrySet()) {
             int t = en.getKey();
             ModState cm = en.getValue().mods();
-            ModState pm = modStateAt(playerSrc, summonStart + t);   // 플레이어 그 절대시각 상태(적 디버프 포함)
+            ModState pm = playerWindows != null ? playerWindows.at(summonStart + t) : EMPTY;   // 플레이어 그 절대시각 실효상태(적 디버프 = 유물 약화 uptime 포함, 경계 정확)
             for (Stat st : ENEMY_DEBUFFS) {
                 double v = pm.get(st);
                 if (v != 0) cm.addStat(st, v);
@@ -182,14 +185,7 @@ public final class SupporterEngine {
         }
     }
 
-    /** 버프 소스에서 시각 s의 ModState 재구성(그 시점 활성 창 전부 적용). */
-    static ModState modStateAt(List<BuffSource> sources, int s) {
-        ModState m = new ModState();
-        if (sources != null)
-            for (BuffSource src : sources)
-                if (!src.dormant() && src.startMs() <= s && s < src.endMs()) src.applyTo(m);
-        return m;
-    }
+    private static final ModState EMPTY = new ModState();
 
     /**
      * 소환 시점 플레이어 실효 프리셋 = base + 그 시점 ModState(버프) 접기.
@@ -200,8 +196,10 @@ public final class SupporterEngine {
         double effAtk = b.atkFlat() * (1 + b.atkPct() / 100.0) * (1 + m.get(Stat.ATK_PCT) / 100.0);
         s.put("ATK_FLAT", effAtk);
         s.put("ATK_PCT", 0.0);
-        s.put("CRIT_RATE", b.critRate() + m.get(Stat.CRIT_RATE) + m.get(Stat.CRIT_RATE_ENEMY));
-        s.put("CRIT_DMG", b.critDmg() + m.get(Stat.CRIT_DMG) + m.get(Stat.CRIT_DMG_ENEMY));
+        // ★적 크확저항(CRIT_RATE_ENEMY)·적받크뎀(CRIT_DMG_ENEMY)은 계승 스탯이 아니라 적 디버프 →
+        //   여기서 접지 않고 applyEnemyRecvDmg가 동료 타격 슬롯에 넣어 DamageFormula가 타격시 적용(이중적용 방지).
+        s.put("CRIT_RATE", b.critRate() + m.get(Stat.CRIT_RATE));
+        s.put("CRIT_DMG", b.critDmg() + m.get(Stat.CRIT_DMG));
         s.put("ATK_SPEED", Stat.ATK_SPEED.combine(b.atkSpeed(), m.get(Stat.ATK_SPEED)));   // ★공속 체감(선형합 금지)
         s.put("DMG", b.dmg() + b.dmgAdd() + m.get(Stat.DMG));
         s.put("DMG_AMP", b.dmgAmp() + m.get(Stat.DMG_AMP));

@@ -381,7 +381,18 @@ const CHAR_GATED_PANELS = new Set(["home", "timeline", "cube", "optcompare", "co
 
 let tlExpApply = false;   // 실험값 전체 적용(실험실 토글). buildMenu가 상단 실행에서 참조 → showPanel 위에 선언(TDZ 방지).
 
+// 탭 진입 카운트(접속 통계 '기능 사용량'). 배경 /api/damage 재호출 오염을 피해 '실제 진입한 탭'만 서버에 남긴다.
+// showPanel은 applyLeaf에서 네비게이션당 1회만 불려 재렌더 중복이 없다. sendBeacon(POST)이라 이탈 중에도 안전.
+const VIEW_TRACK = new Set(["home", "timeline", "cube", "optcompare", "compare", "recommend", "statcompare", "gear"]);
+function trackView(name) {
+  if (!VIEW_TRACK.has(name)) return;
+  const url = "/api/view/" + name;
+  try { if (navigator.sendBeacon && navigator.sendBeacon(url)) return; } catch (e) {}
+  try { fetch(url, { method: "POST", keepalive: true }); } catch (e) {}
+}
+
 function showPanel(name) {
+  trackView(name);   // 탭 진입 기록(비나로 home=데미지 분석 구 / 나로 home=빌드 리다이렉트 후 각 탭 진입 카운트)
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
   updateExpTags();   // 패널 전환 시 '실험실' 태그 반영(실험값 적용 중일 때)
   document.body.classList.toggle("notices-active", name === "notices");   // 공지 탭은 비영리 → 광고 비노출(CSS)
@@ -3018,6 +3029,13 @@ function fmtBig(v) {
   return fmt(v);
 }
 function num1s(v) { return (Math.round((Number(v) || 0) * 10) / 10); }
+// 시간(ms) → 초 표시. 최대 3자리(ms) 정밀도, 불필요한 0 생략(20225→"20.225", 20191→"20.191", 20200→"20.2", 20000→"20").
+// ★엔진은 정수 ms 해상도라 3자리면 정확. 0.1초 반올림으로 경계 시각을 오해하지 않도록.
+function fmtSec(ms) {
+  let s = ((Number(ms) || 0) / 1000).toFixed(3);
+  if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s;
+}
 
 function fillAllyGrades(companionId, selected) {
   const gsel = $("al-grade");
@@ -5844,9 +5862,10 @@ function renderTimelineResult(d) {
 function tlCompanionCard(c, wholeTotal) {
   const list = (c.perSkill || []);
   const maxDmg = list.reduce((m, s) => Math.max(m, s.damage || 0), 0) || 1;
+  const compTotal = (c.total || 0) || list.reduce((t, s) => t + (s.damage || 0), 0);   // 동료 자체 총딜(우측 % 분모)
   const W = wholeTotal || list.reduce((t, s) => t + (s.damage || 0), 0) || (c.total || 0);
   const rows = list.map((s) => {
-    const pct = W > 0 ? (s.damage || 0) / W * 100 : 0;                       // 전체 시뮬에서 이 동료 스킬의 비중
+    const pct = compTotal > 0 ? (s.damage || 0) / compTotal * 100 : 0;       // ★동료 딜 내 비중(전체 시뮬 아님)
     const barW = Math.max(2, Math.min(100, (s.damage || 0) / maxDmg * 100)); // 막대=동료 스킬 간 상대(시각용)
     const metaBits = [];   // 수치(한줄·회) 먼저, 비율은 맨 오른쪽
     if (s.per1 > 0) metaBits.push(`${tlBig(s.per1)}/줄`);
@@ -5860,7 +5879,7 @@ function tlCompanionCard(c, wholeTotal) {
   return `<div class="card tl-comp-card"><div class="dash-head"><h2>동료 · ${escapeHtml(c.name)}</h2>` +
     `<span class="dash-sub">Lv${c.level} · 소환 ${c.summonCount}회 · 전체 딜 비중 ${num1s(compShare)}% · DPS ${koreanUnit(c.dps) || fmt(Math.round(c.dps || 0))}/s</span></div>` +
     `<div class="tl-comp-list">${rows}</div>` +
-    `<div class="tl-hl-note">비중은 전체 시뮬 기준(플레이어+동료 총딜 대비). 동료는 소환창(30초) 동안 딜 + 플레이어 버프.</div></div>`;
+    `<div class="tl-hl-note">막대·우측 %는 <b>동료 딜 내 비중</b>. 상단 '전체 딜 비중'은 플레이어+동료 총딜 대비. 동료는 소환창(30초) 동안 딜 + 플레이어 버프.</div></div>`;
 }
 
 // 간트 위 호버 시 커서 위치에 세로 가이드선 + 그 지점 시간(초) 표시. 평소엔 숨김.
@@ -5881,7 +5900,7 @@ function tlWireGuide() {
     guide.dataset.frac = cx / contentW;   // 시각 비율로 저장 → 줌 시 폭 변해도 재계산(applyTlZoom)
     guide.style.left = (cx + pad) + "px";
     const tms = cx / contentW * tlGuideMs;
-    let label = (tms / 1000).toFixed(1) + "s";
+    let label = fmtSec(tms) + "s";
     if (tlShowDps && tlDpsShownPts && tlDpsShownPts.length) {   // 곡선 위 임의 시각의 DPS(표시 점 사이 선형 보간)
       const arr = tlDpsShownPts;
       let dv;
@@ -6004,8 +6023,8 @@ function tlGantt(d) {
     const l = pct(a.t).toFixed(3);
     const dmg = a.dmg > 0 ? " · " + koreanUnit(a.dmg) : "";
     act += a.basic
-      ? `<span class="tl-tick" style="left:${l}%" data-tip="${a.name} · ${(a.t / 1000).toFixed(2)}s${dmg}"></span>`
-      : `<span class="tl-cast" style="left:${l}%" data-tip="${a.name} · ${(a.t / 1000).toFixed(2)}s${dmg}"></span>`;
+      ? `<span class="tl-tick" style="left:${l}%" data-tip="${a.name} · ${fmtSec(a.t)}s${dmg}"></span>`
+      : `<span class="tl-cast" style="left:${l}%" data-tip="${a.name} · ${fmtSec(a.t)}s${dmg}"></span>`;
   }
   const lanes = [{ label: "액션", labelCls: "", trackCls: "tl-track tl-track-sharp", tall: true, bars: act }];
   tlDealLines(d.dealLines, pct, lanes);   // 도트/주기/프록 딜: 옅은 막대(활성 구간)+진한 틱(실제 타격 시각)
@@ -6022,7 +6041,7 @@ function tlGantt(d) {
   let axis = "";
   for (const t of ticks) {   // 양끝 라벨은 좌/우 정렬로(컨테이너 밖으로 안 삐져나가게)
     const p = pct(t), anchor = t === 0 ? "0" : p >= 99.9 ? "-100%" : "-50%";
-    axis += `<span style="left:${p.toFixed(3)}%;transform:translateX(${anchor})">${+(t / 1000).toFixed(2)}s</span>`;
+    axis += `<span style="left:${p.toFixed(3)}%;transform:translateX(${anchor})">${fmtSec(t)}s</span>`;
   }
 
   // 라벨 열(스크롤 밖 고정) + 트랙 열(가로 스크롤). 행 높이는 tall 여부로 라벨/트랙 짝맞춤.
@@ -6251,7 +6270,7 @@ function tlEffLine(e) {
 }
 // 툴팁 = 이름(스택형은 '이름 (n스택)') / 효과 각 줄 / 유지시간. 여러 줄(\n, CSS pre-line).
 function tlBuffTitle(label, w) {
-  const when = w.always ? "상시" : `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+  const when = w.always ? "상시" : `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
   const lines = [w.stacks != null ? `${label} (${w.stacks}스택)` : label];
   for (const e of (w.effects || [])) lines.push(tlEffLine(e));   // 효과 2개↑면 각각 줄넘김. 무실효 옵션은 취소선.
   lines.push(when);
@@ -6318,12 +6337,12 @@ function tlDealLines(dealLines, pct, lanes) {
     let bars = "";
     for (const w of (dl.windows || [])) {   // 옅은 막대(뒤)
       const width = pct(w.end - w.start);   // 정확한 폭(최소폭 없음)
-      const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+      const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
       bars += `<span class="tl-dwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${dl.name} 지속 · ${when}"></span>`;
     }
     for (const tk of (dl.ticks || [])) {     // 진한 틱(위). strong=즉발 첫타격 → 굵게
       const dmg = tk.dmg > 0 ? " · " + koreanUnit(tk.dmg) : "";
-      bars += `<span class="tl-dtick${tk.strong ? " strong" : ""}" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${(tk.t / 1000).toFixed(2)}s${dmg}"></span>`;
+      bars += `<span class="tl-dtick${tk.strong ? " strong" : ""}" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${fmtSec(tk.t)}s${dmg}"></span>`;
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-dot", trackCls: "tl-track tl-buff", bars });
   }
@@ -6333,7 +6352,8 @@ function tlDealLines(dealLines, pct, lanes) {
 const COMPANION_STAT_LABEL = {
   ATK_PCT: "공격력", FinalDamage: "최종뎀", MaxDamageRatio: "최대뎀배율", CriticalPower: "크뎀",
   CriticalChance: "크확", AttackSpeed: "공속", SkillPower: "스킬뎀", DMG: "데미지",
-  AttackPowerToBoss: "보스뎀", AttackPowerExcludeBoss: "일반뎀", BaseAttackPower: "평타뎀", Weakness: "약화",
+  AttackPowerToBoss: "보스뎀", AttackPowerExcludeBoss: "일반뎀", BaseAttackPower: "평타뎀",
+  Weakness: "적 받는 피해 증가", Defence: "적 방어력", Defense: "적 방어력",
 };
 function tlCompanionLanes(c, pct, lanes, T) {
   if (!c) return;
@@ -6341,7 +6361,7 @@ function tlCompanionLanes(c, pct, lanes, T) {
   let sw = "";
   for (const w of (c.summons || [])) {
     const width = pct(w.end - w.start);
-    const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+    const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
     sw += `<span class="tl-cwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${c.name} 소환 · ${when}"></span>`;
   }
   lanes.push({ label: `▼ ${c.name} 소환`, labelCls: "tl-glabel-comp", trackCls: "tl-track tl-comp-lane", bars: sw });
@@ -6350,7 +6370,7 @@ function tlCompanionLanes(c, pct, lanes, T) {
     let bars = "";
     for (const tk of (dl.ticks || [])) {
       const dmg = tk.dmg > 0 ? " · " + koreanUnit(tk.dmg) : "";
-      bars += `<span class="tl-ctick" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${(tk.t / 1000).toFixed(2)}s${dmg}"></span>`;
+      bars += `<span class="tl-ctick" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${fmtSec(tk.t)}s${dmg}"></span>`;
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
@@ -6368,10 +6388,11 @@ function tlCompanionLanes(c, pct, lanes, T) {
     for (const wk of Object.keys(byWin)) {
       const w = byWin[wk];
       const width = pct(w.end - w.start);
-      const when = `${(w.start / 1000).toFixed(1)}~${(w.end / 1000).toFixed(1)}s`;
+      const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
       const statLines = w.stats.map((b) => {   // 효과별 줄바꿈 + 대상 태그(툴팁에만)
         const tgt = b.toEnemy ? "enemy" : (b.target || "player");
-        return `${COMPANION_STAT_LABEL[b.stat] || b.stat} +${(b.value / 10).toFixed(1)}% · ${compBuffTargetLabel(tgt)}`;
+        const v = b.value / 10;   // 음수는 부호 그대로(예: 적 방어력 -15%)
+        return `${COMPANION_STAT_LABEL[b.stat] || b.stat} ${v >= 0 ? "+" : ""}${v.toFixed(1)}% · ${compBuffTargetLabel(tgt)}`;
       });
       const tip = [g.name, ...statLines, when].join("\n");
       bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tip}"></span>`;

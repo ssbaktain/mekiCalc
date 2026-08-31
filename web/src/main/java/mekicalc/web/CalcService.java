@@ -840,7 +840,8 @@ public final class CalcService {
             Scheduler sched, Schedule schedule, DealExpander de, SkillBook book,
             ArtifactAssembler.Result artRes, List<BuffSource> sources,
             List<Map<String, Object>> cycleRows, List<Map<String, Object>> derivedRows,
-            List<ArtifactAssembler.StackSeg> stackSegs) {}
+            List<ArtifactAssembler.StackSeg> stackSegs,
+            mekicalc.timeline.WindowSet ws) {}   // ★버프/디버프 값-윈도우 집합 — 임의 시각 실효 ModState 조회(동료 스냅샷·적 디버프 경계 정확)
 
     /**
      * stats(유물 딜 미포함 프리셋) + artifacts/potentials로 유물까지 구운 Timeline을 만든다.
@@ -924,6 +925,14 @@ public final class CalcService {
         asm.accumulate(tl, artRes, simMs);
         // ★동료→플레이어 버프를 순환·파생·육각 계산 '전에' 슬롯에 반영 — 동료 버프가 파생 유물 입력(크확·공속)·데미지에 포함되도록.
         mekicalc.timeline.SupporterEngine.accumulateBuffSources(tl, compBuffSources, simMs);
+        // ★WindowSet 값-윈도우: accumulateCycle '전에' 방출(cycleWindows가 base+동료 크확을 읽어 순환 발동을 동일 재현).
+        //   base 입력(스킬+유물+동료)에 순환/육각/약화/파생 윈도우를 더해, 임의 시각 ws.at(t)가 딜타임 slot.mods()와 일치.
+        List<BuffSource> wsBase = new ArrayList<>(sources);
+        wsBase.addAll(artRes.sources());
+        wsBase.addAll(compBuffSources);
+        List<BuffSource> wsWindows = new ArrayList<>(wsBase);
+        wsWindows.addAll(asm.valueWindows(tl, preset, artRes, artOffsetMs, simMs, de.attackInstances(), preActivateProc, wsBase));
+        mekicalc.timeline.WindowSet ws = new mekicalc.timeline.WindowSet(wsWindows, simMs);
         List<Map<String, Object>> cycleRows = asm.accumulateCycle(tl, preset, artRes, simMs);   // 순환(크확 파티션) — base 뒤·파생 앞(순환 크확이 파생 입력에 반영). 창별 실제효과 행 반환(간트 툴팁)
         List<BuffSource> allSrc = new ArrayList<>(sources);   // 스킬+유물 소스 = 파생 입력(크확·공속) 경계의 원천
         allSrc.addAll(artRes.sources());
@@ -935,7 +944,7 @@ public final class CalcService {
         List<ArtifactAssembler.StackSeg> stackSegs = asm.stackSegments(artRes, boss, artOffsetMs, de.attackInstances(), preActivateProc, simMs);
 
         return new TimelineBuild(tl, preset, monDef, boss, simMs, sched, schedule, de, book,
-                artRes, sources, cycleRows, derivedRows, stackSegs);
+                artRes, sources, cycleRows, derivedRows, stackSegs, ws);
     }
 
     /**
@@ -960,9 +969,8 @@ public final class CalcService {
 
         mekicalc.timeline.SupporterEngine.CompanionResult comp = null;
         if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
-            List<BuffSource> playerSrc = new ArrayList<>(tb.sources());
-            playerSrc.addAll(tb.artRes().sources());
-            comp = mekicalc.timeline.SupporterEngine.run(tb.preset(), playerSrc, companionCode,
+            // ★계승 스냅샷·적 디버프는 1차 빌드 WindowSet에서 '정확한 시각' fold로 읽음(유물 직접누적 육각/파생/순환/약화 + 경계 정확).
+            comp = mekicalc.timeline.SupporterEngine.run(tb.preset(), tb.ws(), companionCode,
                     companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook());
             // 동료→플레이어 버프 소스(파생 입력·데미지) + 공속 시간창(스케줄 공격빈도)
             List<BuffSource> compBuffs = new ArrayList<>();
@@ -1720,10 +1728,9 @@ public final class CalcService {
                     preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
             if (baseArt == null) { baseArt = bt1.artRes(); expandResimStats(); }
             if (!compResolved) { compSup = supBook().supporter(companionCode); compLvl = companionLevel <= 0 ? 1 : companionLevel; compResolved = true; }
-            List<BuffSource> playerSrc = new ArrayList<>(bt1.sources());   // 플레이어-only(동료버프는 슬롯에만) → 계승 스냅샷
-            playerSrc.addAll(bt1.artRes().sources());
+            // ★1차 빌드 WindowSet으로 계승 스냅샷·적 디버프(정확한 시각 fold, 유물 직접누적 + 경계 정확). 동료 버프는 미반영(1차).
             mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
-                    bt1.preset(), playerSrc, companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
+                    bt1.preset(), bt1.ws(), companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
             List<BuffSource> cb = new ArrayList<>();
             List<double[]> cs = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
