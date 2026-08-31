@@ -1897,7 +1897,7 @@ body.notices-active .ad-slot { display: none !important; }
 .inq-mine-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .inq-mine-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
 .inq-replies { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-.inq-reply { font-size: 13px; background: rgba(43,108,176,.10); border-radius: 7px; padding: 6px 9px; }
+.inq-reply { font-size: 13px; background: rgba(43,108,176,.10); border-radius: 7px; padding: 6px 9px; white-space: pre-wrap; word-break: break-word; }
 .inq-reply b { color: var(--accent, #4c8dff); margin-right: 6px; }
 
 /* 계정 정지 오버레이(전체 차단) */

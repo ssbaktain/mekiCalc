@@ -101,6 +101,7 @@
     .adm-modal .box { background:var(--card,#171b24); border:1px solid var(--border,#2a3140); border-radius:12px; max-width:640px; width:100%; padding:18px 20px; }
     .adm-modal h3 { margin:0 0 8px; }
     .adm-kv { font-size:13px; color:var(--muted,#8a94a6); margin:2px 0; }
+    .adm-reply-body { white-space:pre-wrap; word-break:break-word; }
     .adm-body { white-space:pre-wrap; word-break:break-word; font-size:14px; background:#0f131b; border:1px solid var(--border,#2a3140); border-radius:8px; padding:10px; margin:8px 0; }
     .adm-imgs { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
     .adm-imgs img { width:96px; height:96px; object-fit:cover; border-radius:8px; border:1px solid var(--border,#2a3140); cursor:pointer; }
@@ -601,7 +602,7 @@
         ${q.build ? `<button class="btn ghost" id="copyBuild">현재 빌드 복사</button>` : `<span class="muted-note">빌드 없음</span>`}
         <span id="copyMsg" style="color:#48bb78;font-size:12px"></span>
       </div><div class="muted-note">복사 후 사이트의 <b>불러오기</b>에 붙여넣으면 그대로 재현돼요.</div></div>`;
-      const replies = (q.messages||[]).map(m => `<div class="adm-kv"><b>${m.author==='admin'?'운영자':'유저'}</b> ${esc(m.body)} <span style="color:#8a94a6;font-size:11px">${fmtWhen(m.at)}</span></div>`).join('');
+      const replies = (q.messages||[]).map(m => `<div class="adm-kv"><b>${m.author==='admin'?'운영자':'유저'}</b> <span class="adm-reply-body">${esc(m.body)}</span> <span style="color:#8a94a6;font-size:11px">${fmtWhen(m.at)}</span></div>`).join('');
       $('#inqModalBox').innerHTML = `
         <div class="admin-top"><h3>문의 #${q.id} <span class="badge ${q.status}">${STATUS_KO[q.status]||q.status}</span></h3>
           <button class="btn ghost" onclick="document.getElementById('inqModal').hidden=true">닫기</button></div>
