@@ -1729,9 +1729,10 @@ body.notices-active .ad-slot { display: none !important; }
 .tl-hl-ctx { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .tl-hl-chip { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
 .tl-hl-tiles { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; }
-/* 동료(v3.1) 결과 카드 — 스킬별 딜 막대 */
-/* 전 행이 열을 공유(그리드를 list에 두고 row=display:contents) → 트랙(막대) 시작점이 모든 행에서 동일 정렬. */
-.tl-comp-card .tl-comp-list { display: grid; grid-template-columns: minmax(84px, 1.1fr) minmax(30px, 1.4fr) max-content; align-items: center; column-gap: 10px; row-gap: 7px; margin-top: 4px; }
+/* 동료(v3.1) 결과 카드 · 유물별 기여도 카드 — 이름 + 막대 + 값 */
+/* ★두 카드는 서로 다른 grid지만 막대 시작·폭을 맞춰야 함(유저 요청) → 이름 열=고정폭, 값 열=minmax(고정,max-content)로
+   현실 범위에선 양쪽 열 폭이 동일 → 막대(1fr) 시작·폭이 두 카드에서 일치. (긴 값이 와도 잘리지 않게 max-content 상한) */
+.tl-comp-card .tl-comp-list { display: grid; grid-template-columns: 140px 1fr minmax(156px, max-content); align-items: center; column-gap: 10px; row-gap: 7px; margin-top: 4px; }
 .tl-comp-row { display: contents; }
 .tl-comp-name { min-width: 0; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-comp-track { height: 9px; background: var(--card2); border-radius: 5px; overflow: hidden; }

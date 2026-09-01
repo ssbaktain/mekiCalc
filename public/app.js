@@ -3172,7 +3172,7 @@ function activePotentials() {
   for (const { id } of activeRelic()) {
     for (const ln of relicPotentials(id)) {
       if (!ln.type || !ln.grade) continue;
-      const row = { type: ln.type, grade: ln.grade };
+      const row = { id, type: ln.type, grade: ln.grade };   // id = 유물별 기여도(하나 빼기)에서 그 유물 잠재도 함께 제외
       if (ln.value != null) row.value = ln.value;   // 미스틱 롤(천분율)
       out.push(row);
     }
@@ -5370,24 +5370,35 @@ function tlRestoreCompanion() {
 // ── 빌드 박스 순서(사용자 지정, 빌드마다 저장) ──
 // 재배치 대상 = data-box 박스들(입력 6 + 결과 4). .tl-build-bar(빌드 헤더)만 항상 최상단 고정.
 // 결과 4박스(타임라인·종합DPS·스킬별기여·동료결과)는 컨테이너 고정·내용만 갱신이라 순서가 유지됨.
-const TL_BOX_KEYS = ["bar", "relic", "companion", "skillsel", "manual", "exp", "gantt", "head", "brk", "comp"];
+const TL_BOX_KEYS = ["bar", "relic", "companion", "skillsel", "manual", "exp", "gantt", "head", "brk", "artc", "comp"];
 const TL_BOX_LABEL = {
   bar: "모드 · 시뮬 · 계산", relic: "유물 계산 설정", companion: "동료 설정", skillsel: "사용 스킬",
-  manual: "스킬 배치표", exp: "실험실", gantt: "타임라인", head: "종합 DPS", brk: "스킬별 기여", comp: "동료 결과",
+  manual: "스킬 배치표", exp: "실험실", gantt: "타임라인", head: "종합 DPS", brk: "스킬별 기여도", artc: "유물별 기여도", comp: "동료 결과",
 };
 function tlBuildContainer() { return $("panel-timeline"); }
-// 현재 DOM의 박스 순서 스냅샷(누락 키는 뒤에 보충).
+// 저장된 순서에 없는 키(신규 박스)를 TL_BOX_KEYS 기준 '제자리'(앞 이웃 바로 뒤)에 끼워넣는다.
+// 예: 'artc'(유물별 기여도)는 'brk'(스킬별 기여도) 바로 뒤 → 옛 빌드도 스킬별 기여도 아래에 위치(맨 뒤 붙이기 아님).
+function fillBoxOrder(seq) {
+  const out = (seq || []).filter((k) => TL_BOX_KEYS.includes(k));
+  for (let i = 0; i < TL_BOX_KEYS.length; i++) {
+    const k = TL_BOX_KEYS[i];
+    if (out.includes(k)) continue;
+    let at = out.length;   // 앞 이웃이 하나도 없으면 맨 뒤
+    for (let j = i - 1; j >= 0; j--) { const idx = out.indexOf(TL_BOX_KEYS[j]); if (idx >= 0) { at = idx + 1; break; } }
+    out.splice(at, 0, k);
+  }
+  return out;
+}
+// 현재 DOM의 박스 순서 스냅샷(누락 키는 제자리에 보충).
 function tlBoxOrderSnapshot() {
   const c = tlBuildContainer();
   const order = c ? [...c.children].map((el) => el.dataset && el.dataset.box).filter((k) => TL_BOX_KEYS.includes(k)) : [];
-  for (const k of TL_BOX_KEYS) if (!order.includes(k)) order.push(k);
-  return order;
+  return fillBoxOrder(order);
 }
 // 저장된 순서를 DOM에 적용 — 빌드 헤더(.tl-build-bar) 뒤부터 순서대로 재배치. 소개·경고는 헤더 앞이라 그대로 유지.
 function applyBoxOrder(order) {
   const c = tlBuildContainer(); if (!c) return;
-  const seq = (order || []).filter((k) => TL_BOX_KEYS.includes(k));
-  for (const k of TL_BOX_KEYS) if (!seq.includes(k)) seq.push(k);   // 누락(신규 박스) 보충
+  const seq = fillBoxOrder(order);   // 누락(신규 박스)은 제자리에 보충
   let prev = c.querySelector(":scope > .tl-build-bar");   // 고정 앵커
   if (!prev) return;
   for (const k of seq) {
@@ -5796,11 +5807,45 @@ function tlRenderBrk(d) {
       `<span class="tl-switch"><input type="checkbox" id="tl-brk-comp"${tlBrkShowComp ? " checked" : ""}><span class="tl-switch-track"></span></span>` +
       `<span class="tl-brk-toggle-lbl">동료 포함</span></label>`
     : "";
-  box.innerHTML = `<div class="card"><div class="dash-head"><h2>스킬별 기여</h2>${toggle}</div>${tlDonutHtml(items)}</div>`;
+  box.innerHTML = `<div class="card"><div class="dash-head"><h2>스킬별 기여도</h2>${toggle}</div>${tlDonutHtml(items)}</div>`;
   const cb = $("tl-brk-comp");
   if (cb) cb.addEventListener("change", () => { tlBrkShowComp = cb.checked; tlRenderBrk(tlLastData); });
   tlWireDonut();
 }
+
+// 유물별 기여도 박스 — 각 유물을 빼고 재계산한 전체 딜 감소분(백엔드 artifactContrib). 동료 결과와 동일 UI(막대 리스트).
+function tlRenderArtc(d) {
+  const box = $("tl-box-artc"); if (!box) return;
+  const list = (d.artifactContrib || []).filter((a) => (a.damage || 0) > 0);
+  if (!list.length) { box.innerHTML = ""; return; }
+  const wholeBase = (+d.totalWithCompanion || +d.total || 0);   // 전체 딜(플레이어+동료) — 기여 % 분모
+  const maxDmg = list.reduce((m, a) => Math.max(m, a.damage || 0), 0) || 1;
+  const rows = list.map((a) => {
+    const nm = relicNameById(a.id);
+    const pct = wholeBase > 0 ? (a.damage || 0) / wholeBase * 100 : 0;        // ★전체 딜 대비 이 유물의 기여
+    const barW = Math.max(2, Math.min(100, (a.damage || 0) / maxDmg * 100));  // 막대 = 유물 간 상대(시각용)
+    const meta = `<span class="tl-comp-meta">${tlBig(a.damage)}</span>`;
+    return `<div class="tl-comp-row"><span class="tl-comp-name">${escapeHtml(nm)}</span>` +
+      `<span class="tl-comp-track"><span class="tl-comp-fill" style="width:${barW}%"></span></span>` +
+      `<span class="tl-comp-val">${meta}<b class="tl-comp-pct">${num1s(pct)}%</b></span></div>`;
+  }).join("");
+  box.innerHTML = `<div class="card tl-comp-card"><div class="dash-head"><h2>유물별 기여도</h2></div>` +
+    `<div class="tl-comp-list">${rows}</div></div>`;
+  attachBoxInfo("tl-box-artc", ARTC_INFO_HTML);   // 설명은 타이틀 옆 ⓘ로
+}
+
+// 박스 타이틀(h2) 오른쪽에 ⓘ 도움말 버튼을 붙인다(설명을 팝업으로). innerHTML 갱신 후 매번 호출.
+function attachBoxInfo(boxId, html) {
+  const h2 = $(boxId) && $(boxId).querySelector(".dash-head h2");
+  if (!h2 || h2.querySelector(".info-help")) return;   // 없거나 이미 붙었으면 skip
+  const body = document.createElement("span");
+  body.className = "info-pop-body";
+  body.innerHTML = html;
+  h2.appendChild(document.createTextNode(" "));
+  h2.appendChild(mkInfo("ⓘ", body, true));   // small=인라인(타이틀 텍스트 오른쪽·중앙)
+}
+const COMP_INFO_HTML = "막대·우측 %는 <b>동료 딜 내 비중</b>. 상단 '전체 딜 비중'은 플레이어+동료 총딜 대비. 동료는 소환창 동안 딜 + 플레이어 버프.";
+const ARTC_INFO_HTML = "유물을 하나씩 빼고 재계산한 <b>전체 딜 감소분</b>. 각 %는 전체 딜 대비 그 유물의 기여(없을 때 줄어드는 딜). 유물 간 시너지로 합이 100%가 아닐 수 있어요.";
 
 function renderTimelineResult(d) {
   tlLastData = d;   // DPS 곡선 토글/곡률 조정 시 재계산 없이 다시 그리기용
@@ -5845,8 +5890,10 @@ function renderTimelineResult(d) {
   // 결과 4박스에 분산 렌더(컨테이너는 고정 → 사용자 지정 순서 유지). 내용만 갱신.
   $("tl-box-gantt").innerHTML = gantt;
   $("tl-box-head").innerHTML = head;
-  tlRenderBrk(d);   // 스킬별 기여(동료 포함 토글 · 도넛 · 호버 연동)
+  tlRenderBrk(d);   // 스킬별 기여도(동료 포함 토글 · 도넛 · 호버 연동)
+  tlRenderArtc(d);  // 유물별 기여도(유물 하나씩 빼고 재계산)
   $("tl-box-comp").innerHTML = d.companion ? tlCompanionCard(d.companion, wholeTotal) : "";
+  if (d.companion) attachBoxInfo("tl-box-comp", COMP_INFO_HTML);   // 설명은 타이틀 옆 ⓘ로
   const expApplyEl = $("tl-exp-apply");   // 매 렌더마다 새로 생성 → 재바인딩
   if (expApplyEl) expApplyEl.addEventListener("change", () => setExpApply(expApplyEl.checked));   // 실험실 박스 토글과 공유
   tlWireZoom();    // Ctrl+휠 확대/축소 리스너(1회)
@@ -5878,8 +5925,7 @@ function tlCompanionCard(c, wholeTotal) {
   const compShare = W > 0 ? (c.total || 0) / W * 100 : 0;
   return `<div class="card tl-comp-card"><div class="dash-head"><h2>동료 · ${escapeHtml(c.name)}</h2>` +
     `<span class="dash-sub">Lv${c.level} · 소환 ${c.summonCount}회 · 전체 딜 비중 ${num1s(compShare)}% · DPS ${koreanUnit(c.dps) || fmt(Math.round(c.dps || 0))}/s</span></div>` +
-    `<div class="tl-comp-list">${rows}</div>` +
-    `<div class="tl-hl-note">막대·우측 %는 <b>동료 딜 내 비중</b>. 상단 '전체 딜 비중'은 플레이어+동료 총딜 대비. 동료는 소환창(30초) 동안 딜 + 플레이어 버프.</div></div>`;
+    `<div class="tl-comp-list">${rows}</div></div>`;
 }
 
 // 간트 위 호버 시 커서 위치에 세로 가이드선 + 그 지점 시간(초) 표시. 평소엔 숨김.

@@ -1236,7 +1236,70 @@ public final class CalcService {
             out.put("dpsWithCompanion", safe(an.dps() + comp.dps()));       // 플레이어(동료버프 반영)+동료
             out.put("totalWithCompanion", safe(total + comp.totalDamage()));
         }
+
+        // ── 유물별 기여도: 각 유물을 하나씩 빼고 전체 딜(플레이어+동료)을 재계산 → 감소분 = 그 유물 기여 ──
+        // ★단순·정확 우선(유저 확정): '하나 빼기'라 유물 수만큼 재sim(느릴 수 있음). 유물의 잠재도 함께 제외.
+        if (artifacts != null && !artifacts.isEmpty()) {
+            double baseWhole = total + (comp != null ? comp.totalDamage() : 0.0);
+            List<Map<String, Object>> artContrib = new ArrayList<>();
+            for (int i = 0; i < artifacts.size(); i++) {
+                Object aidObj = artifacts.get(i).get("id");
+                String aid = aidObj == null ? null : aidObj.toString();
+                List<Map<String, Object>> less = new ArrayList<>(artifacts);
+                less.remove(i);
+                List<Map<String, Object>> lessPots = new ArrayList<>();   // 이 유물의 잠재 줄도 제외(같은 id 태그)
+                if (potentials != null) for (Map<String, Object> p : potentials) {
+                    Object pid = p.get("id");
+                    if (aid != null && pid != null && aid.equals(pid.toString())) continue;
+                    lessPots.add(p);
+                }
+                double without = timelineWholeTotal(stats, mode, casts, chapter, target, simMs, less, lessPots,
+                        enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize,
+                        companionCode, companionLevel, firstSummonMs);
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", aid);
+                row.put("damage", safe(Math.max(0, baseWhole - without)));   // 기여 = 전체 딜 감소분(음수=0)
+                artContrib.add(row);
+            }
+            artContrib.sort((x, y) -> Double.compare((Double) y.get("damage"), (Double) x.get("damage")));
+            out.put("artifactContrib", artContrib);
+        }
         return out;
+    }
+
+    /**
+     * 유물별 기여도용 — 주어진 유물/잠재로 전체 딜(플레이어+동료)만 계산(표시 데이터 없이).
+     * nlTimeline의 딜 산출부와 동일 경로(동료 있으면 실험실과 같은 2패스: 스냅샷→run→동료버프 반영).
+     */
+    private double timelineWholeTotal(Map<String, Double> stats, String mode, List<Map<String, Object>> casts,
+                                      String chapter, String target, int simMs,
+                                      List<Map<String, Object>> artifacts, List<Map<String, Object>> potentials,
+                                      Integer enemies, Double kills, String contentOverride, int artOffsetMs,
+                                      boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
+                                      boolean fillSkills, boolean optimize,
+                                      String companionCode, int companionLevel, int firstSummonMs) {
+        TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
+                enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
+        int sMs = tb.simMs();
+        double compTotal = 0;
+        if (supporterAvailable(companionCode)) {
+            mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
+                    tb.preset(), tb.ws(), companionCode, companionLevel <= 0 ? 1 : companionLevel,
+                    Math.max(0, firstSummonMs), sMs, tb.boss(), tb.monDef(), supBook());
+            List<BuffSource> compBuffs = new ArrayList<>();
+            List<double[]> compSpd = new ArrayList<>();
+            for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
+                if ("companion".equals(pb.target())) continue;
+                compBuffs.add(mekicalc.timeline.SupporterEngine.toBuffSource(pb));
+                if ("AttackSpeed".equals(pb.stat()) && !pb.toEnemy())
+                    compSpd.add(new double[]{pb.startMs(), pb.endMs(), pb.value() / 10.0});
+            }
+            tb = buildTimeline(stats, mode, casts, chapter, target, sMs, artifacts, potentials, enemies, kills,
+                    contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize, compSpd, compBuffs);
+            compTotal = comp.totalDamage();
+        }
+        Analyzer an = new Analyzer(tb.tl(), tb.preset(), tb.monDef(), tb.boss(), sMs);
+        return an.totalDamage() + compTotal;
     }
 
     /** BuffSource → 간트 표시행. artifact=유물 소스 구분. effects=이 소스가 주는 효과+값(툴팁). */
