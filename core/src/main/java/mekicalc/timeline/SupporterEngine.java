@@ -47,7 +47,7 @@ public final class SupporterEngine {
     public static CompanionResult run(Preset playerBase, WindowSet playerWindows,
                                       String companionCode, int companionLevel,
                                       int firstSummonMs, int simMs, boolean boss, double monsterDef,
-                                      SupporterBook book) {
+                                      SupporterBook book, boolean instantBonus) {
         SupporterIR sup = book.supporter(companionCode);
         if (sup == null) return new CompanionResult(Map.of(), 0, 0, List.of(), 0, List.of(), Map.of(), Map.of(), Map.of(), null, null);
         int cd = sup.summonCooldownMs();
@@ -72,7 +72,7 @@ public final class SupporterEngine {
             int usableW = Math.min(W, simMs - s);
             if (usableW <= 0) break;
 
-            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, simMs - s, book, boss);
+            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, simMs - s, book, boss, instantBonus);
             // 적 디버프(약화·방깎·크확저항 등) → 동료 딜에도 적용(적에 붙은 디버프=모든 공격자 수혜, §5). 소스: 플레이어 윈도우 실효상태(절대시각) + 동료 자기 enemy 디버프.
             applyEnemyRecvDmg(r.timeline(), r.playerBuffs(), playerWindows, s);
             if (reprTl == null) { reprTl = r.timeline(); reprSnapshot = snap; }   // 첫 소환 = 큐브 닫힌식 평가 대표

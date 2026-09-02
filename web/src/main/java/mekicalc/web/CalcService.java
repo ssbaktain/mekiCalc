@@ -184,6 +184,37 @@ public final class CalcService {
         String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
         return stageDef(c, stage);
     }
+    /** 대상 최대체력(monster_hp.json). target="boss"=챕터 보스, 아니면 스테이지 일반몹(사냥 기준). 데이터 없으면 null. 표시 전용. */
+    @SuppressWarnings("unchecked")
+    private Double targetHp(String chapter, String target) {
+        Object cObj = content.monsterHp == null ? null : content.monsterHp.get("chapters");
+        if (!(cObj instanceof Map) || chapter == null || chapter.isEmpty()) return null;
+        Object chObj = ((Map<String, Object>) cObj).get(chapter);
+        if (!(chObj instanceof Map)) return null;
+        Map<String, Object> c = Json.asMap(chObj);
+        if (c == null || c.isEmpty()) return null;
+        if ("boss".equals(target)) return c.get("boss") instanceof Number ? ((Number) c.get("boss")).doubleValue() : null;
+        String stage = target != null && target.startsWith("stage:") ? target.substring(6) : target;
+        return stageDef(c, stage);   // stageDef=stages[스테이지] 조회(방어/체력 공통 구조)
+    }
+    /** 챕터 도전(monster_challenge.json) 스테이지 스탯. which="mob"|"boss"(그 스테이지 고유 보스, 챕터 최종보스 아님), key="hp"|"def". 데이터 없으면 null. */
+    @SuppressWarnings("unchecked")
+    private Double challengeStat(String chapter, String stageTarget, String which, String key) {
+        Object cObj = content.monsterChallenge == null ? null : content.monsterChallenge.get("chapters");
+        if (!(cObj instanceof Map) || chapter == null || chapter.isEmpty()) return null;
+        Object chObj = ((Map<String, Object>) cObj).get(chapter);
+        if (!(chObj instanceof Map)) return null;
+        Object stagesObj = Json.asMap(chObj).get("stages");
+        if (!(stagesObj instanceof Map)) return null;
+        String stage = stageTarget != null && stageTarget.startsWith("stage:") ? stageTarget.substring(6) : stageTarget;
+        Object stObj = ((Map<String, Object>) stagesObj).get(stage);
+        if (!(stObj instanceof Map)) return null;
+        Object node = ((Map<String, Object>) stObj).get(which);
+        if (!(node instanceof Map)) return null;   // boss=null(ch1~2 스테이지 보스 없음) 포함
+        Object v = ((Map<String, Object>) node).get(key);
+        return v instanceof Number ? ((Number) v).doubleValue() : null;
+    }
+
     /** 큐브 대상 모드: 스테이지가 보스면 보스 계산. */
     private static boolean isBossTarget(String target) { return "boss".equals(target); }
 
@@ -791,7 +822,7 @@ public final class CalcService {
 
     /** 사용 가능한 동료 목록(supporter_manual.json 등록분) — 프론트 선택 드롭다운용. */
     // ★배포 게이트: 인게임 실측 검증이 끝난 동료만 노출·계산. 미검증(나이트로드 등)은 데이터는 보유하되 숨김 — 검증 후 클래스 추가.
-    private static final java.util.Set<String> AVAILABLE_SUPPORTER_CLASSES = java.util.Set.of("Bishop", "NightLord");
+    private static final java.util.Set<String> AVAILABLE_SUPPORTER_CLASSES = java.util.Set.of("Bishop", "NightLord", "WindBreaker", "Viper");
     private boolean supporterAvailable(String code) {
         if (code == null || code.isEmpty()) return false;
         mekicalc.timeline.ir.SupporterIR s = supBook().supporter(code);
@@ -961,7 +992,7 @@ public final class CalcService {
                                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                                           boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
                                           boolean fillSkills, boolean optimize,
-                                          String companionCode, int companionLevel, int firstSummonMs) {
+                                          String companionCode, int companionLevel, int firstSummonMs, boolean companionInstantFinalDmg) {
         // ── 동료(v3.1): 스냅샷용 1차 빌드 → 동료 확정 → 동료 공속(스케줄)·버프(파생/순환/육각 입력)를 반영해 2차 재조립 ──
         TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
                 enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
@@ -971,7 +1002,7 @@ public final class CalcService {
         if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
             // ★계승 스냅샷·적 디버프는 1차 빌드 WindowSet에서 '정확한 시각' fold로 읽음(유물 직접누적 육각/파생/순환/약화 + 경계 정확).
             comp = mekicalc.timeline.SupporterEngine.run(tb.preset(), tb.ws(), companionCode,
-                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook());
+                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg);
             // 동료→플레이어 버프 소스(파생 입력·데미지) + 공속 시간창(스케줄 공격빈도)
             List<BuffSource> compBuffs = new ArrayList<>();
             List<double[]> compSpd = new ArrayList<>();
@@ -1009,6 +1040,21 @@ public final class CalcService {
         out.put("simMs", simMs);
         out.put("boss", boss);
         out.put("monsterDef", monDef);
+        // 대상 표시 정보: 일반몹/보스의 방어력·체력을 각각 노출. 사냥=일반몹만, 보스=보스만, 도전=웨이브 일반몹+스테이지 보스 둘 다.
+        boolean challenge = "챕터도전".equals(contentOverride);
+        out.put("challenge", challenge);   // 프론트 라벨('챕터 도전')용 — 스테이지 보스 유무와 무관하게 확정
+        if (boss) {
+            if (monDef > 0) out.put("bossDef", monDef);
+            Double bh = targetHp(chapter, "boss"); if (bh != null) out.put("bossHp", bh);
+        } else {
+            if (monDef > 0) out.put("mobDef", monDef);
+            Double mh = challenge ? challengeStat(chapter, target, "mob", "hp") : targetHp(chapter, target);
+            if (mh != null) out.put("mobHp", mh);
+            if (challenge) {   // 챕터 도전 = 웨이브 방어 후 '그 스테이지 고유 보스'(챕터 최종보스 아님)
+                Double bd = challengeStat(chapter, target, "boss", "def"); if (bd != null) out.put("bossDef", bd);
+                Double bh = challengeStat(chapter, target, "boss", "hp"); if (bh != null) out.put("bossHp", bh);
+            }
+        }
         out.put("dps", safe(an.dps()));
         out.put("total", safe(total));
         out.put("cooldowns", sched.effectiveCooldowns());   // 실효 쿨(ms) — 프론트 배치 자동시각용
@@ -1255,7 +1301,7 @@ public final class CalcService {
                 }
                 double without = timelineWholeTotal(stats, mode, casts, chapter, target, simMs, less, lessPots,
                         enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize,
-                        companionCode, companionLevel, firstSummonMs);
+                        companionCode, companionLevel, firstSummonMs, companionInstantFinalDmg);
                 Map<String, Object> row = new LinkedHashMap<>();
                 row.put("id", aid);
                 row.put("damage", safe(Math.max(0, baseWhole - without)));   // 기여 = 전체 딜 감소분(음수=0)
@@ -1277,7 +1323,7 @@ public final class CalcService {
                                       Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                                       boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
                                       boolean fillSkills, boolean optimize,
-                                      String companionCode, int companionLevel, int firstSummonMs) {
+                                      String companionCode, int companionLevel, int firstSummonMs, boolean companionInstantFinalDmg) {
         TimelineBuild tb = buildTimeline(stats, mode, casts, chapter, target, simMs, artifacts, potentials,
                 enemies, kills, contentOverride, artOffsetMs, preActivateProc, autoFillBasic, skillsOff, fillSkills, optimize);
         int sMs = tb.simMs();
@@ -1285,7 +1331,7 @@ public final class CalcService {
         if (supporterAvailable(companionCode)) {
             mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
                     tb.preset(), tb.ws(), companionCode, companionLevel <= 0 ? 1 : companionLevel,
-                    Math.max(0, firstSummonMs), sMs, tb.boss(), tb.monDef(), supBook());
+                    Math.max(0, firstSummonMs), sMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg);
             List<BuffSource> compBuffs = new ArrayList<>();
             List<double[]> compSpd = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
@@ -1689,6 +1735,7 @@ public final class CalcService {
         private final boolean preActivateProc, autoFillBasic, fillSkills, optimize;
         private final java.util.Set<Integer> skillsOff;
         private final String companionCode; private final int companionLevel, firstSummonMs;   // 동료(빌드의 한 축) — 큐브 딜에도 반영
+        private final boolean companionInstantFinalDmg;   // 인스턴트 최종뎀 보너스 체크박스
 
         // 대표 딜(계수·타수·마스터리=1·1·0) — 그룹 딜 = perHit(BASIC1)×basicW + perHit(SKILL1)×skillW.
         private static final DealEvent BASIC1 = new DealEvent(-1, DmgType.BASIC, 1.0, 1, 0.0, false);
@@ -1718,7 +1765,7 @@ public final class CalcService {
                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                           boolean preActivateProc, boolean autoFillBasic, java.util.Set<Integer> skillsOff,
                           boolean fillSkills, boolean optimize, int simMs,
-                          String companionCode, int companionLevel, int firstSummonMs) {
+                          String companionCode, int companionLevel, int firstSummonMs, boolean companionInstantFinalDmg) {
             this.dm = dm;
             this.chapter = chapter; this.target = target;
             this.boss = isBossTarget(target);
@@ -1731,6 +1778,7 @@ public final class CalcService {
             this.skillsOff = skillsOff; this.fillSkills = fillSkills; this.optimize = optimize;
             this.simMs = simMs <= 0 ? (int) ((boss ? BOSS_SECONDS : NORMAL_SECONDS) * 1000) : simMs;
             this.companionCode = companionCode; this.companionLevel = companionLevel; this.firstSummonMs = firstSummonMs;
+            this.companionInstantFinalDmg = companionInstantFinalDmg;
         }
 
         @Override public double output(StatBlock b) {
@@ -1793,7 +1841,7 @@ public final class CalcService {
             if (!compResolved) { compSup = supBook().supporter(companionCode); compLvl = companionLevel <= 0 ? 1 : companionLevel; compResolved = true; }
             // ★1차 빌드 WindowSet으로 계승 스냅샷·적 디버프(정확한 시각 fold, 유물 직접누적 + 경계 정확). 동료 버프는 미반영(1차).
             mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
-                    bt1.preset(), bt1.ws(), companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook());
+                    bt1.preset(), bt1.ws(), companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook(), companionInstantFinalDmg);
             List<BuffSource> cb = new ArrayList<>();
             List<double[]> cs = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
@@ -1912,7 +1960,7 @@ public final class CalcService {
                           Integer enemies, Double kills, String contentOverride, int artOffsetMs,
                           boolean preActivateProc, boolean autoFillBasic, Set<Integer> skillsOff,
                           boolean fillSkills, boolean optimize, int simMs,
-                          String tlCompanion, int tlCompanionLevel, int tlFirstSummonMs) {}   // 빌드의 동료(신엔진) — 큐브 딜에도 반영
+                          String tlCompanion, int tlCompanionLevel, int tlFirstSummonMs, boolean tlCompanionInstantFinalDmg) {}   // 빌드의 동료(신엔진) — 큐브 딜에도 반영
 
     /** 나이트로드(신엔진 구현 직업) → 타임라인 종합 DPS 모델, 그 외 → 구엔진(1타×공속/종합 DPS 해석식). */
     private DealModel cubeDealModel(StatBlock current, Map<String, Double> conv, boolean boss, Set<String> buffs, double hitInterval,
@@ -1922,7 +1970,7 @@ public final class CalcService {
             return new TimelineDealModel(content.damageModel(conv), chapter, target, ctx.artifacts(), ctx.potentials(),
                     ctx.enemies(), ctx.kills(), ctx.contentOverride(), ctx.artOffsetMs(), ctx.preActivateProc(),
                     ctx.autoFillBasic(), ctx.skillsOff(), ctx.fillSkills(), ctx.optimize(), ctx.simMs(),
-                    ctx.tlCompanion(), ctx.tlCompanionLevel(), ctx.tlFirstSummonMs());
+                    ctx.tlCompanion(), ctx.tlCompanionLevel(), ctx.tlFirstSummonMs(), ctx.tlCompanionInstantFinalDmg());
         return dealModel(current, conv, boss, buffs, hitInterval, targetDef(chapter, target), companionId, companionGrade, companionLevel, ratio);
     }
 

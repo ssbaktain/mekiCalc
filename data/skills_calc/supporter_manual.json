@@ -809,7 +809,7 @@
               "targetCount": 8,
               "cond": "nonBoss",
               "_seed": "809100 op1 GetDamageR 300 hits4 maxHitCount8 (non-boss)",
-              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). 엔진 condActive(boss)가 boss/nonBoss를 게이팅해 해당 컨텐츠 effect만 방출(중복계산 아님 — 숫자 검증됨)."
             },
             {
               "role": "deal",
@@ -914,7 +914,7 @@
               "targetCount": 8,
               "cond": "nonBoss",
               "_seed": "809200 op1 GetDamageR 800 hits4 maxHitCount8 (non-boss)",
-              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). 엔진 condActive(boss)가 boss/nonBoss를 게이팅해 해당 컨텐츠 effect만 방출(중복계산 아님 — 숫자 검증됨)."
             },
             {
               "role": "deal",
@@ -1069,7 +1069,7 @@
               "targetCount": 8,
               "cond": "nonBoss",
               "_seed": "809300 op1 GetDamageR 2800 hits4 maxHitCount8 (non-boss)",
-              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). 엔진 condActive(boss)가 boss/nonBoss를 게이팅해 해당 컨텐츠 effect만 방출(중복계산 아님 — 숫자 검증됨)."
             },
             {
               "role": "deal",
@@ -1266,7 +1266,7 @@
               "targetCount": 8,
               "cond": "nonBoss",
               "_seed": "809400 op1 GetDamageR 8000 hits4 maxHitCount8 (non-boss)",
-              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+              "_note": "컨텐츠 분기(op별 non-boss/boss 계수). 엔진 condActive(boss)가 boss/nonBoss를 게이팅해 해당 컨텐츠 effect만 방출(중복계산 아님 — 숫자 검증됨)."
             },
             {
               "role": "deal",
@@ -1376,7 +1376,7 @@
               "durationMs": 20000,
               "cond": "nonBoss",
               "_seed": "809440→투사체809440(20s)→자식809441 op1 ModStat Weakness 100 (non-boss)",
-              "_note": "결계 받피증 +10%(20초). 컨텐츠 분기(op별 non-boss/boss 계수). ★엔진이 cond 미평가라 두 effect 모두 방출→중복계산. boss 플래그로 effect 선택 필요."
+              "_note": "결계 받피증 +10%(20초). 컨텐츠 분기(op별 non-boss/boss 계수). 엔진 condActive(boss)가 boss/nonBoss를 게이팅해 해당 컨텐츠 effect만 방출(중복계산 아님 — 숫자 검증됨)."
             },
             {
               "role": "debuff",
@@ -1479,7 +1479,7 @@
               "targetCount": 1,
               "cond": "boss",
               "_seed": "809480 OnAttack ratio350 boss-only GetDamageR 10000 hits1 target Target",
-              "_note": "동료가 보스 공격 시 35% 확률 1000% 추가피해. ★boss 전용(cond boss) — 엔진이 cond 미평가라 일반몹에도 발동함(보스게이팅 필요)."
+              "_note": "동료가 보스 공격 시 35% 확률 1000% 추가피해. boss 전용(cond boss) — 엔진 condActive(boss)가 게이팅해 일반몹엔 미발동(검증됨)."
             }
           ]
         }
@@ -1502,6 +1502,1482 @@
           {
             "stat": "AttackPowerToBoss",
             "value": 200.0,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_11_1",
+      "class": "Viper",
+      "name": "바이퍼(1차)",
+      "grade": "rare",
+      "creatureIndex": "9111",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare).",
+      "skills": [
+        {
+          "idx": "811100",
+          "name": "소환 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "_note": "소환 효과 15초(소환창 30초 중 앞 15초): 동료+플레이어 공속·크뎀 +8%. ★크뎀은 seed가 Parent 2회 표기하나 구검증모델=both.",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 80,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "AttackSpeed",
+              "_seed": "811100 공속 both, 15초"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 80,
+              "target": "both",
+              "durationMs": 15000,
+              "_seed": "811100 크뎀 both(seed Parent x2), 15초"
+            }
+          ]
+        },
+        {
+          "idx": "811110",
+          "name": "솜머솔트 킥",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "811110 SomerSaultKick 260 h2 mh3"
+            }
+          ]
+        },
+        {
+          "idx": "811120",
+          "name": "크리티컬 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 100,
+              "target": "player",
+              "_seed": "811120 크확 player"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_11_2",
+      "class": "Viper",
+      "name": "바이퍼(2차)",
+      "grade": "epic",
+      "creatureIndex": "9211",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic). compareLevel 30.",
+      "skills": [
+        {
+          "idx": "811200",
+          "name": "소환 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "_note": "소환 효과 15초(소환창 30초 중 앞 15초): 동료+플레이어 공속·크뎀 +12%. ★크뎀은 seed가 Parent 2회 표기하나 구검증모델=both.",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 120,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "AttackSpeed",
+              "_seed": "811200 공속 both, 15초"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 120,
+              "target": "both",
+              "durationMs": 15000,
+              "_seed": "811200 크뎀 both(seed Parent x2), 15초"
+            }
+          ]
+        },
+        {
+          "idx": "811210",
+          "name": "쇼크 웨이브",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "811210 ShockWave 400 h3 mh5"
+            }
+          ]
+        },
+        {
+          "idx": "811220",
+          "name": "크리티컬 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "player",
+              "_seed": "811220 크확 player"
+            }
+          ]
+        },
+        {
+          "idx": "811230",
+          "name": "씨 서펜트 버스트",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 7000,
+          "openLevel": 1,
+          "chance": 400,
+          "triggerBy": "basicAttack",
+          "_note": "동료 평타 40%·내부쿨7s → 버스트 130%x2(5대상). epic은 서펜트스톤 없어 어썰트 없음.",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1300,
+              "hits": 2,
+              "targetCount": 5,
+              "_seed": "버스트 (1300, 2, 5) (100%, 어썰트 없음)"
+            }
+          ]
+        },
+        {
+          "idx": "811240",
+          "name": "소환수 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 4000,
+          "_note": "4초마다 플레이어 HP/MP 회복(딜무관).",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811240 GetHealByMaxHpR 1.5%/4s"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811240 GetMpR 1.5%/4s"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MainStatR",
+            "value": 30,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_11_3",
+      "class": "Viper",
+      "name": "바이퍼(3차)",
+      "grade": "unique",
+      "creatureIndex": "9311",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique). compareLevel 60.",
+      "_gradeBonusNote": "811370/371/372(FinalDamage +25%x3 @lv5/8/10)=엔진 _gradeBonus 일괄. 811360(어썰트 arm)은 whenState 메커니즘이 대체 → 스킬 제외.",
+      "skills": [
+        {
+          "idx": "811300",
+          "name": "소환 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "_note": "소환 효과 15초(소환창 30초 중 앞 15초): 동료+플레이어 공속·크뎀 +12%. ★크뎀은 seed가 Parent 2회 표기하나 구검증모델=both.",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 120,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "AttackSpeed",
+              "_seed": "811300 공속 both, 15초"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 120,
+              "target": "both",
+              "durationMs": 15000,
+              "_seed": "811300 크뎀 both(seed Parent x2), 15초"
+            }
+          ]
+        },
+        {
+          "idx": "811310",
+          "name": "터닝 킥",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "811310 TurningKick 800 h5 mh6"
+            }
+          ]
+        },
+        {
+          "idx": "811320",
+          "name": "서펜트 스톤",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 3,
+          "opensState": "SerpentStone",
+          "opensStateMs": 12000,
+          "_note": "12초간 플레이어 최종뎀+15%·동료+30%, + 'SerpentStone' 상태창 12초(씨서펜트버스트→어썰트 치환).",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 150,
+              "target": "player",
+              "durationMs": 12000,
+              "_seed": "811320 FinalDamage Target(플레이어) 12s"
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 300,
+              "target": "companion",
+              "durationMs": 12000,
+              "_seed": "811320 FinalDamage Myself(동료) 12s"
+            }
+          ]
+        },
+        {
+          "idx": "811330",
+          "name": "크리티컬 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "player",
+              "_seed": "811330 크확 player"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 100,
+              "target": "player",
+              "_seed": "811330 크뎀 player"
+            }
+          ]
+        },
+        {
+          "idx": "811340",
+          "name": "씨 서펜트 버스트",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 5000,
+          "openLevel": 1,
+          "chance": 400,
+          "triggerBy": "basicAttack",
+          "_note": "평타 40%·내부쿨5s로 발동. 평상시 버스트430%x2(7) 50% + 어썰트480%x3(12) 50%(버스트→어썰트 대체). 서펜트스톤 중엔 어썰트 100%.",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 4300,
+              "hits": 2,
+              "targetCount": 7,
+              "whenNotState": "SerpentStone",
+              "chance": 500,
+              "_seed": "버스트 (4300, 2, 7) · 평상시 50%(나머지 50%는 어썰트 대체)"
+            },
+            {
+              "role": "deal",
+              "coeff": 4800,
+              "hits": 3,
+              "targetCount": 12,
+              "whenNotState": "SerpentStone",
+              "chance": 500,
+              "_seed": "어썰트 (4800, 3, 12) · 버스트→어썰트 50% 대체(평상시)"
+            },
+            {
+              "role": "deal",
+              "coeff": 4800,
+              "hits": 3,
+              "targetCount": 12,
+              "whenState": "SerpentStone",
+              "_seed": "어썰트 (4800, 3, 12) · 서펜트스톤 중 100%(대체 게이트 무시)"
+            }
+          ]
+        },
+        {
+          "idx": "811350",
+          "name": "소환수 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 4000,
+          "_note": "4초마다 플레이어 HP/MP 회복(딜무관).",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811350 GetHealByMaxHpR 1.5%/4s"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811350 GetMpR 1.5%/4s"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MainStatR",
+            "value": 60,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_11_4",
+      "class": "Viper",
+      "name": "바이퍼(4차)",
+      "grade": "legend",
+      "creatureIndex": "9411",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 만렙16=90%캡). compareLevel 100.",
+      "_gradeBonusNote": "811490/491/492(FinalDamage +25%x3 @lv5/8/10)=엔진 _gradeBonus 일괄. 811470(어썰트 arm)은 whenState 대체 → 제외.",
+      "skills": [
+        {
+          "idx": "811400",
+          "name": "소환 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "_note": "소환 효과 15초(소환창 30초 중 앞 15초): 동료+플레이어 공속·크뎀 +15%. ★크뎀은 seed가 Parent 2회 표기하나 구검증모델=both.",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "AttackSpeed",
+              "_seed": "811400 공속 both, 15초"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "both",
+              "durationMs": 15000,
+              "_seed": "811400 크뎀 both(seed Parent x2), 15초"
+            }
+          ]
+        },
+        {
+          "idx": "811410",
+          "name": "훅 바머",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "811410 HookBomber 2900 h5 mh6"
+            }
+          ]
+        },
+        {
+          "idx": "811420",
+          "name": "서펜트 스톤",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 2,
+          "opensState": "SerpentStone",
+          "opensStateMs": 12000,
+          "_note": "12초간 플레이어 최종뎀+15%·동료+30%, + 'SerpentStone' 상태창 12초(씨서펜트버스트→어썰트 치환).",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 150,
+              "target": "player",
+              "durationMs": 12000,
+              "_seed": "811420 FinalDamage Target(플레이어) 12s"
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 300,
+              "target": "companion",
+              "durationMs": 12000,
+              "_seed": "811420 FinalDamage Myself(동료) 12s"
+            }
+          ]
+        },
+        {
+          "idx": "811440",
+          "name": "크리티컬 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "player",
+              "_seed": "811440 크확 player"
+            },
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 100,
+              "target": "player",
+              "_seed": "811440 크뎀 player"
+            }
+          ]
+        },
+        {
+          "idx": "811430",
+          "name": "피스트 인레이지",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 16000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 9000,
+              "hits": 3,
+              "targetCount": 4,
+              "_seed": "811430 op1 GetDamageR 9000 h3 mh4(4대상)"
+            },
+            {
+              "role": "deal",
+              "coeff": 9000,
+              "hits": 2,
+              "targetCount": 1,
+              "cond": "boss",
+              "_seed": "811430 op2 GetDamageR 9000 h2 Parent EnableCondition CreatureIsBoss(보스 전용, 주대상)",
+              "_note": "보스면 동일 피해 2회 더(복호화 desc 일치)."
+            }
+          ]
+        },
+        {
+          "idx": "811450",
+          "name": "씨 서펜트 버스트",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 3000,
+          "openLevel": 1,
+          "chance": 400,
+          "triggerBy": "basicAttack",
+          "_note": "평타 40%·내부쿨3s로 발동. 평상시 버스트1050%x3(9) 50% + 어썰트1750%x3(12) 50%(버스트→어썰트 대체). 서펜트스톤 중엔 어썰트 100%.",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 10500,
+              "hits": 3,
+              "targetCount": 9,
+              "whenNotState": "SerpentStone",
+              "chance": 500,
+              "_seed": "버스트 (10500, 3, 9) · 평상시 50%(나머지 50%는 어썰트 대체)"
+            },
+            {
+              "role": "deal",
+              "coeff": 17500,
+              "hits": 3,
+              "targetCount": 12,
+              "whenNotState": "SerpentStone",
+              "chance": 500,
+              "_seed": "어썰트 (17500, 3, 12) · 버스트→어썰트 50% 대체(평상시)"
+            },
+            {
+              "role": "deal",
+              "coeff": 17500,
+              "hits": 3,
+              "targetCount": 12,
+              "whenState": "SerpentStone",
+              "_seed": "어썰트 (17500, 3, 12) · 서펜트스톤 중 100%(대체 게이트 무시)"
+            }
+          ]
+        },
+        {
+          "idx": "811460",
+          "name": "소환수 회복",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 4000,
+          "_note": "4초마다 플레이어 HP/MP 회복(딜무관).",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811460 GetHealByMaxHpR 1.5%/4s"
+            },
+            {
+              "role": "utility",
+              "stat": "MP_REGEN",
+              "value": 15,
+              "target": "player",
+              "used": false,
+              "_seed": "811460 GetMpR 1.5%/4s"
+            }
+          ]
+        },
+        {
+          "idx": "811480",
+          "name": "서펜트 마크",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "openLevel": 4,
+          "triggerSkillIdx": 811430,
+          "_note": "레전 전용: 피스트 인레이지(811430) 시전마다 편승 — 1700%x2(8대상) + 적 받피증 +15%(10초).",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 17000,
+              "hits": 2,
+              "targetCount": 8,
+              "_seed": "811480 op1 GetDamageR 17000 Dot x2 mh8(즉발 근사)"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "811480 op2 Weakness 150 Parent(적) 10s"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MainStatR",
+            "value": 120,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_14_1",
+      "class": "WindBreaker",
+      "name": "윈드브레이커(1차)",
+      "grade": "rare",
+      "creatureIndex": "9114",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare). compareLevel 보정 없음.",
+      "skills": [
+        {
+          "idx": "814100",
+          "name": "정령의 기운",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 195,
+              "hits": 15,
+              "targetCount": 1,
+              "_seed": "814100 UseSkill 814101x15; 814101 130(base)+260(2배) -> EV 195",
+              "_note": "소환 시 정령 15개(각 base%×강화 50%2배 기대 x1.5=EV). 정령=RandomEnemy 단일(tc1), 즉발 근사."
+            }
+          ]
+        },
+        {
+          "idx": "814110",
+          "name": "산들바람 화살(브리즈 애로우)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "814110 BreezeArrow GetDamageR 260 hits2 maxHit3"
+            }
+          ]
+        },
+        {
+          "idx": "814120",
+          "name": "정령의 축복(공격력)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 80,
+              "target": "both",
+              "_cltStat": "Attack",
+              "_seed": "814120 ModStatR Attack 80 Myself(동료)+Target(플레이어)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_14_2",
+      "class": "WindBreaker",
+      "name": "윈드브레이커(2차)",
+      "grade": "epic",
+      "creatureIndex": "9214",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic). compareLevel 30.",
+      "skills": [
+        {
+          "idx": "814200",
+          "name": "정령의 기운",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 450,
+              "hits": 15,
+              "targetCount": 1,
+              "_seed": "814200 UseSkill 814201x15; 814201 300(base)+600 -> EV 450",
+              "_note": "소환 시 정령 15개(각 base%×강화 50%2배 기대 x1.5=EV). 정령=RandomEnemy 단일(tc1), 즉발 근사."
+            }
+          ]
+        },
+        {
+          "idx": "814210",
+          "name": "돌풍 사격(거스트 샷)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "814210 GustShot GetDamageR 400 hits3 maxHit5"
+            }
+          ]
+        },
+        {
+          "idx": "814220",
+          "name": "회전 화살(스파이럴 볼텍스)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1800,
+              "hits": 2,
+              "targetCount": 8,
+              "_seed": "814220 SpiralVortex GetDamageR 1800 hits2 maxHit8"
+            },
+            {
+              "role": "cc",
+              "action": "stun",
+              "target": "enemy",
+              "durationMs": 1200,
+              "used": false,
+              "_seed": "814220 Stun Parent(enemy) 1.2s",
+              "_note": "기절(딜무관, 보스는 대개 면역)"
+            }
+          ]
+        },
+        {
+          "idx": "814230",
+          "name": "정령의 축복(공격력)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 120,
+              "target": "both",
+              "_cltStat": "Attack",
+              "_seed": "814230 ModStatR Attack 120 Myself(동료)+Target(플레이어)"
+            }
+          ]
+        },
+        {
+          "idx": "814240",
+          "name": "정령 재생성",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "cooldown": 2000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 450,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "814240 UseSkill 정령 x1 (액티브 시전당, 내부쿨2s)",
+              "_note": "OnActiveSkill=액티브(모든 액션) 편승, 100%·내부쿨 2s. 정령 1개xEV."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 50,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_14_3",
+      "class": "WindBreaker",
+      "name": "윈드브레이커(3차)",
+      "grade": "unique",
+      "creatureIndex": "9314",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique). compareLevel 60.",
+      "_instantNote": "800000(+25% open1 상시 최종뎀, 나이트워커·윈드브레이커 공유)=이벤트성 버프라 스킬 제외. 대신 '추가 최종뎀' 체크박스(동료 무관 +25% 고정 곱소스, 엔진 INSTANT_FINAL_DMG)로 자유 토글.",
+      "_gradeBonusNote": "814370/371/372(FinalDamage +25%x3 @lv5/8/10)은 엔진 _gradeBonus 일괄 처리 -> 스킬 제외.",
+      "skills": [
+        {
+          "idx": "814300",
+          "name": "정령의 기운",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1200,
+              "hits": 15,
+              "targetCount": 1,
+              "_seed": "814300 UseSkill 814301x15; 814301 800(base)+1600 -> EV 1200",
+              "_note": "소환 시 정령 15개(각 base%×강화 50%2배 기대 x1.5=EV). 정령=RandomEnemy 단일(tc1), 즉발 근사."
+            }
+          ]
+        },
+        {
+          "idx": "814310",
+          "name": "얼어붙은 바람의 춤",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "814310 DanceOfFrozenWind GetDamageR 800 hits5 maxHit6"
+            }
+          ]
+        },
+        {
+          "idx": "814320",
+          "name": "회전 화살(스파이럴 볼텍스)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6000,
+              "hits": 2,
+              "targetCount": 8,
+              "_seed": "814320 SpiralVortex GetDamageR 6000 hits2 maxHit8"
+            },
+            {
+              "role": "cc",
+              "action": "stun",
+              "target": "enemy",
+              "durationMs": 1200,
+              "used": false,
+              "_seed": "814320 Stun Parent(enemy) 1.2s",
+              "_note": "기절(딜무관, 보스는 대개 면역)"
+            }
+          ]
+        },
+        {
+          "idx": "814330",
+          "name": "정조준 관통(핀포인트 피어스)",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3900,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "814330 op1 GetDamageR 3900"
+            },
+            {
+              "role": "deal",
+              "coeff": 8400,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "814330 op2 GetDamageR 8400(피니시)"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 250,
+              "target": "enemy",
+              "durationMs": 8000,
+              "used": true,
+              "_seed": "814330 ModStat Weakness 250 Parent(enemy) 8s",
+              "_note": "적 받는 피해 +25%(8초)."
+            }
+          ]
+        },
+        {
+          "idx": "814340",
+          "name": "정령의 축복(공격력)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "both",
+              "_cltStat": "Attack",
+              "_seed": "814340 ModStatR Attack 150 Myself(동료)+Target(플레이어)"
+            }
+          ]
+        },
+        {
+          "idx": "814350",
+          "name": "정령 재생성",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "cooldown": 2000,
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1200,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "814350 UseSkill 정령 x2 (액티브 시전당, 내부쿨2s)",
+              "_note": "OnActiveSkill=액티브(모든 액션) 편승, 100%·내부쿨 2s. 정령 2개xEV."
+            }
+          ]
+        },
+        {
+          "idx": "814360",
+          "name": "바람의 가호(최종뎀)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 150,
+              "target": "companion",
+              "_seed": "814360 ModStat FinalDamage 150 Myself(동료 +15%)"
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 50,
+              "target": "player",
+              "_seed": "814360 ModStat FinalDamage 50 Target(플레이어 +5%)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 100,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_14_4",
+      "class": "WindBreaker",
+      "name": "윈드브레이커(4차)",
+      "grade": "legend",
+      "creatureIndex": "9414",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 만렙16=90%캡). compareLevel 100.",
+      "_instantNote": "800000(+25% open1 상시 최종뎀, 나이트워커·윈드브레이커 공유)=이벤트성 버프라 스킬 제외. 대신 '추가 최종뎀' 체크박스(동료 무관 +25% 고정 곱소스, 엔진 INSTANT_FINAL_DMG)로 자유 토글.",
+      "_gradeBonusNote": "814490/491/492(FinalDamage +25%x3 @lv5/8/10)=엔진 _gradeBonus 일괄.",
+      "skills": [
+        {
+          "idx": "814400",
+          "name": "정령의 기운",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 4650,
+              "hits": 15,
+              "targetCount": 1,
+              "_seed": "814400 UseSkill 814401x15; 814401 3100(base)+6200 -> EV 4650",
+              "_note": "소환 시 정령 15개(각 base%×강화 50%2배 기대 x1.5=EV). 정령=RandomEnemy 단일(tc1), 즉발 근사."
+            }
+          ]
+        },
+        {
+          "idx": "814410",
+          "name": "요정의 선회(페어리 턴)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "814410 FairyTurn GetDamageR 2900 hits5 maxHit6"
+            }
+          ]
+        },
+        {
+          "idx": "814420",
+          "name": "회전 화살(스파이럴 볼텍스)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 23000,
+              "hits": 2,
+              "targetCount": 8,
+              "_seed": "814420 SpiralVortex GetDamageR 23000 hits2 maxHit8"
+            },
+            {
+              "role": "cc",
+              "action": "stun",
+              "target": "enemy",
+              "durationMs": 1200,
+              "used": false,
+              "_seed": "814420 Stun Parent(enemy) 1.2s",
+              "_note": "기절(딜무관, 보스는 대개 면역)"
+            }
+          ]
+        },
+        {
+          "idx": "814430",
+          "name": "정조준 관통(핀포인트 피어스)",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 15500,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "814430 op1 GetDamageR 15500"
+            },
+            {
+              "role": "deal",
+              "coeff": 34500,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "814430 op2 GetDamageR 34500(피니시)"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 250,
+              "target": "enemy",
+              "durationMs": 8000,
+              "used": true,
+              "_seed": "814430 ModStat Weakness 250 Parent(enemy) 8s",
+              "_note": "적 받는 피해 +25%(8초)."
+            }
+          ]
+        },
+        {
+          "idx": "814440",
+          "name": "하늘의 노래(송 오브 스카이)",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 7800,
+              "hits": 1,
+              "targetCount": 4,
+              "tickMs": 200,
+              "tickCount": 13,
+              "tickStartMs": 1000,
+              "tickBySpeed": true,
+              "_seed": "814440 SongOfSky TickTimeMs[1000..3400] 13틱x200ms(공속 비례 발사) GetDamageR 7800 h1 maxHit4"
+            },
+            {
+              "role": "deal",
+              "coeff": 4650,
+              "hits": 2,
+              "targetCount": 1,
+              "cond": "boss",
+              "tickMs": 200,
+              "tickCount": 13,
+              "tickStartMs": 1000,
+              "tickBySpeed": true,
+              "_seed": "814440 op2 UseSkill 814401x2/틱 EnableCondition IsCampaignBoss -> 화살 발사마다 정령 2개(13틱x2=26개)xEV4650",
+              "_note": "보스전 거대화살 추가정령(챕터보스 전용). 각 화살 발사시각에 정령 2개(총 26개)."
+            }
+          ]
+        },
+        {
+          "idx": "814450",
+          "name": "정령의 축복(공격력)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "both",
+              "_cltStat": "Attack",
+              "_seed": "814450 ModStatR Attack 150 Myself(동료)+Target(플레이어)"
+            }
+          ]
+        },
+        {
+          "idx": "814460",
+          "name": "정령 재생성",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "cooldown": 2000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 4650,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "814460 UseSkill 정령 x3 (액티브 시전당, 내부쿨2s)",
+              "_note": "OnActiveSkill=액티브(모든 액션) 편승, 100%·내부쿨 2s. 정령 3개xEV."
+            }
+          ]
+        },
+        {
+          "idx": "814470",
+          "name": "바람의 가호(최종뎀)",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 150,
+              "target": "companion",
+              "_seed": "814470 ModStat FinalDamage 150 Myself(동료 +15%)"
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 50,
+              "target": "player",
+              "_seed": "814470 ModStat FinalDamage 50 Target(플레이어 +5%)"
+            }
+          ]
+        },
+        {
+          "idx": "814480",
+          "name": "질풍의 일격",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 500,
+          "openLevel": 3,
+          "chance": 350,
+          "_note": "동료 공격 35%·내부쿨0.5s proc. trigCond(SkillIndex!=814480)=자기재귀 방지(엔진 proc 비재귀).",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 7500,
+              "hits": 1,
+              "targetCount": 5,
+              "_seed": "814480 op1 GetDamageR 7500 maxHit5"
+            },
+            {
+              "role": "deal",
+              "coeff": 4650,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "814480 op2 UseSkill 814401x2 (proc 시 정령 2개)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerToBoss",
+            "value": 200,
             "used": false
           }
         ]

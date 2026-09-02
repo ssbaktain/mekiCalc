@@ -44,6 +44,10 @@ public final class GameContent {
     public final Map<String, Object> companionRoot;
     /** monster_defense.json 전체 맵(챕터별 스테이지 일반몹/보스 방어력). 대상별 절대 데미지용. 없으면 빈 맵. */
     public final Map<String, Object> monsterDefense;
+    /** monster_hp.json 전체 맵(챕터별 스테이지 일반몹/보스 최대체력). 챕터보스 체력 표시용. 없으면 빈 맵. */
+    public final Map<String, Object> monsterHp;
+    /** monster_challenge.json 전체 맵(챕터 도전=웨이브 방어+보스, waves[스테이지].{hp,def} + boss.{hp,def}). 도전 대상 표시용. 없으면 빈 맵. */
+    public final Map<String, Object> monsterChallenge;
     /** artifact.json 전체 맵(유물 데이터 + 슬롯 임계 등 상수). 없으면 빈 맵. */
     public final Map<String, Object> artifactRoot;
     /** 유물 목록(artifact.json의 artifacts 배열, 원본 맵). 없으면 빈 목록(유물 탭 "준비 중"). */
@@ -59,7 +63,7 @@ public final class GameContent {
                         Map<String, Double> currency, List<StatSource> sources,
                         EquipmentPotential equip, SkillData skillData, SkillData skillDataDk, SkillData skillDataBishop, SkillData skillDataHero, SkillData skillDataBow,
                         List<Map<String, Object>> companions, Map<String, Object> companionRoot,
-                        Map<String, Object> monsterDefense,
+                        Map<String, Object> monsterDefense, Map<String, Object> monsterHp, Map<String, Object> monsterChallenge,
                         Map<String, Object> artifactRoot, List<Map<String, Object>> artifacts,
                         Map<String, Object> artifactPotential,
                         Map<String, Object> gearOptions, Path dataDir) {
@@ -76,6 +80,8 @@ public final class GameContent {
         this.companions = companions;
         this.companionRoot = companionRoot;
         this.monsterDefense = monsterDefense;
+        this.monsterHp = monsterHp;
+        this.monsterChallenge = monsterChallenge;
         this.artifactRoot = artifactRoot;
         this.artifacts = artifacts;
         this.artifactPotential = artifactPotential;
@@ -122,6 +128,8 @@ public final class GameContent {
         Object arr = compRoot.get("companions");
         if (arr != null) for (Object o : Json.asList(arr)) comps.add(Json.asMap(o));
         Map<String, Object> monDef = loadJsonMap(dataDir, "monster_defense.json");
+        Map<String, Object> monHp = loadJsonMap(dataDir, "monster_hp.json");
+        Map<String, Object> monChal = loadJsonMap(dataDir, "monster_challenge.json");
         Map<String, Object> artRoot = loadJsonMap(dataDir, "artifact.json");
         List<Map<String, Object>> arts = new ArrayList<>();
         Object artArr = artRoot.get("artifacts");
@@ -129,7 +137,7 @@ public final class GameContent {
         Map<String, Object> gearOpts = loadJsonMap(dataDir, "gear_options.json");
         Map<String, Object> artPot = loadJsonMap(dataDir, "artifact_potential.json");
         return new GameContent(g.stats, g.profile, g.currencyValues, g.sources, equip, skillData, skillDataDk, skillDataBishop, skillDataHero, skillDataBow,
-                comps, compRoot, monDef, artRoot, arts, artPot, gearOpts, dataDir);
+                comps, compRoot, monDef, monHp, monChal, artRoot, arts, artPot, gearOpts, dataDir);
     }
 
     /** dataDir의 JSON 파일을 맵으로 읽는다. 없거나 손상 시 빈 맵. */

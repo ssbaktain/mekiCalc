@@ -98,7 +98,7 @@ public class ApiController {
                 strOpt(req, "content"), (int) Math.round(num(req, "artOffsetSec", 0) * 1000),
                 bool(req, "preActivateProc", false), bool(req, "autoFillBasic", true), toIntSet(req.get("skillsOff")),
                 bool(req, "fillSkills", false), bool(req, "optimize", false), (int) num(req, "simMs", 0),
-                strOpt(req, "tlCompanion"), (int) num(req, "tlCompanionLevel", 1), (int) num(req, "tlFirstSummonMs", 0));   // 빌드 동료(신엔진) → 큐브 딜 반영(구 ally 필드와 충돌 방지 위해 tl* 접두)
+                strOpt(req, "tlCompanion"), (int) num(req, "tlCompanionLevel", 1), (int) num(req, "tlFirstSummonMs", 0), bool(req, "tlCompanionInstantFinalDmg", false));   // 빌드 동료(신엔진) → 큐브 딜 반영(구 ally 필드와 충돌 방지 위해 tl* 접두)
     }
 
     @PostMapping("/api/evaluate")
@@ -202,7 +202,8 @@ public class ApiController {
                 strOpt(req, "content"), (int) Math.round(num(req, "artOffsetSec", 0) * 1000),
                 bool(req, "preActivateProc", false), bool(req, "autoFillBasic", true), toIntSet(req.get("skillsOff")),
                 bool(req, "fillSkills", false), bool(req, "optimize", false),
-                strOpt(req, "companion"), (int) num(req, "companionLevel", 1), (int) num(req, "firstSummonMs", 0));
+                strOpt(req, "companion"), (int) num(req, "companionLevel", 1), (int) num(req, "firstSummonMs", 0),
+                bool(req, "companionInstantFinalDmg", false));
     }
 
     @GetMapping("/api/supporters")

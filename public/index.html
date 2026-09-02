@@ -176,34 +176,49 @@
         <button type="button" id="tl-run" class="tl-run-btn">계산</button>
       </div>
 
-      <details class="card tl-relic-opts" data-box="relic" open>
-        <summary>유물 계산 설정 <span class="tl-ro-hint">마리수·처치수·컨텐츠·시간 의존 유물 반영</span></summary>
-        <div class="tl-ro-grid">
-          <label><span class="ro-head">마리수(적)<span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></span><input id="tl-enemies" type="number" min="1" placeholder="미지정"></label>
-          <label><span class="ro-head">분당 처치수<span class="tl-ro-hint">성배</span></span><input id="tl-kills" type="number" min="0" placeholder="미지정"></label>
-          <label><span class="ro-head">컨텐츠<span class="tl-ro-hint">현재 자동만 지원 · 나머지는 준비 중</span></span><select id="tl-content">
-            <option value="">자동(대상 기준)</option>
-            <option value="성장던전" disabled>성장 던전 (준비 중)</option>
-            <option value="레이드-자쿰" disabled>레이드-자쿰 (준비 중)</option>
-            <option value="레이드-혼테일" disabled>레이드-혼테일 (준비 중)</option>
-            <option value="월드보스" disabled>월드보스 (준비 중)</option>
-            <option value="아레나" disabled>아레나 (준비 중)</option>
-            <option value="월드아레나" disabled>월드 아레나 (준비 중)</option>
-            <option value="길드토벌전" disabled>길드 토벌전 (준비 중)</option>
-          </select></label>
-          <label><span class="ro-head">유물 사전활성(초)<span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></span><input id="tl-artoffset" type="number" min="0" value="0"></label>
-        </div>
-        <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
-      </details>
+      <!-- 계산 설정(v: 유물 조건 + 동료 + 컨텐츠 대상을 한 박스로 통합) -->
+      <details class="card tl-calc-opts" data-box="calc" open>
+        <summary>계산 설정 <span class="tl-ro-hint">유물 조건 · 동료 · 컨텐츠 대상</span></summary>
 
-      <!-- 동료(v3.1): 소환 딜 + 동료→플레이어 버프 반영. 소환 30초·쿨 90초. -->
-      <details class="card tl-companion-opts" data-box="companion" open>
-        <summary>동료 <span class="tl-ro-hint">소환 딜 + 동료→플레이어 버프 반영 · 소환 30초·쿨 90초</span></summary>
-        <div class="tl-ro-grid">
-          <label><span class="ro-head">동료</span><select id="tl-companion"><option value="">없음</option></select></label>
-          <label><span class="ro-head">등급</span><select id="tl-companion-grade"></select></label>
-          <label><span class="ro-head">동료 레벨</span><input id="tl-companion-level" type="number" min="1" value="1"></label>
-          <label><span class="ro-head">첫 소환 시각(초)<span class="tl-ro-hint">기본 5초 · 이후 90초마다 자동 소환</span></span><input id="tl-first-summon" type="number" min="0" step="0.001" value="5"></label>
+        <!-- 컨텐츠: 챕터(=대상 챕터/스테이지 직접 선택) + 준비 중 컨텐츠들. 챕터 선택 시 옆에 챕터·스테이지, 일반 스테이지면 '챕터 도전' 체크. -->
+        <div class="tl-calc-sec">
+          <div class="tl-calc-sec-h">컨텐츠</div>
+          <div class="tl-content-row">
+            <label class="tl-content-cell"><span class="ro-head">컨텐츠<span class="tl-ro-hint">현재 챕터만 지원 · 나머지는 준비 중</span></span><select id="tl-content">
+              <option value="">챕터</option>
+              <option value="성장던전" disabled>성장 던전 (준비 중)</option>
+              <option value="레이드-자쿰" disabled>레이드-자쿰 (준비 중)</option>
+              <option value="레이드-혼테일" disabled>레이드-혼테일 (준비 중)</option>
+              <option value="월드보스" disabled>월드보스 (준비 중)</option>
+              <option value="아레나" disabled>아레나 (준비 중)</option>
+              <option value="월드아레나" disabled>월드 아레나 (준비 중)</option>
+              <option value="길드토벌전" disabled>길드 토벌전 (준비 중)</option>
+            </select></label>
+            <label class="tl-content-cell tl-target-cell" id="tl-target-wrap"><span class="ro-head">챕터 · 스테이지</span><span class="tl-target-sels"><select id="tl-chapter" title="챕터"></select><select id="tl-stage" title="스테이지"></select></span></label>
+            <label class="tl-ro-check tl-challenge-cell" id="tl-challenge-wrap"><input type="checkbox" id="tl-challenge"> 챕터 도전 <span class="tl-ro-hint">웨이브 방어 컨텐츠 · [챕터 사냥] 전용 유물(영혼의 계약서) 미적용</span></label>
+          </div>
+        </div>
+
+        <div class="tl-calc-sec">
+          <div class="tl-calc-sec-h">유물</div>
+          <div class="tl-ro-grid">
+            <label><span class="ro-head">마리수(적)<span class="tl-ro-hint">세이람·화염초·비밀지도·레인디어</span></span><input id="tl-enemies" type="number" min="1" placeholder="미지정"></label>
+            <label><span class="ro-head">분당 처치수<span class="tl-ro-hint">성배</span></span><input id="tl-kills" type="number" min="0" placeholder="미지정"></label>
+            <label><span class="ro-head">유물 사전활성(초)<span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></span><input id="tl-artoffset" type="number" min="0" value="0"></label>
+          </div>
+          <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
+        </div>
+
+        <!-- 동료(v3.1): 소환 딜 + 동료→플레이어 버프 반영. 소환 30초·쿨 90초. -->
+        <div class="tl-calc-sec">
+          <div class="tl-calc-sec-h">동료</div>
+          <div class="tl-ro-grid">
+            <label><span class="ro-head">동료</span><select id="tl-companion"><option value="">없음</option></select></label>
+            <label><span class="ro-head">등급</span><select id="tl-companion-grade"></select></label>
+            <label><span class="ro-head">동료 레벨</span><input id="tl-companion-level" type="number" min="1" value="1"></label>
+            <label><span class="ro-head">첫 소환 시각(초)<span class="tl-ro-hint">기본 5초 · 이후 90초마다 자동 소환</span></span><input id="tl-first-summon" type="number" min="0" step="0.001" value="5"></label>
+          </div>
+          <label class="tl-ro-check"><input type="checkbox" id="tl-companion-instant"> 추가 최종뎀 <span class="tl-ro-hint">체크 시 어떤 동료든 최종 데미지 +25%(별도 곱적용) · 자유 세팅 비교용</span></label>
         </div>
       </details>
 

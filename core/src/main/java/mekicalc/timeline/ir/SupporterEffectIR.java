@@ -25,6 +25,12 @@ import java.util.Map;
  * @param perHpRatio 현재HP 비례 스탯
  * @param assumeMax  현재HP 비례를 HP100% 최대로 계산(value가 이미 최대값)
  * @param maxStacks  램프업 스택 상한(periodic 스택 버프, 예 최종뎀 1초마다 +1.5% 최대 15중첩)
+ * @param whenState    ★범용: 이름의 상태창이 <b>활성</b>일 때만 이 effect 발동(예 서펜트스톤 중 어썰트). null=무관.
+ * @param whenNotState ★범용: 이름의 상태창이 <b>비활성</b>일 때만 발동(예 서펜트스톤 아닐 때 버스트). null=무관.
+ * @param chance       ★범용: 이 effect의 발동 확률(‰, 기댓값 가중). deal이면 coeff에 ×(chance/1000). 예 버스트50%→어썰트 치환(버스트 chance500·어썰트 chance500). null=100%.
+ * @param tickCount    ★범용: deal을 시간분산(채널링)해 N틱 방출(예 SongOfSky 화살 13발). null=단발(즉발). tickMs=간격, tickStartMs=첫틱 오프셋.
+ * @param tickStartMs  채널링 첫 틱 오프셋(ms, 시전 기준). null=tickMs.
+ * @param tickBySpeed  true면 틱 시각을 <b>공속 비례</b>로 압축(간격·오프셋 ×(1000/slotMs)의 역=시전시점 slotMs/1000). 화살 발사속도가 공속에 비례.
  */
 public record SupporterEffectIR(
         String role,
@@ -42,8 +48,19 @@ public record SupporterEffectIR(
         String action,
         Boolean perHpRatio,
         Boolean assumeMax,
-        Integer maxStacks
+        Integer maxStacks,
+        String whenState,
+        String whenNotState,
+        Integer chance,
+        Integer tickCount,
+        Integer tickStartMs,
+        Boolean tickBySpeed
 ) {
+    /** 발동 확률 배율(기댓값). chance 없으면 1.0. */
+    public double chanceMult() { return chance == null ? 1.0 : chance / 1000.0; }
+    /** 시간분산(채널링) 딜인가(tickCount>0). */
+    public boolean isChanneled() { return tickCount != null && tickCount > 0; }
+    public boolean tickBySpeedOn() { return Boolean.TRUE.equals(tickBySpeed); }
     static SupporterEffectIR from(Map<String, Object> m) {
         return new SupporterEffectIR(
                 IRRead.str(m, "role"),
@@ -61,8 +78,21 @@ public record SupporterEffectIR(
                 IRRead.str(m, "action"),
                 IRRead.bool(m, "perHpRatio"),
                 IRRead.bool(m, "assumeMax"),
-                IRRead.intg(m, "maxStacks")
+                IRRead.intg(m, "maxStacks"),
+                IRRead.str(m, "whenState"),
+                IRRead.str(m, "whenNotState"),
+                IRRead.intg(m, "chance"),
+                IRRead.intg(m, "tickCount"),
+                IRRead.intg(m, "tickStartMs"),
+                IRRead.bool(m, "tickBySpeed")
         );
+    }
+
+    /** ★범용 상태 게이팅: 상태창 활성/비활성 조건을 현재 상태집합으로 평가. whenState/whenNotState 미지정이면 항상 true. */
+    public boolean stateActive(java.util.function.Predicate<String> stateActiveAt) {
+        if (whenState != null && !stateActiveAt.test(whenState)) return false;
+        if (whenNotState != null && stateActiveAt.test(whenNotState)) return false;
+        return true;
     }
 
     /** 딜 무관(used:false)이면 true — 딜 계산에서 제외. */

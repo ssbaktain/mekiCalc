@@ -1335,7 +1335,18 @@ html.deep-route #panel-home { display: none !important; }
 .relic-cell-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .relic-cell-aw { padding: 5px 6px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
 /* 타임라인 탭: 유물 계산 설정(M/K/C/오프셋) */
-.tl-relic-opts { margin-top: 10px; }
+.tl-relic-opts, .tl-calc-opts { margin-top: 10px; }
+/* 계산 설정 서브섹션(유물/동료/컨텐츠) */
+.tl-calc-sec { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.tl-calc-sec:first-of-type { margin-top: 4px; padding-top: 0; border-top: 0; }
+.tl-calc-sec-h { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+/* 컨텐츠 행: 컨텐츠 셀렉트 + 챕터·스테이지 + 도전 체크를 한 줄(넘치면 줄바꿈) */
+.tl-content-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-top: 8px; }
+.tl-content-cell { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.tl-content-cell > .ro-head { display: flex; align-items: center; gap: 5px; }
+.tl-content-cell select { padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 400; }
+.tl-target-sels { display: flex; gap: 6px; }
+.tl-challenge-cell { margin-top: 0; align-self: center; }
 .tl-ro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 8px; }
 .tl-ro-grid > label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .tl-ro-grid > label > .ro-head { display: flex; align-items: center; gap: 5px; }   /* 이름 + ⓘ 를 한 줄로(입력칸은 아래) */
@@ -1619,10 +1630,10 @@ body.notices-active .ad-slot { display: none !important; }
 /* 저장 버튼: 변경 없으면 비활성(흐리게) */
 .mini-btn:disabled { opacity: .45; cursor: default; }
 /* 사용 스킬 체크리스트 */
-.tl-skillsel > summary, .tl-relic-opts > summary, .tl-companion-opts > summary { cursor: pointer; font-weight: 600; color: var(--text); list-style: revert; }
-.tl-relic-opts > summary, .tl-companion-opts > summary { font-size: 17px; }   /* 옛 h2 크기 유지 */
-.tl-skillsel > summary .tl-ro-hint, .tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint { font-weight: 400; margin-left: 6px; }
-.tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint { font-size: 12px; }
+.tl-skillsel > summary, .tl-relic-opts > summary, .tl-companion-opts > summary, .tl-calc-opts > summary { cursor: pointer; font-weight: 600; color: var(--text); list-style: revert; }
+.tl-relic-opts > summary, .tl-companion-opts > summary, .tl-calc-opts > summary { font-size: 17px; }   /* 옛 h2 크기 유지 */
+.tl-skillsel > summary .tl-ro-hint, .tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint, .tl-calc-opts > summary .tl-ro-hint { font-weight: 400; margin-left: 6px; }
+.tl-relic-opts > summary .tl-ro-hint, .tl-companion-opts > summary .tl-ro-hint, .tl-calc-opts > summary .tl-ro-hint { font-size: 12px; }
 .tl-skillsel-bar { display: flex; gap: 8px; margin: 10px 0 6px; }
 .tl-skill-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; }
 .tl-skill-cb { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text); cursor: pointer; }

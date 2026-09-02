@@ -1054,7 +1054,7 @@ function targetOfActivePreset() {
   return (p && p.target) || loadJSON(TARGET_KEY, null) || null;
 }
 // 대상 선택기 인스턴스(같은 값을 공유): 프리셋 빠른 전환(플로팅) + 스탯 프리셋 패널(직업 옆).
-const TARGET_PAIRS = [["qs-chapter", "qs-stage"], ["spt-chapter", "spt-stage"]];
+const TARGET_PAIRS = [["qs-chapter", "qs-stage"], ["spt-chapter", "spt-stage"], ["tl-chapter", "tl-stage"]];
 function currentTargetSel() {
   for (const [chId, stId] of TARGET_PAIRS) {
     const st = $(stId);
@@ -1105,6 +1105,7 @@ function syncTargetSelector() {
   }
   const pn = $("ts-preset-name"); if (pn) pn.textContent = "‘" + ((statPresets && statPresets.active) || "") + "’";
   updateCubeTargetHint();
+  tlSyncContentUI();   // 빌드 컨텐츠 행(챕터·스테이지/도전) 표시도 대상 변화에 맞춰 갱신
 }
 function renderTargetSelector() {
   if (!targetCatalog || !targetCatalog.chapters) return;
@@ -1128,8 +1129,9 @@ function onTargetChange(chId, stId) {
   const p = activeStatPreset();
   if (p) { p.target = t; saveJSON(STATP_KEY, statPresets); }   // 프리셋에 귀속(자동 저장)
   saveJSON(TARGET_KEY, t);                                     // 폴백/호환 유지
-  syncTargetSelector();                                        // 홈·스탯패널 선택기 동기화
+  syncTargetSelector();                                        // 홈·스탯패널 선택기 동기화(+빌드 컨텐츠 행)
   refreshTargetFactor().then(renderHome);
+  runTimelineIfActive();                                       // 대상 변화 → 빌드 딜(방어력·보스·체력) 재계산
 }
 function hasTargets(ch) {
   const c = targetCatalog.chapters[ch];
@@ -4645,13 +4647,14 @@ function tlInitHandlers() {
   if (opt) opt.addEventListener("change", () => tlSetOptimize(opt.checked));
   // 시뮬 길이·유물 계산 옵션·동료 설정도 빌드에 저장되는 선택 → 변경 즉시 저장 버튼 활성(input), 확정 시 재계산(change).
   for (const id of ["tl-simsec", "tl-enemies", "tl-kills", "tl-content", "tl-artoffset", "tl-preact",
-                    "tl-companion", "tl-companion-grade", "tl-companion-level", "tl-first-summon"]) {
+                    "tl-companion", "tl-companion-grade", "tl-companion-level", "tl-first-summon", "tl-challenge", "tl-companion-instant"]) {
     const e = $(id);
     if (e) {
       e.addEventListener("input", () => setBuildDirty(true));   // 타이핑 즉시 저장 버튼 활성(blur 전에도)
       e.addEventListener("change", () => {
         if (id === "tl-companion") tlFillCompanionGrades();       // 클래스 변경 → 등급 목록 재구성
         else if (id === "tl-companion-grade") tlSyncCompanionCap();
+        else if (id === "tl-content") tlSyncContentUI();          // 컨텐츠 전환 → 챕터·스테이지/도전 표시 갱신
         setBuildDirty(true); runTimeline();
       });
     }
@@ -4782,6 +4785,7 @@ function buildPayload(wipeRotation) {
     enemies: v("tl-enemies"),                        // 마리수
     kills: v("tl-kills"),                            // 분당 처치수
     content: v("tl-content"),                        // 컨텐츠
+    challenge: !!($("tl-challenge") && $("tl-challenge").checked),   // 챕터 도전(일반 스테이지+챕터일 때만 의미)
     artOffset: parseFloat(v("tl-artoffset")) || 0,   // 유물 사전활성(초)
     preAct: !!($("tl-preact") && $("tl-preact").checked),   // 확률형 유물 사전활성
     job: currentJob(),
@@ -4880,6 +4884,8 @@ function bpApply(name) {
   setv("tl-simsec", b.sim, 90); setv("tl-enemies", b.enemies, ""); setv("tl-kills", b.kills, "");
   setv("tl-content", b.content, ""); setv("tl-artoffset", b.artOffset, 0);
   { const cs = $("tl-content"); if (cs && cs.options[cs.selectedIndex] && cs.options[cs.selectedIndex].disabled) cs.value = ""; }   // 미개발 컨텐츠가 저장돼 있으면 자동으로 보정
+  if ($("tl-challenge")) $("tl-challenge").checked = !!b.challenge;   // 챕터 도전 복원
+  tlSyncContentUI();   // 복원된 컨텐츠/대상에 맞춰 챕터·스테이지/도전 표시 갱신
   tlApplyCompanionBuild(b.companion);   // 타임라인 동료 복원(목록 미로드면 보류→로드 후 적용)
   applyBoxOrder(b.boxOrder);            // 빌드 박스 순서 복원(없으면 기본)
   if ($("tl-preact")) $("tl-preact").checked = !!b.preAct;
@@ -5191,7 +5197,9 @@ function relicCtxPayload() {
   const p = { artifacts: activeRelic(), potentials: activePotentials() };
   const enemies = parseInt($("tl-enemies").value, 10); if (!isNaN(enemies)) p.enemies = enemies;   // 마리수 M
   const kills = parseFloat($("tl-kills").value); if (!isNaN(kills)) p.kills = kills;               // 분당 처치수 K
-  const content = $("tl-content").value; if (content) p.content = content;                          // 컨텐츠 C
+  let content = $("tl-content").value;                                                              // 컨텐츠 C
+  if (!content && tlChallengeActive()) content = "챕터도전";   // 챕터 + 일반 스테이지 + 도전 체크 → 도전 컨텐츠(챕터사냥 전용 유물 미적용)
+  if (content) p.content = content;
   p.artOffsetSec = parseFloat($("tl-artoffset").value) || 0;                                        // 유물 사전활성(초)
   if ($("tl-preact").checked) p.preActivateProc = true;                                             // 확률형 유물 사전활성
   if (tlSkillsOff.size) p.skillsOff = [...tlSkillsOff];                                              // 사용 해제 스킬
@@ -5235,8 +5243,25 @@ function effRelicCtx() {
     if (rm) { p.artifacts = rm.artifacts; p.potentials = rm.potentials; }
   }
   const cb = tlCompanionBuild();   // 빌드 동료(신엔진) → 큐브·비교·추천 딜에도 반영(구 ally와 충돌 없게 tl* 필드)
-  if (cb) { p.tlCompanion = cb.code; p.tlCompanionLevel = cb.level; p.tlFirstSummonMs = Math.round((cb.firstSummon || 0) * 1000); }
+  if (cb) { p.tlCompanion = cb.code; p.tlCompanionLevel = cb.level; p.tlFirstSummonMs = Math.round((cb.firstSummon || 0) * 1000); p.tlCompanionInstantFinalDmg = !!cb.instant; }
   return p;
+}
+
+// 컨텐츠='챕터' + 일반(비보스) 스테이지 + '챕터 도전' 체크 → 도전 컨텐츠 활성. (보스 스테이지엔 도전 없음)
+function tlChallengeActive() {
+  const c = $("tl-content"); if (!c || c.value) return false;   // 챕터(=빈값)일 때만
+  const cb = $("tl-challenge"); if (!cb || !cb.checked) return false;
+  const t = currentTargetSel();
+  return !!(t && t.stage && t.stage !== "boss");
+}
+// 컨텐츠 행 표시 동기화: '챕터'면 챕터·스테이지 셀렉터 노출, 일반 스테이지면 '챕터 도전' 체크박스 노출.
+function tlSyncContentUI() {
+  const c = $("tl-content"); if (!c) return;
+  const isChapter = !c.value;   // "" = 챕터
+  const tw = $("tl-target-wrap"); if (tw) tw.style.display = isChapter ? "" : "none";
+  const t = currentTargetSel();
+  const nonBoss = !!(t && t.stage && t.stage !== "boss");
+  const cw = $("tl-challenge-wrap"); if (cw) cw.style.display = (isChapter && nonBoss) ? "" : "none";
 }
 
 // 시뮬 길이(ms) — 타임라인 탭 설정. 큐브 계산도 동일 값을 써 실험실과 딜 기준을 맞춘다(순환/파생 유물은 sim 길이 의존).
@@ -5329,6 +5354,7 @@ function tlPayload() {
     payload.companion = gSel.value;
     payload.companionLevel = Math.max(1, parseInt(($("tl-companion-level") || {}).value) || 1);
     payload.firstSummonMs = Math.max(0, Math.round((parseFloat(($("tl-first-summon") || {}).value) || 0) * 1000));
+    payload.companionInstantFinalDmg = !!($("tl-companion-instant") || {}).checked;   // 인스턴트 최종뎀 보너스
   }
   return payload;
 }
@@ -5342,6 +5368,7 @@ function tlCompanionBuild() {
     code: gSel.value,
     level: Math.max(1, parseInt(($("tl-companion-level") || {}).value) || 1),
     firstSummon: Math.max(0, parseFloat(($("tl-first-summon") || {}).value) || 0),   // 초
+    instant: !!($("tl-companion-instant") || {}).checked,   // 인스턴트 최종뎀 보너스
   };
 }
 // 빌드 복원: 저장된 동료를 2단 셀렉트+레벨+첫소환에 반영. 목록 미로드면 보류(로드 후 자동 적용).
@@ -5353,13 +5380,15 @@ function tlRestoreCompanion() {
   if (!tlSupporters || !Object.keys(tlSupByClass).length) return false;   // 목록 로드 후 tlLoadSupporters가 재호출
   const c = tlPendingCompanion;
   let hasCompanion = false;
-  if (!c || !c.code) { cSel.value = ""; cSel.dataset.cls = ""; tlFillCompanionGrades(); }
+  const inst = $("tl-companion-instant");
+  if (!c || !c.code) { cSel.value = ""; cSel.dataset.cls = ""; tlFillCompanionGrades(); if (inst) inst.checked = false; }
   else {
     const entry = (tlSupporters || []).find((x) => x.code === c.code);
     cSel.value = entry ? (entry.class || "") : "";
     tlFillCompanionGrades(c.code);
     const lvl = $("tl-companion-level"); if (lvl) lvl.value = Math.max(1, c.level || 1);
     const fs = $("tl-first-summon"); if (fs) fs.value = c.firstSummon != null ? c.firstSummon : 5;   // 기본 첫 소환 5초
+    if (inst) inst.checked = !!c.instant;   // 인스턴트 최종뎀 보너스 복원
     tlSyncCompanionCap();
     hasCompanion = !!(cSel.value && gSel.value);
   }
@@ -5370,9 +5399,9 @@ function tlRestoreCompanion() {
 // ── 빌드 박스 순서(사용자 지정, 빌드마다 저장) ──
 // 재배치 대상 = data-box 박스들(입력 6 + 결과 4). .tl-build-bar(빌드 헤더)만 항상 최상단 고정.
 // 결과 4박스(타임라인·종합DPS·스킬별기여·동료결과)는 컨테이너 고정·내용만 갱신이라 순서가 유지됨.
-const TL_BOX_KEYS = ["bar", "relic", "companion", "skillsel", "manual", "exp", "gantt", "head", "brk", "artc", "comp"];
+const TL_BOX_KEYS = ["bar", "calc", "skillsel", "manual", "exp", "gantt", "head", "brk", "artc", "comp"];
 const TL_BOX_LABEL = {
-  bar: "모드 · 시뮬 · 계산", relic: "유물 계산 설정", companion: "동료 설정", skillsel: "사용 스킬",
+  bar: "모드 · 시뮬 · 계산", calc: "계산 설정", skillsel: "사용 스킬",
   manual: "스킬 배치표", exp: "실험실", gantt: "타임라인", head: "종합 DPS", brk: "스킬별 기여도", artc: "유물별 기여도", comp: "동료 결과",
 };
 function tlBuildContainer() { return $("panel-timeline"); }
@@ -5851,12 +5880,27 @@ function renderTimelineResult(d) {
   tlLastData = d;   // DPS 곡선 토글/곡률 조정 시 재계산 없이 다시 그리기용
   const secs = Math.round(d.simMs / 1000);
   const t = currentTargetSel();
-  const targetLabel = t ? (d.boss ? `${t.ch}챕터 보스` : `${t.ch}-${String(t.stage).replace("stage:", "")} 일반몹`) : "대상 미설정";
+  const hasMob = d.mobDef > 0 || d.mobHp > 0;
+  const hasBoss = d.bossDef > 0 || d.bossHp > 0;
+  const isChallenge = !d.boss && (d.challenge || hasBoss);   // 도전(백엔드 플래그, 스테이지 보스 없는 초반 챕터 포함)
+  const stageNo = t ? String(t.stage).replace("stage:", "") : "";
+  const targetLabel = t
+    ? (d.boss ? `${t.ch}챕터 보스` : isChallenge ? `${t.ch}-${stageNo} 챕터 도전` : `${t.ch}-${stageNo} 일반몹`)
+    : "대상 미설정";
+  // 대상 방어력·체력 칩(일반몹/보스 각각). 둘 다 있으면(도전) 앞에 라벨을 붙여 구분.
+  const statChip = (label, def, hp) => {
+    const parts = [];
+    if (def > 0) parts.push(`🛡 방어력 ${fmt(def)}`);
+    if (hp > 0) parts.push(`❤️ 체력 ${koreanUnit(hp)}`);
+    return parts.length ? `<span class="tl-hl-chip">${label}${parts.join(" · ")}</span>` : "";
+  };
+  const both = hasMob && hasBoss;
   const chips =
     `<span class="tl-hl-chip">🎯 ${targetLabel}</span>` +
     `<span class="tl-hl-chip">${d.mode === "manual" ? "✍️ 수동" : "⚙️ 자동"}</span>` +
     `<span class="tl-hl-chip">⏱ ${secs}초 측정</span>` +
-    (d.monsterDef > 0 ? `<span class="tl-hl-chip">🛡 방어력 ${fmt(d.monsterDef)}</span>` : "");
+    (hasMob ? statChip(both ? "일반몹 · " : "", d.mobDef, d.mobHp) : "") +
+    (hasBoss ? statChip(both ? "보스 · " : "", d.bossDef, d.bossHp) : "");
   const tile = (label, val, cls, per) =>
     `<div class="tl-hl-tile${cls ? " " + cls : ""}"><div class="tl-hl-label">${label}</div>` +
     `<div class="tl-hl-num">${koreanUnit(val) || fmt(Math.round(val || 0))}${per ? `<span class="tl-hl-per">${per}</span>` : ""}</div>` +
@@ -6395,10 +6439,11 @@ function tlDealLines(dealLines, pct, lanes) {
 }
 
 // 동료(v3.1) 간트 lane: 소환창 막대 + 스킬별 딜 틱 + 동료→플레이어 버프 막대. 시간축 공유.
+// ★스탯 표시명 = 게임 원본명(data/stats.json 정본, 줄임말 금지). clt키→앱스탯 매핑 후 stats.json 명칭(끝 % 제외, 값에 %가 붙음).
 const COMPANION_STAT_LABEL = {
-  ATK_PCT: "공격력", FinalDamage: "최종뎀", MaxDamageRatio: "최대뎀배율", CriticalPower: "크뎀",
-  CriticalChance: "크확", AttackSpeed: "공속", SkillPower: "스킬뎀", DMG: "데미지",
-  AttackPowerToBoss: "보스뎀", AttackPowerExcludeBoss: "일반뎀", BaseAttackPower: "평타뎀",
+  ATK_PCT: "공격력", FinalDamage: "최종 데미지", MaxDamageRatio: "최대 데미지 배율", CriticalPower: "크리티컬 데미지",
+  CriticalChance: "크리티컬 확률", AttackSpeed: "공격 속도", SkillPower: "스킬 데미지", DMG: "데미지",
+  AttackPowerToBoss: "보스 몬스터 데미지", AttackPowerExcludeBoss: "일반 몬스터 데미지", BaseAttackPower: "기본 공격 데미지",
   Weakness: "적 받는 피해 증가", Defence: "적 방어력", Defense: "적 방어력",
 };
 function tlCompanionLanes(c, pct, lanes, T) {
