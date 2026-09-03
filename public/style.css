@@ -493,6 +493,7 @@ body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스�
 .table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table td.star { color: #e7c14a; width: 20px; text-align: center; }
 .table td.good { color: #6fcf97; font-weight: 600; }
+.table td.bad { color: #e07a7a; font-weight: 600; }
 .qual-tag { color: #c2902a; font-size: 12px; }
 .table tbody tr:hover { background: var(--card2); }
 

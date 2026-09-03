@@ -2203,6 +2203,9 @@ public final class CalcService {
     /** 스탯 비교에서 제외할 스탯: 레벨(딜 모델 밖)·기본 공격 대상 수(상황 의존). 나머지 입력 가능한 스탯 전부 비교. */
     private static final Set<String> STAT_COMPARE_SKIP = Set.of("LEVEL", "BASIC_ATK_TARGETS");
 
+    /** 숨김 스탯이지만 스탯 비교엔 노출하는 장비 특수 옵션(눈장식=1레벨당 주스탯·포켓=4레벨당 주스탯%). 입력 폼엔 여전히 미노출. dm.combine이 레벨 반영해 주스탯으로 환산. */
+    private static final Set<String> STAT_COMPARE_INCLUDE_HIDDEN = Set.of("MAIN_STAT_PER_LEVEL", "MAIN_STAT_PCT_PER_4LEVEL");
+
     /** 공용(직업 미선택)에선 스킬/기본공격 구분·로테이션이 없으므로 이 딜 구성 스탯들을 항상 '딜 미환산'으로 본다.
      *  (쿨감·지속류는 이미 qualitative라 공용에서 딜 미환산 → 여기선 기본공격/스킬 데미지만 강제) */
     private static final Set<String> COMMON_JOB_QUAL = Set.of("BASIC_ATK_DMG", "SKILL_DMG");
@@ -2242,7 +2245,7 @@ public final class CalcService {
         int job = (int) current.get("JOB");
         List<Map<String, Object>> rows = new ArrayList<>();
         for (StatDef d : content.stats.values()) {
-            if (d.hidden || d.derived || STAT_COMPARE_SKIP.contains(d.id)) continue;
+            if ((d.hidden && !STAT_COMPARE_INCLUDE_HIDDEN.contains(d.id)) || d.derived || STAT_COMPARE_SKIP.contains(d.id)) continue;
             DealModel useDm = effDm(d.id, dm, dmBossDmg, dmNormalDmg);
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("statId", d.id);
@@ -2472,7 +2475,7 @@ public final class CalcService {
     // OCR이 읽은 '등급 부위명' 텍스트에서 우리 부위명으로 정규화. 등급 접두어·공백은 무시하고 부위명 포함 여부로 매칭.
     // "반지2"를 "반지"보다 먼저 검사해야 반지2가 반지로 오분류되지 않는다(반지2 ⊃ 반지). 얼굴/눈 장식은 전체명 매칭이라 겹치지 않음.
     private static final List<String> OCR_PART_NAMES = List.of(
-        "반지2", "투구", "상의", "망토", "견장", "하의", "장갑", "벨트", "신발", "반지", "목걸이", "얼굴장식", "눈장식", "귀고리");
+        "반지2", "투구", "상의", "망토", "견장", "하의", "장갑", "벨트", "신발", "반지", "목걸이", "얼굴장식", "눈장식", "귀고리", "포켓");
 
     private String canonicalPart(String ocrName) {
         if (ocrName == null) return null;
@@ -2708,7 +2711,7 @@ public final class CalcService {
             + "- 각 박스에서 장비 이름(흰 글씨) 바로 아래, 아이콘 오른쪽의 '등급 부위명' 텍스트"
             + "(예: '레전드리 하의', '유니크 반지2', '에픽 얼굴장식')에서 부위명만 읽으세요. "
             + "왼쪽 박스 부위명은 leftPart, 오른쪽 박스 부위명은 rightPart에 넣습니다. "
-            + "부위명은 반드시 다음 중 하나: 투구, 상의, 망토, 견장, 하의, 장갑, 벨트, 신발, 반지, 반지2, 목걸이, 얼굴장식, 눈장식, 귀고리. "
+            + "부위명은 반드시 다음 중 하나: 투구, 상의, 망토, 견장, 하의, 장갑, 벨트, 신발, 반지, 반지2, 목걸이, 얼굴장식, 눈장식, 귀고리, 포켓. "
             + "등급 접두어(레전드리·유니크·에픽·중급·최상급 등)는 빼고 부위명만. 확실히 못 읽으면 빈 문자열.\n"
             + "- 왼쪽 박스는 left, 오른쪽 박스는 right. 박스가 하나뿐이면 그 박스를 left에 넣고 right는 빈 배열.\n"
             + "반드시 JSON만 출력: {\"leftPart\":\"...\",\"rightPart\":\"...\",\"left\":[{\"label\":\"...\",\"value\":\"...\"}],\"right\":[{\"label\":\"...\",\"value\":\"...\"}]}";

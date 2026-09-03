@@ -69,6 +69,7 @@ public final class DamageModel implements DealModel {
     private static final String ATK_SPEED = "ATK_SPEED";
     private static final String LEVEL = "LEVEL";
     private static final String MAIN_STAT_PER_LEVEL = "MAIN_STAT_PER_LEVEL";
+    private static final String MAIN_STAT_PCT_PER_4LEVEL = "MAIN_STAT_PCT_PER_4LEVEL";
     private static final String SKILL_LEVEL_1 = "SKILL_LEVEL_1";
     private static final String SKILL_LEVEL_2 = "SKILL_LEVEL_2";
     private static final String SKILL_LEVEL_3 = "SKILL_LEVEL_3";
@@ -267,6 +268,12 @@ public final class DamageModel implements DealModel {
             r.set(MAIN_STAT_PER_LEVEL, current.get(MAIN_STAT_PER_LEVEL)); // 누적 취소(기준 유지)
             r.set(MAIN_STAT_FLAT, r.get(MAIN_STAT_FLAT) + current.get(LEVEL) * perLevelDelta);
         }
+        // '4레벨당 주스탯%'(포켓 특옵)은 누적 스탯이 아니라, 즉시 floor(레벨/4) × 값 만큼 주스탯%로 환산한다.
+        double perLevelPctDelta = delta.get(MAIN_STAT_PCT_PER_4LEVEL);
+        if (perLevelPctDelta != 0) {
+            r.set(MAIN_STAT_PCT_PER_4LEVEL, current.get(MAIN_STAT_PCT_PER_4LEVEL)); // 누적 취소(기준 유지)
+            r.set(MAIN_STAT_PCT, r.get(MAIN_STAT_PCT) + Math.floor(current.get(LEVEL) / 4.0) * perLevelPctDelta);
+        }
         // 주스탯(주스탯깡/주스탯%)이 바뀌면 게임처럼 늘어난 주스탯만큼 공격력(깡)에도 1:1 반영한다.
         // 입력 공격력은 현재 주스탯이 이미 포함된 표시값이라, '증가분'만 더하면 baseline은 그대로 유지된다.
         double mainDelta = mainStat(r) - mainStat(current);
@@ -300,16 +307,21 @@ public final class DamageModel implements DealModel {
         double subAfter = subStat(r);               // r의 부스탯(옵션 반영 후)
         double level = r.get(LEVEL);                // 레벨은 combine으로 변하지 않음
         double perLevelDelta = delta.get(MAIN_STAT_PER_LEVEL);
+        double perLevelPctDelta = delta.get(MAIN_STAT_PCT_PER_4LEVEL);
         StatBlock before = new StatBlock(r);
         // 공격력(ATK_FLAT)/레벨당주스탯을 제외한 모든 delta 스탯을 역연산(주스탯 포함 → before 주스탯 복원).
         for (Map.Entry<String, Double> e : delta.asMap().entrySet()) {
             String id = e.getKey();
-            if (id.equals(ATK_FLAT) || id.equals(MAIN_STAT_PER_LEVEL)) continue;
+            if (id.equals(ATK_FLAT) || id.equals(MAIN_STAT_PER_LEVEL) || id.equals(MAIN_STAT_PCT_PER_4LEVEL)) continue;
             StatDef def = stats.get(id);
             if (id.equals(MAIN_STAT_FLAT)) {
                 // 레벨당 환산으로 더해졌던 깡주스탯을 먼저 빼고, MAIN_STAT_FLAT 옵션(SUM)을 역연산.
                 double flat = r.get(MAIN_STAT_FLAT) - level * perLevelDelta;
                 before.set(MAIN_STAT_FLAT, def != null ? def.unmerge(flat, e.getValue()) : flat - e.getValue());
+            } else if (id.equals(MAIN_STAT_PCT)) {
+                // 4레벨당 환산으로 더해졌던 주스탯%를 먼저 빼고, MAIN_STAT_PCT 옵션(SUM)을 역연산.
+                double pct = r.get(MAIN_STAT_PCT) - Math.floor(level / 4.0) * perLevelPctDelta;
+                before.set(MAIN_STAT_PCT, def != null ? def.unmerge(pct, e.getValue()) : pct - e.getValue());
             } else {
                 double un = (def != null) ? def.unmerge(r.get(id), e.getValue()) : r.get(id) - e.getValue();
                 before.set(id, un);
@@ -318,6 +330,10 @@ public final class DamageModel implements DealModel {
         // delta에 MAIN_STAT_FLAT가 없는데 레벨당 옵션만 있었다면 환산분을 따로 제거.
         if (perLevelDelta != 0 && !delta.asMap().containsKey(MAIN_STAT_FLAT)) {
             before.set(MAIN_STAT_FLAT, before.get(MAIN_STAT_FLAT) - level * perLevelDelta);
+        }
+        // delta에 MAIN_STAT_PCT가 없는데 4레벨당% 옵션만 있었다면 환산분을 따로 제거.
+        if (perLevelPctDelta != 0 && !delta.asMap().containsKey(MAIN_STAT_PCT)) {
+            before.set(MAIN_STAT_PCT, before.get(MAIN_STAT_PCT) - Math.floor(level / 4.0) * perLevelPctDelta);
         }
         // 주스탯·부스탯 증가분만큼 더해졌던 공격력 가산·스탯비례 가산을 되돌린 뒤, ATK 옵션(SUM)도 제거.
         double mainDelta = mainAfter - mainStat(before);

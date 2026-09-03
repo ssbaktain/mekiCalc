@@ -138,7 +138,7 @@ const GRADE_COLOR = {
 function gradeColor(code) { return GRADE_COLOR[code] || "var(--text)"; }
 
 // 부위 표시 순서(데스크톱 PART_ORDER와 동일). 모든 부위 드롭다운·카드에 통일 적용.
-const PART_ORDER = ["모자", "망토", "상의", "어깨장식", "하의", "벨트", "장갑", "신발", "반지", "반지2", "목걸이", "눈장식", "얼굴장식", "귀고리"];
+const PART_ORDER = ["모자", "망토", "상의", "어깨장식", "하의", "벨트", "장갑", "신발", "반지", "반지2", "목걸이", "눈장식", "얼굴장식", "귀고리", "포켓"];
 function partIdx(p) { const i = PART_ORDER.indexOf(p); return i < 0 ? 999 : i; }
 function sortParts(arr) { return arr.slice().sort((a, b) => partIdx(a) - partIdx(b)); }
 function gradeText(code) { return `<span class="grade-text" style="color:${gradeColor(code)}">${gradeKo(code)}</span>`; }
@@ -1628,12 +1628,12 @@ function renderEval() {
   tb.innerHTML = "";
   for (const r of rows) {
     const inc = r.qualitative ? '<span class="qual-tag">딜 미환산</span>'
-      : (r.damageIncrease == null ? "—" : "+" + (r.damageIncrease * 100).toFixed(2) + "%");
+      : (r.damageIncrease == null ? "—" : (r.damageIncrease < 0 ? "" : "+") + (r.damageIncrease * 100).toFixed(2) + "%");
     const cubes = (r.expectedCubes == null) ? "∞" : fmt(r.expectedCubes) + "개";
     const tr = document.createElement("tr");
     tr.innerHTML =
       `<td class="star">${r.special ? "★" : ""}</td><td${r.yellow ? ' style="color:#e7c14a"' : ""}>${cleanName(r.name)}</td><td class="num"${r.yellow ? ' style="color:#e7c14a"' : ""}>${r.value}${OPT_SUFFIX[r.unit] || ""}</td>` +
-      `<td class="num ${r.qualitative ? "" : "good"}">${inc}</td><td class="num">${pct(r.pPerCube)}</td><td class="num">${cubes}</td>`;
+      `<td class="num ${r.qualitative ? "" : (r.damageIncrease < 0 ? "bad" : "good")}">${inc}</td><td class="num">${pct(r.pPerCube)}</td><td class="num">${cubes}</td>`;
     tb.appendChild(tr);
   }
   $("ev-table").hidden = rows.length === 0;
@@ -2000,15 +2000,22 @@ function gcSubPool(prefix) { return gearCfg.commonSub.concat(gcSpecials(prefix))
 let scSource = null;   // {statId, value} 현재 기준
 let scTimer = null;
 
+// 숨김 스탯(입력 폼엔 미노출)이지만 스탯 비교·실험실엔 노출하는 장비 특수 옵션.
+//   눈장식=1레벨당 주스탯(깡) · 포켓=4레벨당 주스탯%. 이름/단위는 stats.json과 동일.
+//   엔진 변환: 서버 dm.combine(스탯 비교) / 클라 tlStatDerived(실험실)가 레벨 반영해 주스탯으로 환산.
+const PER_LEVEL_STATS = [
+  { id: "MAIN_STAT_PER_LEVEL", name: "1레벨당 주스탯(+)", unit: "FLAT" },
+  { id: "MAIN_STAT_PCT_PER_4LEVEL", name: "4레벨당 주스탯%", unit: "PCT" },
+];
 function scStatDefs() {
   const base = (statDefs || []).filter((d) => !d.hidden && d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
-  return [...base, { id: "ATK_PCT_SKILL", name: EXP_SYNTH.ATK_PCT_SKILL, unit: "PCT" }];   // 합성: 스킬/유물 유래 공격력%(프리셋 공%와 별도 곱)
+  return [...base, { id: "ATK_PCT_SKILL", name: EXP_SYNTH.ATK_PCT_SKILL, unit: "PCT" }, ...PER_LEVEL_STATS];   // 합성: 스킬/유물 유래 공격력% + 장비 특수 옵션
 }
 
 // 스탯 비교 전용 소분류(종류별로 묶어 한눈에 보이게). stats.json 순서는 캐릭터 폼이 '스탯창 순서'로 쓰므로 건드리지 않고 여기서만 그룹핑.
 const SC_GROUPS = [
-  { title: "+ 스탯", ids: ["ATK_FLAT", "MAIN_STAT_FLAT", "SUB_STAT_FLAT", "DEFENSE"] },
-  { title: "% 스탯", ids: ["ATK_PCT", "ATK_PCT_SKILL", "MAIN_STAT_PCT", "STAT_PROP_DMG", "CRIT_RATE", "CRIT_DMG", "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "BOSS_DMG", "NORMAL_DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
+  { title: "+ 스탯", ids: ["ATK_FLAT", "MAIN_STAT_FLAT", "MAIN_STAT_PER_LEVEL", "SUB_STAT_FLAT", "DEFENSE"] },
+  { title: "% 스탯", ids: ["ATK_PCT", "ATK_PCT_SKILL", "MAIN_STAT_PCT", "MAIN_STAT_PCT_PER_4LEVEL", "STAT_PROP_DMG", "CRIT_RATE", "CRIT_DMG", "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "BOSS_DMG", "NORMAL_DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
   { title: "곱연산 스탯", ids: ["DEF_PEN", "ATK_SPEED", "FINAL_DMG"] },
   { title: "기타 스탯", ids: ["COOLDOWN_REDUCTION_PCT", "COOLDOWN_REDUCTION", "SUMMON_DURATION", "BUFF_DURATION"] },
   { title: "스킬 레벨", ids: ["SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "SKILL_LEVELS"] },
@@ -2379,8 +2386,8 @@ async function runGearApply() {
 
 // ──────────────────── 내 옵션 비교 ────────────────────
 
-function statLabel(id) { const d = statDefs.find((x) => x.id === id); return d ? d.name : (EXP_SYNTH[id] || id); }
-function statUnit(id) { const d = statDefs.find((x) => x.id === id); return d ? d.unit : (EXP_SYNTH[id] ? "PCT" : ""); }
+function statLabel(id) { const d = statDefs.find((x) => x.id === id) || PER_LEVEL_STATS.find((x) => x.id === id); return d ? d.name : (EXP_SYNTH[id] || id); }
+function statUnit(id) { const d = statDefs.find((x) => x.id === id) || PER_LEVEL_STATS.find((x) => x.id === id); return d ? d.unit : (EXP_SYNTH[id] ? "PCT" : ""); }
 
 // 옵션 박스 안 내용(읽기전용). 노랑은 금색 글씨 + 배지.
 // 옵션 표기: 이름에서 단위(%·(+)·(+초)) 떼고 값 뒤에 단위 붙임 (예: "공격 속도 10%").
@@ -5535,10 +5542,14 @@ function tlCombineStat(key, cur, delta) {
 function tlStatDerived(stat, amt, s) {
   const mainFlat = parseFloat(s.MAIN_STAT_FLAT) || 0, mainPct = parseFloat(s.MAIN_STAT_PCT) || 0;
   const subFlat = parseFloat(s.SUB_STAT_FLAT) || 0, subPct = parseFloat(s.SUB_STAT_PCT) || 0;
+  const level = parseFloat(s.LEVEL) || 0;
   let dMain = 0, dSub = 0;
   switch (stat) {
     case "MAIN_STAT_FLAT": dMain = amt * (1 + mainPct / 100); break;
     case "MAIN_STAT_PCT":  dMain = mainFlat * (amt / 100); break;
+    // 눈장식(1레벨당 주스탯 깡) → 레벨×값을 주스탯깡으로, 포켓(4레벨당 주스탯%) → floor(레벨/4)×값을 주스탯%로 환산(구엔진 DamageModel.combine과 동일).
+    case "MAIN_STAT_PER_LEVEL":      dMain = (level * amt) * (1 + mainPct / 100); break;
+    case "MAIN_STAT_PCT_PER_4LEVEL": dMain = mainFlat * (Math.floor(level / 4) * amt / 100); break;
     case "SUB_STAT_FLAT":  dSub = amt * (1 + subPct / 100); break;
     case "SUB_STAT_PCT":   dSub = subFlat * (amt / 100); break;
     default: return null;
@@ -5557,6 +5568,10 @@ function tlExpStatOptions(sel) {
     opts += `<option value="${d.id}"${d.id === sel ? " selected" : ""}>${d.name}</option>`;
     if (d.id === "ATK_PCT")   // 공격력% 바로 아래에 '공격력%(스킬/유물)' 배치
       opts += `<option value="ATK_PCT_SKILL"${sel === "ATK_PCT_SKILL" ? " selected" : ""}>${EXP_SYNTH.ATK_PCT_SKILL}</option>`;
+    if (d.id === "MAIN_STAT_FLAT")   // 주스탯(깡) 바로 아래에 '1레벨당 주스탯(+)'(눈장식)
+      opts += `<option value="MAIN_STAT_PER_LEVEL"${sel === "MAIN_STAT_PER_LEVEL" ? " selected" : ""}>${PER_LEVEL_STATS[0].name}</option>`;
+    if (d.id === "MAIN_STAT_PCT")    // 주스탯% 바로 아래에 '4레벨당 주스탯%'(포켓)
+      opts += `<option value="MAIN_STAT_PCT_PER_4LEVEL"${sel === "MAIN_STAT_PCT_PER_4LEVEL" ? " selected" : ""}>${PER_LEVEL_STATS[1].name}</option>`;
   }
   return ph + opts;
 }
@@ -5736,7 +5751,7 @@ async function tlRunExperiment(baseD) {
   const stats = Object.assign({}, mod.stats);
   const applied = [];
   for (const r of active) {
-    const d = statDefById(r.stat), nm = d ? d.name : (EXP_SYNTH[r.stat] || r.stat);
+    const nm = statLabel(r.stat);   // statDefs → PER_LEVEL_STATS → EXP_SYNTH → id 폴백
     // ★주/부스탯은 타임라인이 직접 안 씀 → 구엔진 규칙대로 공격력(ATK_FLAT)+스탯비례(STAT_PROP)로 환산.
     const der = tlStatDerived(r.stat, r.amount, stats);
     if (der != null) {

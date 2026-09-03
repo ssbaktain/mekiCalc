@@ -25,6 +25,7 @@
     { "part": "목걸이",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG", "MAIN_STAT_PCT"] },
     { "part": "얼굴장식", "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["MIN_DMG_MULT", "MAX_DMG_MULT"] },
     { "part": "눈장식",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DEF_PEN"] },
-    { "part": "귀고리",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["BASIC_ATK_DMG", "MAIN_STAT_PCT"] }
+    { "part": "귀고리",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["BASIC_ATK_DMG", "MAIN_STAT_PCT"] },
+    { "part": "포켓",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": ["DMG", "MAIN_STAT_PCT"] }
   ]
 }

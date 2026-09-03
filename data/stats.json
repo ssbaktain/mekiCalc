@@ -33,5 +33,6 @@
   { "id": "SKILL_LEVEL_3",    "name": "3차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVEL_4",    "name": "4차 스킬 레벨(+)",         "unit": "LEVEL", "combine": "SUM" },
   { "id": "SKILL_LEVELS",     "name": "모든 스킬 레벨(+)",        "unit": "LEVEL", "combine": "SUM" },
-  { "id": "MAIN_STAT_PER_LEVEL","name": "1레벨당 주스탯(+)",       "unit": "FLAT",  "combine": "SUM", "hidden": true }
+  { "id": "MAIN_STAT_PER_LEVEL","name": "1레벨당 주스탯(+)",       "unit": "FLAT",  "combine": "SUM", "hidden": true },
+  { "id": "MAIN_STAT_PCT_PER_4LEVEL","name": "4레벨당 주스탯%",     "unit": "PCT",   "combine": "SUM", "hidden": true }
 ]
