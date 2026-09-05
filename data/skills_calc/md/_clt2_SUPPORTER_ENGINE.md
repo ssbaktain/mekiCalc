@@ -76,6 +76,7 @@
 - **동료 공격/초** = `atkRate(평타) + 액티브·소환 시전/초`(proc 트리거 빈도용, 구 `skillCastsPerSec`).
 - ★**proc 편승 소스** = 동료 자기 공격만(triggerBy companionAttack/companionBasicAttack). **플레이어 공격엔 안 걸림**(§6).
 - 자식 딜본체는 manual에서 이미 부모 effect로 통합됨(targetCount=maxHitCount) — 엔진은 통합값 그대로.
+- ★**설치기 절단**([[_clt2_SUPPORTER_TAGS]] §7-15): `expiresOnSummonEnd:true`(바닥 장판·소환체=CreateProjectile/ExpireOnCreatureDie) 도트는 **소환창(windowMs)에서 틱 절단**(`emitDeals` cap=min(windowMs,simCap)). 비-설치기(적 상태 도트 GetDotR·버프·디버프)는 simCap까지 잔존(소환 종료 후에도 적/플레이어 상태칸에 유지).
 
 ---
 

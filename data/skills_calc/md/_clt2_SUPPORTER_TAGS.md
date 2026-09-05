@@ -174,3 +174,7 @@ supporter { code, class, grade, creatureIndex,
 12. **직업별 등급 수 상이**(61종=14직업×비균일 등급) — seed 전수로 확정, 균일 가정 금지.
 13. **동료 공격 = 별개 스트림**(예전 확정) — 플레이어측 `onAttack`/`onHit` 판정(유물 은펜던트·돼지리본, 직업 '공격/타격 시' 스킬)은 **동료 공격에 발동 안 함**(플레이어 본인 공격만). 동료 자신의 onAttack proc은 동료 자기 공격만 편승. 상호 미교차.
 14. **조건(cond) 기본 상시** — 별도 미지정 조건은 충족 가정(효과 활성). 예외만 개별 명시. 조건 주체=effect target(hp/mpRatio=플레이어).
+15. **★설치기(installer)는 소환 해제 시 제거**(2026-09-05 확정, 유저 실측+클뜯) — **바닥 장판·소환체 = `CreateProjectile`로 까는 것**(clt Flag **`ExpireOnCreatureDie`**)은 동료(소환체)가 사라지면 **같이 사라진다**. 따라서 설치기 딜(특히 도트)은 **소환창(windowMs)에서 절단**(simCap까지 끌지 않음). manual effect에 **`expiresOnSummonEnd: true`** 마킹 → 엔진 `emitDeals`가 windowMs에서 컷.
+    - **설치기**(=마킹 대상): 장판(포이즌 미스트류)·주기 소환구름(OnTimer 독안개)·소환 정령(이프리트) 등 CreateProjectile 기반. 재설치 시 이전 것 제거(MaxProjectileCount).
+    - **비-설치기**(=마킹 안 함, 소환 종료 후 잔존): **적 상태칸 도트**(`GetDotR`/`GetDamageR Dot`가 적 State에 거는 중독 등)·**버프**(플레이어 상태)·**디버프**(적 상태, 약화·방깎)·**즉발 타격**. 적/플레이어에 걸린 거라 소환과 무관하게 지속.
+    - ★판별: clt op가 `CreateProjectile`(ExpireOnCreatureDie)면 설치기, `GetDotR`(적 State)·`ModStat`(버프/디버프)면 비-설치기.

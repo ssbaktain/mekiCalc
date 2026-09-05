@@ -79,7 +79,7 @@ public final class SupporterTimeline {
 
         double cur = 0;
         if (enter != null) {   // 소환 스킬 = t0 모션(슬롯 점유)
-            emitDeals(tl, enter, 0, DmgType.SKILL, simCapMs, attackTimes, boss, stateWindows, slotMsAt(companionBase, skills, 0, activeCastTimes) / 1000.0);
+            emitDeals(tl, enter, 0, DmgType.SKILL, simCapMs, windowMs, attackTimes, boss, stateWindows, slotMsAt(companionBase, skills, 0, activeCastTimes) / 1000.0);
             collectPlayerBuffs(enter, 0, effDur(enter), windowMs, pbuffs, boss);
             cur += slotMsAt(companionBase, skills, 0, activeCastTimes);   // 소환 모션 = t0 공속
         }
@@ -89,7 +89,7 @@ public final class SupporterTimeline {
             SupporterSkillIR chosen = null;
             for (SupporterSkillIR a : actives) if (nextReady.get(a.idx()) <= ti) { chosen = a; break; }
             if (chosen != null) {
-                if (chosen.hasDeal()) emitDeals(tl, chosen, ti, DmgType.SKILL, simCapMs, attackTimes, boss, stateWindows, slotMs / 1000.0);
+                if (chosen.hasDeal()) emitDeals(tl, chosen, ti, DmgType.SKILL, simCapMs, windowMs, attackTimes, boss, stateWindows, slotMs / 1000.0);
                 collectPlayerBuffs(chosen, ti, effDur(chosen), windowMs, pbuffs, boss);   // 버프 액티브면 창 수집(딜 전용이면 no-op)
                 activeCastTimes.computeIfAbsent(chosen.idx(), k -> new ArrayList<>()).add(ti);   // ★특정스킬 편승(triggerSkillIdx)용
                 if (chosen.opensState() != null && chosen.opensStateMs() != null)              // ★상태창 열기(서펜트스톤 등)
@@ -97,7 +97,7 @@ public final class SupporterTimeline {
                 int cd = chosen.cooldownMs() == null ? 0 : chosen.cooldownMs();
                 nextReady.put(chosen.idx(), ti + Math.max(cd, (int) Math.round(slotMs)));
             } else if (basic != null) {
-                emitDeals(tl, basic, ti, DmgType.BASIC, simCapMs, attackTimes, boss, stateWindows, slotMs / 1000.0);   // 빈 슬롯 = 평타
+                emitDeals(tl, basic, ti, DmgType.BASIC, simCapMs, windowMs, attackTimes, boss, stateWindows, slotMs / 1000.0);   // 빈 슬롯 = 평타
                 basicAttackTimes.add(ti);   // ★평타 시각(basicAttack-only proc용)
             }
             cur += slotMs;
@@ -108,7 +108,7 @@ public final class SupporterTimeline {
             if (!s.isPeriodic()) continue;
             int period = s.periodMs() == null ? 0 : s.periodMs();
             if (period > 0 && s.hasDeal())
-                for (int pt = period; pt <= windowMs; pt += period) emitDeals(tl, s, pt, DmgType.SKILL, simCapMs, attackTimes, boss, stateWindows, 1.0);
+                for (int pt = period; pt <= windowMs; pt += period) emitDeals(tl, s, pt, DmgType.SKILL, simCapMs, windowMs, attackTimes, boss, stateWindows, 1.0);
             collectPeriodicPlayerBuffs(s, period, windowMs, pbuffs, boss);
         }
 
@@ -143,20 +143,20 @@ public final class SupporterTimeline {
                 if (acc >= 1000.0 && (cd <= 0 || t >= lastFire + cd)) {
                     acc -= 1000.0;
                     lastFire = t;
-                    emitDeals(tl, s, t, DmgType.SKILL, simCapMs, null, boss, stateWindows, 1.0);   // proc는 트리거 스트림에 재귀 안 함(v3.1), 상태창 스왑 반영
+                    emitDeals(tl, s, t, DmgType.SKILL, simCapMs, windowMs, null, boss, stateWindows, 1.0);   // proc는 트리거 스트림에 재귀 안 함(v3.1), 상태창 스왑 반영
                     collectPlayerBuffs(s, t, effDur(s), windowMs, pbuffs, boss);              // ★proc의 버프/디버프(예 811480 받피증)도 발동마다 수집
                 }
             }
         }
 
         // ── 동료 자기버프(상수 ModState): gradeBonus FinalDamage + target:companion statUp(onStart) + 인스턴트 보너스 ──
-        applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs, instantBonus, activeCastTimes);
+        applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs, instantBonus, activeCastTimes, boss);
 
         // ── 동료 자기버프 '표시용' 창(딜은 applySelfBuffs로 이미 반영, 여기선 간트 바 target=companion만) ──
         //   ★durationMs 있는 액티브=시전마다 창 / enter=[0,dur] / 그 외(onStart)=창 전체. (applySelfBuffs 윈도잉과 동일)
         for (SupporterSkillIR s : skills)
             for (SupporterEffectIR e : s.effects()) {
-                if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null) continue;
+                if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
                 if (e.toPlayer() || e.toEnemy() || !e.toCompanion()) continue;   // player/both/enemy는 위에서 수집됨 — 여기선 순수 동료
                 if (e.durationMs() != null && s.isActive()) {   // 액티브 시전마다 창
                     int dur = e.durationMs();
@@ -200,7 +200,7 @@ public final class SupporterTimeline {
      * 스킬의 deal 효과를 시각 t에 방출(즉발 + dot 틱). attackTimes!=null이면 공격 인스턴스 등록(proc 트리거). ★cond boss/nonBoss 게이팅.
      * @param simCapMs 시뮬 경계(상대시각). ★이 경계 이상(시뮬 시간 밖)의 딜/도트 틱은 방출하지 않는다(딜 미포함).
      */
-    private static void emitDeals(Timeline tl, SupporterSkillIR s, int t, DmgType type, int simCapMs, List<Integer> attackTimes, boolean boss,
+    private static void emitDeals(Timeline tl, SupporterSkillIR s, int t, DmgType type, int simCapMs, int windowMs, List<Integer> attackTimes, boolean boss,
                                   Map<String, List<int[]>> stateWindows, double speedFactor) {
         boolean anyInstant = false;
         for (SupporterEffectIR e : s.effects()) {
@@ -208,13 +208,16 @@ public final class SupporterTimeline {
             if (!e.stateActive(name -> stateActiveAt(stateWindows, name, t))) continue;   // ★상태창 게이팅(버스트↔어썰트 스왑)
             double frac = (e.coeff() == null ? 0 : e.coeff()) / 1000.0 * e.chanceMult();   // 동료=성장/마스터리 없음. ★effect chance=기댓값 가중(버스트/어썰트 50%)
             int hits = e.hitsOr1();
+            // ★설치기(바닥 장판·소환체=CreateProjectile, Flag ExpireOnCreatureDie)=소환 해제 시 제거 → 소환창(windowMs)에서 틱 절단.
+            //   그 외(적 상태 도트 GetDotR·즉발)=적/플레이어 상태칸이라 소환 종료 후에도 잔존 → 시뮬 경계(simCapMs)까지.
+            int cap = e.installer() ? Math.min(windowMs, simCapMs) : simCapMs;
             if (e.isChanneled()) {   // ★시간분산(채널링): N틱을 각 시각에 방출(예 SongOfSky 화살 13발). tickBySpeed면 공속 비례로 압축.
                 int interval = e.tickMs() == null ? 0 : e.tickMs();
                 int startMs = e.tickStartMs() != null ? e.tickStartMs() : interval;
                 double sf = e.tickBySpeedOn() ? speedFactor : 1.0;
                 for (int k = 0; k < e.tickCount(); k++) {
                     int tt = t + (int) Math.round((startMs + (long) interval * k) * sf);
-                    if (tt >= simCapMs) break;
+                    if (tt >= cap) break;
                     tl.addDeal(tt, new DealEvent(s.idx(), DmgType.SKILL, frac, hits, 0.0, k > 0));   // 첫 틱=시전(캐스트 카운트), 이후=틱
                 }
                 anyInstant = true;   // 시전(캐스트) 자체는 공격 인스턴스로(proc 트리거 시각=t)
@@ -224,13 +227,13 @@ public final class SupporterTimeline {
                 if (tick <= 0) continue;
                 for (int k = 1; (long) tick * k <= dur; k++) {
                     int tt = t + tick * k;
-                    // ★도트는 소환창(W) 이후에도 남은 지속을 계속 입히지만(인게임: 시전된 지속딜은 소환 종료 후에도 유지),
-                    //   시뮬 경계(simCapMs) 밖의 틱은 자른다(시뮬 시간 밖 딜 미포함). W 초과 틱은 applySelfBuffs가
-                    //   동료 자기버프(최종뎀 스택·등급보너스)를 싣지 않고, 적 디버프(받피증·방깎)는 그대로 수혜.
-                    if (tt >= simCapMs) break;
+                    // ★적 상태 도트(설치기 아님)는 소환창(W) 이후에도 남은 지속을 계속 입히지만(인게임: 적에 걸린 지속딜은 소환 종료 후에도 유지),
+                    //   설치기는 소환 해제와 함께 제거되므로 windowMs에서 절단. 어느 쪽이든 시뮬 경계(simCapMs) 밖 틱은 미포함.
+                    //   W 초과 틱(적 상태 도트)은 applySelfBuffs가 동료 자기버프(최종뎀 스택·등급보너스)를 싣지 않고, 적 디버프(받피증·방깎)는 그대로 수혜.
+                    if (tt >= cap) break;
                     tl.addDeal(tt, new DealEvent(s.idx(), DmgType.SKILL, frac, hits, 0.0, true));
                 }
-            } else if (t < simCapMs) {
+            } else if (t < cap) {
                 tl.addDeal(t, new DealEvent(s.idx(), type, frac, hits, 0.0, false));
                 anyInstant = true;
             }
@@ -307,7 +310,7 @@ public final class SupporterTimeline {
     }
     private static void applySelfBuffs(Timeline tl, SupporterIR sup, int companionLevel,
                                        List<SupporterSkillIR> skills, SupporterBook book, int windowMs, boolean instantBonus,
-                                       Map<Integer, List<Integer>> activeCastTimes) {
+                                       Map<Integer, List<Integer>> activeCastTimes, boolean boss) {
         // 1) gradeBonus 동료 자기 최종뎀 — 도달한 각 레벨(+25%씩)을 ★별도 곱소스로(합산 아님: ×1.25×1.25×1.25).
         List<Double> selfFinalSources = new ArrayList<>();
         SupporterBook.GradeBonus gb = book.gradeBonus();
@@ -324,7 +327,7 @@ public final class SupporterTimeline {
         for (SupporterSkillIR s : skills) {
             int period = s.periodMs() == null ? 0 : s.periodMs();
             for (SupporterEffectIR e : s.effects()) {
-                if (e.unused() || !"statUp".equals(e.role()) || !e.toCompanion()) continue;
+                if (e.unused() || !"statUp".equals(e.role()) || !e.toCompanion() || !e.condActive(boss)) continue;
                 if (e.stat() == null || e.value() == null) continue;
                 double[] routed = routeSelf(e.stat(), e.value());
                 if (routed == null) continue;

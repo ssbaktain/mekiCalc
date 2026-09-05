@@ -1208,7 +1208,7 @@
               "target": "companion",
               "maxStacks": 15,
               "_seed": "809360 OnTimer 1s ModStat FinalDamage 15 Myself, enableCond StateCount<15",
-              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 미지원: applySelfBuffs가 target:companion를 상수 1소스로만 반영 → 램프업(스택 성장) 엔진 처리 필요. periodMs/maxStacks 필드는 확장 대비 보존."
+              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 램프업 지원됨: applySelfBuffs가 periodMs(1000)+maxStacks(15)를 stacks=min(maxStacks, t/period)로 반영 → 소환창 내 경과시간에 따라 최대 +22.5%까지 램프업(상수 아님). 딜라인 실측 스택당 +1.5% 증가 확인(2026-09-04)."
             }
           ]
         }
@@ -1455,7 +1455,7 @@
               "target": "companion",
               "maxStacks": 15,
               "_seed": "809470 OnTimer 1s ModStat FinalDamage 15 Myself, enableCond StateCount<15",
-              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 미지원: applySelfBuffs가 target:companion를 상수 1소스로만 반영 → 램프업(스택 성장) 엔진 처리 필요. periodMs/maxStacks 필드는 확장 대비 보존."
+              "_note": "1초마다 동료 자기 최종뎀 +1.5%(누적 최대 15중첩=+22.5%). ★엔진 램프업 지원됨: applySelfBuffs가 periodMs(1000)+maxStacks(15)를 stacks=min(maxStacks, t/period)로 반영 → 소환창 내 경과시간에 따라 최대 +22.5%까지 램프업(상수 아님). 딜라인 실측 스택당 +1.5% 증가 확인(2026-09-04)."
             }
           ]
         },
@@ -2978,6 +2978,797 @@
           {
             "stat": "AttackPowerToBoss",
             "value": 200,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_5_1",
+      "class": "ArchMageFP",
+      "name": "아크메이지(불,독)(1차)",
+      "grade": "rare",
+      "creatureIndex": "9105",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분/나머지 100%, 만렙50=90%캡). compareLevel 보정 없음.",
+      "skills": [
+        {
+          "idx": "805100",
+          "name": "소환 공격",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 100,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "805100 op1 GetDamageR 100 hits5 maxHitCount6"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805100 op2 ModStat Weakness 100 Parent(적,ParentOp1) 10s",
+              "_note": "적 받는 피해 증가(약화). 적 디버프=플레이어+동료 양쪽 수혜, 다른 받피증과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "805110",
+          "name": "에너지 볼트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 2,
+              "_seed": "805110 EnergyBolt GetDamageR 260 hits2 + 자식805111 maxHitCount2"
+            }
+          ]
+        },
+        {
+          "idx": "805120",
+          "name": "공격력/방어력 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "Defence",
+              "value": 80,
+              "target": "player",
+              "used": false,
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 80,
+              "target": "player",
+              "_cltStat": "Attack",
+              "_note": "플레이어 공격력 증가(ATK_PCT, 별도 곱)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack",
+            "_note": "계정전역/딜분리(깡공)"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_5_2",
+      "class": "ArchMageFP",
+      "name": "아크메이지(불,독)(2차)",
+      "grade": "epic",
+      "creatureIndex": "9205",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 만렙30=90%캡). compareLevel=30(플레이어<30이면 감산).",
+      "skills": [
+        {
+          "idx": "805200",
+          "name": "소환 공격",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 300,
+              "hits": 5,
+              "targetCount": 8,
+              "_seed": "805200 op1 GetDamageR 300 hits5 maxHitCount8"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805200 op2 Weakness 150 10s",
+              "_note": "적 받는 피해 증가(약화). 적 디버프=플레이어+동료 양쪽 수혜, 다른 받피증과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "805210",
+          "name": "플레임 오브",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "805210 FlameOrb GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "805220",
+          "name": "포이즌 브레스",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 12000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 500,
+              "hits": 3,
+              "targetCount": 6,
+              "_seed": "805220 op1 GetDamageR 500 hits3 maxHitCount6"
+            },
+            {
+              "role": "deal",
+              "coeff": 100,
+              "hits": 1,
+              "targetCount": 6,
+              "form": "dot",
+              "tickMs": 500,
+              "durationMs": 10000,
+              "_seed": "805220 op2 GetDotR 100 tick500 dur10000 (20틱x10%) state ArchMagePoison_Support",
+              "_note": "적 상태칸 도트(GetDotR)=설치기 아님 → 소환 종료 후에도 남은 지속 잔존."
+            }
+          ]
+        },
+        {
+          "idx": "805230",
+          "name": "공격력/방어력 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "Defence",
+              "value": 120,
+              "target": "player",
+              "used": false,
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 120,
+              "target": "player",
+              "_cltStat": "Attack",
+              "_note": "플레이어 공격력 증가(ATK_PCT, 별도 곱)"
+            }
+          ]
+        },
+        {
+          "idx": "805240",
+          "name": "독 안개",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 3,
+          "periodMs": 1000,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 360,
+              "hits": 1,
+              "targetCount": 3,
+              "expiresOnSummonEnd": true,
+              "_seed": "805240 OnTimer(TriggerTimeMs3000) CreateProjectile->투사체805240(dur20000 tick1000)->805241 GetDamageR 120 Dot, MaxTarget3 MaxProjectileCount3",
+              "_note": "OnTimer 3초마다 독구름 생성(투사체 지속20s/틱1s/1틱 120). MaxProjectileCount=3(동시 최대 3개). 캡 반영: 정상상태 3구름 동시 = 초당 3x1틱(coeff=3x120)로 모델(램프/잔존 근사). 설치기=소환 해제 시 제거. 인게임 실측 검증 필요."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "CriticalChance",
+            "value": 30,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_5_3",
+      "class": "ArchMageFP",
+      "name": "아크메이지(불,독)(3차)",
+      "grade": "unique",
+      "creatureIndex": "9305",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 만렙10=90%캡). compareLevel=60.",
+      "skills": [
+        {
+          "idx": "805300",
+          "name": "소환 공격",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 900,
+              "hits": 5,
+              "targetCount": 10,
+              "_seed": "805300 op1 GetDamageR 900 hits5 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 200,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805300 op2 Weakness 200 10s",
+              "_note": "적 받는 피해 증가(약화). 적 디버프=플레이어+동료 양쪽 수혜, 다른 받피증과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "805310",
+          "name": "익스플로전",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "805310 Explosion GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "805320",
+          "name": "포이즌 브레스",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 12000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1600,
+              "hits": 3,
+              "targetCount": 6,
+              "_seed": "805320 op1 GetDamageR 1600 hits3 maxHitCount6"
+            },
+            {
+              "role": "deal",
+              "coeff": 300,
+              "hits": 1,
+              "targetCount": 6,
+              "form": "dot",
+              "tickMs": 500,
+              "durationMs": 10000,
+              "_seed": "805320 op2 GetDotR 300 tick500 dur10000 (20틱x30%)",
+              "_note": "적 상태칸 도트(GetDotR)=설치기 아님 → 소환 종료 후에도 잔존."
+            }
+          ]
+        },
+        {
+          "idx": "805330",
+          "name": "포이즌 미스트",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1100,
+              "hits": 1,
+              "targetCount": 10,
+              "form": "dot",
+              "tickMs": 1000,
+              "durationMs": 10000,
+              "expiresOnSummonEnd": true,
+              "_seed": "805330 CreateProjectile->투사체805330(dur10000 tick1000, ExpireOnCreatureDie)->805331 GetDamageR 1100 Dot (10틱x110%) MaxTarget10",
+              "_note": "설치기(바닥 장판)=소환 해제 시 제거."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805330 두번째 투사체805331->805332 ModStat Weakness 150 (state Support_PoisonMist_Weakness, 안개장판 10s)",
+              "_note": "포이즌 미스트 장판 받피증 +15%(10초). 적 디버프=양쪽 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "805340",
+          "name": "공격력/방어력 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "used": false,
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "player",
+              "_cltStat": "Attack",
+              "_note": "플레이어 공격력 증가(ATK_PCT, 별도 곱)"
+            }
+          ]
+        },
+        {
+          "idx": "805350",
+          "name": "독 안개",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 2,
+          "periodMs": 1000,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 900,
+              "hits": 1,
+              "targetCount": 3,
+              "expiresOnSummonEnd": true,
+              "_seed": "805350 OnTimer3000->투사체805350(dur20000 tick1000)->805351 GetDamageR 300 Dot, MaxProjectileCount3",
+              "_note": "OnTimer 3초마다 독구름 생성(투사체 지속20s/틱1s/1틱 300). MaxProjectileCount=3(동시 최대 3개). 캡 반영: 정상상태 3구름 동시 = 초당 3x1틱(coeff=3x300)로 모델(램프/잔존 근사). 설치기=소환 해제 시 제거. 인게임 실측 검증 필요."
+            }
+          ]
+        },
+        {
+          "idx": "805360",
+          "name": "마력 집중",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 30,
+              "target": "companion",
+              "cond": "boss",
+              "_seed": "805360 op1 ModStat FinalDamage #GetEnemyCountMax10(30) target Myself(동료자기)",
+              "_note": "적 수 비례 동료 자기 최종뎀 #GetEnemyCountMax10(30). 보스=1마리=+3%. 엔진 applySelfBuffs가 cond(boss/nonBoss) 게이팅."
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 300,
+              "target": "companion",
+              "cond": "nonBoss",
+              "assumeMax": true,
+              "_note": "일반몹=최대 10마리 가정 -> +30%(assumeMax). #GetEnemyCountMax10=min(마리수,10)x30."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "CriticalChance",
+            "value": 60,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_5_4",
+      "class": "ArchMageFP",
+      "name": "아크메이지(불,독)(4차)",
+      "grade": "legend",
+      "creatureIndex": "9405",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "805400",
+          "name": "소환 공격",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 5,
+              "targetCount": 10,
+              "_seed": "805400 op1 GetDamageR 3000 hits5 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 250,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805400 op2 Weakness 250 10s",
+              "_note": "적 받는 피해 증가(약화). 적 디버프=플레이어+동료 양쪽 수혜, 다른 받피증과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "805410",
+          "name": "플레임 스윕",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "805410 FlameSweep GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "805420",
+          "name": "포이즌 미스트",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 1,
+              "targetCount": 10,
+              "form": "dot",
+              "tickMs": 1000,
+              "durationMs": 10000,
+              "expiresOnSummonEnd": true,
+              "_seed": "805420 op1 CreateProjectile->투사체805420(dur10000 tick1000, ExpireOnCreatureDie)->805421 GetDamageR 3000 Dot (10틱x300%) MaxTarget10",
+              "_note": "설치기(바닥 장판)=소환 해제 시 제거."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "805420 op2 투사체805421->805422 ModStat Weakness 150 (장판 10s)",
+              "_note": "포이즌 미스트 장판 받피증 +15%(10초). 적 상태칸 디버프=소환 종료 후에도 잔존."
+            },
+            {
+              "role": "deal",
+              "coeff": 20000,
+              "hits": 1,
+              "targetCount": 10,
+              "form": "dot",
+              "tickMs": 5000,
+              "durationMs": 10000,
+              "expiresOnSummonEnd": true,
+              "_seed": "805420 op3 투사체805422(Disabled, 805480 패시브가 해금, ExpireOnCreatureDie)->805481 GetDamageR 20000(2000%) tick5000 dur10000 (2틱)",
+              "_note": "설치기(추가 장판)=소환 해제 시 제거. 동료레벨>=3에서 805480 패시브(ModSkillEnabled 805420 op3)가 이 추가 투사체를 해금. 레전은 통상 고레벨(등급보너스 lv5+)이라 상시 포함으로 모델. lv1~2에선 미발동(근사 주의)."
+            }
+          ]
+        },
+        {
+          "idx": "805430",
+          "name": "메테오",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 17000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6000,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "805430 Meteor GetDamageR 6000 hits3 maxHitCount5 (tick300/400/500=3타 착지)"
+            }
+          ]
+        },
+        {
+          "idx": "805440",
+          "name": "이프리트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 35000,
+              "hits": 1,
+              "targetCount": 3,
+              "form": "dot",
+              "tickMs": 4000,
+              "durationMs": 30000,
+              "expiresOnSummonEnd": true,
+              "_seed": "805440 CreateProjectile->투사체805440(dur30000 tick4000 FollowMyself, ExpireOnCreatureDie)->805441 GetDamageR 35000(3500%) MaxTarget3, MaxProjectileCount1",
+              "_note": "설치기(소환체)=소환 해제 시 제거. dur30000이나 소환창(30s) 넘는 틱은 절단."
+            }
+          ]
+        },
+        {
+          "idx": "805450",
+          "name": "공격력/방어력 강화",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "used": false,
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 150,
+              "target": "player",
+              "_cltStat": "Attack",
+              "_note": "플레이어 공격력 증가(ATK_PCT, 별도 곱)"
+            }
+          ]
+        },
+        {
+          "idx": "805460",
+          "name": "독 안개",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 1,
+          "periodMs": 1000,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 1,
+              "targetCount": 3,
+              "expiresOnSummonEnd": true,
+              "_seed": "805460 OnTimer3000->투사체805460(dur20000 tick1000)->805461 GetDamageR 1000 Dot(100%), MaxProjectileCount3",
+              "_note": "OnTimer 3초마다 독구름 생성(투사체 지속20s/틱1s/1틱 1000). MaxProjectileCount=3(동시 최대 3개). 캡 반영: 정상상태 3구름 동시 = 초당 3x1틱(coeff=3x1000)로 모델(램프/잔존 근사). 설치기=소환 해제 시 제거. 인게임 실측 검증 필요."
+            }
+          ]
+        },
+        {
+          "idx": "805470",
+          "name": "마력 집중",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 30,
+              "target": "companion",
+              "cond": "boss",
+              "_seed": "805470 op1 ModStat FinalDamage #GetEnemyCountMax10(30) target Myself",
+              "_note": "적 수 비례 동료 자기 최종뎀 #GetEnemyCountMax10(30). 보스=1마리=+3%. 엔진 applySelfBuffs가 cond(boss/nonBoss) 게이팅."
+            },
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 300,
+              "target": "companion",
+              "cond": "nonBoss",
+              "assumeMax": true,
+              "_note": "일반몹=최대 10마리 가정 -> +30%(assumeMax). #GetEnemyCountMax10=min(마리수,10)x30."
+            }
+          ]
+        },
+        {
+          "idx": "805480",
+          "name": "포이즌 미스트 강화",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": null,
+              "action": "enableSkill",
+              "used": false,
+              "_seed": "805480 op1 ModSkillEnabled 805420 op3 (동료레벨>=3에서 포이즌 미스트 추가 투사체805481 해금)",
+              "_note": "딜 자체는 805420 op3 effect에 통합. 이 스킬은 해금 트리거(딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "CriticalChance",
+            "value": 120,
             "used": false
           }
         ]

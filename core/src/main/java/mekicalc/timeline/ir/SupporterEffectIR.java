@@ -31,6 +31,9 @@ import java.util.Map;
  * @param tickCount    ★범용: deal을 시간분산(채널링)해 N틱 방출(예 SongOfSky 화살 13발). null=단발(즉발). tickMs=간격, tickStartMs=첫틱 오프셋.
  * @param tickStartMs  채널링 첫 틱 오프셋(ms, 시전 기준). null=tickMs.
  * @param tickBySpeed  true면 틱 시각을 <b>공속 비례</b>로 압축(간격·오프셋 ×(1000/slotMs)의 역=시전시점 slotMs/1000). 화살 발사속도가 공속에 비례.
+ * @param expiresOnSummonEnd ★범용: true면 <b>설치기</b>(바닥 장판·소환체 = CreateProjectile, clt Flag ExpireOnCreatureDie).
+ *                     소환 해제(소환창 windowMs) 시 함께 제거 → 도트 틱을 <b>소환창에서 절단</b>(simCap 아님).
+ *                     null/false=적/플레이어 상태칸(적 도트 GetDotR·버프·디버프)이라 소환 종료 후에도 잔존.
  */
 public record SupporterEffectIR(
         String role,
@@ -54,7 +57,8 @@ public record SupporterEffectIR(
         Integer chance,
         Integer tickCount,
         Integer tickStartMs,
-        Boolean tickBySpeed
+        Boolean tickBySpeed,
+        Boolean expiresOnSummonEnd
 ) {
     /** 발동 확률 배율(기댓값). chance 없으면 1.0. */
     public double chanceMult() { return chance == null ? 1.0 : chance / 1000.0; }
@@ -84,9 +88,13 @@ public record SupporterEffectIR(
                 IRRead.intg(m, "chance"),
                 IRRead.intg(m, "tickCount"),
                 IRRead.intg(m, "tickStartMs"),
-                IRRead.bool(m, "tickBySpeed")
+                IRRead.bool(m, "tickBySpeed"),
+                IRRead.bool(m, "expiresOnSummonEnd")
         );
     }
+
+    /** 설치기(바닥 장판·소환체)인가 — 소환 해제 시 함께 제거(도트 틱을 소환창에서 절단). */
+    public boolean installer() { return Boolean.TRUE.equals(expiresOnSummonEnd); }
 
     /** ★범용 상태 게이팅: 상태창 활성/비활성 조건을 현재 상태집합으로 평가. whenState/whenNotState 미지정이면 항상 true. */
     public boolean stateActive(java.util.function.Predicate<String> stateActiveAt) {
