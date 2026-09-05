@@ -58,10 +58,13 @@ public record SupporterEffectIR(
         Integer tickCount,
         Integer tickStartMs,
         Boolean tickBySpeed,
-        Boolean expiresOnSummonEnd
+        Boolean expiresOnSummonEnd,
+        Boolean individualDur
 ) {
     /** 발동 확률 배율(기댓값). chance 없으면 1.0. */
     public double chanceMult() { return chance == null ? 1.0 : chance / 1000.0; }
+    /** ★중첩 지속 방식: true=발동마다 독립 창(은펜던트식, 게임설명 "지속시간은 개별 적용"). null/false=공유 타이머(기본, 재발동 시 전체 갱신+스택+1, 만료 시 전 스택 동시 소멸). */
+    public boolean individualDurOn() { return Boolean.TRUE.equals(individualDur); }
     /** 시간분산(채널링) 딜인가(tickCount>0). */
     public boolean isChanneled() { return tickCount != null && tickCount > 0; }
     public boolean tickBySpeedOn() { return Boolean.TRUE.equals(tickBySpeed); }
@@ -89,7 +92,8 @@ public record SupporterEffectIR(
                 IRRead.intg(m, "tickCount"),
                 IRRead.intg(m, "tickStartMs"),
                 IRRead.bool(m, "tickBySpeed"),
-                IRRead.bool(m, "expiresOnSummonEnd")
+                IRRead.bool(m, "expiresOnSummonEnd"),
+                IRRead.bool(m, "individualDur")
         );
     }
 

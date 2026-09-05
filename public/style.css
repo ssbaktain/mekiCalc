@@ -1320,8 +1320,13 @@ html.deep-route #panel-home { display: none !important; }
 .relic-equip { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .relic-equip-head { font-weight: 700; margin-bottom: 10px; }
 .relic-equip-head span { color: var(--accent); font-size: 13px; }
-#relic-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+#relic-slots, #tl-relic-equip { display: flex; flex-wrap: wrap; gap: 8px; }
+.tl-relic-equip .status { flex: 1 1 100%; margin: 0; }
 .relic-slot { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
+/* ★나이트로드: 유물 세부 장착은 빌드(계산 설정)로 이동 → 유물 프리셋에선 장착 패널 숨김(보유 현황만), 동료 프리셋은 통째 숨김 */
+body.job-nightlord #sub-relic .relic-equip { display: none; }
+body.job-nightlord #panel-presets .subtab[data-sub="ally"],
+body.job-nightlord .m-leaf-ally { display: none; }
 .relic-slot-n { flex: 0 0 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: var(--card); color: var(--muted); font-size: 12px; }
 .relic-slot select { flex: 1 1 auto; min-width: 0; padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }
 .relic-sum { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
@@ -1369,7 +1374,7 @@ html.deep-route #panel-home { display: none !important; }
 .relic-badge.pending { background: rgba(224, 168, 30, .16); color: #d69a1e; }
 @media (max-width: 720px) {
   .relic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #relic-slots { flex-direction: column; }
+  #relic-slots, #tl-relic-equip { flex-direction: column; }
   .relic-slot { flex: 1 1 auto; }
 }
 

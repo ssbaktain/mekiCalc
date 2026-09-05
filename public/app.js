@@ -11,6 +11,7 @@ const ALLYP_KEY = "mekicalc.allyPresets.v1";
 const RELIC_KEY = "mekicalc.relic.v1";          // 유물 작업 상태([{id,awaken,on}])
 const RELICP_KEY = "mekicalc.relicPresets.v1";  // 유물 프리셋 {active, presets:{name:[rows]}}
 const BUILDP_KEY = "mekicalc.builds.v1";        // 빌드 프리셋(타임라인 전용) {active, presets:{name:{rotation,autoFill}}}
+const LAB_RELIC_WIPE_KEY = "mekicalc.migrate.labRelicWipe.v1";   // ★실험실 유물=추가전용 전환 → 기존 저장분 일회성 비우기(과대평가 방지)
 const CACHE_ARTIFACTS = "mekicalc.cache.artifacts.v1";   // 유물 카탈로그(목록+슬롯임계, 정적)
 // 즉시 페인트용 캐시(서버 대기 없이 화면 먼저 그림). 정적 데이터는 계정 무관, 데미지는 직전 값.
 const CACHE_STATS = "mekicalc.cache.statDefs.v2";   // v2: combine/max 추가(변경 실험용)
@@ -253,6 +254,7 @@ function setJob(job) {
     document.querySelectorAll(".bv-tab").forEach((b) => b.classList.toggle("active", b.dataset.bv === "stat"));
     const bk = $("bv-skill"); if (bk) bk.hidden = true;
     const bs = $("bv-stat"); if (bs) bs.hidden = false;
+    if (currentSub === "ally") selectSub("build");   // ★동료 프리셋 보던 중 나이트로드로 전환 → 캐릭터로(동료 프리셋 숨김)
   }
   try { localStorage.setItem("mekicalc.job", String(job)); } catch (e) {}   // 다음 로드 첫 페인트 진입탭 결정용(head 스크립트가 읽음)
   return changed;
@@ -567,6 +569,7 @@ function selectLeaf(leaf, item) { applyLeaf(leaf, item, true); }
 // 프리셋 패널 안의 서브탭 선택. 쿼리는 #panel-presets로 한정 — 큐브 페이지의 route-link 서브탭(.cube-subtabs)까지
 // 건드리면 안 됨(그건 정적 active + 라우터가 담당). 전역 .subtab로 잡으면 큐브 앵커에 active가 잘못 퍼짐.
 function selectSub(name) {
+  if (name === "ally" && currentJob() === 1) name = "build";   // ★나이트로드=동료 프리셋 숨김(동료는 빌드에 있음) → 캐릭터로
   currentSub = name;
   document.querySelectorAll("#panel-presets .subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
@@ -691,7 +694,7 @@ function buildMobileMenu(itemEls) {
 
   const addLeaf = (label, leaf, desktopItem, isTop) => {
     const btn = document.createElement("button");
-    btn.className = "m-leaf" + (isTop ? " m-leaf-top" : "") + (leaf && leaf.panel === "home" ? " menu-home" : "");   // isTop=최상위 단독(프리셋)=대분류 크기. home=나이트로드면 숨김
+    btn.className = "m-leaf" + (isTop ? " m-leaf-top" : "") + (leaf && leaf.panel === "home" ? " menu-home" : "") + (leaf && leaf.sub === "ally" ? " m-leaf-ally" : "");   // isTop=대분류. home=나이트로드면 숨김. ally=동료 프리셋(나이트로드면 숨김)
 
     btn.type = "button"; btn.textContent = label;
     btn.addEventListener("click", (e) => {
@@ -3201,10 +3204,12 @@ function relicSlots() {
 }
 function relicOwned() { return (artifactCatalog.list || []).filter((a) => relicHas(a.id)); }
 
-// 딜에 반영할 장착 유물 = equipped 중 보유(0각 포함)한 것, 슬롯 수 상한. 중복 제거.
+// ★유효 장착 소스: 나이트로드=빌드(tlRelicEquip), 그 외=유물 프리셋(myRelic.equipped). 보유 현황(각성/잠재)은 항상 myRelic.
+function effEquipped() { return currentJob() === 1 ? (tlRelicEquip || []) : (myRelic.equipped || []); }
+// 딜에 반영할 장착 유물 = 유효 장착 중 보유(0각 포함)한 것, 슬롯 수 상한. 중복 제거.
 function activeRelic() {
   const slots = relicSlots(); const seen = new Set(); const out = [];
-  for (const id of (myRelic.equipped || [])) {
+  for (const id of effEquipped()) {
     if (!id || seen.has(id) || !relicHas(id)) continue;
     seen.add(id); out.push({ id, awaken: relicAwaken(id) });
     if (out.length >= slots) break;
@@ -3235,6 +3240,7 @@ function rpApply(name) {
   myRelic = normalizeRelic(clone(relicPresets.presets[name]));
   saveJSON(RELIC_KEY, myRelic); setRelicDirty(false);
   if (currentSub === "relic") renderRelic();
+  renderBuildRelicEquip();   // 보유 현황 바뀌면 빌드 장착 슬롯 옵션·슬롯수 갱신
   calcDamage();
 }
 function renderRelic() {
@@ -3324,6 +3330,33 @@ function renderRelicEquip() {
       arr[i] = sel.value;
       myRelic.equipped = arr.filter(Boolean);
       saveRelic(); renderRelic(); calcDamage();
+    });
+  });
+}
+// ★빌드 '계산 설정'의 유물 장착 슬롯(나이트로드) — 보유 유물 중 선택 → tlRelicEquip. 각성/잠재는 유물 프리셋(myRelic)에서 읽음.
+function renderBuildRelicEquip() {
+  const box = $("tl-relic-equip"); if (!box) return;
+  const slots = relicSlots(), owned = relicOwned();
+  const eq = (tlRelicEquip || []).filter((id) => relicHas(id));
+  let html = "";
+  for (let i = 0; i < slots; i++) {
+    const cur = eq[i] || "";
+    const opts = '<option value="">— 비움 —</option>' + owned.map((a) => {
+      if (eq.some((x, j) => x === a.id && j !== i)) return "";   // 다른 슬롯 중복 방지
+      return `<option value="${a.id}"${a.id === cur ? " selected" : ""}>${a.name} (${relicAwaken(a.id)}각)</option>`;
+    }).join("");
+    html += `<label class="relic-slot"><span class="relic-slot-n">${i + 1}</span><select data-eqslot="${i}">${opts}</select></label>`;
+  }
+  if (!owned.length) html = '<p class="status muted tl-ro-hint">유물 프리셋에서 보유 유물의 각성을 먼저 입력하세요.</p>';
+  box.innerHTML = html;
+  box.querySelectorAll("select[data-eqslot]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      const i = parseInt(sel.dataset.eqslot, 10);
+      const arr = (tlRelicEquip || []).filter((id) => relicHas(id)).slice(0, slots);
+      while (arr.length < slots) arr.push("");
+      arr[i] = sel.value;
+      tlRelicEquip = arr.filter(Boolean);
+      renderBuildRelicEquip(); setBuildDirty(true); runTimelineIfActive();
     });
   });
 }
@@ -4772,6 +4805,8 @@ function tlSyncMode() {
 // 빌드 = 스킬 배치(rotation)+자동채움+스탯·동료·유물 프리셋 선택+직업. 저장 버튼으로만 반영(미저장 유실).
 // 빌드를 고르면 그 스탯/동료/유물이 전역 활성으로 적용됨(단일 소스 — 큐브 기댓값 등 전역 계산에 반영).
 let buildDirty = false;
+// ★유물 세부 장착 = 빌드 소유(나이트로드). 보유 현황(각성·잠재)은 유물 프리셋(myRelic)에서 읽고, 어떤 유물을 장착했나만 빌드가 저장.
+let tlRelicEquip = [];   // [artifactId...] — 이 빌드에서 장착한 유물(계산 설정)
 const JOB_NAME = { 0: "공용", 1: "나이트로드", 2: "다크나이트", 3: "비숍", 4: "히어로", 5: "보우마스터" };
 
 // 현재 상태 스냅샷 1개 = 빌드. 로테이션+자동채움+모드+시뮬+유물계산옵션+로드아웃 전부. wipeRotation이면 배치 비움.
@@ -4797,7 +4832,8 @@ function buildPayload(wipeRotation) {
     preAct: !!($("tl-preact") && $("tl-preact").checked),   // 확률형 유물 사전활성
     job: currentJob(),
     stat: (statPresets && statPresets.active) || null,
-    relic: (relicPresets && relicPresets.active) || null,
+    relic: (relicPresets && relicPresets.active) || null,   // (레거시) 마이그레이션 폴백용 보유-프리셋명. 선택은 빌드에서 제거됨.
+    relicEquip: [...tlRelicEquip],                    // ★유물 세부 장착(어떤 유물을 장착했나) — 빌드 소유. 각성/잠재는 유물 프리셋.
     companion: tlCompanionBuild(),                   // 타임라인 동료(클래스/등급/레벨/첫소환) — 빌드에 저장
     boxOrder: tlBoxOrderSnapshot(),                  // 빌드 박스 배치 순서(사용자 지정)
   };
@@ -4846,12 +4882,24 @@ function tlCleanupLevel() {
   return before - tlSeq.length;
 }
 
+// ★실험실 유물이 예전엔 '장착 유물 스냅샷'으로 채워졌는데, 이제 '추가(장착 위에 얹기)'로 바뀜 → 기존 저장분을 그대로 두면 이중계산(과대평가).
+// 전 유저 빌드의 expRelics를 일회성으로 전부 비운다(버전 플래그로 1회만).
+function migrateWipeLabRelics() {
+  try { if (localStorage.getItem(LAB_RELIC_WIPE_KEY)) return; } catch (e) {}
+  if (buildPresets && buildPresets.presets) {
+    for (const p of Object.values(buildPresets.presets)) if (p && Array.isArray(p.expRelics) && p.expRelics.length) p.expRelics = [];
+    saveJSON(BUILDP_KEY, buildPresets);
+  }
+  tlExpRelics = [];
+  try { localStorage.setItem(LAB_RELIC_WIPE_KEY, "1"); } catch (e) {}
+}
 function initBuildPresets() {
   if (!buildPresets || !buildPresets.presets || !Object.keys(buildPresets.presets).length) {
     buildPresets = { active: "기본", presets: { "기본": buildPayload(false) } };   // 빈 배치 + 현재 로드아웃
     saveJSON(BUILDP_KEY, buildPresets);
   }
   if (!buildPresets.presets[buildPresets.active]) buildPresets.active = Object.keys(buildPresets.presets)[0];
+  migrateWipeLabRelics();   // ★일회성: 기존 빌드들의 실험실 유물 전부 비우기(추가전용 전환)
 }
 
 // 빌드가 저장한 스탯/동료/유물을 전역 활성으로 적용(있고, 현재와 다를 때만).
@@ -4859,9 +4907,7 @@ function applyBuildPresets(b) {
   if (b.stat && statPresets && statPresets.presets[b.stat] && statPresets.active !== b.stat) {
     statPresets.active = b.stat; saveJSON(STATP_KEY, statPresets); spApply(b.stat); if ($("sp-sel")) $("sp-sel").value = b.stat;
   }
-  if (b.relic && relicPresets && relicPresets.presets[b.relic] && relicPresets.active !== b.relic) {
-    relicPresets.active = b.relic; saveJSON(RELICP_KEY, relicPresets); rpApply(b.relic); if ($("rp-sel")) $("rp-sel").value = b.relic;
-  }
+  // ★유물 보유-프리셋 선택은 빌드에서 제거됨(보유 현황=전역 활성 유물 프리셋). 빌드는 세부 장착(relicEquip)만 소유.
 }
 
 // 활성 빌드를 로드: 로드아웃 프리셋 전역 적용 + 로테이션·자동채움·모드·시뮬·유물옵션 복원 + 레벨 열화 정리.
@@ -4878,7 +4924,7 @@ function bpApply(name) {
   tlExpStats = (b.expStats || []).map((r) => ({ stat: r.stat, amount: r.amount }));   // 가상 스탯 실험 복원
   // 유물 실험: 저장분 있으면 복원(각성·잠재), 없으면 현재 장착 유물로 초기 채움.
   if (b.expRelics != null) tlExpRelics = b.expRelics.map((r) => ({ id: r.id, awaken: String(r.awaken), pot: (r.pot || []).map((l) => ({ type: l.type || "", grade: l.grade || "", value: l.value == null ? null : l.value })) }));
-  else tlExpRelics = tlExpRelicSnapshot();
+  else tlExpRelics = [];   // ★추가 전용 → 저장분 없으면 빈 상태
   tlExpApply = !!b.expApply;   // 토글 UI는 타임라인 헤더 + 실험실 박스에서 이 값으로 렌더됨
   syncExpToggles();   // 실험실 박스 토글 상태 동기화
   tlRenderExp();
@@ -4893,6 +4939,13 @@ function bpApply(name) {
   { const cs = $("tl-content"); if (cs && cs.options[cs.selectedIndex] && cs.options[cs.selectedIndex].disabled) cs.value = ""; }   // 미개발 컨텐츠가 저장돼 있으면 자동으로 보정
   if ($("tl-challenge")) $("tl-challenge").checked = !!b.challenge;   // 챕터 도전 복원
   tlSyncContentUI();   // 복원된 컨텐츠/대상에 맞춰 챕터·스테이지/도전 표시 갱신
+  // ★유물 세부 장착 복원. 저장분 있으면 그대로, 없으면(옛 빌드) 참조 보유-프리셋(b.relic) 또는 현재 활성 프리셋의 장착을 기본값으로.
+  if (Array.isArray(b.relicEquip)) tlRelicEquip = b.relicEquip.slice();
+  else {
+    const src = (b.relic && relicPresets && relicPresets.presets[b.relic]) ? relicPresets.presets[b.relic] : myRelic;
+    tlRelicEquip = (((src && src.equipped) || myRelic.equipped || [])).slice();
+  }
+  renderBuildRelicEquip();
   tlApplyCompanionBuild(b.companion);   // 타임라인 동료 복원(목록 미로드면 보류→로드 후 적용)
   applyBoxOrder(b.boxOrder);            // 빌드 박스 순서 복원(없으면 기본)
   if ($("tl-preact")) $("tl-preact").checked = !!b.preAct;
@@ -4909,7 +4962,6 @@ function bpApply(name) {
 function fillBuildSel() { if (buildPresets) fillPresetSel($("tb-sel"), buildPresets); }
 function fillBuildPresetSelects() {
   if (statPresets) fillPresetSel($("tb-stat"), statPresets);
-  if (relicPresets) fillPresetSel($("tb-relic"), relicPresets);
 }
 
 // 저장: 직업 변동 시 경고 후 배치 삭제, 아니면 현재 상태를 활성 빌드에 커밋.
@@ -4935,7 +4987,9 @@ $("tb-new").addEventListener("click", () => {
   const name = (prompt("새 빌드 이름") || "").trim();
   if (!name || (buildPresets.presets && buildPresets.presets[name])) return;
   const copy = confirm("현재 빌드의 스킬 배치까지 복사할까요?\n확인 = 복사 / 취소 = 빈 배치로 새로 생성");
-  buildPresets.presets[name] = buildPayload(!copy);
+  const nb = buildPayload(!copy);
+  nb.relicEquip = [];   // ★전 직업 구현 전까지: 새 빌드 생성 시 계산 설정 유물은 빈 상태(유물 프리셋에서 자동 상속 안 함)
+  buildPresets.presets[name] = nb;
   buildPresets.active = name; saveJSON(BUILDP_KEY, buildPresets);
   fillBuildSel(); bpApply(name); runTimeline();
 });
@@ -4967,14 +5021,6 @@ $("tb-stat").addEventListener("change", () => {
   resetLab();   // 프리셋 변경 → 실험실 초기화
   setBuildDirty(true); updateBuildWarn(); runTimeline();
 });
-$("tb-relic").addEventListener("change", () => {
-  const name = $("tb-relic").value;
-  if (!canLeaveRelic()) { $("tb-relic").value = relicPresets.active; return; }
-  relicPresets.active = name; saveJSON(RELICP_KEY, relicPresets); rpApply(name); if ($("rp-sel")) $("rp-sel").value = name;
-  resetLab();   // 프리셋 변경(유물 새로 반영 후) → 실험실 초기화
-  setBuildDirty(true); updateBuildWarn(); runTimeline();
-});
-
 // 1액션 슬롯(초). 계산 응답의 실효 슬롯(유물 공속 반영) 우선, 없으면 스탯 공속 근사.
 function tlSlotSec() {
   if (tlBaseSlotMs > 0) return tlBaseSlotMs / 1000;
@@ -5035,6 +5081,7 @@ function tlAddRow() {
 // 시각 오름차순으로 표시(위=처음 시전). 표시 순서 = 시전 순서 = tlSeq 인덱스.
 // 좌측 햄버거로 드래그-드롭 순서 변경(들어갈 자리에 간격이 벌어짐).
 function tlRender() {
+  renderBuildRelicEquip();   // 계산 설정 유물 장착 슬롯(보유 현황 반영) 최신화
   const tb = $("tl-table").querySelector("tbody");
   tb.innerHTML = "";
   for (let si = 0; si < tlSeq.length; si++) {
@@ -5246,8 +5293,8 @@ function effStats() {
 function effRelicCtx() {
   const p = relicCtxPayload();
   if (tlExpApply) {
-    const rm = tlExpRelicPayload();
-    if (rm) { p.artifacts = rm.artifacts; p.potentials = rm.potentials; }
+    const rm = tlExpRelicPayload();   // ★실험실 유물 = 추가(빌드 장착 위에 얹음, 슬롯 상한 무시). 교체 아님.
+    if (rm) { p.artifacts = (p.artifacts || []).concat(rm.artifacts); p.potentials = (p.potentials || []).concat(rm.potentials); }
   }
   const cb = tlCompanionBuild();   // 빌드 동료(신엔진) → 큐브·비교·추천 딜에도 반영(구 ally와 충돌 없게 tl* 필드)
   if (cb) { p.tlCompanion = cb.code; p.tlCompanionLevel = cb.level; p.tlFirstSummonMs = Math.round((cb.firstSummon || 0) * 1000); p.tlCompanionInstantFinalDmg = !!cb.instant; }
@@ -5613,12 +5660,12 @@ function tlExpRelicSnapshot() {
     pot: relicPotentials(id).map((l) => ({ type: l.type || "", grade: l.grade || "", value: l.value == null ? null : l.value })),
   }));
 }
-function tlExpRelicInit() { tlExpRelics = tlExpRelicSnapshot(); tlRenderExpRelic(); }
+function tlExpRelicInit() { tlExpRelics = []; tlRenderExpRelic(); }   // ★추가 전용 → 빈 상태로 시작(장착 유물 미표시)
 // 빌드 내 프리셋(스탯/동료/유물) 선택이 바뀌면 실험실 초기화 — 실험값은 이전 프리셋 기준이라 무의미.
 function resetLab() {
   tlExpStats = [];
   tlExpApply = false;
-  tlExpRelics = tlExpRelicSnapshot();   // 새 프리셋의 현재 장착 유물로 리셋
+  tlExpRelics = [];   // ★추가 전용 → 리셋 시 비움(장착 유물 미표시)
   syncExpToggles();
   tlRenderExp();
   tlRenderExpRelic();
@@ -5665,7 +5712,7 @@ function tlExpPotLinesHtml(i, row) {
 }
 function tlRenderExpRelic() {
   const box = $("tl-exp-relic-list"); if (!box) return;
-  if (!tlExpRelics.length) { box.innerHTML = `<div class="exp-relic-empty tl-ro-hint">장착 유물이 없어요. "+ 유물 추가"로 넣어보세요.</div>`; }
+  if (!tlExpRelics.length) { box.innerHTML = `<div class="exp-relic-empty tl-ro-hint">"+ 유물 추가"로 유물을 얹어 테스트해보세요(현재 장착 위에 추가·슬롯 상한 무시).</div>`; }
   else box.innerHTML = tlExpRelics.map((r, i) =>
     `<div class="exp-relic-row">` +
       `<div class="exp-relic-top">` +
@@ -5678,7 +5725,14 @@ function tlRenderExpRelic() {
   // 유물 변경: pot 초기화(새 유물의 열린 슬롯에서 다시 채움)
   box.querySelectorAll(".exp-relic-row").forEach((row, i) => {
     // 유물 변경 시 잠재는 유지(같은 잠재로 다른 유물 테스트 가능) — 슬롯 수는 tlExpPotLinesHtml이 새 유물에 맞춰 자동 조정.
-    row.querySelector(".tl-exp-relic-id").addEventListener("change", (e) => { tlExpRelics[i].id = e.target.value; tlRenderExpRelic(); setBuildDirty(true); runTimeline(); });
+    row.querySelector(".tl-exp-relic-id").addEventListener("change", (e) => {
+      const id = e.target.value; tlExpRelics[i].id = id;
+      if (id && relicHas(id)) {   // ★추가 유물 기본값 = 유물 프리셋(보유 현황)의 각성·잠재 → 여기서 더 커스텀 가능
+        tlExpRelics[i].awaken = String(relicAwaken(id));
+        tlExpRelics[i].pot = relicPotentials(id).map((l) => ({ type: l.type || "", grade: l.grade || "", value: l.value == null ? null : l.value }));
+      }
+      tlRenderExpRelic(); setBuildDirty(true); runTimeline();
+    });
     row.querySelector(".tl-exp-relic-aw").addEventListener("change", (e) => { tlExpRelics[i].awaken = e.target.value; tlRenderExpRelic(); setBuildDirty(true); runTimeline(); });
     row.querySelector(".tl-del").addEventListener("click", () => { tlExpRelics.splice(i, 1); tlRenderExpRelic(); setBuildDirty(true); runTimeline(); });
   });
@@ -5704,10 +5758,10 @@ function tlRenderExpRelic() {
 // 신엔진은 artifacts 배열의 각 항목을 개별 계산하므로, 중복/자유 구성이 그대로 딜에 반영된다(실험용 자유도).
 const _relicNorm = (list) => JSON.stringify((list || []).filter((r) => r.id).map((r) =>
   ({ id: r.id, aw: parseInt(r.awaken, 10) || 0, pot: (r.pot || []).map((l) => [l.type || "", l.grade || "", l.value == null ? "" : l.value]) })));
+// ★실험실 유물 = '추가'(장착 미표시, 빌드 장착 위에 얹어 테스트). 추가 행이 있으면 그것을 payload로(교체 아님). 없으면 null.
 function tlExpRelicPayload() {
   const rows = tlExpRelics.filter((r) => r.id);
-  const baseSnap = tlExpRelicSnapshot();
-  if (_relicNorm(rows) === _relicNorm(baseSnap)) return null;   // 변경 없음 → 실험 안 함
+  if (!rows.length) return null;   // 추가한 유물 없음
   const artifacts = rows.map((r) => ({ id: r.id, awaken: parseInt(r.awaken, 10) || 0 }));
   const potentials = [];
   for (const r of rows) {                                       // 행별 개별 잠재(열린 슬롯 수만큼, 미선택 줄 제외)
@@ -5719,7 +5773,8 @@ function tlExpRelicPayload() {
       potentials.push(row);
     }
   }
-  return { artifacts, potentials, applied: tlExpRelicDiffNotes(baseSnap, rows) };
+  const applied = rows.map((r) => ({ relic: true, name: relicNameById(r.id), note: `추가(${parseInt(r.awaken, 10) || 0}각)` }));
+  return { artifacts, potentials, applied };
 }
 // 실험 세트 ↔ 기본 스냅샷 비교 → diff 설명 목록. 같은 유물 중복도 개별 표시(baseline을 소비 방식으로 매칭).
 function tlExpRelicDiffNotes(base, rows) {
@@ -5766,9 +5821,9 @@ async function tlRunExperiment(baseD) {
     }
   }
   mod.stats = stats;
-  if (relicMod) {   // 유물 변경본으로 교체 + diff 목록에 추가
-    mod.artifacts = relicMod.artifacts;
-    mod.potentials = relicMod.potentials;
+  if (relicMod) {   // ★유물 추가(빌드 장착 위에 얹음) + diff 목록에 추가
+    mod.artifacts = (mod.artifacts || []).concat(relicMod.artifacts);
+    mod.potentials = (mod.potentials || []).concat(relicMod.potentials);
     applied.push(...relicMod.applied);
   }
   try {

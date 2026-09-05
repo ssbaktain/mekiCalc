@@ -77,6 +77,11 @@
 - ★**proc 편승 소스** = 동료 자기 공격만(triggerBy companionAttack/companionBasicAttack). **플레이어 공격엔 안 걸림**(§6).
 - 자식 딜본체는 manual에서 이미 부모 effect로 통합됨(targetCount=maxHitCount) — 엔진은 통합값 그대로.
 - ★**설치기 절단**([[_clt2_SUPPORTER_TAGS]] §7-15): `expiresOnSummonEnd:true`(바닥 장판·소환체=CreateProjectile/ExpireOnCreatureDie) 도트는 **소환창(windowMs)에서 틱 절단**(`emitDeals` cap=min(windowMs,simCap)). 비-설치기(적 상태 도트 GetDotR·버프·디버프)는 simCap까지 잔존(소환 종료 후에도 적/플레이어 상태칸에 유지).
+- ★**onAttack 버프-only proc = 확률 누산식**(2026-09-06 정정, 팔라딘 홀리차지·히어로 콤보): 딜 없는 확률 버프는 **[[_clt2_SIM_MODEL]] §79 확률 누산기**로 처리 — 공격 스트림마다 chance(‰) 누산→1000 도달 시 발동, **발동마다 독립 창**[t,t+durMs](`SupporterTimeline.procWindows`, ArtifactAssembler 은펜던트식). **겹치는 창 수 = 스택**(캡 maxStacks). player/적=스택 세그먼트 창(value×스택), companion=딜슬롯 시각의 스택수. ★모든 슬롯(로테+periodic+proc딜) 생성 후 실행. 딜 있는 onAttack proc(디바인 저지먼트)은 proc path가 발동 시각별 collectPlayerBuffs로 처리(여기 제외).
+  - ★★**중첩 상태 지속 = 공유 타이머(기본, refresh) / 개별은 예외(2026-09-06 인게임 실측 확정)**: 재발동 시 **타이머 전체 갱신 + 스택+1(캡)**, 만료 시 **전 스택 동시 소멸**(히어로 콤보 실측: 소환 종료 후에도 5스택 유지→마지막 발동+지속에 한 번에 꺼짐, 1스택씩 감소 아님). `sharedStackSegments`.
+    - ★**개별 지속(은펜던트식)은 게임 설명에 "지속시간은 개별 적용됩니다"로 명시된 것만** → effect `individualDur:true` → 발동마다 독립 창(`procWindows`), 겹침=스택, 개별 소멸(풀중첩 짧음). 그 문구 없으면 기본=공유. **이게 은펜던트 vs 콤보 클뜯 차이**(은펜던트 desc "개별 적용" 명기 · 콤보 없음).
+    - StackRule(None/Override/FollowOperation…)은 스택 '개수' 규칙이지 지속 방식 아님(콤보=Override=공유). ~~DLL StateChangerList가 IStateChanger 리스트라 개별로 오독했으나(2026-09-06), 인게임 실측·게임설명으로 공유 확정.~~ ~~procBuffUptime/procEffective(스칼라)는 폐기 — SIM_MODEL §18~§79 확률 누산식.~~ 콤보 MaxStack5=발동40%·10s 공유, 램프 후 +25% 유지.
+- ⚠️**미해결 한계(OnTimer 첫 발동 지연)**: clt `TriggerTimeMs`는 **[첫 발동 지연, 반복 간격]** 2원소(두 값 다른 스킬 32개 확인, 예 `[42000,50000]`·`[5000,25000]`). 현재 엔진은 **간격(periodMs) 하나만** 쓰고 첫 발동=t=period로 가정(periodic 루프 `pt=period,2period,…`, collectPeriodicPlayerBuffs 동일). **첫지연==간격이면 정확**(팔라딘 블레싱아머 `[10000,10000]`=첫 실드 10초 뒤=일치). 첫지연≠간격 동료가 나오면 **틀림**(첫 발동을 간격으로 잡음) → 그때 `firstDelayMs` 분리 지원 필요.
 
 ---
 

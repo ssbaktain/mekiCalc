@@ -822,7 +822,7 @@ public final class CalcService {
 
     /** 사용 가능한 동료 목록(supporter_manual.json 등록분) — 프론트 선택 드롭다운용. */
     // ★배포 게이트: 인게임 실측 검증이 끝난 동료만 노출·계산. 미검증(나이트로드 등)은 데이터는 보유하되 숨김 — 검증 후 클래스 추가.
-    private static final java.util.Set<String> AVAILABLE_SUPPORTER_CLASSES = java.util.Set.of("Bishop", "NightLord", "WindBreaker", "Viper", "ArchMageFP");
+    private static final java.util.Set<String> AVAILABLE_SUPPORTER_CLASSES = java.util.Set.of("Bishop", "NightLord", "WindBreaker", "Viper", "ArchMageFP", "Paladin", "Hero");
     private boolean supporterAvailable(String code) {
         if (code == null || code.isEmpty()) return false;
         mekicalc.timeline.ir.SupporterIR s = supBook().supporter(code);

@@ -149,6 +149,40 @@ public final class SupporterTimeline {
             }
         }
 
+        // ── onAttack 버프-only proc(딜 없는 확률 버프, 예 팔라딘 홀리차지·히어로 콤보어택): ★확률 누산식(SIM_MODEL §79) ──
+        //   공격마다 chance 누산 → 1000 도달 시 발동, 발동마다 durMs 독립 창(DLL 확인: 상태 스택=개별 SwapState 리스트=개별 지속).
+        //   겹치는 창 수 = 스택(캡 maxStacks). 플레이어/적=스택 세그먼트 창 · 동료=슬롯별 스택. (딜 있는 onAttack proc은 위 proc path에서 처리.)
+        //   ★모든 슬롯(로테 + periodic + proc딜) 생성 후 실행 — 동료 슬롯별 스택 반영 위해.
+        for (SupporterSkillIR s : skills) {
+            if (!s.isOnAttack() || hasActiveDeal(s, boss)) continue;
+            int chance = s.chance() == null ? 0 : s.chance();
+            List<Integer> stream = s.basicAttackOnly() ? basicAttackTimes : attackTimes;   // 트리거 스트림(평타-only/전공격)
+            for (SupporterEffectIR e : s.effects()) {
+                if (e.unused() || (!"statUp".equals(e.role()) && !"debuff".equals(e.role()))) continue;
+                if (e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
+                int dur = e.durationMs() == null ? 0 : e.durationMs();
+                int maxS = e.maxStacksOr1();
+                // ★지속 방식: individualDur=은펜던트식 독립 창(겹침=스택), 기본=공유 타이머(refresh, 재발동 시 전체 갱신+스택+1, 만료 시 동시 소멸).
+                List<int[]> segs = e.individualDurOn()
+                        ? stackSegments(procWindows(stream, chance, dur), maxS)
+                        : sharedStackSegments(stream, chance, dur, maxS);
+                boolean enemy = e.toEnemy() || "debuff".equals(e.role());
+                if (e.toPlayer() || enemy)                                     // 플레이어/적: 스택 세그먼트별 창(value×스택)
+                    for (int[] sg : segs)
+                        pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value() * sg[2], sg[0], sg[1], enemy, effTarget(e, enemy)));
+                if (e.toCompanion()) {                                         // 동료: 딜슬롯 시각의 스택수만큼
+                    double[] routed = routeSelf(e.stat(), e.value());
+                    if (routed != null)
+                        for (var slotEn : tl.slots().entrySet()) {
+                            int t = slotEn.getKey(); if (t > windowMs) continue;
+                            int st = stackAtSeg(segs, t); if (st <= 0) continue;
+                            if (routed[0] < 0) slotEn.getValue().mods().addFinalDmgSource(routed[1] * st);
+                            else slotEn.getValue().mods().addStat(Stat.values()[(int) routed[0]], routed[1] * st);
+                        }
+                }
+            }
+        }
+
         // ── 동료 자기버프(상수 ModState): gradeBonus FinalDamage + target:companion statUp(onStart) + 인스턴트 보너스 ──
         applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs, instantBonus, activeCastTimes, boss);
 
@@ -158,7 +192,15 @@ public final class SupporterTimeline {
             for (SupporterEffectIR e : s.effects()) {
                 if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
                 if (e.toPlayer() || e.toEnemy() || !e.toCompanion()) continue;   // player/both/enemy는 위에서 수집됨 — 여기선 순수 동료
-                if (e.durationMs() != null && s.isActive()) {   // 액티브 시전마다 창
+                int period = s.periodMs() == null ? 0 : s.periodMs();
+                if (e.maxStacksOr1() > 1 && period > 0) {   // ★램프업 스택(나로 809470 최종뎀 1초당 +1.5% 최대 15중첩): 표시도 계산과 동일하게 스택별 램프(상수 +1.5% 아님)
+                    int maxS = e.maxStacksOr1();
+                    for (int k = 1; k <= maxS; k++) {
+                        int start = k * period; if (start >= windowMs) break;   // t∈[k·period,(k+1)·period) → stacks=min(max, t/period)=k
+                        int end = k < maxS ? Math.min((k + 1) * period, windowMs) : windowMs;
+                        pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value() * k, start, end, false, "companion"));
+                    }
+                } else if (e.durationMs() != null && s.isActive()) {   // 액티브 시전마다 창
                     int dur = e.durationMs();
                     for (int ct : activeCastTimes.getOrDefault(s.idx(), List.of()))
                         pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), ct, Math.min(ct + dur, windowMs), false, "companion"));
@@ -270,6 +312,84 @@ public final class SupporterTimeline {
         }
     }
 
+    /** onAttack 버프-only proc의 기댓값 가동률 — 갱신형 버프가 durMs 내내 유지될 정상상태 확률.
+     *  U = 1 − (1−chance/1000)^n, n = round(durMs/slotMs)(동료 공격 간격, ≥1). 확률 버프(예 팔라딘 홀리차지 15%/타격·10s)를
+     *  '상시 가정' 대신 기댓값으로 상시화(공속↑=n↑=U→100% 근접). chance≥1000(100%)이면 U=1. */
+    public static double procBuffUptime(int chance, int durMs, double slotMs) {
+        if (chance >= 1000) return 1.0;
+        if (chance <= 0 || durMs <= 0 || slotMs <= 0) return 0.0;
+        int n = (int) Math.max(1, Math.round(durMs / slotMs));
+        return 1.0 - Math.pow(1.0 - chance / 1000.0, n);
+    }
+
+    /** ★확률 누산식 발동 창(SIM_MODEL §79 · ArtifactAssembler.procWindows) — 트리거(공격) 스트림마다 chance(‰) 누산,
+     *  1000 도달 시 발동 + 초과분 이월. 발동마다 <b>독립 창</b>[t, t+durMs]. ★은펜던트식 개별 지속(individualDur:true)일 때만 사용.
+     *  게임설명 "지속시간은 개별 적용" = 개별. 그 문구 없으면 기본=공유 타이머(sharedStackSegments). */
+    private static List<int[]> procWindows(List<Integer> atk, int chance, int durMs) {
+        List<int[]> w = new ArrayList<>();
+        if (atk == null || chance <= 0 || durMs <= 0) return w;
+        double acc = 0;
+        for (int t : atk) { acc += chance; if (acc >= 1000.0) { acc -= 1000.0; w.add(new int[]{t, t + durMs}); } }
+        return w;
+    }
+    /** 시각 t에 겹치는 발동 창 수 = 스택(캡 maxStacks). */
+    private static int stacksAt(List<int[]> windows, int t, int maxStacks) {
+        int s = 0; for (int[] w : windows) if (w[0] <= t && t < w[1]) s++;
+        return Math.min(s, maxStacks);
+    }
+    /** 발동 창들 → 스택 세그먼트 [start, end, stacks](겹침 카운트, 캡). 플레이어/적 버프 창 방출용.
+     *  ★인접 세그먼트가 스택수 같고 끊김 없으면(한 스택 만료+다른 스택 유지로 개수 불변) 한 창으로 병합(타임라인 한 막대). */
+    private static List<int[]> stackSegments(List<int[]> windows, int maxStacks) {
+        List<int[]> evs = new ArrayList<>();
+        for (int[] w : windows) { evs.add(new int[]{w[0], 1}); evs.add(new int[]{w[1], -1}); }
+        evs.sort((a, b) -> a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]);   // 동시각은 -1(종료) 먼저 처리
+        List<int[]> segs = new ArrayList<>();
+        int cur = 0, segStart = 0;
+        for (int[] ev : evs) {
+            if (ev[0] > segStart && cur > 0) {
+                int st = Math.min(cur, maxStacks);
+                int[] last = segs.isEmpty() ? null : segs.get(segs.size() - 1);
+                if (last != null && last[1] == segStart && last[2] == st) last[1] = ev[0];   // 병합: 끊김 없고 스택 동일
+                else segs.add(new int[]{segStart, ev[0], st});
+            }
+            cur += ev[1]; segStart = ev[0];
+        }
+        return segs;
+    }
+
+    /** ★공유 타이머 스택 세그먼트(<b>기본</b>, 은펜던트식 아님) — 확률 누산기로 발동 시각 산출 →
+     *  <b>단일 타이머</b> 시뮬: 발동마다 timerEnd=t+durMs로 <b>전체 갱신</b> + 스택+1(캡). 타이머 만료 시 <b>전 스택 동시 소멸</b>.
+     *  (히어로 콤보어택: 소환 종료 후에도 마지막 발동+지속까지 5스택 유지하다 한 번에 꺼짐 — 인게임 실측 일치.) */
+    private static List<int[]> sharedStackSegments(List<Integer> atk, int chance, int durMs, int maxStacks) {
+        List<int[]> segs = new ArrayList<>();
+        if (atk == null || chance <= 0 || durMs <= 0) return segs;
+        double acc = 0; int stack = 0, timerEnd = 0, segStart = 0;
+        for (int t : atk) {
+            acc += chance;
+            if (acc < 1000.0) continue;
+            acc -= 1000.0;
+            if (stack > 0 && t >= timerEnd) { addSeg(segs, segStart, timerEnd, stack, maxStacks); stack = 0; }   // 이전 체인 만료(동시 소멸)
+            if (stack == 0) { stack = 1; segStart = t; }
+            else { addSeg(segs, segStart, t, stack, maxStacks); stack = Math.min(maxStacks, stack + 1); segStart = t; }   // 갱신+스택증가
+            timerEnd = t + durMs;
+        }
+        if (stack > 0) addSeg(segs, segStart, timerEnd, stack, maxStacks);   // 마지막 체인=지속 끝까지 유지 후 소멸
+        return segs;
+    }
+    /** 세그먼트 방출(인접 동일 스택·끊김 없으면 병합 → 타임라인 한 막대). */
+    private static void addSeg(List<int[]> segs, int start, int end, int stack, int maxStacks) {
+        if (end <= start || stack <= 0) return;
+        int st = Math.min(stack, maxStacks);
+        int[] last = segs.isEmpty() ? null : segs.get(segs.size() - 1);
+        if (last != null && last[1] == start && last[2] == st) last[1] = end;
+        else segs.add(new int[]{start, end, st});
+    }
+    /** 세그먼트에서 시각 t의 스택수(없으면 0). */
+    private static int stackAtSeg(List<int[]> segs, int t) {
+        for (int[] sg : segs) if (sg[0] <= t && t < sg[1]) return sg[2];
+        return 0;
+    }
+
     /** 버프 지속(ms) — 효과 durationMs 최대(없으면 0=창전체 취급). */
     private static int effDur(SupporterSkillIR s) {
         int d = 0;
@@ -328,6 +448,7 @@ public final class SupporterTimeline {
             int period = s.periodMs() == null ? 0 : s.periodMs();
             for (SupporterEffectIR e : s.effects()) {
                 if (e.unused() || !"statUp".equals(e.role()) || !e.toCompanion() || !e.condActive(boss)) continue;
+                if (s.isOnAttack()) continue;   // ★onAttack proc 버프(홀리차지·콤보)는 build()의 확률누산 패스에서 슬롯별 스택 적용됨 — 여기 중복 금지
                 if (e.stat() == null || e.value() == null) continue;
                 double[] routed = routeSelf(e.stat(), e.value());
                 if (routed == null) continue;

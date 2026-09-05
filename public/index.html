@@ -161,9 +161,8 @@
         </div>
         <div class="tl-build-presets">
           <label>스탯 <select id="tb-stat"></select></label>
-          <label>유물 <select id="tb-relic"></select></label>
         </div>
-        <div class="tl-build-hint">빌드 = <b>스킬 배치 + 동료 + 스탯·유물 프리셋</b> 한 벌. 빌드를 고르면 그 프리셋이 전역에 적용돼요. 변경 후 <b>저장</b>을 눌러야 반영됩니다(미저장 시 유실).</div>
+        <div class="tl-build-hint">빌드 = <b>스킬 배치 + 동료 + 유물 장착 + 스탯 프리셋</b> 한 벌. 유물 <b>보유 현황(각성·잠재)</b>은 유물 프리셋에서, <b>장착</b>은 아래 계산 설정에서 정합니다. 변경 후 <b>저장</b>을 눌러야 반영됩니다(미저장 시 유실).</div>
         <div id="tl-build-warn" class="tl-build-warn" hidden></div>
       </div>
 
@@ -207,6 +206,12 @@
             <label><span class="ro-head">유물 사전활성(초)<span class="tl-ro-hint">전투 시작 전 켜둔 시간(육각 스택)</span></span><input id="tl-artoffset" type="number" min="0" value="0"></label>
           </div>
           <label class="tl-ro-check"><input type="checkbox" id="tl-preact"> 확률형 유물 사전 활성 <span class="tl-ro-hint">성배·은펜던트·천도명약이 전투 시작부터 발동 중</span></label>
+        </div>
+
+        <!-- 유물 장착(v: 빌드 소유): 보유 현황(각성·잠재)은 유물 프리셋에서, 어떤 유물을 장착했나만 빌드에 저장. -->
+        <div class="tl-calc-sec">
+          <div class="tl-calc-sec-h">유물 장착 <span class="tl-ro-hint">보유·각성·잠재는 유물 프리셋에서 · 장착만 여기서(빌드에 저장)</span></div>
+          <div id="tl-relic-equip" class="tl-relic-equip"></div>
         </div>
 
         <!-- 동료(v3.1): 소환 딜 + 동료→플레이어 버프 반영. 소환 30초·쿨 90초. -->
@@ -255,10 +260,10 @@
         </table>
         <button type="button" id="tl-exp-addrow" class="tl-addrow-btn">+ 스탯 추가</button>
 
-        <!-- 유물 실험: 현재 장착 유물로 초기 채움. 유물·각성·잠재 자유 편집. ✕=해제, 초기화=프리셋 복원. -->
+        <!-- 유물 추가 실험: 빈 상태에서 유물을 '추가'해 현재 빌드 장착 위에 얹어 테스트(슬롯 상한 무시, 5개+ 가능). 추가 시 기본값=유물 프리셋(각성·잠재), 거기서 커스텀. -->
         <div class="tl-exp-relic-head">
-          <span>유물</span>
-          <button type="button" id="tl-exp-relic-reset" class="tl-mini-btn" title="현재 프리셋의 장착 유물 상태로 되돌리기">↺ 초기화</button>
+          <span>유물 추가 <span class="tl-ro-hint">장착 유물 위에 얹어 테스트 · 5개+ 가능</span></span>
+          <button type="button" id="tl-exp-relic-reset" class="tl-mini-btn" title="추가한 유물 모두 비우기">↺ 비우기</button>
         </div>
         <div id="tl-exp-relic-list"></div>
         <button type="button" id="tl-exp-relic-addrow" class="tl-addrow-btn">+ 유물 추가</button>

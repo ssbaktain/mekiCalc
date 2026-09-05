@@ -3773,6 +3773,1488 @@
           }
         ]
       }
+    },
+    {
+      "code": "SUPPORTER_2_1",
+      "class": "Paladin",
+      "name": "팔라딘(1차)",
+      "grade": "rare",
+      "creatureIndex": "9102",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분/나머지 100%, 만렙50=90%캡). compareLevel 보정 없음.",
+      "skills": [
+        {
+          "idx": "802100",
+          "name": "소환 - 강인함",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "ModStat Toughness 150 Friend(player) state SupportPaladin_Summon",
+              "_note": "강인함(CC저항, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "802110",
+          "name": "슬래시 블래스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "802110 SlashBlast GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "802120",
+          "name": "홀리 오라",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -50,
+              "target": "enemy",
+              "used": true,
+              "_seed": "802120 OnStart CreateProjectile->투사체802120(FollowMyself dur무한 ExpireOnCreatureDie)->802121 ModStatR Defence -50 (적 방어력 -5%)",
+              "_note": "적 방어력 감소 아우라(설치기 FollowMyself, 소환중 상시). onStart=[0,소환창]이라 소환 해제 시 중단(설치기 규칙). DEF_REDUCE, 다른 방깎과 합산."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack",
+            "_note": "계정전역/딜분리(깡공)"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_2_2",
+      "class": "Paladin",
+      "name": "팔라딘(2차)",
+      "grade": "epic",
+      "creatureIndex": "9202",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 만렙30=90%캡). compareLevel=30.",
+      "skills": [
+        {
+          "idx": "802200",
+          "name": "소환 - 강인함",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 150,
+              "target": "player",
+              "durationMs": 15000,
+              "used": false,
+              "_seed": "ModStat Toughness 150 Friend(player) state SupportPaladin_Summon",
+              "_note": "강인함(CC저항, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "802210",
+          "name": "디바인 스윙",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "802210 DivineSwing GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "802220",
+          "name": "페이지 오더",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2600,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "802220 PageOrder op1 GetDamageR 2600 hits1 maxHitCount7"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "PageOrder op2 ModStatR Defence -100 Parent(적) state Support_PageOrder 10s",
+              "_note": "적 방어력 감소(캐스트, 적 상태칸 10초 잔존). 아우라와 별개 스택."
+            }
+          ]
+        },
+        {
+          "idx": "802230",
+          "name": "홀리 오라",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -50,
+              "target": "enemy",
+              "used": true,
+              "_seed": "802230 OnStart 아우라->802231 Defence -50 (적 방어력 -5%)",
+              "_note": "적 방어력 감소 아우라(설치기 FollowMyself, 소환중 상시). onStart=[0,소환창]이라 소환 해제 시 중단(설치기 규칙). DEF_REDUCE, 다른 방깎과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "802240",
+          "name": "홀리 차지",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 3,
+          "chance": 150,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "both",
+              "durationMs": 10000,
+              "_seed": "OnAttack ratio150 ModStat CriticalPower 150 Target(player)+Myself(companion) state Support_HolyCharge 10s",
+              "_note": "동료 공격 시 15% 확률로 플레이어+동료 크리티컬 데미지 +15%(10초, 갱신형). ★엔진이 발동률(15%/타격)·지속(10s)·공속으로 기댓값 가동률 계산(상시 아님). 크뎀=합산."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "BaseAttackPower",
+            "value": 20,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_2_3",
+      "class": "Paladin",
+      "name": "팔라딘(3차)",
+      "grade": "unique",
+      "creatureIndex": "9302",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 만렙10=90%캡). compareLevel=60.",
+      "skills": [
+        {
+          "idx": "802300",
+          "name": "소환 - 강인함",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 150,
+              "target": "player",
+              "durationMs": 15000,
+              "used": false,
+              "_seed": "ModStat Toughness 150 Friend(player) state SupportPaladin_Summon",
+              "_note": "강인함(CC저항, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "802310",
+          "name": "디바인 차지",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "802310 DivineCharge GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "802320",
+          "name": "페이지 오더",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8600,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "802320 PageOrder op1 GetDamageR 8600 hits1 maxHitCount7"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "PageOrder op2 ModStatR Defence -100 Parent(적) state Support_PageOrder 10s",
+              "_note": "적 방어력 감소(캐스트, 적 상태칸 10초 잔존). 아우라와 별개 스택."
+            }
+          ]
+        },
+        {
+          "idx": "802330",
+          "name": "노블 디맨드",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 14000,
+              "hits": 1,
+              "targetCount": 8,
+              "_seed": "802330 NobleDemand op1 EffectOnly maxHitCount8 -> UseSkillToTarget 802331 GetDamageR 14000 hits1"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "802331 op2 ModStat Weakness 100 Parent(적) state Support_NobleDemand 10s",
+              "_note": "적 받는 피해 증가(약화, 10초). 적 디버프=플레이어+동료 양쪽 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "802340",
+          "name": "홀리 오라",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "used": true,
+              "_seed": "802340 OnStart 아우라->802341 Defence -100 (적 방어력 -10%)",
+              "_note": "적 방어력 감소 아우라(설치기 FollowMyself, 소환중 상시). onStart=[0,소환창]이라 소환 해제 시 중단(설치기 규칙). DEF_REDUCE, 다른 방깎과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "802350",
+          "name": "홀리 차지",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 2,
+          "chance": 150,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "both",
+              "durationMs": 10000,
+              "_seed": "OnAttack ratio150 ModStat CriticalPower 150 Target(player)+Myself(companion) state Support_HolyCharge 10s",
+              "_note": "동료 공격 시 15% 확률로 플레이어+동료 크리티컬 데미지 +15%(10초, 갱신형). ★엔진이 발동률(15%/타격)·지속(10s)·공속으로 기댓값 가동률 계산(상시 아님). 크뎀=합산."
+            }
+          ]
+        },
+        {
+          "idx": "802360",
+          "name": "블레싱 아머",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 3,
+          "periodMs": 10000,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 100,
+              "target": "player",
+              "durationMs": 5000,
+              "_cltStat": "Attack",
+              "_seed": "OnTimer 10000 op2 ModStatR Attack 100 Parent(player) state Support_BlessingArmor, WatchOp=1(실드 5s 연동)",
+              "_note": "10초마다 플레이어 공격력 +10%(실드 지속 5초 동안, 가동률 50%). ATK_PCT 별도 곱."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 80,
+              "target": "player",
+              "durationMs": 5000,
+              "used": false,
+              "_seed": "op1 CreateShieldByMaxHpR 80 dur5000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "BaseAttackPower",
+            "value": 40,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_2_4",
+      "class": "Paladin",
+      "name": "팔라딘(4차)",
+      "grade": "legend",
+      "creatureIndex": "9402",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "802400",
+          "name": "소환 - 강인함",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 150,
+              "target": "player",
+              "durationMs": 20000,
+              "used": false,
+              "_seed": "ModStat Toughness 150 Friend(player) state SupportPaladin_Summon",
+              "_note": "강인함(CC저항, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "802410",
+          "name": "블래스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "802410 Blast GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "802420",
+          "name": "페이지 오더",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 23000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "802420 PageOrder op1 GetDamageR 23000 hits1 maxHitCount7"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "PageOrder op2 ModStatR Defence -100 Parent(적) state Support_PageOrder 10s",
+              "_note": "적 방어력 감소(캐스트, 적 상태칸 10초 잔존). 아우라와 별개 스택."
+            }
+          ]
+        },
+        {
+          "idx": "802430",
+          "name": "노블 디맨드",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 39000,
+              "hits": 1,
+              "targetCount": 8,
+              "_seed": "802430 NobleDemand->802431 GetDamageR 39000 hits1 maxHitCount8"
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "802431 op2 ModStat Weakness 100 Parent(적) 10s",
+              "_note": "적 받는 피해 증가(약화, 10초). 적 디버프=플레이어+동료 양쪽 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "802440",
+          "name": "디바인 블레싱",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 80,
+              "target": "both",
+              "durationMs": 10000,
+              "_seed": "802440 DivineBlessing ModStat FinalDamage 80 Friend(player)+Myself(companion) state Support_DivineBlessing 10s",
+              "_note": "플레이어+동료 최종 데미지 +8%(10초, 쿨30초). 최종뎀=별도 곱."
+            }
+          ]
+        },
+        {
+          "idx": "802450",
+          "name": "홀리 오라",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "used": true,
+              "_seed": "802450 OnStart 아우라->802451 Defence -100 (적 방어력 -10%)",
+              "_note": "적 방어력 감소 아우라(설치기 FollowMyself, 소환중 상시). onStart=[0,소환창]이라 소환 해제 시 중단(설치기 규칙). DEF_REDUCE, 다른 방깎과 합산."
+            }
+          ]
+        },
+        {
+          "idx": "802460",
+          "name": "홀리 차지",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 1,
+          "chance": 150,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "both",
+              "durationMs": 10000,
+              "_seed": "OnAttack ratio150 ModStat CriticalPower 150 Target(player)+Myself(companion) state Support_HolyCharge 10s",
+              "_note": "동료 공격 시 15% 확률로 플레이어+동료 크리티컬 데미지 +15%(10초, 갱신형). ★엔진이 발동률(15%/타격)·지속(10s)·공속으로 기댓값 가동률 계산(상시 아님). 크뎀=합산."
+            }
+          ]
+        },
+        {
+          "idx": "802470",
+          "name": "블레싱 아머",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 2,
+          "periodMs": 10000,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 100,
+              "target": "player",
+              "durationMs": 5000,
+              "_cltStat": "Attack",
+              "_seed": "OnTimer 10000 op2 ModStatR Attack 100 Parent(player) state Support_BlessingArmor, WatchOp=1(실드 5s 연동)",
+              "_note": "10초마다 플레이어 공격력 +10%(실드 지속 5초 동안, 가동률 50%). ATK_PCT 별도 곱."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 80,
+              "target": "player",
+              "durationMs": 5000,
+              "used": false,
+              "_seed": "op1 CreateShieldByMaxHpR 80 dur5000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "802480",
+          "name": "디바인 저지먼트",
+          "role": [
+            "deal",
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 5000,
+          "openLevel": 3,
+          "chance": 350,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6500,
+              "hits": 4,
+              "targetCount": 4,
+              "_seed": "802480 OnAttack ratio350 cd5000 CreateProjectile->802481 GetDamageR 6500 hits4 MaxTarget4"
+            },
+            {
+              "role": "statUp",
+              "stat": "BaseAttackPower",
+              "value": 150,
+              "target": "player",
+              "durationMs": 5000,
+              "_seed": "802480 op2 ModStat BaseAttackPower 150 Friend(player) state Support_DivineJudgement_Buff 5s",
+              "_note": "기본 공격 데미지 +15%(플레이어, 5초). 발동 시각마다 창(딜 있는 proc이라 proc path 정확 처리)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "BaseAttackPower",
+            "value": 80,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_1_1",
+      "class": "Hero",
+      "name": "히어로(1차)",
+      "grade": "rare",
+      "creatureIndex": "9101",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분/나머지 100%, 만렙50=90%캡). compareLevel 보정 없음.",
+      "skills": [
+        {
+          "idx": "801100",
+          "name": "소환 - 수호",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op1 ModStatR Defence 150 Friend(player) state SupportHero_Summon 10s",
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op2 CreateShieldByMaxHpR 150 dur10000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801110",
+          "name": "평타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "801110 GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "801120",
+          "name": "위협",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Attack",
+              "value": -100,
+              "target": "enemy",
+              "used": false,
+              "_seed": "801120 OnStart 아우라->801121 ModStatR Attack -100 (적 공격력 -10%)",
+              "_note": "적 공격력 감소(피해 경감, 우리 딜 무관). 설치기 아우라(FollowMyself ExpireOnCreatureDie)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50,
+            "used": false,
+            "_cltStat": "Attack",
+            "_note": "계정전역/딜분리(깡공)"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_1_2",
+      "class": "Hero",
+      "name": "히어로(2차)",
+      "grade": "epic",
+      "creatureIndex": "9201",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 만렙30=90%캡). compareLevel=30.",
+      "skills": [
+        {
+          "idx": "801200",
+          "name": "소환 - 수호",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op1 ModStatR Defence 150 Friend(player) state SupportHero_Summon 10s",
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 200,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op2 CreateShieldByMaxHpR 200 dur10000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801210",
+          "name": "평타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "801210 GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "801220",
+          "name": "강타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 22000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2500,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "801220 op1 GetDamageR 2500 hits1 maxHitCount7"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "value": 1500,
+              "target": "enemy",
+              "used": false,
+              "_seed": "Stun Parent(적) dur1500",
+              "_note": "스턴(CC, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801230",
+          "name": "위협",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Attack",
+              "value": -150,
+              "target": "enemy",
+              "used": false,
+              "_seed": "801230 아우라->801231 Attack -150 (적 공격력 -15%)",
+              "_note": "적 공격력 감소(피해 경감, 우리 딜 무관). 설치기 아우라(FollowMyself ExpireOnCreatureDie)."
+            }
+          ]
+        },
+        {
+          "idx": "801240",
+          "name": "콤보 어택",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 500,
+          "openLevel": 3,
+          "chance": 400,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 50,
+              "target": "both",
+              "durationMs": 10000,
+              "maxStacks": 5,
+              "_cltStat": "Attack",
+              "_seed": "OnAttack ratio400 cd500 ModStatR Attack 50 Friend(player)+Myself(companion) state SupportHero_ComboAttack(MaxStack5,StackRule Override) 10s",
+              "_note": "동료 공격 시 40% 확률로 플레이어+동료 공격력 +5%(스택당)·최대 5중첩(=+25%)·10초. ★공유 타이머(refresh, 재발동 시 전체 갱신+스택+1, 만료 시 5스택 동시 소멸 — 인게임 실측). 은펜던트와 달리 개별 지속 아님(게임설명에 '개별 적용' 없음). 엔진=확률 누산식(sharedStackSegments). ATK_PCT 별도 곱."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MaxDamageRatio",
+            "value": 50,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_1_3",
+      "class": "Hero",
+      "name": "히어로(3차)",
+      "grade": "unique",
+      "creatureIndex": "9301",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 만렙10=90%캡). compareLevel=60.",
+      "skills": [
+        {
+          "idx": "801300",
+          "name": "소환 - 수호",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op1 ModStatR Defence 150 Friend(player) state SupportHero_Summon 10s",
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 250,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op2 CreateShieldByMaxHpR 250 dur10000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801310",
+          "name": "평타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "801310 GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "801320",
+          "name": "강타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 22000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "801320 op1 GetDamageR 8000 hits1 maxHitCount7"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "value": 2000,
+              "target": "enemy",
+              "used": false,
+              "_seed": "Stun Parent(적) dur2000",
+              "_note": "스턴(CC, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801330",
+          "name": "소드 스윕",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 9000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2500,
+              "hits": 4,
+              "targetCount": 8,
+              "_seed": "801330 GetDamageR 2500 hits4 maxHitCount8"
+            }
+          ]
+        },
+        {
+          "idx": "801340",
+          "name": "위협",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Attack",
+              "value": -200,
+              "target": "enemy",
+              "used": false,
+              "_seed": "801340 아우라->801341 Attack -200 (적 공격력 -20%)",
+              "_note": "적 공격력 감소(피해 경감, 우리 딜 무관). 설치기 아우라(FollowMyself ExpireOnCreatureDie)."
+            }
+          ]
+        },
+        {
+          "idx": "801350",
+          "name": "콤보 어택",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 500,
+          "openLevel": 2,
+          "chance": 400,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 50,
+              "target": "both",
+              "durationMs": 10000,
+              "maxStacks": 5,
+              "_cltStat": "Attack",
+              "_seed": "OnAttack ratio400 cd500 ModStatR Attack 50 Friend(player)+Myself(companion) state SupportHero_ComboAttack(MaxStack5,StackRule Override) 10s",
+              "_note": "동료 공격 시 40% 확률로 플레이어+동료 공격력 +5%(스택당)·최대 5중첩(=+25%)·10초. ★공유 타이머(refresh, 재발동 시 전체 갱신+스택+1, 만료 시 5스택 동시 소멸 — 인게임 실측). 은펜던트와 달리 개별 지속 아님(게임설명에 '개별 적용' 없음). 엔진=확률 누산식(sharedStackSegments). ATK_PCT 별도 곱."
+            }
+          ]
+        },
+        {
+          "idx": "801360",
+          "name": "불굴",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "DebuffResist",
+              "value": 10,
+              "target": "player",
+              "used": false,
+              "_seed": "ModStat DebuffResist 10 Friend(player)",
+              "_note": "디버프 저항(딜무관)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MaxDamageRatio",
+            "value": 100,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_1_4",
+      "class": "Hero",
+      "name": "히어로(4차)",
+      "grade": "legend",
+      "creatureIndex": "9401",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "801400",
+          "name": "소환 - 수호",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Defence",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op1 ModStatR Defence 150 Friend(player) state SupportHero_Summon 10s",
+              "_note": "플레이어 방어력 증가(생존, 딜무관)"
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "value": 300,
+              "target": "player",
+              "durationMs": 10000,
+              "used": false,
+              "_seed": "op2 CreateShieldByMaxHpR 300 dur10000",
+              "_note": "실드(생존, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801410",
+          "name": "레이징 블로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "801410 RagingBlow GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "801420",
+          "name": "강타",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 22000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 24000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "801420 op1 GetDamageR 24000 hits1 maxHitCount7"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "value": 2000,
+              "target": "enemy",
+              "used": false,
+              "_seed": "Stun Parent(적) dur2000",
+              "_note": "스턴(CC, 딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801430",
+          "name": "소드 스윕",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 9000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 7500,
+              "hits": 4,
+              "targetCount": 8,
+              "_seed": "801430 GetDamageR 7500 hits4 maxHitCount8"
+            }
+          ]
+        },
+        {
+          "idx": "801440",
+          "name": "인사이징",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 11000,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "801440 op2 GetDamageR 11000 hits3 maxHitCount5 FiredTargetGround"
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "801440 op3 ModStatR Defence -100 Parent(적) state SupportHero_Incising 10s",
+              "_note": "적 방어력 -10%(10초). DEF_REDUCE."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 100,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "801440 op4 ModStat Weakness 100 Parent(적) WatchOp=3(op3 방깎과 동일 10초)",
+              "_note": "적 받는 피해 증가 +10%(10초, 방깎과 동일 지속). 적 디버프=양쪽 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "801450",
+          "name": "위협",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Attack",
+              "value": -200,
+              "target": "enemy",
+              "used": false,
+              "_seed": "801450 아우라->801451 Attack -200 (적 공격력 -20%)",
+              "_note": "적 공격력 감소(피해 경감, 우리 딜 무관). 설치기 아우라(FollowMyself ExpireOnCreatureDie)."
+            }
+          ]
+        },
+        {
+          "idx": "801460",
+          "name": "콤보 어택",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 500,
+          "openLevel": 1,
+          "chance": 400,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 50,
+              "target": "both",
+              "durationMs": 10000,
+              "maxStacks": 5,
+              "_cltStat": "Attack",
+              "_seed": "OnAttack ratio400 cd500 ModStatR Attack 50 Friend(player)+Myself(companion) state SupportHero_ComboAttack(MaxStack5,StackRule Override) 10s",
+              "_note": "동료 공격 시 40% 확률로 플레이어+동료 공격력 +5%(스택당)·최대 5중첩(=+25%)·10초. ★공유 타이머(refresh, 재발동 시 전체 갱신+스택+1, 만료 시 5스택 동시 소멸 — 인게임 실측). 은펜던트와 달리 개별 지속 아님(게임설명에 '개별 적용' 없음). 엔진=확률 누산식(sharedStackSegments). ATK_PCT 별도 곱."
+            }
+          ]
+        },
+        {
+          "idx": "801470",
+          "name": "불굴",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "DebuffResist",
+              "value": 10,
+              "target": "player",
+              "used": false,
+              "_seed": "ModStat DebuffResist 10 Friend(player)",
+              "_note": "디버프 저항(딜무관)"
+            }
+          ]
+        },
+        {
+          "idx": "801480",
+          "name": "용맹",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 150,
+              "target": "companion",
+              "_seed": "801480 op2 ModStat FinalDamage 150 Myself(동료자기) dur무한",
+              "_note": "동료 자기 최종 데미지 +15%(소환중 상시, 등급보너스와 별개 곱)."
+            },
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "value": 150,
+              "target": "player",
+              "used": false,
+              "_seed": "801480 op1 ModStat Toughness 150 Friend(player)",
+              "_note": "강인함(CC저항, 딜무관)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MaxDamageRatio",
+            "value": 200,
+            "used": false
+          }
+        ]
+      }
     }
   ]
 }
