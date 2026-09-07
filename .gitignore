@@ -110,3 +110,6 @@ dev/__pycache__/
 dev/*.log
 dev/_audit_out.txt
 dev/_bootrun.log
+
+# OCR 사이드카 런타임 로그
+ocr-sidecar/*.log
