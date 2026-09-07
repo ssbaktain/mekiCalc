@@ -24,6 +24,7 @@ public final class OcrConfig {
 
     private static final String DEFAULT_GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
     private static final String DEFAULT_MISTRAL_MODEL = "mistral-medium-latest";
+    private static final String DEFAULT_LOCAL_OCR_URL = "http://127.0.0.1:8090";   // 로컬 PaddleOCR 사이드카(무료·무제한, 1차 제공자)
 
     public final boolean groqEnabled;
     public final String groqApiKey;
@@ -33,10 +34,12 @@ public final class OcrConfig {
     public final String mistralModel;
     /** 폴백 tesseract 실행 경로(없으면 null → 폴백 미사용). 현재 미사용. */
     public final String tesseractCmd;
+    /** 로컬 PaddleOCR 사이드카 베이스 URL(빈 문자열이면 비활성). 기본=localhost:8090. */
+    public final String localOcrUrl;
 
     private OcrConfig(boolean groqEnabled, String groqApiKey, String groqModel,
                       boolean mistralEnabled, String mistralApiKey, String mistralModel,
-                      String tesseractCmd) {
+                      String tesseractCmd, String localOcrUrl) {
         this.groqEnabled = groqEnabled;
         this.groqApiKey = groqApiKey;
         this.groqModel = groqModel;
@@ -44,12 +47,13 @@ public final class OcrConfig {
         this.mistralApiKey = mistralApiKey;
         this.mistralModel = mistralModel;
         this.tesseractCmd = tesseractCmd;
+        this.localOcrUrl = localOcrUrl;
     }
 
     public static OcrConfig load(Path dataDir) {
         Path f = dataDir.resolve("ocr.json");
         if (!Files.exists(f)) {
-            return new OcrConfig(false, "", DEFAULT_GROQ_MODEL, false, "", DEFAULT_MISTRAL_MODEL, null);
+            return new OcrConfig(false, "", DEFAULT_GROQ_MODEL, false, "", DEFAULT_MISTRAL_MODEL, null, DEFAULT_LOCAL_OCR_URL);
         }
         try {
             String text = Files.readString(f);
@@ -60,12 +64,13 @@ public final class OcrConfig {
             String mKey = s(m, "mistralApiKey");
             String mModel = s(m, "mistralModel");
             String tess = s(m, "tesseractCmd");
+            String local = m.containsKey("localOcrUrl") ? s(m, "localOcrUrl") : DEFAULT_LOCAL_OCR_URL;   // 키 없으면 기본 활성
             return new OcrConfig(
                     !gKey.isEmpty(), gKey, gModel.isEmpty() ? DEFAULT_GROQ_MODEL : gModel,
                     !mKey.isEmpty(), mKey, mModel.isEmpty() ? DEFAULT_MISTRAL_MODEL : mModel,
-                    tess.isEmpty() ? null : tess);
+                    tess.isEmpty() ? null : tess, local);
         } catch (Exception e) {
-            return new OcrConfig(false, "", DEFAULT_GROQ_MODEL, false, "", DEFAULT_MISTRAL_MODEL, null);
+            return new OcrConfig(false, "", DEFAULT_GROQ_MODEL, false, "", DEFAULT_MISTRAL_MODEL, null, DEFAULT_LOCAL_OCR_URL);
         }
     }
 

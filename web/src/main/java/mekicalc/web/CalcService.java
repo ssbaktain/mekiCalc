@@ -101,6 +101,7 @@ public final class CalcService {
     private static VisionOcr buildOcr(java.nio.file.Path dataDir) {
         OcrConfig oc = OcrConfig.load(dataDir);
         return FallbackOcr.of(
+                new LocalOcr(oc),                                  // 1차: 로컬 PaddleOCR 사이드카(무료·무제한). 죽어있으면 즉시 폴백
                 new MistralOcr(oc),
                 new GroqOcr(oc),
                 new GeminiOcr(GeminiConfig.load(dataDir)));
@@ -2401,10 +2402,9 @@ public final class CalcService {
         LinkedHashSet<String> unionMain = allMainStats();
         LinkedHashSet<String> unionSub = allSubStats();
 
-        // 대비 강화 전처리: 흐릿한 회색 필터 오버레이는 배경으로 묻히고 흰색 옵션 글씨는 또렷해져 인식률이 오른다.
+        // ★로컬 PaddleOCR 사이드카(1차)가 자체 적응형 대비강화(raw→강화 폴백)를 하므로, 여기선 원본을 그대로 보낸다.
+        // (Java가 미리 강화하면 사이드카가 이중 강화해 어두운 크롭의 앵커가 뭉개짐. 클라우드 폴백 LLM도 원본에 강건.)
         String ocrImage = imageBase64, ocrMime = mimeType;
-        byte[] enhanced = enhanceForOcr(imageBase64);
-        if (enhanced != null) { ocrImage = Base64.getEncoder().encodeToString(enhanced); ocrMime = "image/png"; }
 
         // 비전 모델은 드물게 좌측 박스를 통째로 누락한다. 좌측이 비면 1회 재시도(실패에서만 발동).
         Map<String, Object> left = null, right = null;

@@ -1,0 +1,9 @@
+# mekiCalc OCR 사이드카 의존성 (CPU 전용, GPU 불필요)
+# ★paddlepaddle는 반드시 3.0.0 — 3.3.x는 oneDNN(PIR) 크래시로 CPU 가속 불가.
+paddlepaddle==3.0.0
+paddleocr>=3.0,<4
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2
