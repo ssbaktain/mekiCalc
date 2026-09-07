@@ -8,6 +8,15 @@ Java(web)의 LocalOcr 제공자가 localhost로 호출하고, statId 매핑·주
 의존: paddlepaddle==3.0.0, paddleocr, opencv-python-headless(<5, numpy<2), fastapi, uvicorn
 """
 import os, io, base64, queue, threading, re, time, logging
+
+# ★홈 경로가 비ASCII(예: 한글 사용자명 C:\Users\박민혁)면 paddle C++가 모델 파일을 못 연다.
+# 그 경우 paddlex/HF 모델 캐시를 ASCII 경로(C:\Users\Public)로 돌린다. ASCII 홈이면 기본 유지.
+if not os.path.expanduser("~").isascii():
+    _cache = r"C:\Users\Public\paddlex"
+    os.makedirs(_cache, exist_ok=True)
+    os.environ.setdefault("PADDLE_PDX_CACHE_HOME", _cache)
+    os.environ.setdefault("HF_HOME", os.path.join(_cache, "hf"))
+
 import numpy as np
 import cv2
 from fastapi import FastAPI, HTTPException
