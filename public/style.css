@@ -1323,8 +1323,9 @@ html.deep-route #panel-home { display: none !important; }
 #relic-slots, #tl-relic-equip { display: flex; flex-wrap: wrap; gap: 8px; }
 .tl-relic-equip .status { flex: 1 1 100%; margin: 0; }
 .relic-slot { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
-/* ★나이트로드: 유물 세부 장착은 빌드(계산 설정)로 이동 → 유물 프리셋에선 장착 패널 숨김(보유 현황만), 동료 프리셋은 통째 숨김 */
-body.job-nightlord #sub-relic .relic-equip { display: none; }
+/* ★나이트로드: 유물 세부 장착은 빌드(계산 설정)로 이동 → 유물 프리셋에선 장착 패널·장착 관련 주의 문구 숨김(보유 현황만), 동료 프리셋은 통째 숨김 */
+body.job-nightlord #sub-relic .relic-equip,
+body.job-nightlord #sub-relic .relic-notice { display: none; }
 body.job-nightlord #panel-presets .subtab[data-sub="ally"],
 body.job-nightlord .m-leaf-ally { display: none; }
 .relic-slot-n { flex: 0 0 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: var(--card); color: var(--muted); font-size: 12px; }
@@ -1338,8 +1339,31 @@ body.job-nightlord .m-leaf-ally { display: none; }
 .relic-cell { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .relic-cell.owned { border-color: var(--accent2); background: rgba(124, 156, 255, .07); }
 .relic-cell-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
+.relic-cell-id { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.relic-cell-ic { width: 26px; height: 26px; flex: 0 0 auto; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
 .relic-cell-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.relic-cell-aw { padding: 5px 6px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+.relic-cell-name .rcn-inner { display: inline; }
+/* 잘린 이름: 좌로 스크롤해 끝을 보여주고 → 끝에서 멈춤 → 처음으로 복귀 반복(넘치는 셀만 JS가 .marquee 부여) */
+.relic-cell-name.marquee { text-overflow: clip; }
+.relic-cell-name.marquee .rcn-inner { display: inline-block; will-change: transform; animation: relicMarquee var(--marquee-dur, 5s) linear infinite; }
+@keyframes relicMarquee {
+  0%, 14% { transform: translateX(0); }                              /* 처음에서 잠깐 멈춤 */
+  58%, 90% { transform: translateX(var(--marquee-dist, 0)); }        /* 끝까지 스크롤 후 멈춤 */
+  100% { transform: translateX(var(--marquee-dist, 0)); }            /* 유지 → 루프 시작에서 처음으로 즉시 복귀 */
+}
+@media (prefers-reduced-motion: reduce) { .relic-cell-name.marquee .rcn-inner { animation: none; } }
+.relic-cell-top .info-help { flex: 0 0 auto; }
+.relic-info-pending .info-btn { color: #d69a1e; border-color: rgba(224, 168, 30, .5); }
+/* 각성도 = 별 위젯: '보유' 토글 + 별 5개(0~5각) */
+.relic-aw { display: flex; align-items: center; gap: 8px; }
+.relic-own { flex: 0 0 auto; padding: 3px 9px; font-size: 11.5px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; }
+.relic-own.on { background: rgba(124, 156, 255, .18); border-color: var(--accent2); color: var(--accent); }
+.relic-stars { display: inline-flex; align-items: center; gap: 1px; }
+.relic-stars.dim { opacity: .5; filter: grayscale(1); }
+.relic-stars .star { width: 18px; height: 18px; padding: 0; border: 0; background: transparent center/contain no-repeat; background-image: url(/img/star-off.png); cursor: pointer; }
+.relic-stars .star.on { background-image: url(/img/star-on.png); }
+.relic-stars .star:disabled { cursor: default; }
+.relic-stars .star:not(:disabled):hover { transform: scale(1.18); }
 /* 타임라인 탭: 유물 계산 설정(M/K/C/오프셋) */
 .tl-relic-opts, .tl-calc-opts { margin-top: 10px; }
 /* 계산 설정 서브섹션(유물/동료/컨텐츠) */
@@ -1368,10 +1392,6 @@ body.job-nightlord .m-leaf-ally { display: none; }
 .relic-pot-line { display: flex; gap: 3px; }
 .relic-pot-line select { flex: 1 1 0; min-width: 0; padding: 3px 4px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font-size: 11.5px; }
 .relic-pot-roll { flex: 0 0 auto !important; color: #c07f22; }
-.relic-badge { font-size: 10px; padding: 1px 6px; border-radius: 999px; white-space: nowrap; flex: 0 0 auto; }
-.relic-badge.ok { background: rgba(124, 156, 255, .2); color: var(--accent); }
-.relic-badge.muted { background: rgba(154, 160, 171, .15); color: var(--muted); }
-.relic-badge.pending { background: rgba(224, 168, 30, .16); color: #d69a1e; }
 @media (max-width: 720px) {
   .relic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #relic-slots, #tl-relic-equip { flex-direction: column; }

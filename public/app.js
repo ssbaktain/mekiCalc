@@ -786,6 +786,11 @@ function repositionInfoPops() {
 }
 window.addEventListener("scroll", repositionInfoPops, true);   // capture: 중첩 스크롤 컨테이너 스크롤도 포착
 window.addEventListener("resize", repositionInfoPops);
+// 리사이즈로 유물 이름 잘림 여부가 바뀌면 마퀴 재평가(그리드가 보일 때만).
+window.addEventListener("resize", () => {
+  const g = document.getElementById("relic-grid");
+  if (g && g.offsetParent && typeof setupRelicMarquee === "function") requestAnimationFrame(() => setupRelicMarquee(g));
+});
 // 설명글(접이식 panel-about + 인라인 힌트·안내 status/hint)을 i 버튼 호버 툴팁으로 접어 화면을 깔끔하게.
 // 경고성(.deal-warning·.relic-notice)·동적 상태(#id 있는 status)는 제외.
 function toInfoHelp() {
@@ -3218,15 +3223,19 @@ function activeRelic() {
 }
 function saveRelic() { myRelic.equipped = (myRelic.equipped || []).filter((id) => relicHas(id)); saveJSON(RELIC_KEY, myRelic); setRelicDirty(true); }
 
-// 정상 딜 반영 유물(compute·상시스탯 preReflected)은 뱃지 없음 — 주의가 필요한 예외 상태만 뱃지로 표시.
-const RELIC_CAT = { content: ["컨텐츠 전용", "muted"], survival: ["딜 미반영", "muted"] };
+// 정상 딜 반영 유물(compute·상시스탯 preReflected)은 표시 없음 — 주의가 필요한 예외 상태만 ⓘ로 표시.
 // 타임라인 엔진에 아직 미구현인 유물(상태 유물·동료 유물) — category는 compute지만 '지원 예정'으로 표시.
 const RELIC_PENDING = new Set(["burning_lava", "old_music_box", "horn"]);
 function relicCatById(id) { return ((artifactCatalog.list || []).find((a) => a.id === id) || {}).category; }
+// 태그(딜 미반영·컨텐츠 전용·지원 예정)는 이름을 밀지 않도록 ⓘ 버튼 placeholder로 출력 → renderRelic()이 mkInfo로 치환.
+const RELIC_TAG_DESC = {
+  content: "특정 컨텐츠 전용 효과라 딜 계산에는 반영되지 않습니다.",
+  survival: "생존·유틸 효과라 딜 계산에는 반영되지 않습니다.",
+};
 function relicBadge(id) {
-  if (RELIC_PENDING.has(id)) return `<span class="relic-badge pending">지원 예정</span>`;
-  const m = RELIC_CAT[relicCatById(id)];
-  return m ? `<span class="relic-badge ${m[1]}">${m[0]}</span>` : "";
+  if (RELIC_PENDING.has(id)) return `<span class="relic-info-slot" data-tag="아직 계산에 지원되지 않는 유물입니다." data-kind="pending"></span>`;
+  const cat = relicCatById(id);
+  return RELIC_TAG_DESC[cat] ? `<span class="relic-info-slot" data-tag="${RELIC_TAG_DESC[cat]}"></span>` : "";
 }
 
 function initRelicPresets() {
@@ -3250,11 +3259,29 @@ function renderRelic() {
   if (!cat.length) { grid.innerHTML = '<p class="status">유물 데이터 준비 중이에요.</p>'; return; }
   // 보유현황 4열 그리드 — 각 유물의 각성도 입력
   grid.innerHTML = cat.map((a) => relicCellHtml(a)).join("");
-  grid.querySelectorAll("select.relic-cell-aw").forEach((sel) => {
-    sel.addEventListener("change", () => {
-      const id = sel.dataset.id;
-      if (sel.value === "") delete myRelic.awaken[id];   // 미보유
-      else myRelic.awaken[id] = Math.max(0, Math.min(5, parseInt(sel.value, 10) || 0));   // 0~5각
+  // 태그 placeholder → ⓘ 버튼(호버/탭 툴팁, 이름 밀지 않음)
+  grid.querySelectorAll(".relic-info-slot[data-tag]").forEach((slot) => {
+    const body = document.createElement("span");
+    body.className = "info-pop-body"; body.textContent = slot.dataset.tag;
+    const info = mkInfo("ⓘ", body, true);
+    if (slot.dataset.kind) info.classList.add("relic-info-" + slot.dataset.kind);
+    slot.replaceWith(info);
+  });
+  // 보유 토글: 미보유 ↔ 0각
+  grid.querySelectorAll("button.relic-own").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      if (relicHas(id)) delete myRelic.awaken[id];   // 보유 해제 → 미보유
+      else myRelic.awaken[id] = 0;                   // 보유 → 0각
+      saveRelic(); renderRelic(); calcDamage();
+    });
+  });
+  // 별 클릭: 0~5각. 현재 각성과 같은 별 재클릭=한 단계 아래로 클리어(0각까지). 미보유 별은 disabled.
+  grid.querySelectorAll(".relic-stars button.star").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id, n = +btn.dataset.n;
+      const cur = relicAwaken(id);
+      myRelic.awaken[id] = (n === cur) ? n - 1 : n;   // 같은 별=아래로, 아니면 그 값
       saveRelic(); renderRelic(); calcDamage();
     });
   });
@@ -3272,14 +3299,37 @@ function renderRelic() {
     sel.addEventListener("change", () => potChange(sel, { value: parseFloat(sel.value) })));
   renderRelicEquip();
   updateRelicSlotInfo();
+  requestAnimationFrame(() => setupRelicMarquee(grid));   // 레이아웃 확정 후 잘린 이름만 마퀴 적용
+}
+// 잘린 유물 이름을 좌로 스크롤(끝까지)→끝에서 멈춤→처음으로 복귀 반복. 넘치는 셀만, prefers-reduced-motion이면 생략.
+function setupRelicMarquee(grid) {
+  if (!grid) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  grid.querySelectorAll(".relic-cell-name").forEach((nm) => {
+    nm.classList.remove("marquee");
+    nm.style.removeProperty("--marquee-dist"); nm.style.removeProperty("--marquee-dur");
+    if (reduce) return;
+    const over = nm.scrollWidth - nm.clientWidth;   // 숨겨진 폭(=끝까지 보여주려면 이동할 거리)
+    if (over > 1) {
+      nm.style.setProperty("--marquee-dist", -(over + 2) + "px");
+      nm.style.setProperty("--marquee-dur", (2.4 + over * 0.045).toFixed(2) + "s");   // 넘치는 만큼 길게(속도 균일)
+      nm.classList.add("marquee");
+    }
+  });
 }
 function relicCellHtml(a) {
   const has = relicHas(a.id), aw = relicAwaken(a.id);
-  const opts = `<option value=""${!has ? " selected" : ""}>미보유</option>` +
-    [0, 1, 2, 3, 4, 5].map((n) => `<option value="${n}"${has && n === aw ? " selected" : ""}>${n}각</option>`).join("");
+  // 각성도 = 별 위젯. '보유' 토글로 보유/미보유, 별 클릭으로 0~5각(미보유면 별 disabled).
+  const stars = [1, 2, 3, 4, 5].map((n) =>
+    `<button type="button" class="star${has && n <= aw ? " on" : ""}" data-id="${a.id}" data-n="${n}"${has ? "" : " disabled"} aria-label="${n}각"></button>`).join("");
+  const awWidget =
+    `<div class="relic-aw">` +
+      `<button type="button" class="relic-own${has ? " on" : ""}" data-id="${a.id}" title="${has ? "보유 해제(미보유로)" : "보유로 표시"}">보유</button>` +
+      `<span class="relic-stars${has ? "" : " dim"}" title="${has ? aw + "각" : "미보유"}">${stars}</span>` +
+    `</div>`;
   return `<div class="relic-cell${has ? " owned" : ""}">` +
-    `<div class="relic-cell-top"><span class="relic-cell-name" title="${a.name}">${a.name}</span>${relicBadge(a.id)}</div>` +
-    `<select class="relic-cell-aw" data-id="${a.id}">${opts}</select>` +
+    `<div class="relic-cell-top"><span class="relic-cell-id"><img class="relic-cell-ic" src="/img/artifact/${a.id}.png" alt="" loading="lazy" onerror="this.remove()"><span class="relic-cell-name" title="${a.name}"><span class="rcn-inner">${a.name}</span></span></span>${relicBadge(a.id)}</div>` +
+    awWidget +
     (has ? potentialLinesHtml(a.id) : "") +
     `</div>`;
 }
