@@ -2250,22 +2250,56 @@ async function runGearOcr(file) {
     }
     gcApplyOcrSide("gc-l", data.left);
     gcApplyOcrSide("gc-r", data.right);
+    gcUpdateWarn();
     $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
     runGearCompare();
   } catch (e) { $("gc-status").textContent = "인식 실패: " + e.message; }
   finally { box.classList.remove("loading"); }
 }
 
-// OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성.
+// OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성. 낮은 신뢰도(warn)는 ⚠️로 재확인 유도.
 function gcApplyOcrSide(prefix, side) {
   if (!side) return;
-  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) inp.value = "0";
+  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) { inp.value = "0"; gcMarkWarn(inp, false); }
   for (const o of (side.main || [])) {
     const inp = $(prefix + "-main").querySelector('input[data-stat="' + o.statId + '"]');
-    if (inp) inp.value = o.value;
+    if (inp) { inp.value = o.value; gcMarkWarn(inp, o.warn, o.confidence); }
   }
   $(prefix + "-sub").innerHTML = "";
-  for (const o of (side.sub || [])) gcAddSubRow(prefix, o.statId, o.value);
+  for (const o of (side.sub || [])) gcAddSubRow(prefix, o.statId, o.value, o.warn, o.confidence);
+}
+
+// 인식 신뢰도가 낮은 값(warn): [스탯 + 값]을 둥근 주황 테두리로 묶고 그 왼쪽에 ⚠️(공용 호버 팝업, 신뢰도% 안내).
+// 스탯 종류 자체도 오독일 수 있어 스탯·값을 함께 묶어 재확인 유도.
+function gcMarkWarn(inp, warn, confidence) {
+  const row = inp.closest(".gc-row"); if (!row) return;
+  // 초기화: 기존 묶음/아이콘 해제(묶음 내용물을 행으로 되돌림)
+  const oldWrap = row.querySelector(".gc-warn-group");
+  if (oldWrap) { while (oldWrap.firstChild) row.insertBefore(oldWrap.firstChild, oldWrap); oldWrap.remove(); }
+  const oldIc = row.querySelector(".info-help.gc-warn"); if (oldIc) oldIc.remove();
+  if (!warn) return;
+  const stat = row.querySelector(".gc-name, .gc-substat");   // 주=이름 span, 부=드롭다운
+  const del = row.querySelector(".gc-del");
+  const wrap = document.createElement("div"); wrap.className = "gc-warn-group";
+  row.insertBefore(wrap, del || null);      // 삭제버튼(부옵션) 앞, 없으면 끝
+  if (stat) wrap.appendChild(stat);
+  wrap.appendChild(inp);
+  const pct = confidence != null ? Math.round(confidence * 100) : null;
+  const body = document.createElement("span");
+  body.className = "info-pop-body";
+  body.textContent = (pct != null ? `인식 신뢰도 약 ${pct}% — ` : "") +
+    "이미지가 흐리거나 일부가 잘려 값이 정확하지 않을 수 있어요. 스탯 종류와 값을 확인해 주세요.";
+  const ic = mkInfo("⚠️", body, true);      // 공용 호버 팝업 UI
+  ic.classList.add("gc-warn");
+  row.insertBefore(ic, wrap);               // 묶음 박스 왼쪽
+}
+
+// 양쪽(현재/새 장비) 어디든 의심 값이 하나라도 있으면 두 박스 아래에 경고 문구 하나 표시.
+function gcUpdateWarn() {
+  const box = $("gc-warn"); if (!box) return;
+  const n = document.querySelectorAll("#panel-gear .info-help.gc-warn").length;
+  box.hidden = n === 0;
+  if (n) box.textContent = "⚠️ 이미지가 흐리거나 일부가 잘려 텍스트 변환 정확도가 보장되지 않아요. ⚠️ 표시된 스탯·값을 다시 확인해 주세요.";
 }
 
 function gcBuildBoxes() {
@@ -2308,7 +2342,7 @@ function gcBuildSide(prefix) {
 }
 
 // 부옵션 한 줄(스탯 드롭다운 + 값 + 삭제).
-function gcAddSubRow(prefix, stat, value) {
+function gcAddSubRow(prefix, stat, value, warn, confidence) {
   const box = $(prefix + "-sub");
   const row = document.createElement("div");
   row.className = "gc-row gc-subrow";
@@ -2323,6 +2357,7 @@ function gcAddSubRow(prefix, stat, value) {
   del.addEventListener("click", () => row.remove());
   row.appendChild(sel); row.appendChild(inp); row.appendChild(del);
   box.appendChild(row);
+  gcMarkWarn(inp, warn, confidence);
 }
 
 // 종류 변경 시 기존 부옵션 줄의 드롭다운 옵션만 갱신(선택 보존).

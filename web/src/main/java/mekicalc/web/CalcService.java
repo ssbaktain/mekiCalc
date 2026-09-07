@@ -2614,6 +2614,13 @@ public final class CalcService {
         if (statId == null) return null;
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("statId", statId); m.put("value", val);
+        // 로컬 사이드카가 준 신뢰도/경고(있으면) 통과 → 프론트가 낮은 줄에 ⚠️ 표시. 클라우드 폴백엔 없음.
+        if (rowObj instanceof Map) {
+            Object warn = ((Map<?, ?>) rowObj).get("warn");
+            if (Boolean.TRUE.equals(warn)) m.put("warn", true);
+            Object conf = ((Map<?, ?>) rowObj).get("confidence");
+            if (conf instanceof Number) m.put("confidence", ((Number) conf).doubleValue());
+        }
         return m;
     }
 

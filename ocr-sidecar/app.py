@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 mekiCalc 장비 비교 OCR 사이드카 (로컬·무료·무제한).
-PaddleOCR(한국어) + 규칙 파서로 장비 상세 스크린샷 → {leftPart,rightPart,left,right} 원문 JSON.
-Java(web)의 LocalOcr 제공자가 localhost로 호출하고, statId 매핑·주/부 분리·부위 정규화는 Java가 수행.
+PaddleOCR(한국어) + 규칙 파서 v2로 장비 상세 스크린샷 → {leftPart,rightPart,left,right,overall} JSON.
+좌우 산술 교차검증(오른쪽=왼쪽+델타, 색 무관)으로 병합값을 자동 분리·보정하고, 줄별 신뢰도/경고(warn)를 낸다.
+Java(web)의 LocalOcr가 localhost로 호출하고, statId 매핑·주/부 분리·부위 정규화는 Java가 수행.
 
 실행: python app.py   (환경변수: OCR_PORT(기본 8090)·OCR_WORKERS(기본 2)·OCR_CPU_THREADS(기본 6))
 의존: paddlepaddle==3.0.0, paddleocr, opencv-python-headless(<5, numpy<2), fastapi, uvicorn
@@ -29,33 +30,48 @@ CPU_THREADS = int(os.environ.get("OCR_CPU_THREADS", "6"))
 log = logging.getLogger("ocr")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-# ─────────────────────────── 파서(검증본) ───────────────────────────
-VALUE_RE = re.compile(r"^[+\-]?\d[\d,.\s%+\-]*$")      # 숫자로 시작·숫자/기호만 = 값
+# ─────────────────────────── 파서 v2 (단일 패스 + 산술 교차검증, 색 무관) ───────────────────────────
 HANGUL = re.compile(r"[가-힣]")
-FIRST_NUM = re.compile(r"[+\-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?")   # 흰 값(첫 숫자)만
+VALUE_RE = re.compile(r"^[+\-]?\d[\d,.\s%+\-]*$")
 ANCHOR = "장착효과"
+GRADE_WORDS = ("레전드리", "유니크", "에픽", "신화", "노멀")
 PART_SYN = {"어깨장식": "견장"}
 PART_KEYS = ["투구","상의","망토","견장","어깨장식","하의","장갑","벨트","신발","반지2","반지",
              "목걸이","얼굴장식","눈장식","귀고리","포켓"]
+WARN_BELOW = 0.90   # 이 신뢰도 미만이면 warn=True(프론트 ⚠️). 산술 검증(verified)은 항상 통과.
+TOL = 0.06
 
 def _norm(s): return re.sub(r"\s", "", s or "")
 def _is_value(t): return bool(VALUE_RE.match(t)) and not HANGUL.search(t)
 def _is_name(t): return bool(HANGUL.search(t))
-def _is_anchor(t):
-    n = _norm(t); return n.endswith("효과") and 2 <= len(n) <= 6
-def _clean_value(t):
-    parts = t.split(); m = FIRST_NUM.match(parts[0] if parts else t)
-    return m.group() if m else t
+def _is_anchor(t):   # 블러 내성: '과'로 끝 + 길이3~5 + 앵커 글자 포함('장착 효과'가 '교과'·'장작' 등으로 뭉개져도)
+    n = _norm(t); return 3 <= len(n) <= 5 and n.endswith("과") and any(c in n for c in "장착효교")
+def _has_pct(s): return "%" in (s or "")
+def _fix_thousands(tok):   # 흐림으로 천단위 콤마가 점으로 오독: '44.758'→'44758' (점 뒤 그룹이 전부 3자리면 천단위)
+    if "%" in tok or "," in tok: return tok
+    sign = tok[0] if tok[:1] in "+-" else ""; body = tok[len(sign):]
+    parts = body.split(".")
+    if len(parts) >= 2 and all(p.isdigit() for p in parts) and all(len(p) == 3 for p in parts[1:]):
+        return sign + "".join(parts)
+    return tok
+def _to_num(s):
+    m = re.search(r"[+\-]?\d[\d,.]*", s or "")
+    if not m: return None
+    try: return float(_fix_thousands(m.group()).replace(",", ""))
+    except ValueError: return None
+def _first_num_str(s):
+    m = re.match(r"[+\-]?(?:\d{1,3}(?:[,.]\d{3})+|\d+)(?:\.\d+)?", s or "")
+    return (_fix_thousands(m.group()) + ("%" if _has_pct(s) else "")) if m else s
 
 def _boxes(ocr, img):
     out = []
     for r in ocr.predict(input=img):
-        txts = r.get("rec_texts", []); scs = r.get("rec_scores", []); pls = r.get("rec_polys", r.get("dt_polys", []))
-        for i, t in enumerate(txts):
-            if i >= len(pls): continue
-            p = pls[i]; xs = [q[0] for q in p]; ys = [q[1] for q in p]
-            out.append(dict(text=(t or "").strip(), conf=(scs[i] if i < len(scs) else 0),
-                            xl=min(xs), xr=max(xs), xc=sum(xs) / len(xs), yc=sum(ys) / len(ys)))
+        t = r.get("rec_texts", []); sc = r.get("rec_scores", []); pl = r.get("rec_polys", r.get("dt_polys", []))
+        for i, x in enumerate(t):
+            if i >= len(pl): continue
+            p = pl[i]; xs = [q[0] for q in p]; ys = [q[1] for q in p]
+            out.append(dict(text=(x or "").strip(), conf=(sc[i] if i < len(sc) else 0),
+                            xl=min(xs), xr=max(xs), xc=sum(xs)/len(xs), yc=sum(ys)/len(ys)))
     return [b for b in out if b["conf"] >= 0.5 and b["text"]]
 
 def _panel(bs, lo, hi, yt):
@@ -64,50 +80,127 @@ def _panel(bs, lo, hi, yt):
     for b in band:
         if rows and abs(b["yc"] - rows[-1][0]) <= 14: rows[-1][1].append(b)
         else: rows.append([b["yc"], [b]])
-    opts = []
+    out = []
     for _, rb in rows:
         rb.sort(key=lambda b: b["xl"])
         nb = next((b for b in rb if _is_name(b["text"])), None)
         if nb is None: continue
-        vc = [b for b in rb if _is_value(b["text"]) and b["xc"] > nb["xc"]]
-        if not vc: continue
-        vb = min(vc, key=lambda b: b["xc"])
+        nums = [b for b in rb if _is_value(b["text"]) and b["xc"] > nb["xc"]]
+        if not nums: continue
         if ANCHOR in _norm(nb["text"]) or "전투력" in nb["text"]: continue
-        opts.append({"label": nb["text"].strip(), "value": _clean_value(vb["text"])})
-    return opts
+        out.append({"label": nb["text"].strip(), "nameConf": nb["conf"],
+                    "nums": [b["text"] for b in nums], "numConf": [b["conf"] for b in nums]})
+    return out
 
 def _part(bs, lo, hi, yb):
-    for b in sorted([b for b in bs if lo <= b["xc"] < hi and b["yc"] < yb and HANGUL.search(b["text"])], key=lambda b: b["yc"]):
+    cand = [b for b in bs if lo <= b["xc"] < hi and b["yc"] < yb and any(g in b["text"] for g in GRADE_WORDS)]
+    if not cand: cand = [b for b in bs if lo <= b["xc"] < hi and b["yc"] < yb and HANGUL.search(b["text"])]
+    for b in sorted(cand, key=lambda b: b["yc"]):
         for k in PART_KEYS:
             if k in _norm(b["text"]): return PART_SYN.get(k, k)
     return ""
 
 def _enhance(img, lo=120, hi=230):
-    f = np.clip((img.astype(np.float32) - lo) / (hi - lo), 0, 1)
-    return (f * 255).astype(np.uint8)
+    return (np.clip((img.astype(np.float32)-lo)/(hi-lo), 0, 1)*255).astype(np.uint8)
 
 def _parse_one(ocr, img):
     bs = _boxes(ocr, img)
     an = sorted([b for b in bs if _is_anchor(b["text"])], key=lambda b: b["xc"])
-    if not an:
-        return {"leftPart": "", "rightPart": "", "left": [], "right": []}
+    if not an: return {"leftPart": "", "rightPart": "", "left": [], "right": []}
     if len(an) < 2:
-        a = an[0]; pitch = 360
-        return {"leftPart": _part(bs, a["xc"] - 30, a["xc"] + pitch - 30, a["yc"]), "rightPart": "",
-                "left": _panel(bs, a["xc"] - 30, a["xc"] + pitch - 30, a["yc"]), "right": []}
+        a = an[0]; p = 360
+        return {"leftPart": _part(bs, a["xc"]-30, a["xc"]+p-30, a["yc"]), "rightPart": "",
+                "left": _panel(bs, a["xc"]-30, a["xc"]+p-30, a["yc"]), "right": []}
     aL, aR = an[0], an[1]; p = aR["xc"] - aL["xc"]
-    return {"leftPart": _part(bs, aL["xc"] - 30, aL["xc"] + p - 30, aL["yc"]),
-            "rightPart": _part(bs, aR["xc"] - 30, aR["xc"] + p - 30, aR["yc"]),
-            "left": _panel(bs, aL["xc"] - 30, aL["xc"] + p - 30, aL["yc"]),
-            "right": _panel(bs, aR["xc"] - 30, aR["xc"] + p - 30, aR["yc"])}
+    return {"leftPart": _part(bs, aL["xc"]-30, aL["xc"]+p-30, aL["yc"]),
+            "rightPart": _part(bs, aR["xc"]-30, aR["xc"]+p-30, aR["yc"]),
+            "left": _panel(bs, aL["xc"]-30, aL["xc"]+p-30, aL["yc"]),
+            "right": _panel(bs, aR["xc"]-30, aR["xc"]+p-30, aR["yc"])}
 
-def _n_opts(r): return len(r.get("left", [])) + len(r.get("right", []))
+def _n_opts(r): return len(r["left"]) + len(r["right"])
+
+# ── 산술 교차검증 ──
+def _rule_default(base, lv, delta): return abs((base - (lv if lv is not None else 0)) - delta) <= TOL
+STAT_RULES = {}   # _norm(label) -> fn(base,lv,delta)->bool. 예외 스탯만 등록.
+
+def _split_structural(t):
+    m = re.search(r"(?<=\d)[+\-]", t)
+    if m: return (t[:m.start()], t[m.start():])
+    ps = [mm.end() for mm in re.finditer("%", t)]
+    if len(ps) >= 2: return (t[:ps[0]], t[ps[0]:])
+    m = re.match(r"[+\-]?\d{1,3}(?:[,.]\d{3})+", t)   # 콤마(또는 점 오독) 천단위 첫 수: '44.758 8,050'
+    if m and m.end() < len(t): return (t[:m.end()], t[m.end():])
+    return None
+
+def _resolve_right(nums, lv, label):
+    """반환 (value_str, delta_or_None, verified, trusted). verified=왼쪽으로 독립 교차검증됨."""
+    if not nums: return (None, None, False, False)
+    rule = STAT_RULES.get(_norm(label), _rule_default)
+    has_left = lv is not None
+    def ver(bv, dv): return has_left and dv is not None and rule(bv, lv, dv)
+    if len(nums) >= 2:
+        base_s = _first_num_str(nums[0]); dv = _to_num(_first_num_str(nums[1]))
+        return (base_s, dv, ver(_to_num(base_s), dv), True)
+    T = nums[0]
+    st = _split_structural(T)
+    if st:
+        base_s = _first_num_str(st[0]); dv = _to_num(st[1])
+        return (base_s, dv, ver(_to_num(base_s), dv), True)
+    core = T.replace("%", ""); pct = "%" if _has_pct(T) else ""
+    if core.isdigit() and len(core) >= 2:
+        if has_left:
+            for i in range(1, len(core)):
+                bv, dv = float(core[:i]), float(core[i:])
+                if rule(bv, lv, dv): return (core[:i]+pct, dv, True, True)
+        elif len(core) % 2 == 0 and core[:len(core)//2] == core[len(core)//2:]:
+            h = core[:len(core)//2]; return (h+pct, float(h), False, True)
+    if has_left and abs((_to_num(T) if _to_num(T) is not None else -1e9) - lv) <= TOL:
+        return (_first_num_str(T), 0.0, True, False)
+    return (_first_num_str(T), None, False, False)
+
+def _line_conf(row):
+    cs = [row.get("nameConf", 1.0)] + list(row.get("numConf", []) or [1.0])
+    return round(min(cs), 3)
+
+def _resolve(res):
+    left, right = res["left"], res["right"]
+    lval = {}
+    for r in left:
+        r["value"] = _first_num_str(r["nums"][0]); r["_v"] = _to_num(r["value"]); r["_verified"] = False
+        lval.setdefault(_norm(r["label"]), []).append(r)
+    occ = {}
+    for r in right:
+        k = _norm(r["label"]); i = occ.get(k, 0); occ[k] = i + 1
+        lrow = lval[k][i] if k in lval and i < len(lval[k]) else None
+        lv = lrow["_v"] if lrow else None
+        val, dv, verified, trusted = _resolve_right(r["nums"], lv, r["label"])
+        r["value"] = val; r["_v"] = _to_num(val); r["_verified"] = verified
+        if trusted and dv is not None and lrow is not None and r["_v"] is not None:
+            expect_l = r["_v"] - dv
+            if lrow["_v"] is None or abs(lrow["_v"] - expect_l) > TOL:
+                fixed = str(int(expect_l)) if float(expect_l).is_integer() else str(expect_l)
+                if _has_pct(r["value"]): fixed += "%"
+                lrow["value"] = fixed; lrow["_v"] = expect_l
+            lrow["_verified"] = True; r["_verified"] = True
+
+    def emit(r):
+        ocrc = _line_conf(r); verified = r.get("_verified", False)
+        conf = max(ocrc, 0.97) if verified else ocrc
+        return {"label": r["label"], "value": r["value"], "confidence": round(conf, 3),
+                "verified": bool(verified), "warn": (not verified) and conf < WARN_BELOW}
+
+    L = [emit(r) for r in left]; R = [emit(r) for r in right]
+    allc = [o["confidence"] for o in L + R] or [1.0]
+    overall = {"confidence": round(sum(allc)/len(allc), 3), "min": round(min(allc), 3),
+               "verified": sum(1 for o in L + R if o["verified"]), "lines": len(L + R)}
+    return {"leftPart": res["leftPart"], "rightPart": res["rightPart"], "left": L, "right": R, "overall": overall}
 
 def parse(ocr, img):
-    r1 = _parse_one(ocr, img)                     # raw 먼저(어두운 크롭에 강함)
-    if _n_opts(r1) >= 6: return r1
-    r2 = _parse_one(ocr, _enhance(img))           # 부실하면 대비강화(배경 많은 스샷에 강함)
-    return r2 if _n_opts(r2) > _n_opts(r1) else r1
+    r1 = _parse_one(ocr, img)
+    if _n_opts(r1) < 6:
+        r2 = _parse_one(ocr, _enhance(img))
+        if _n_opts(r2) > _n_opts(r1): r1 = r2
+    return _resolve(r1)
 
 # ─────────────────────────── 워커(스레드별 자체 예측기) ───────────────────────────
 _jobs = queue.Queue()
