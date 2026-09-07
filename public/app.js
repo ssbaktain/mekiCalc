@@ -4912,9 +4912,8 @@ function updateBuildWarn() {
   const b = buildPresets && buildPresets.presets[buildPresets.active];
   const diffs = [];
   if (b) {
+    // 캐릭터(스탯) 프리셋만 경고 대상. 유물 장착은 빌드 소유(relicEquip)로, 동료도 빌드 내장(companion)으로 옮겨져 프리셋 활성명 차이는 무의미 → 경고 제외.
     if (b.stat && statPresets && b.stat !== statPresets.active) diffs.push(`캐릭터 <b>${b.stat}</b>→${statPresets.active}`);
-    if (b.ally && allyPresets && b.ally !== allyPresets.active) diffs.push(`동료 <b>${b.ally}</b>→${allyPresets.active}`);
-    if (b.relic && relicPresets && b.relic !== relicPresets.active) diffs.push(`유물 <b>${b.relic}</b>→${relicPresets.active}`);
   }
   if (!diffs.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
@@ -4989,12 +4988,9 @@ function bpApply(name) {
   { const cs = $("tl-content"); if (cs && cs.options[cs.selectedIndex] && cs.options[cs.selectedIndex].disabled) cs.value = ""; }   // 미개발 컨텐츠가 저장돼 있으면 자동으로 보정
   if ($("tl-challenge")) $("tl-challenge").checked = !!b.challenge;   // 챕터 도전 복원
   tlSyncContentUI();   // 복원된 컨텐츠/대상에 맞춰 챕터·스테이지/도전 표시 갱신
-  // ★유물 세부 장착 복원. 저장분 있으면 그대로, 없으면(옛 빌드) 참조 보유-프리셋(b.relic) 또는 현재 활성 프리셋의 장착을 기본값으로.
-  if (Array.isArray(b.relicEquip)) tlRelicEquip = b.relicEquip.slice();
-  else {
-    const src = (b.relic && relicPresets && relicPresets.presets[b.relic]) ? relicPresets.presets[b.relic] : myRelic;
-    tlRelicEquip = (((src && src.equipped) || myRelic.equipped || [])).slice();
-  }
+  // ★유물 세부 장착 복원. 저장분 있으면 그대로, 없으면(옛 빌드) 빈 상태로 시작.
+  // 신엔진에선 유물 프리셋의 '장착'이 빌드에 영향을 주지 않는다(장착은 계산 설정에서만). 프리셋 장착을 끌어오던 잔재 제거.
+  tlRelicEquip = Array.isArray(b.relicEquip) ? b.relicEquip.slice() : [];
   renderBuildRelicEquip();
   tlApplyCompanionBuild(b.companion);   // 타임라인 동료 복원(목록 미로드면 보류→로드 후 적용)
   applyBoxOrder(b.boxOrder);            // 빌드 박스 순서 복원(없으면 기본)

@@ -1328,6 +1328,10 @@ body.job-nightlord #sub-relic .relic-equip,
 body.job-nightlord #sub-relic .relic-notice { display: none; }
 body.job-nightlord #panel-presets .subtab[data-sub="ally"],
 body.job-nightlord .m-leaf-ally { display: none; }
+/* ★나이트로드: 대상 챕터/스테이지는 빌드 계산 설정에 있으므로 캐릭터 프리셋 박스의 챕터 셀렉터는 숨김(값은 계산 설정과 동기화 유지) */
+body.job-nightlord #build-chapter-cell { display: none; }
+/* ★나이트로드: 대상·프리셋 전환은 빌드 탭 안에서 하므로 우하단 ⚡ 빠른 전환 FAB는 숨김(코드는 유지, 나중 재활용) */
+body.job-nightlord #quick-presets { display: none; }
 .relic-slot-n { flex: 0 0 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: var(--card); color: var(--muted); font-size: 12px; }
 .relic-slot select { flex: 1 1 auto; min-width: 0; padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }
 .relic-sum { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }

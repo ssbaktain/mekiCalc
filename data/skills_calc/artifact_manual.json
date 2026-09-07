@@ -309,6 +309,34 @@
    ]
   },
   {
+   "idx": "409",
+   "grade": "unique",
+   "name": "핑크빈의 왕갈비",
+   "desc": "[레이드 - 핑크빈] 전투 시 최종 데미지가 20% 증가하고, HP 물약 재사용 대기시간이 20% 감소합니다. 석상을 처치하여 획득하는 특수 효과의 지속시간이 25% 증가합니다.",
+   "descMax": "[레이드 - 핑크빈] 전투 시 최종 데미지가 60% 증가하고, HP 물약 재사용 대기시간이 60% 감소합니다. 석상을 처치하여 획득하는 특수 효과의 지속시간이 100% 증가합니다.",
+   "content": [
+    "레이드-핑크빈"
+   ],
+   "_survival": [
+    "HpPotionCoolTimeReduceRatio",
+    "PinkBean_Statue_OnDieBuff"
+   ],
+   "effects": [
+    {
+     "stat": "FinalDamage",
+     "values": [
+      200,
+      280,
+      360,
+      440,
+      520,
+      600
+     ],
+     "_op": "ModStat"
+    }
+   ]
+  },
+  {
    "idx": "501",
    "grade": "legend",
    "name": "성배",

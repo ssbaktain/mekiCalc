@@ -369,6 +369,29 @@
       ]
     },
     {
+      "id": "pinkbean_galbi",
+      "name": "핑크빈의 왕갈비",
+      "grade": "UNIQUE",
+      "category": "content",
+      "raw": "[레이드-핑크빈] 최종뎀 20%(5각 60%), HP물약쿨 20%(5각 60%)↓, 석상 처치 효과 지속 25%(5각 100%)↑",
+      "effects": [
+        {
+          "stat": "FINAL_DMG",
+          "target": "player",
+          "values": [
+            20,
+            28,
+            36,
+            44,
+            52,
+            60
+          ],
+          "content": "레이드-핑크빈",
+          "used": false
+        }
+      ]
+    },
+    {
       "id": "holy_grail",
       "name": "성배",
       "grade": "LEGENDARY",
