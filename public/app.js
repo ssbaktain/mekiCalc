@@ -396,6 +396,7 @@ function trackView(name) {
 function showPanel(name) {
   trackView(name);   // 탭 진입 기록(비나로 home=데미지 분석 구 / 나로 home=빌드 리다이렉트 후 각 탭 진입 카운트)
   for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + name);
+  if ($("sub-build") && $("sub-build").offsetParent === null) clearStatOcrFlags();   // 캐릭터 폼이 안 보이면 OCR 표시(주황·문구) 정리
   updateExpTags();   // 패널 전환 시 '실험실' 태그 반영(실험값 적용 중일 때)
   document.body.classList.toggle("notices-active", name === "notices");   // 공지 탭은 비영리 → 광고 비노출(CSS)
   if (CHAR_GATED_PANELS.has(name)) {   // 캐릭터 미입력 → 게이트. 내 옵션 비교·우선순위 추천은 큐브 프리셋도 필요.
@@ -573,6 +574,7 @@ function selectSub(name) {
   currentSub = name;
   document.querySelectorAll("#panel-presets .subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
+  if (name !== "build") clearStatOcrFlags();   // 캐릭터 서브탭을 떠나면 OCR 표시(주황·문구) 정리
   if (name === "cube" && cubeNeedsRender) { cubeNeedsRender = false; renderCube(); }   // 지연 렌더
   if (name === "build" && !booting) renderBuffs();   // 빌드 화면 스킬 목록 최신화(초기 pre-set 땐 미룸 — init 끝 refreshSkillData가 처리)
   if (name === "build") refreshStatGuideHint();       // 첫 입력이면 스탯 입력 가이드 배너 노출
@@ -2525,6 +2527,7 @@ function ocrConfTip(conf, msg) {
 function clearStatOcrFlags() {
   document.querySelectorAll("#sub-build .ocr-warn").forEach((el) => ocrWarnEl(el, false));
   const box = $("stat-ocr-warn"); if (box) { box.hidden = true; box.textContent = ""; }
+  const st = $("stat-ocr-status"); if (st) st.textContent = "";   // '인식 완료 — N개' 문구도 초기화
   ocrTipHide();
 }
 
