@@ -2348,6 +2348,7 @@ function bumpStatOcrCount() { try { localStorage.setItem("mekicalc.statOcrCount"
 
 // 진입: 직업·레벨 입력 모달(폼 값 프리필).
 function openStatOcr() {
+  preloadStatGuide();   // 진입 즉시 가이드 이미지 미리 로드(직업·레벨 입력하는 동안 받아둠)
   const jobSel = $("so-job");
   if (jobSel) { jobSel.innerHTML = $("job-sel").innerHTML; jobSel.value = $("job-sel").value; }
   $("so-level").value = Math.round(collectStats().LEVEL || 0) || "";
@@ -2369,7 +2370,12 @@ function statOcrProceed() {
   else openStatCollect();
 }
 
-function openStatGuide(forced) { sgForced = !!forced; sgIdx = 0; renderStatGuide(); $("modal-stat-guide").hidden = false; }
+let _statGuidePreloaded = false;
+function preloadStatGuide() {   // 슬라이드 이미지 미리 로드 → 넘길 때 사진 지연 없음(글씨만 먼저 넘어가던 문제)
+  if (_statGuidePreloaded) return; _statGuidePreloaded = true;
+  STAT_OCR_GUIDE.forEach((g) => { const im = new Image(); im.src = "/guide/stat-ocr/" + g.img; });
+}
+function openStatGuide(forced) { preloadStatGuide(); sgForced = !!forced; sgIdx = 0; renderStatGuide(); $("modal-stat-guide").hidden = false; }
 function closeStatGuide() { $("modal-stat-guide").hidden = true; }
 function renderStatGuide() {
   const g = STAT_OCR_GUIDE[sgIdx], last = sgIdx === STAT_OCR_GUIDE.length - 1;
