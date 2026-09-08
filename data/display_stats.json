@@ -1,0 +1,14 @@
+[
+  { "_comment": "스탯 정보창 OCR용 '미환산(딜 무관) 스탯' 정의. ★딜 엔진(stats.json)과 완전 분리 — 여기 스탯은 계산에 안 들어가고 프리셋에 '기록/표시'만 된다. 내부 id는 stats.json의 딜 스탯 id와 절대 겹치지 않게 지음. unit=FLAT(깡수치)/PCT(%). ★전투력은 기록 안 함(제외)." },
+  { "id": "MAX_HP",        "name": "최대 HP",       "unit": "FLAT" },
+  { "id": "MAX_MP",        "name": "최대 MP",       "unit": "FLAT" },
+  { "id": "MP_REGEN",      "name": "초당 MP 회복",   "unit": "FLAT" },
+  { "id": "DMG_REDUCTION", "name": "받는 피해 감소",  "unit": "PCT"  },
+  { "id": "ACCURACY",      "name": "명중",          "unit": "FLAT" },
+  { "id": "EVASION",       "name": "회피",          "unit": "FLAT" },
+  { "id": "DEBUFF_RESIST", "name": "디버프 내성",    "unit": "FLAT" },
+  { "id": "EXP_GAIN",      "name": "경험치 획득량",   "unit": "PCT"  },
+  { "id": "MESO_GAIN",     "name": "메소 획득량",    "unit": "PCT"  },
+  { "id": "MAIN_STAT_PER_LEVEL_REC",     "name": "1레벨당 주 스탯",  "unit": "FLAT", "_note": "기록용 — 이미 주스탯에 반영됨(딜 id MAIN_STAT_PER_LEVEL과 분리해 이중가산 방지)" },
+  { "id": "MAIN_STAT_PCT_PER_4LEVEL_REC", "name": "4레벨당 주 스탯%", "unit": "PCT"  }
+]

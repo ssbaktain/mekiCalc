@@ -83,6 +83,7 @@ public final class CalcService {
     private volatile ArtifactBook nlArtBook;   // 유물 IR(타임라인 조립용), 최초 요청 시 지연 로딩
     private volatile mekicalc.timeline.ir.SupporterBook supBook;   // 동료 IR(v3.1 동료 엔진용), 최초 요청 시 지연 로딩
     private volatile Map<String, Integer> nlArtSlugToIdx;   // 카탈로그 슬러그id → manual idx(이름 조인), 지연 구축
+    private volatile StatOcr statOcrSvc;   // 스탯 정보창 OCR(사이드카) 서비스, 최초 요청 시 지연 로딩
 
     public CalcService(GameContent content) {
         this(content, buildOcr(content.dataDir));
@@ -105,6 +106,34 @@ public final class CalcService {
                 new MistralOcr(oc),
                 new GroqOcr(oc),
                 new GeminiOcr(GeminiConfig.load(dataDir)));
+    }
+
+    /** 스탯 OCR 서비스(지연 로딩). 사이드카 미설정 시 예외. */
+    private StatOcr statOcrService() {
+        StatOcr so = statOcrSvc;
+        if (so == null) {
+            synchronized (this) {
+                if (statOcrSvc == null) statOcrSvc = new StatOcr(content, OcrConfig.load(content.dataDir));
+                so = statOcrSvc;
+            }
+        }
+        if (!so.enabled()) throw new IllegalStateException("스탯 OCR 사이드카가 설정되지 않았습니다.");
+        return so;
+    }
+
+    /** 스탯 정보창 OCR(일괄): 누적 스크린샷 → statId→값 + 메타. */
+    public Object statOcr(java.util.List<String> images, String mimeType, int level, boolean nightlord) throws Exception {
+        return statOcrService().resolve(images, mimeType, level, nightlord);
+    }
+
+    /** 스탯 OCR — 이미지 1장 파싱(장별 진행도용). */
+    public Object statOcrParse(String image, String mimeType) throws Exception {
+        return statOcrService().parseOne(image, mimeType);
+    }
+
+    /** 스탯 OCR — 파싱 결과들 → 계산·역산. */
+    public Object statOcrResolve(java.util.List<Map<String, Object>> parsed, int level, boolean nightlord) {
+        return statOcrService().resolveParsed(parsed, level, nightlord);
     }
 
     // ──────────────────── 공통 헬퍼 ────────────────────
@@ -2616,10 +2645,13 @@ public final class CalcService {
         m.put("statId", statId); m.put("value", val);
         // 로컬 사이드카가 준 신뢰도/경고(있으면) 통과 → 프론트가 낮은 줄에 ⚠️ 표시. 클라우드 폴백엔 없음.
         if (rowObj instanceof Map) {
-            Object warn = ((Map<?, ?>) rowObj).get("warn");
-            if (Boolean.TRUE.equals(warn)) m.put("warn", true);
-            Object conf = ((Map<?, ?>) rowObj).get("confidence");
+            Map<?, ?> r = (Map<?, ?>) rowObj;
+            Object conf = r.get("confidence");
             if (conf instanceof Number) m.put("confidence", ((Number) conf).doubleValue());
+            Object lc = r.get("labelConf");   // 라벨·값 신뢰도 분리(프론트가 종류/수치 각각 주황 표시)
+            if (lc instanceof Number) m.put("labelConf", ((Number) lc).doubleValue());
+            Object vc = r.get("valueConf");
+            if (vc instanceof Number) m.put("valueConf", ((Number) vc).doubleValue());
         }
         return m;
     }

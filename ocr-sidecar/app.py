@@ -186,8 +186,12 @@ def _resolve(res):
     def emit(r):
         ocrc = _line_conf(r); verified = r.get("_verified", False)
         conf = max(ocrc, 0.97) if verified else ocrc
+        lconf = round(r.get("nameConf", 1.0), 3)
+        vconf = round(min(r.get("numConf") or [1.0]), 3)
+        if verified: vconf = max(vconf, 0.97)   # 산술 교차검증되면 값 신뢰
         return {"label": r["label"], "value": r["value"], "confidence": round(conf, 3),
-                "verified": bool(verified), "warn": (not verified) and conf < WARN_BELOW}
+                "verified": bool(verified), "warn": (not verified) and conf < WARN_BELOW,
+                "labelConf": lconf, "valueConf": vconf}   # 라벨·값 신뢰도 분리
 
     L = [emit(r) for r in left]; R = [emit(r) for r in right]
     allc = [o["confidence"] for o in L + R] or [1.0]
@@ -201,6 +205,114 @@ def parse(ocr, img):
         r2 = _parse_one(ocr, _enhance(img))
         if _n_opts(r2) > _n_opts(r1): r1 = r2
     return _resolve(r1)
+
+# ─────────────────────────── 스탯 정보창 파서 ───────────────────────────
+# 인게임 '스탯 정보' 창(본문 라벨:값) + ⓘ 상세(+ :/% :/합산 :). ★statId 매핑·주부스탯 판별·
+# 공격력 선반영 역산은 Java가 수행 — 여기선 원문 라벨/값 + 신뢰도만 낸다(+ 한글 만·억·조·경 숫자 파싱).
+_MYRIAD = [("경", 10**16), ("조", 10**12), ("억", 10**8), ("만", 10**4)]
+_MYRIAD_V = {u: v for u, v in _MYRIAD}
+_STAT_NOISE = ("스탯정보", "물약", "능력치", "자동사용설정", "상세", "현재보유중인능력치")  # 값으로 안 잡을 헤더/노이즈
+_MAIN_STAT_TOK = ("STR", "DEX", "INT", "LUK")
+
+def parse_kor_num(s):
+    """'4억 6422만'·'4543만 3561'·'2경 6644조'·'64,292'·'132.5%'·'1,103,455' → (value, is_pct). 실패=None."""
+    if s is None: return None
+    t = s.strip().replace(" ", "")
+    pct = "%" in t
+    t = t.replace("%", "").replace(",", "")
+    if not t: return None
+    if any(u in t for u, _ in _MYRIAD):
+        total = 0.0
+        for m in re.finditer(r"(\d+)(경|조|억|만)", t):
+            total += int(m.group(1)) * _MYRIAD_V[m.group(2)]
+        tail = re.sub(r"\D", "", re.sub(r"\d+(경|조|억|만)", "", t))   # 단위그룹 제거 후 남은 1의 자리
+        if tail: total += int(tail)
+        return (total, pct)
+    m = re.search(r"\d+(?:\.\d+)?", t)   # 접두 부호/콜론('+ :', '% :') 허용 위해 search
+    return (float(m.group()), pct) if m else None
+
+def _has_num(b): return parse_kor_num(b["text"]) is not None
+def _row_conf(bs): return round(min(b["conf"] for b in bs), 3)
+def _is_main_stat(text):   # STR·DEX·INT·LUK (ⓘ가 'LUKi' 등으로 붙어도 인식)
+    u = re.sub(r"[^A-Za-z]", "", text or "").upper()
+    return any(u.startswith(t) for t in _MAIN_STAT_TOK)
+
+def _stat_rows(bs):
+    """단일 컬럼 행 그룹(y 근접). 각 행 = x 오름차순 박스들."""
+    rows = []
+    for b in sorted(bs, key=lambda b: b["yc"]):
+        if rows and abs(b["yc"] - rows[-1][0]) <= 14: rows[-1][1].append(b)
+        else: rows.append([b["yc"], [b]])
+    return [sorted(r[1], key=lambda b: b["xl"]) for r in rows]
+
+def _stat_title(rb):
+    return next((b for b in rb if _is_name(b["text"]) or _is_main_stat(b["text"])), None)
+
+def _parse_stat_main(bs):
+    """본문 라벨:값 목록. 라벨=한글/주스탯토큰, 값=라벨 우측 수치(다박스 결합)."""
+    out = []
+    for rb in _stat_rows(bs):
+        name = _stat_title(rb)
+        if name is None: continue
+        nn = _norm(name["text"])
+        if not nn or any(h in nn for h in _STAT_NOISE): continue
+        nums = [b for b in rb if b is not name and b["xc"] > name["xc"] and _has_num(b)]
+        if not nums: continue
+        pv = parse_kor_num("".join(b["text"] for b in nums))
+        if pv is None: continue
+        out.append({"label": name["text"].strip(), "raw": "".join(b["text"] for b in nums).strip(),
+                    "value": pv[0], "pct": pv[1], "confidence": _row_conf([name] + nums),
+                    "labelConf": round(name["conf"], 3), "valueConf": _row_conf(nums)})   # 라벨·값 신뢰도 분리
+    return {"type": "main", "rows": out}
+
+def _parse_stat_detail(bs):
+    """ⓘ 상세: 제목(스탯명) + '+ :'(flat)·'% :'(pct)·'합산 :'(sum). ★배경 격리 후 호출 전제."""
+    rows = _stat_rows(bs)
+    start = 0                                          # '현재 보유 중인 능력치' 이후만 값(상세 설명문의 숫자 배제)
+    for i, rb in enumerate(rows):
+        n = _norm("".join(b["text"] for b in rb))
+        if "보유" in n and "능력치" in n: start = i + 1; break
+    flat = pct = summ = title = None; confs = []
+    for rb in rows[start:]:
+        n = _norm("".join(b["text"] for b in rb))
+        num = parse_kor_num("".join(b["text"] for b in rb if _has_num(b)))
+        if num is None: continue
+        if "합산" in n:
+            if summ is None: summ = num[0]
+        elif num[1]:                                   # is_pct → % 줄
+            if pct is None: pct = num[0]; confs.append(_row_conf(rb))
+        elif flat is None:                             # 합산·% 아닌 순수 숫자 = '+  :' 줄
+            flat = num[0]; confs.append(_row_conf(rb))
+    for rb in rows:                                    # 제목 = 공격력 / 주스탯(STR·DEX·INT·LUK)
+        for b in rb:
+            if _norm(b["text"]) == "공격력" or _is_main_stat(b["text"]): title = b["text"].strip(); break
+        if title: break
+    return {"type": "detail", "title": title, "flat": flat, "pct": pct, "sum": summ,
+            "confidence": round(min(confs) if confs else 0.5, 3)}
+
+def _modal_boxes(img, bs):
+    """스탯 모달(밝은 패널)만 남긴다. 좌측 메뉴·뒤 배경(반투명 어두움) 제거.
+    가장 크고 중앙에 가까운 '밝은' 사각 영역을 모달로 보고 그 안의 박스만 취한다."""
+    H, W = img.shape[:2]
+    g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, th = cv2.threshold(g, 175, 255, cv2.THRESH_BINARY)
+    th = cv2.morphologyEx(th, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))   # 텍스트 구멍 메움→모달 한 덩어리
+    cnts, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    best = None; best_score = 0.0; cx0 = W / 2.0
+    for c in cnts:
+        x, y, w, h = cv2.boundingRect(c)
+        if w < W * 0.18 or w > W * 0.72 or h < H * 0.25: continue   # 모달 크기대(메뉴칩·배경 제외)
+        score = w * h - abs((x + w / 2.0) - cx0) * h                # 큰 면적 + 중앙 근접
+        if score > best_score: best_score = score; best = (x, y, w, h)
+    if best is None: return bs
+    x, y, w, h = best; m = 10
+    return [b for b in bs if x - m <= b["xc"] <= x + w + m and y - m <= b["yc"] <= y + h + m]
+
+def parse_stats(ocr, img):
+    bs = _modal_boxes(img, _boxes(ocr, img))
+    if not bs: return {"type": "main", "rows": []}
+    if any("합산" in _norm(b["text"]) for b in bs): return _parse_stat_detail(bs)
+    return _parse_stat_main(bs)
 
 # ─────────────────────────── 워커(스레드별 자체 예측기) ───────────────────────────
 _jobs = queue.Queue()
@@ -224,9 +336,9 @@ def _worker(wid):
         if _ready_count[0] >= N_WORKERS: _ready.set()
     log.info("worker %d ready", wid)
     while True:
-        img, fut = _jobs.get()
+        img, fut, mode = _jobs.get()
         try:
-            fut["result"] = parse(ocr, img)
+            fut["result"] = parse_stats(ocr, img) if mode == "stats" else parse(ocr, img)
         except Exception as e:
             fut["error"] = e
             log.exception("ocr failed")
@@ -244,8 +356,7 @@ class OcrReq(BaseModel):
 def health():
     return {"ok": _ready.is_set(), "workers": N_WORKERS, "cpuThreads": CPU_THREADS}
 
-@app.post("/ocr")
-def ocr(req: OcrReq):
+def _decode(req: OcrReq):
     b64 = req.image or ""
     if "," in b64[:64] and b64[:5].lower() in ("data:", "data"):
         b64 = b64.split(",", 1)[1]
@@ -256,13 +367,24 @@ def ocr(req: OcrReq):
         raise HTTPException(status_code=400, detail="이미지 디코딩 실패")
     if img is None:
         raise HTTPException(status_code=400, detail="이미지 형식 오류")
+    return img
+
+def _run(img, mode):
     fut = {"event": threading.Event()}
-    _jobs.put((img, fut))
+    _jobs.put((img, fut, mode))
     if not fut["event"].wait(timeout=60):
         raise HTTPException(status_code=504, detail="OCR 처리 시간 초과")
     if "error" in fut:
         raise HTTPException(status_code=500, detail="OCR 처리 오류: " + str(fut["error"])[:200])
     return fut["result"]
+
+@app.post("/ocr")
+def ocr(req: OcrReq):
+    return _run(_decode(req), "gear")
+
+@app.post("/ocr-stats")
+def ocr_stats(req: OcrReq):
+    return _run(_decode(req), "stats")
 
 if __name__ == "__main__":
     for w in range(N_WORKERS):

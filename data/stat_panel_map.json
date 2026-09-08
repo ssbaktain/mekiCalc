@@ -1,0 +1,62 @@
+{
+  "_comment": "스탯 정보창 OCR: 인게임 패널 라벨(공백 제거 정규화) → 내부 statId. 딜 스탯(stats.json) + 미환산 스탯(display_stats.json) 통합 단일 매핑. ★착시 방지 원칙: 라벨을 공백 제거 정규화 후 '정확 일치'로만 매핑(부분일치 금지 — '데미지'가 '기본 공격 데미지'에 오매칭되지 않도록). 특수 케이스(공격력·주스탯=ⓘ 상세, 쿨감=단위 구분, 주/부스탯 판별)는 direct에 두지 않고 아래 규칙으로 처리.",
+
+  "direct": {
+    "방어력": "DEFENSE",
+    "크리티컬확률": "CRIT_RATE",
+    "크리티컬데미지": "CRIT_DMG",
+    "공격속도": "ATK_SPEED",
+    "스탯비례데미지": "STAT_PROP_DMG",
+    "데미지": "DMG",
+    "데미지증폭": "DMG_AMP",
+    "기본공격데미지": "BASIC_ATK_DMG",
+    "스킬데미지": "SKILL_DMG",
+    "방어관통력": "DEF_PEN",
+    "보스몬스터데미지": "BOSS_DMG",
+    "일반몬스터데미지": "NORMAL_DMG",
+    "상태이상데미지": "AILMENT_DMG",
+    "크리티컬저항": "CRIT_RESIST",
+    "최소데미지배율": "MIN_DMG_MULT",
+    "최대데미지배율": "MAX_DMG_MULT",
+    "최종데미지": "FINAL_DMG",
+    "동료소환지속시간증가": "SUMMON_DURATION",
+    "버프지속시간증가": "BUFF_DURATION",
+    "기본공격대상수증가": "BASIC_ATK_TARGETS",
+    "1레벨당주스탯": "MAIN_STAT_PER_LEVEL_REC",
+    "4레벨당주스탯%": "MAIN_STAT_PCT_PER_4LEVEL_REC",
+    "1차스킬레벨": "SKILL_LEVEL_1",
+    "2차스킬레벨": "SKILL_LEVEL_2",
+    "3차스킬레벨": "SKILL_LEVEL_3",
+    "4차스킬레벨": "SKILL_LEVEL_4",
+    "모든스킬레벨": "SKILL_LEVELS",
+
+    "최대HP": "MAX_HP",
+    "최대MP": "MAX_MP",
+    "초당MP회복": "MP_REGEN",
+    "받는피해감소": "DMG_REDUCTION",
+    "명중": "ACCURACY",
+    "회피": "EVASION",
+    "디버프내성": "DEBUFF_RESIST",
+    "경험치획득량": "EXP_GAIN",
+    "메소획득량": "MESO_GAIN"
+  },
+
+  "detail": {
+    "_comment": "패널 본문 총합은 스킬/유물 포함이라 미사용. ⓘ 상세의 '+ :'→flat, '% :'→pct 로만 입력. 공격력=무기공격력%(불변)·깡공, 주스탯=주스탯%·깡주.",
+    "공격력": { "flat": "ATK_FLAT", "pct": "ATK_PCT" },
+    "주스탯": { "flat": "MAIN_STAT_FLAT", "pct": "MAIN_STAT_PCT" }
+  },
+
+  "mainStat": {
+    "_comment": "STR·DEX·INT·LUK 줄 판별: ⓘ가 붙은(=값이 가장 큰) 줄=주스탯 → detail.주스탯 규칙으로 ⓘ +/% 입력(MAIN_STAT_FLAT/PCT). 나머지 줄=부스탯 → 본문 총합을 SUB_STAT_FLAT로. 직업 주스탯명 하드코딩 불필요(값 크기로 판별).",
+    "tokens": ["STR", "DEX", "INT", "LUK"],
+    "subFlat": "SUB_STAT_FLAT"
+  },
+
+  "cooldownReduction": {
+    "_comment": "'스킬 재사용 대기시간 감소' 라벨이 %줄·초줄 2개로 나옴 → 값 단위로 구분. %=COOLDOWN_REDUCTION_PCT, 초=COOLDOWN_REDUCTION.",
+    "label": "스킬재사용대기시간감소",
+    "pct": "COOLDOWN_REDUCTION_PCT",
+    "sec": "COOLDOWN_REDUCTION"
+  }
+}

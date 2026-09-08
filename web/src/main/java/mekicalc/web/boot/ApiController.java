@@ -180,6 +180,32 @@ public class ApiController {
         return service.gearOcr(str(req, "image"), strOpt(req, "mimeType"), str(req, "part"));
     }
 
+    /** 스탯 정보창 OCR: 누적 스크린샷(images[] 또는 image) → 캐릭터 프리셋 스탯 자동 채움. */
+    @PostMapping("/api/stat-ocr")
+    public Object statOcr(@RequestBody Map<String, Object> req) throws Exception {
+        java.util.List<String> images = new java.util.ArrayList<>();
+        Object imgs = req.get("images");
+        if (imgs instanceof java.util.List) for (Object o : (java.util.List<?>) imgs) if (o != null) images.add(String.valueOf(o));
+        if (req.get("image") != null) images.add(str(req, "image"));
+        return service.statOcr(images, strOpt(req, "mimeType"), (int) num(req, "level", 0), bool(req, "nightlord", false));
+    }
+
+    /** 스탯 OCR — 이미지 1장 파싱(프론트가 장별 호출해 진행도 표시). */
+    @PostMapping("/api/stat-ocr-parse")
+    public Object statOcrParse(@RequestBody Map<String, Object> req) throws Exception {
+        return service.statOcrParse(str(req, "image"), strOpt(req, "mimeType"));
+    }
+
+    /** 스탯 OCR — 파싱 결과들 → 계산·역산. */
+    @SuppressWarnings("unchecked")
+    @PostMapping("/api/stat-ocr-resolve")
+    public Object statOcrResolve(@RequestBody Map<String, Object> req) throws Exception {
+        java.util.List<Map<String, Object>> parsed = new java.util.ArrayList<>();
+        Object p = req.get("parsed");
+        if (p instanceof java.util.List) for (Object o : (java.util.List<?>) p) if (o instanceof Map) parsed.add((Map<String, Object>) o);
+        return service.statOcrResolve(parsed, (int) num(req, "level", 0), bool(req, "nightlord", false));
+    }
+
     @PostMapping("/api/target-damage")
     public Object targetDamage(@RequestBody Map<String, Object> req) {
         return service.targetDamage(str(req, "chapter"), str(req, "target"), num(req, "pen", 0),

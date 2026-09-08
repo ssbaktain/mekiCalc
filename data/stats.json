@@ -20,6 +20,8 @@
   { "id": "DEF_PEN",          "name": "방어 관통력%",            "unit": "PCT",   "combine": "DIMINISHING", "max": 100, "qualitative": true },
   { "id": "BOSS_DMG",         "name": "보스 몬스터 데미지%",      "unit": "PCT",   "combine": "SUM" },
   { "id": "NORMAL_DMG",       "name": "일반 몬스터 데미지%",      "unit": "PCT",   "combine": "SUM" },
+  { "id": "AILMENT_DMG",      "name": "상태이상 데미지%",         "unit": "PCT",   "combine": "SUM" },
+  { "id": "CRIT_RESIST",      "name": "크리티컬 저항%",           "unit": "PCT",   "combine": "SUM" },
   { "id": "MIN_DMG_MULT",     "name": "최소 데미지 배율%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "MAX_DMG_MULT",     "name": "최대 데미지 배율%",        "unit": "PCT",   "combine": "SUM" },
   { "id": "FINAL_DMG",        "name": "최종 데미지%",            "unit": "PCT",   "combine": "MULT_PCT" },

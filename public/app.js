@@ -869,55 +869,118 @@ async function loadStats(pre) {
   catch (e) { $("stat-form").textContent = "스탯 목록을 불러오지 못했습니다: " + e; }
 }
 
+// 게임 스탯 창 순서(사진 기준). 미환산도 인라인, 공격력/주스탯은 +/% 뒤 합산(최종) 표시. 목록에 없는 딜 스탯은 뒤에 안전 추가.
+const STAT_FORM_ORDER = [
+  "ATK_FLAT", "ATK_PCT", "DEFENSE", "MAX_HP", "MAX_MP",
+  "CRIT_RATE", "CRIT_DMG", "ATK_SPEED",
+  "MAIN_STAT_FLAT", "MAIN_STAT_PCT", "SUB_STAT_FLAT", "STAT_PROP_DMG",
+  "MP_REGEN", "DMG_REDUCTION",
+  "DMG", "DMG_AMP", "BASIC_ATK_DMG", "SKILL_DMG", "DEF_PEN",
+  "BOSS_DMG", "NORMAL_DMG", "AILMENT_DMG", "CRIT_RESIST",
+  "ACCURACY", "EVASION", "MIN_DMG_MULT", "MAX_DMG_MULT",
+  "EXP_GAIN", "MESO_GAIN", "FINAL_DMG",
+  "SUMMON_DURATION", "BUFF_DURATION", "DEBUFF_RESIST", "BASIC_ATK_TARGETS",
+  "COOLDOWN_REDUCTION_PCT", "COOLDOWN_REDUCTION",
+  "MAIN_STAT_PER_LEVEL_REC", "MAIN_STAT_PCT_PER_4LEVEL_REC",
+  "SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "SKILL_LEVELS",
+];
+
 function renderForm() {
-  const groups = new Map();
-  let levelDef = null;
-  for (const d of statDefs) {
-    if (d.id === "JOB") continue;   // 직업은 상단 선택기에서
-    if (d.id === "LEVEL") { levelDef = d; continue; }   // 레벨은 상단 공용 헤더로(직업·대상 옆)
-    if (!groups.has(d.group)) groups.set(d.group, []);
-    groups.get(d.group).push(d);
-  }
-  const slot = $("build-level-slot");   // 레벨: 헤더 슬롯. data-stat-id 동일 → 아래 핸들러/collectStats가 함께 처리
+  const dealById = new Map(statDefs.map((d) => [d.id, d]));           // 딜 스탯(stats.json)
+  const dispById = new Map(DISPLAY_STATS.map((d) => [d.id, d]));       // 미환산(기록용)
+  const levelDef = dealById.get("LEVEL");
+  const slot = $("build-level-slot");   // 레벨은 헤더 슬롯(직업·대상 옆). data-stat-id 동일 → collectStats/핸들러 공용
   if (slot) slot.innerHTML = levelDef
     ? `<label class="ctl inline">레벨<input type="number" id="f_${levelDef.id}" data-stat-id="${levelDef.id}" value="0" step="any" /></label>` : "";
+
   const form = $("stat-form");
   form.innerHTML = "";
-  for (const [group, defs] of groups) {
-    const box = document.createElement("div");
-    box.className = "group";
-    box.innerHTML = `<div class="group-title">${group}</div>`;
-    const grid = document.createElement("div");
-    grid.className = "field-grid";
-    for (const d of defs) {
-      const field = document.createElement("div");
-      field.className = "field";
-      field.dataset.statId = d.id;
-      field.innerHTML =
-        `<div class="field-head"><label for="f_${d.id}">${d.name}</label>` +
-        `<button type="button" class="qual-info" hidden aria-label="데미지 미환산 스탯" data-tip="데미지 미환산 스탯">ⓘ</button></div>` +
-        `<div class="input-wrap"><input type="number" id="f_${d.id}" data-stat-id="${d.id}" value="0" step="any" />` +
-        `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>`;
-      grid.appendChild(field);
-    }
-    box.appendChild(grid);
-    form.appendChild(box);
-  }
-  // 스탯 값 변경 시: (파생 트리거면)스탯 비례 데미지 즉시 반영 + 표기 버림 + 미저장 표시 + 자동 재계산
-  // #sub-build 범위 = 헤더 레벨 + 폼 필드 모두 커버(레벨을 헤더로 옮겼어도 동일 핸들러 적용)
+  const grid = document.createElement("div");
+  grid.className = "field-grid";
+  const done = new Set(["JOB", "LEVEL"]);
+  const emit = (id) => {
+    if (done.has(id)) return;
+    const disp = dispById.get(id);
+    const d = dealById.get(id) || disp;
+    if (!d) return;
+    done.add(id);
+    const field = document.createElement("div");
+    field.className = "field" + (disp ? " field-record" : "");
+    field.dataset.statId = id;
+    field.innerHTML =   // 기록 태그·미환산 ⓘ 제거(OCR로 채우니 불필요·정돈). 계산 결과 태그는 makeFinalField에서 유지.
+      `<div class="field-head"><label for="f_${id}">${d.name}</label></div>` +
+      `<div class="input-wrap"><input type="number" id="f_${id}" data-stat-id="${id}" value="0" step="any" />` +
+      `<span class="unit">${UNIT_SUFFIX[d.unit] ?? ""}</span></div>`;
+    grid.appendChild(field);
+    if (id === "ATK_PCT") grid.appendChild(makeFinalField("ATK", "최종 공격력"));         // 공격력 아래 = 최종(상시 패시브 선반영 포함)
+    if (id === "SUB_STAT_FLAT") grid.appendChild(makeFinalField("MAIN", "최종 주스탯"));   // 부스탯 아래 = 최종 주스탯
+  };
+  for (const id of STAT_FORM_ORDER) emit(id);
+  for (const d of statDefs) emit(d.id);   // 순서 목록에 없는 딜 스탯도 빠짐없이
+  form.appendChild(grid);
+
+  // 스탯 값 변경 시: (파생 트리거면)스탯 비례 즉시 반영 + 표기 버림 + 합산 갱신 + 미저장 표시 + 재계산
   for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {
     const id = input.dataset.statId;
-    input.addEventListener("input", () => { delete input.dataset.full; });   // 유저가 직접 편집 → 보존한 풀값 폐기, 표기값 신뢰
-    if (STAT_PROP_TRIGGERS.has(id)) input.addEventListener("input", deriveStatProp);   // 입력 즉시 갱신
+    input.addEventListener("input", () => { delete input.dataset.full; });
+    if (STAT_PROP_TRIGGERS.has(id)) input.addEventListener("input", deriveStatProp);
     input.addEventListener("change", () => {
-      truncStatInput(input);                              // 게임 표기 규칙(소수 2자리부터 버림)
-      if (STAT_PROP_TRIGGERS.has(id)) deriveStatProp();   // 트리거값 확정 시 재파생
+      truncStatInput(input);
+      if (STAT_PROP_TRIGGERS.has(id)) deriveStatProp();
+      updateStatFinals();
       setStatDirty(true); calcDamage(); refreshStatGuideHint();
     });
   }
   applyQualMarkers();
   refreshStatGuideHint();
+  updateStatFinals();
 }
+
+// 계산 결과만 보여주는 회색 비활성 필드(공격력·주스탯 최종). data-stat-id 없음 → collectStats/저장 제외.
+function makeFinalField(key, name) {
+  const f = document.createElement("div");
+  f.className = "field field-final";
+  f.innerHTML =
+    `<div class="field-head"><label>${name}</label><span class="fin-tag">계산 결과</span></div>` +
+    `<div class="input-wrap"><input type="text" data-final="${key}" value="" readonly disabled /><span class="unit"></span></div>`;
+  return f;
+}
+// 나이트로드 상시 공격력% 선반영 = 숙련된 표창술(+18%, growthSlot22=0.3%/lv). 서버 StatOcr.nightlordAtkReflectPct와 동일.
+function atkReflectPct() {
+  if (currentJob() !== 1) return 0;
+  const s = collectStats();
+  const lv = Math.round(s.LEVEL || 0), sk3 = Math.round(s.SKILL_LEVEL_3 || 0), skA = Math.round(s.SKILL_LEVELS || 0);
+  const eff3 = Math.max(0, 3 * (Math.min(lv, 100) - 60)) + sk3 + skA;   // Preset.effectiveSkillLevel(3)
+  return truncStat(18 * (1 + 0.003 * eff3), "PCT");   // 게임 표기규칙(소수 1자리 버림) = 29.664→29.6%
+}
+// 최종 공격력=깡공×(1+공격력%)×(1+상시선반영%)  (게임 본문 공격력과 동일). 최종 주스탯=깡주×(1+주스탯%)(주스탯 상시패시브 없음).
+function updateStatFinals() {
+  const s = collectStats();
+  const rAtk = atkReflectPct();
+  const put = (key, v) => {
+    const inp = document.querySelector('input[data-final="' + key + '"]');
+    if (inp) inp.value = v > 0 ? (koreanUnit(Math.round(v)) || Math.round(v).toLocaleString()) : "";
+  };
+  put("ATK", (s.ATK_FLAT || 0) * (1 + (s.ATK_PCT || 0) / 100) * (1 + rAtk / 100));
+  put("MAIN", (s.MAIN_STAT_FLAT || 0) * (1 + (s.MAIN_STAT_PCT || 0) / 100));
+}
+
+// 미환산(딜 무관) 스탯 정의 — data/display_stats.json과 동일(id·이름·단위). 딜 엔진 미투입, 프리셋에 기록/표시만.
+const DISPLAY_STATS = [
+  { id: "MAX_HP", name: "최대 HP", unit: "FLAT" },
+  { id: "MAX_MP", name: "최대 MP", unit: "FLAT" },
+  { id: "MP_REGEN", name: "초당 MP 회복", unit: "FLAT" },
+  { id: "DMG_REDUCTION", name: "받는 피해 감소", unit: "PCT" },
+  { id: "ACCURACY", name: "명중", unit: "FLAT" },
+  { id: "EVASION", name: "회피", unit: "FLAT" },
+  { id: "DEBUFF_RESIST", name: "디버프 내성", unit: "FLAT" },
+  { id: "EXP_GAIN", name: "경험치 획득량", unit: "PCT" },
+  { id: "MESO_GAIN", name: "메소 획득량", unit: "PCT" },
+  { id: "MAIN_STAT_PER_LEVEL_REC", name: "1레벨당 주 스탯", unit: "FLAT" },      // 기록용(이미 주스탯에 반영, 이중가산 방지 위해 딜 id와 분리)
+  { id: "MAIN_STAT_PCT_PER_4LEVEL_REC", name: "4레벨당 주 스탯%", unit: "PCT" },  // 기록용
+];
+// 스탯 단위(딜 스탯 statDefs → 미환산 DISPLAY_STATS → FLAT 폴백). 표기 버림·채움에서 % 소수 보존용.
+function unitOf(id) { const d = statDefById(id) || DISPLAY_STATS.find((x) => x.id === id); return d ? d.unit : "FLAT"; }
 
 // 게임 스탯 표기 규칙(전역): +옵션(FLAT·LEVEL)은 자연수, %·초는 소수 1자리까지, 소수 2자리부터는 버림(내림).
 function truncStat(v, unit) {
@@ -929,8 +992,7 @@ function statDefById(id) { return (statDefs || []).find((d) => d.id === id); }
 function truncStatInput(input) {
   const v = parseFloat(input.value);
   if (isNaN(v)) return;
-  const def = statDefById(input.dataset.statId);
-  input.value = truncStat(v, def ? def.unit : "FLAT");
+  input.value = truncStat(v, unitOf(input.dataset.statId));   // 미환산 %스탯 소수 보존
 }
 
 // 최종뎀% 등은 게임 내부 곱연산 라운딩을 역산할 수 없어(넥슨 공식: 스탯창 표기대로 적용) 표기값은 소수 1자리로 두되,
@@ -2234,72 +2296,294 @@ function gcShowPreview(file) {
   $("gc-preview").hidden = false;
 }
 
+// ──────────────────── 스탯 정보창 OCR(캐릭터 프리셋 자동 입력) ────────────────────
+let statOcrWired = false;
+function wireStatOcr() {
+  const card = $("stat-ocr");
+  const on = typeof meta !== "undefined" && meta.ocrEnabled;
+  if (card) card.hidden = !on;   // OCR 미설정이면 숨김
+  if (statOcrWired || !on) return;
+  statOcrWired = true;
+  $("stat-ocr-btn").addEventListener("click", openStatOcr);
+  $("so-x").addEventListener("click", closeStatOcr);
+  $("so-guide").addEventListener("click", () => openStatGuide(false));
+  $("so-upload").addEventListener("click", statOcrProceed);
+  $("sgg-x").addEventListener("click", closeStatGuide);
+  $("sgg-prev").addEventListener("click", statGuidePrev);
+  $("sgg-next").addEventListener("click", statGuideNext);
+  $("sp-done").addEventListener("click", spClose);
+  // 수집 모달: 파일 선택 + Ctrl+V 붙여넣기 + 드래그드롭
+  $("sc-x").addEventListener("click", closeStatCollect);
+  $("sc-add").addEventListener("click", () => $("sc-file").click());
+  $("sc-file").addEventListener("change", (e) => { addScFiles(e.target.files); e.target.value = ""; });
+  $("sc-go").addEventListener("click", scGo);
+  document.addEventListener("paste", (e) => {
+    if ($("modal-stat-collect").hidden) return;   // 수집 모달 열려 있을 때만(장비 OCR 붙여넣기와 분리)
+    const imgs = [...(e.clipboardData?.items || [])].filter((x) => x.type && x.type.startsWith("image/")).map((x) => x.getAsFile()).filter(Boolean);
+    if (imgs.length) { e.preventDefault(); addScFiles(imgs); }
+  });
+  const drop = $("sc-drop");
+  if (drop) {
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("drag"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+    drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("drag"); addScFiles(e.dataTransfer && e.dataTransfer.files); });
+  }
+}
+
+// 단계별 가이드 슬라이드(게임 스샷). 최초 1회 필수 자동, 이후 '단계별 가이드' 버튼으로.
+const STAT_OCR_GUIDE = [
+  { img: "s1-preset.png",   cap: "게임에서 <b>프리셋</b> 메뉴를 엽니다." },
+  { img: "s2-ability.png",  cap: "대상이 <b>챕터 사냥이 아니면</b>, ‘챕터 사냥’ 프리셋의 <b>어빌리티</b>를 대상 프리셋과 <b>동일하게</b> 맞춥니다." },
+  { img: "s3-empty.png",    cap: "<b>유물 프리셋을 모두 비웁니다</b>(＋ 4칸). 유물 효과는 계산기가 따로 반영해요." },
+  { img: "s4-expected.png", cap: "<b>예상 능력치</b>를 눌러 스탯 정보 창을 엽니다." },
+  { img: "s5-top.png",      cap: "스탯 창 <b>위쪽</b>을 스크린샷 (공격력~데미지)." },
+  { img: "s6-mid.png",      cap: "스크롤해서 <b>중간</b>을 스크린샷 (데미지~메소 획득량)." },
+  { img: "s7-bottom.png",   cap: "스크롤해서 <b>아래쪽</b>을 스크린샷 (경험치~스킬 레벨)." },
+  { img: "s8-atk.png",      cap: "<b>공격력 옆 ⓘ</b>를 눌러 상세 창을 스크린샷 — <b>필수</b>." },
+  { img: "s9-mainstat.png", cap: "<b>주스탯(LUK 등) 옆 ⓘ</b>를 눌러 상세 창을 스크린샷 — <b>필수</b>." },
+];
+let sgIdx = 0, sgForced = false, statOcrLevel = 0, statOcrFiles = [];
+function statOcrCount() { return parseInt(localStorage.getItem("mekicalc.statOcrCount") || "0", 10) || 0; }
+function bumpStatOcrCount() { try { localStorage.setItem("mekicalc.statOcrCount", String(statOcrCount() + 1)); } catch (e) {} }
+
+// 진입: 직업·레벨 입력 모달(폼 값 프리필).
+function openStatOcr() {
+  const jobSel = $("so-job");
+  if (jobSel) { jobSel.innerHTML = $("job-sel").innerHTML; jobSel.value = $("job-sel").value; }
+  $("so-level").value = Math.round(collectStats().LEVEL || 0) || "";
+  $("modal-stat-ocr").hidden = false;
+}
+function closeStatOcr() { $("modal-stat-ocr").hidden = true; }
+
+// 직업·레벨을 폼에 반영(기존 핸들러 재사용) 후 업로드 진행. 처음(0회)이면 단계별 가이드 필수.
+function statOcrProceed() {
+  const lv = Math.max(0, Math.round(parseFloat($("so-level").value) || 0));
+  if (lv <= 0) { toast("캐릭터 레벨을 입력해주세요 — 상시 패시브(공격력) 계산에 필요해요."); const el = $("so-level"); if (el) el.focus(); return; }
+  statOcrLevel = lv;   // ★모달에서 받은 레벨을 OCR에 직접 사용(collectStats/dataset.full 경유 안 해 확실히 전달)
+  const jobSel = $("job-sel"), lvInp = $("f_LEVEL");
+  const job = String(parseInt($("so-job").value, 10) || 0);
+  if (jobSel && jobSel.value !== job) { jobSel.value = job; jobSel.dispatchEvent(new Event("change")); }
+  if (lvInp) { delete lvInp.dataset.full; lvInp.value = lv; lvInp.dispatchEvent(new Event("change")); }   // 폼에도 반영(스테일 풀값 제거)
+  closeStatOcr();
+  if (statOcrCount() <= 0) openStatGuide(true);   // 처음이면 가이드 반드시 → 끝나면 수집
+  else openStatCollect();
+}
+
+function openStatGuide(forced) { sgForced = !!forced; sgIdx = 0; renderStatGuide(); $("modal-stat-guide").hidden = false; }
+function closeStatGuide() { $("modal-stat-guide").hidden = true; }
+function renderStatGuide() {
+  const g = STAT_OCR_GUIDE[sgIdx], last = sgIdx === STAT_OCR_GUIDE.length - 1;
+  $("sgg-img").src = "/guide/stat-ocr/" + g.img;
+  $("sgg-cap").innerHTML = g.cap;
+  $("sgg-step").textContent = (sgIdx + 1) + " / " + STAT_OCR_GUIDE.length;
+  $("sgg-prev").disabled = sgIdx === 0;
+  $("sgg-next").textContent = last ? (sgForced ? "스크린샷 올리기 →" : "완료") : "다음 →";
+  const dots = $("sgg-dots"); dots.innerHTML = "";
+  STAT_OCR_GUIDE.forEach((_, i) => { const d = document.createElement("span"); d.className = "sgg-dot" + (i === sgIdx ? " on" : ""); dots.appendChild(d); });
+}
+function statGuidePrev() { if (sgIdx > 0) { sgIdx--; renderStatGuide(); } }
+function statGuideNext() {
+  if (sgIdx < STAT_OCR_GUIDE.length - 1) { sgIdx++; renderStatGuide(); return; }
+  closeStatGuide();
+  if (sgForced) openStatCollect();   // 필수 가이드 끝 → 수집 모달
+}
+
+// ── 스크린샷 수집(파일 선택 + Ctrl+V 붙여넣기 + 드래그, 여러 장) ──
+function openStatCollect() { statOcrFiles = []; renderScThumbs(); $("modal-stat-collect").hidden = false; }
+function closeStatCollect() { $("modal-stat-collect").hidden = true; }
+function addScFiles(list) {
+  for (const f of list || []) if (f && f.type && f.type.startsWith("image/")) statOcrFiles.push(f);
+  renderScThumbs();
+}
+function renderScThumbs() {
+  const box = $("sc-thumbs"); if (!box) return;
+  box.innerHTML = "";
+  statOcrFiles.forEach((f, i) => {
+    const d = document.createElement("div"); d.className = "sc-thumb";
+    const img = document.createElement("img"); img.src = URL.createObjectURL(f); img.onload = () => URL.revokeObjectURL(img.src);
+    const x = document.createElement("button"); x.type = "button"; x.className = "sc-thumb-x"; x.textContent = "✕";
+    x.addEventListener("click", () => { statOcrFiles.splice(i, 1); renderScThumbs(); });
+    d.appendChild(img); d.appendChild(x); box.appendChild(d);
+  });
+  const c = $("sc-count"); if (c) c.textContent = statOcrFiles.length + "장";
+  const go = $("sc-go"); if (go) go.disabled = statOcrFiles.length === 0;
+}
+function scGo() { if (!statOcrFiles.length) return; closeStatCollect(); runStatOcr(statOcrFiles.slice()); }
+
+// ── 진행 상태 모달(스피너·진행바·퍼센트·단계 문구) ──
+let spTimer = null;
+function spOpen() { clearTimeout(spTimer); $("sp-done").hidden = true; $("sp-spinner").style.visibility = "visible"; spSet(0, "시작하는 중…", "스탯 인식 중…"); $("modal-stat-progress").hidden = false; }
+function spSet(pct, stage, title) {
+  $("sp-bar-fill").style.width = Math.max(0, Math.min(100, pct)) + "%";
+  $("sp-pct").textContent = Math.round(pct) + "%";
+  if (stage != null) $("sp-stage").textContent = stage;
+  if (title != null) $("sp-title").textContent = title;
+}
+function spFinish(title, stage) { spSet(100, stage != null ? stage : "", title); $("sp-spinner").style.visibility = "hidden"; $("sp-done").hidden = false; }
+function spClose() { clearTimeout(spTimer); $("modal-stat-progress").hidden = true; }
+function spAutoClose() { clearTimeout(spTimer); spTimer = setTimeout(spClose, 3000); }   // 완료 후 3초 자동 닫힘(확인 버튼으로 즉시 닫기 가능)
+const spSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function runStatOcr(files) {
+  const status = $("stat-ocr-status");
+  spOpen();
+  try {
+    const imgs = [...files].filter((f) => f.type && f.type.startsWith("image/"));
+    if (!imgs.length) { spFinish("이미지 파일이 없습니다."); spAutoClose(); return; }
+    const M = imgs.length;
+    // 1) 장별 인식(실제 진행도). 사이드카 워커가 바쁘면 잠시 대기할 수 있음.
+    const parsed = [];
+    for (let i = 0; i < M; i++) {
+      spSet(4 + (i / M) * 76, `스탯 창 인식 중…  (${i + 1} / ${M})\n다른 사용자가 많으면 잠시 대기할 수 있어요`, "스탯 인식 중…");
+      const { base64 } = await gcReadImage(imgs[i]);
+      parsed.push(await postJson("/api/stat-ocr-parse", { image: base64, mimeType: "image/jpeg" }));
+    }
+    // 2) 계산/역산
+    spSet(84, "값을 계산하는 중…", "값 계산 중…");
+    const level = statOcrLevel || Math.round(collectStats().LEVEL || 0);   // 모달에서 받은 레벨 우선
+    const nightlord = currentJob() === 1;
+    const data = await postJson("/api/stat-ocr-resolve", { parsed, level, nightlord });
+    if (data && data.gearMatch === false) { spSet(92, "장비가 챕터 사냥과 달라\n공격력·주스탯을 역산하는 중…"); await spSleep(500); }
+    spSet(97, "값을 채우는 중…");
+    const n = fillStatOcr(data);
+    spFinish("완료!", `${n}개 값을 반영했어요. 확인·수정 후 저장하세요.`);
+    if (status) status.textContent = `인식 완료 — ${n}개 값 반영.`;
+    spAutoClose();
+  } catch (e) {
+    spFinish("인식 실패", e && e.message ? e.message : String(e));
+    if (status) status.textContent = "인식 실패: " + (e && e.message ? e.message : e);
+    spAutoClose();
+  }
+}
+
+// OCR 결과(statId→값)를 폼·미환산 섹션에 채움. 낮은 신뢰도·추정은 ⚠️(주황) 표시.
+function fillStatOcr(data) {
+  clearStatOcrFlags();   // 이전 OCR 경고 제거 후 새로 표시
+  const vals = (data && data.values) || {}, mm = (data && data.meta) || {};
+  let n = 0, anyWarn = false;
+  for (const id in vals) {
+    const inp = $("f_" + id);
+    if (!inp) continue;
+    setStatValue(inp, vals[id], unitOf(id));
+    const m = mm[id] || {};
+    anyWarn = anyWarn || !!(m.labelWarn || m.valueWarn || m.estimated);
+    statOcrMarkWarn(inp, m);
+    n++;
+  }
+  const box = $("stat-ocr-warn");
+  const notes = (data && data.notes) || [];
+  if (anyWarn || notes.length) {
+    box.hidden = false;
+    box.textContent = "⚠️ " + notes.join(" ") + (anyWarn ? " 주황으로 표시된 값은 신뢰도가 낮거나 추정값이에요 — 확인해 주세요." : "");
+  } else box.hidden = true;
+  if (typeof deriveStatProp === "function") deriveStatProp();
+  updateStatFinals();
+  setStatDirty(true); calcDamage(); refreshStatGuideHint();
+  if (n > 0) bumpStatOcrCount();   // OCR 성공 1회 기록(0회면 다음에도 가이드 강제)
+  return n;
+}
+
+// ── 공용 OCR 신뢰도 표시(주황) + 마우스 위 커스텀 툴팁 — 장비 비교·스탯 공용 ──
+const OCR_WARN_CONF = 0.80;
+let _ocrTip = null;
+function ocrTip() { if (!_ocrTip) { _ocrTip = document.createElement("div"); _ocrTip.id = "ocr-tip"; _ocrTip.hidden = true; document.body.appendChild(_ocrTip); } return _ocrTip; }
+function ocrTipHide() { if (_ocrTip) _ocrTip.hidden = true; }
+function ocrTipShow(el, html) {
+  const t = ocrTip(); t.innerHTML = html; t.hidden = false;
+  const r = el.getBoundingClientRect();
+  let left = Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, r.left + r.width / 2 - t.offsetWidth / 2));
+  let top = r.top - t.offsetHeight - 9;              // 마우스(요소) 위쪽
+  if (top < 6) top = r.bottom + 9;                   // 위 공간 없으면 아래로
+  t.style.left = left + "px"; t.style.top = top + "px";
+}
+// el에 주황 표시 + 호버 툴팁. on=false면 해제.
+function ocrWarnEl(el, on, tipHtml) {
+  if (!el) return;
+  el.classList.toggle("ocr-warn", !!on);
+  if (on && tipHtml) {
+    el.dataset.ocrtip = tipHtml;
+    if (!el._ocrBound) { el._ocrBound = true;
+      el.addEventListener("mouseenter", () => { if (el.dataset.ocrtip) ocrTipShow(el, el.dataset.ocrtip); });
+      el.addEventListener("mouseleave", ocrTipHide);
+    }
+  } else if (el.dataset) { delete el.dataset.ocrtip; }
+}
+// 신뢰도 툴팁 HTML(신뢰도 크게 강조 → 옆 텍스트와 확실히 구분).
+function ocrConfTip(conf, msg) {
+  const pct = conf != null ? Math.round(conf * 100) : null;
+  return (pct != null ? `<span class="ocr-tip-conf">인식 신뢰도 ${pct}%</span>` : "") +
+    `<span class="ocr-tip-msg">${msg || "이미지가 흐리거나 잘려 정확하지 않을 수 있어요. 확인해 주세요."}</span>`;
+}
+
+// OCR 경고 초기화 — 프리셋 전환·재OCR 시 이전 주황/툴팁 제거.
+function clearStatOcrFlags() {
+  document.querySelectorAll("#sub-build .ocr-warn").forEach((el) => ocrWarnEl(el, false));
+  const box = $("stat-ocr-warn"); if (box) { box.hidden = true; box.textContent = ""; }
+  ocrTipHide();
+}
+
+// 스탯 필드: 종류(라벨)·수치(입력) 각각 신뢰도에 따라 주황 표시(따로).
+function statOcrMarkWarn(inp, m) {
+  const field = inp.closest(".field"); if (!field) return;
+  const label = field.querySelector("label");
+  ocrWarnEl(label, !!(m && m.labelWarn), ocrConfTip(m && m.labelConf, "스탯 종류를 잘못 읽었을 수 있어요. 확인해 주세요."));
+  const estimated = !!(m && m.estimated);
+  ocrWarnEl(inp, !!(m && (m.valueWarn || m.estimated)), estimated
+    ? ocrConfTip(null, "추정값 — 장비 구성 차이로 오차가 있을 수 있어요. 확인해 주세요.")
+    : ocrConfTip(m && m.valueConf, "값을 잘못 읽었을 수 있어요. 확인해 주세요."));
+}
+
 async function runGearOcr(file) {
   if (!file || !file.type.startsWith("image/")) { toast("이미지 파일이 아닙니다."); return; }
   gcShowPreview(file);
-  const box = $("gc-preview");
-  box.classList.add("loading");   // 어둡게 + 스피너(클래스로만 제어 → 완료 시 확실히 사라짐)
-  $("gc-status").textContent = "이미지 인식 중…";
+  spOpen(); spSet(15, "장비 스크린샷 인식 중…\n다른 사용자가 많으면 잠시 대기할 수 있어요", "장비 인식 중…");
   try {
     const { base64, mimeType } = await gcReadImage(file);
+    spSet(45, "이미지 인식 중…");
     const data = await postJson("/api/gear-ocr", { image: base64, mimeType, part: $("gc-part").value });
+    spSet(85, "값 채우는 중…");
     // 감지된 부위로 드롭다운 전환 후 박스 재구성(부위별 주옵션·부옵션 풀이 달라 안 하면 특옵 입력 불가).
-    if (data.part && $("gc-part").value !== data.part) {
-      $("gc-part").value = data.part;
-      gcBuildBoxes();
-    }
+    if (data.part && $("gc-part").value !== data.part) { $("gc-part").value = data.part; gcBuildBoxes(); }
     gcApplyOcrSide("gc-l", data.left);
     gcApplyOcrSide("gc-r", data.right);
     gcUpdateWarn();
-    $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
     runGearCompare();
-  } catch (e) { $("gc-status").textContent = "인식 실패: " + e.message; }
-  finally { box.classList.remove("loading"); }
+    if ($("gc-status")) $("gc-status").textContent = "인식 완료 — 값을 확인·수정한 뒤 비교하세요.";
+    spFinish("완료!", "값을 확인·수정한 뒤 비교하세요."); spAutoClose();
+  } catch (e) {
+    if ($("gc-status")) $("gc-status").textContent = "인식 실패: " + (e && e.message ? e.message : e);
+    spFinish("인식 실패", e && e.message ? e.message : String(e)); spAutoClose();
+  }
 }
 
 // OCR 결과 한 박스를 폼에 반영: 주 옵션은 입력값, 부 옵션은 줄로 재생성. 낮은 신뢰도(warn)는 ⚠️로 재확인 유도.
 function gcApplyOcrSide(prefix, side) {
   if (!side) return;
-  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) { inp.value = "0"; gcMarkWarn(inp, false); }
+  for (const inp of $(prefix + "-main").querySelectorAll("input.gc-val")) { inp.value = "0"; gcMarkWarn(inp, null); }
   for (const o of (side.main || [])) {
     const inp = $(prefix + "-main").querySelector('input[data-stat="' + o.statId + '"]');
-    if (inp) { inp.value = o.value; gcMarkWarn(inp, o.warn, o.confidence); }
+    if (inp) { inp.value = o.value; gcMarkWarn(inp, o); }
   }
   $(prefix + "-sub").innerHTML = "";
-  for (const o of (side.sub || [])) gcAddSubRow(prefix, o.statId, o.value, o.warn, o.confidence);
+  for (const o of (side.sub || [])) gcAddSubRow(prefix, o.statId, o.value, o);
 }
 
-// 인식 신뢰도가 낮은 값(warn): [스탯 + 값]을 둥근 주황 테두리로 묶고 그 왼쪽에 ⚠️(공용 호버 팝업, 신뢰도% 안내).
-// 스탯 종류 자체도 오독일 수 있어 스탯·값을 함께 묶어 재확인 유도.
-function gcMarkWarn(inp, warn, confidence) {
+// 장비 행: 스탯 종류(이름/드롭다운)·수치(입력) 각각 신뢰도에 따라 주황 표시(따로). meta=사이드카 옵션 객체(없으면 해제).
+function gcMarkWarn(inp, meta) {
   const row = inp.closest(".gc-row"); if (!row) return;
-  // 초기화: 기존 묶음/아이콘 해제(묶음 내용물을 행으로 되돌림)
-  const oldWrap = row.querySelector(".gc-warn-group");
-  if (oldWrap) { while (oldWrap.firstChild) row.insertBefore(oldWrap.firstChild, oldWrap); oldWrap.remove(); }
-  const oldIc = row.querySelector(".info-help.gc-warn"); if (oldIc) oldIc.remove();
-  if (!warn) return;
   const stat = row.querySelector(".gc-name, .gc-substat");   // 주=이름 span, 부=드롭다운
-  const del = row.querySelector(".gc-del");
-  const wrap = document.createElement("div"); wrap.className = "gc-warn-group";
-  row.insertBefore(wrap, del || null);      // 삭제버튼(부옵션) 앞, 없으면 끝
-  if (stat) wrap.appendChild(stat);
-  wrap.appendChild(inp);
-  const pct = confidence != null ? Math.round(confidence * 100) : null;
-  const body = document.createElement("span");
-  body.className = "info-pop-body";
-  body.textContent = (pct != null ? `인식 신뢰도 약 ${pct}% — ` : "") +
-    "이미지가 흐리거나 일부가 잘려 값이 정확하지 않을 수 있어요. 스탯 종류와 값을 확인해 주세요.";
-  const ic = mkInfo("⚠️", body, true);      // 공용 호버 팝업 UI
-  ic.classList.add("gc-warn");
-  row.insertBefore(ic, wrap);               // 묶음 박스 왼쪽
+  const lw = !!(meta && meta.labelConf != null && meta.labelConf < OCR_WARN_CONF);
+  const vw = !!(meta && meta.valueConf != null && meta.valueConf < OCR_WARN_CONF);
+  ocrWarnEl(stat, lw, ocrConfTip(meta && meta.labelConf, "스탯 종류를 잘못 읽었을 수 있어요. 확인해 주세요."));
+  ocrWarnEl(inp, vw, ocrConfTip(meta && meta.valueConf, "값을 잘못 읽었을 수 있어요. 확인해 주세요."));
 }
 
-// 양쪽(현재/새 장비) 어디든 의심 값이 하나라도 있으면 두 박스 아래에 경고 문구 하나 표시.
+// 양쪽 어디든 주황 표시가 하나라도 있으면 두 박스 아래에 경고 문구 하나 표시.
 function gcUpdateWarn() {
   const box = $("gc-warn"); if (!box) return;
-  const n = document.querySelectorAll("#panel-gear .info-help.gc-warn").length;
+  const n = document.querySelectorAll("#panel-gear .ocr-warn").length;
   box.hidden = n === 0;
-  if (n) box.textContent = "⚠️ 이미지가 흐리거나 일부가 잘려 텍스트 변환 정확도가 보장되지 않아요. ⚠️ 표시된 스탯·값을 다시 확인해 주세요.";
+  if (n) box.textContent = "⚠️ 주황으로 표시된 스탯·값은 인식 신뢰도가 낮아요 — 값을 다시 확인해 주세요.";
 }
 
 function gcBuildBoxes() {
@@ -2341,8 +2625,8 @@ function gcBuildSide(prefix) {
   $(prefix + "-sub").innerHTML = "";   // 부옵션은 빈 상태로 시작(유저가 추가)
 }
 
-// 부옵션 한 줄(스탯 드롭다운 + 값 + 삭제).
-function gcAddSubRow(prefix, stat, value, warn, confidence) {
+// 부옵션 한 줄(스탯 드롭다운 + 값 + 삭제). meta=사이드카 옵션 객체(신뢰도).
+function gcAddSubRow(prefix, stat, value, meta) {
   const box = $(prefix + "-sub");
   const row = document.createElement("div");
   row.className = "gc-row gc-subrow";
@@ -2357,7 +2641,7 @@ function gcAddSubRow(prefix, stat, value, warn, confidence) {
   del.addEventListener("click", () => row.remove());
   row.appendChild(sel); row.appendChild(inp); row.appendChild(del);
   box.appendChild(row);
-  gcMarkWarn(inp, warn, confidence);
+  gcMarkWarn(inp, meta);
 }
 
 // 종류 변경 시 기존 부옵션 줄의 드롭다운 옵션만 갱신(선택 보존).
@@ -2598,11 +2882,12 @@ $("cmp-apply").addEventListener("click", runApply);
 // 스탯 입력 폼을 주어진 값으로 채운다(없는 스탯은 0).
 // double 덧뺄셈에서 생기는 부동소수점 노이즈(예: 321.90000000000003) 제거.
 function fillStats(stats) {
-  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {   // 헤더 레벨 + 폼 필드
-    const def = statDefById(input.dataset.statId);
+  clearStatOcrFlags();   // 프리셋 전환 시 이전 OCR 경고(주황 테두리·⚠️·문구) 제거
+  for (const input of document.querySelectorAll("#sub-build input[data-stat-id]")) {   // 헤더 레벨 + 폼 필드 + 미환산
     const v = stats[input.dataset.statId];
-    setStatValue(input, v == null ? null : v, def ? def.unit : "FLAT");   // 화면=표기(버림), 계산 원본=풀값 보존
+    setStatValue(input, v == null ? null : v, unitOf(input.dataset.statId));   // 화면=표기(버림), 계산 원본=풀값 보존
   }
+  updateStatFinals();       // 공격력·주스탯 합산(최종) 갱신
   refreshStatGuideHint();   // 프리셋 적용 후 미입력/입력 여부 재판정
 }
 
@@ -4278,6 +4563,7 @@ function applyMeta(m) {
   $("ev-grade").value = meta.grades[meta.grades.length - 1];
   applyGradeColor($("ev-grade"));
   saveJSON(CACHE_META, meta);
+  wireStatOcr();   // 스탯 정보창 OCR 버튼 노출/배선(meta.ocrEnabled 반영)
 }
 
 async function loadMeta(pre) {
