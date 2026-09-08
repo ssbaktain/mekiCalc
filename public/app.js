@@ -2081,8 +2081,10 @@ const PER_LEVEL_STATS = [
   { id: "MAIN_STAT_PER_LEVEL", name: "1레벨당 주스탯(+)", unit: "FLAT" },
   { id: "MAIN_STAT_PCT_PER_4LEVEL", name: "4레벨당 주스탯%", unit: "PCT" },
 ];
+// 스탯 비교에서 제외: 딜 미배선 스탯(AILMENT_DMG=아직 딜 반영 안 함, CRIT_RESIST=딜 무관) — 스탯 창 표시/OCR용으로만 존재
+const SC_EXCLUDE = new Set(["LEVEL", "BASIC_ATK_TARGETS", "JOB", "AILMENT_DMG", "CRIT_RESIST"]);
 function scStatDefs() {
-  const base = (statDefs || []).filter((d) => !d.hidden && d.id !== "LEVEL" && d.id !== "BASIC_ATK_TARGETS" && d.id !== "JOB");
+  const base = (statDefs || []).filter((d) => !d.hidden && !SC_EXCLUDE.has(d.id));
   return [...base, { id: "ATK_PCT_SKILL", name: EXP_SYNTH.ATK_PCT_SKILL, unit: "PCT" }, ...PER_LEVEL_STATS];   // 합성: 스킬/유물 유래 공격력% + 장비 특수 옵션
 }
 
@@ -5985,7 +5987,7 @@ function tlStatDerived(stat, amt, s) {
 // 실험 드롭다운: 딜 영향 스탯. JOB/LEVEL 제외. 스탯비례데미지는 주/부스탯으로 조절하므로 직접선택 제외.
 const EXP_SYNTH = { ATK_PCT_SKILL: "공격력%(스킬/유물)" };   // 합성 옵션: 프리셋 공%와 달리 별도 곱(스킬/유물 공격력처럼)
 function tlExpStatOptions(sel) {
-  const skip = new Set(["JOB", "LEVEL", "STAT_PROP_DMG"]);
+  const skip = new Set(["JOB", "LEVEL", "STAT_PROP_DMG", "AILMENT_DMG", "CRIT_RESIST"]);   // 딜 미배선(AILMENT_DMG)·딜 무관(CRIT_RESIST) 제외
   const ph = sel ? "" : `<option value="" disabled selected hidden>스탯 선택…</option>`;
   let opts = "";
   for (const d of (statDefs || [])) {
