@@ -467,10 +467,12 @@ function syncMobileActive(leaf) {
 }
 
 // 실제 패널 적용(공용). push=true면 주소창 URL도 갱신(pushState).
+let _appliedLeafPath = null;
 function applyLeaf(leaf, item, push) {
   const staysInPresets = leaf.panel === "presets" && !leaf.sub;
   if (!staysInPresets && !canLeaveEditors()) return false;
-  closeAllModals();   // 탭 이동 시 열린 팝업(내보내기·불러오기·선택)·잔존 선택 정리
+  if (_appliedLeafPath !== leaf.path) closeAllModals();   // ★실제 탭 이동일 때만 열린 팝업 정리(같은 탭 재적용=부팅 마무리 navigate 시 방금 연 모달 유지)
+  _appliedLeafPath = leaf.path;
   closeMenus();
   item = item || routeItemEls.get(leaf.path);
   if (item) setActiveMenu(item);
@@ -6954,6 +6956,7 @@ function compBuffTargetLabel(t) {
   const bootPath = location.pathname;
   const bootLeaf = leafByPath(normPath(bootPath)) || (bootPath.startsWith("/notices") ? leafByPath("/notices") : null);
   const bootDeep = !!(bootLeaf && bootLeaf !== MENU[0]);
+  _appliedLeafPath = bootLeaf ? bootLeaf.path : null;   // 부팅 마무리 navigate가 같은 탭이면 no-op → 로딩 중 연 모달이 안 닫힘
   if (bootDeep) {
     for (const p of document.querySelectorAll(".panel")) p.hidden = (p.id !== "panel-" + bootLeaf.panel);
     document.body.classList.toggle("notices-active", bootLeaf.panel === "notices");
