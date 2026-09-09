@@ -89,6 +89,10 @@ public final class CubeRecommender {
                                     Map<String, double[]> ranges, boolean[] locked,
                                     String grade, int stack, EquipmentPotential ep) {
         String curGrade = grade != null ? grade : "";
+        // ★부위별 범위 필터: 이 부위가 실제로 뽑을 수 있는 스탯의 범위만 적용한다.
+        // 특옵(부위 한정: 상의=대상수·모자=쿨감 등)에 건 범위는 그 특옵이 나오는 부위에만, 공용 옵션 범위는 전 부위에 적용.
+        // 큐브로 안 나오는 스탯(쿨감·방관 등 옵션 미존재)의 범위는 자동 제외 → 뽑을 수 없는 부위까지 추천이 막히지 않음.
+        Map<String, double[]> pr = partRanges(ranges, ep, part, slots);
         double curFull = model.output(current);
         // 고정 슬롯(잠금) vs 풀 슬롯(돌릴 수 있는 슬롯: 옵션 또는 빈).
         // 정성적 스탯이 박힌 슬롯도 일반 슬롯처럼 개선 대상에 포함한다(유지하려면 추천 옵션 수치 범위로 제약).
@@ -130,15 +134,15 @@ public final class CubeRecommender {
         Map<String, Double> setDeal = new LinkedHashMap<>();
         Map<String, List<PotentialDraw>> setOpts = new LinkedHashMap<>();
         genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of(), true);
+                new java.util.HashSet<>(), setDeal, setOpts, current, pr, requiredOpts, java.util.List.of(), true);
         // ★범위를 만족하는 '딜 개선' 후보가 하나도 없을 때: 범위를 무시하지 않는다(사용자가 강제로 챙기려는 스탯 존중).
         // 대신 개선 요건만 풀어(requireImprove=false), 범위를 지키는 구성 중 딜이 가장 나은 것을 추천한다(딜이 현재보다 낮을 수 있음).
         // (구: 범위를 통째로 무시하고 재생성 → 범위 밖 추천이 나오던 버그.)
         boolean constrained = false;
-        if (setDeal.isEmpty() && ranges != null && !ranges.isEmpty()) {
+        if (setDeal.isEmpty() && pr != null && !pr.isEmpty()) {
             constrained = true;
             genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                    new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of(), false);
+                    new java.util.HashSet<>(), setDeal, setOpts, current, pr, requiredOpts, java.util.List.of(), false);
         }
 
         List<OptSet> all = new ArrayList<>();
@@ -178,7 +182,7 @@ public final class CubeRecommender {
                 Map<String, Double> sd = new LinkedHashMap<>();
                 Map<String, List<PotentialDraw>> so = new LinkedHashMap<>();
                 genSets(model, baseFull, curBase, curDeal, java.util.List.of(0, 1, 2), tg, 0,
-                        new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, ranges, java.util.List.of(), keptStats, !constrained);
+                        new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, pr, java.util.List.of(), keptStats, !constrained);
                 for (Map.Entry<String, Double> e : sd.entrySet()) {
                     List<PotentialDraw> opts = so.get(e.getKey());
                     double pSum = arrangeSum(opts, tg);              // 정확구성(상호배타): nextStep·'1회 리롤'용
@@ -317,6 +321,27 @@ public final class CubeRecommender {
             genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats, requireImprove);
         }
         chosen[depth] = null;
+    }
+
+    /**
+     * 부위별 범위 필터: 이 부위가 실제로 뽑을 수 있는 스탯의 범위만 남긴다.
+     * <ul>
+     *   <li>공용 옵션(크확·공속·데미지·주스탯 등) 범위 → 모든 부위에 적용.</li>
+     *   <li>특옵(부위 한정: 상의=대상수·모자=쿨감 등) 범위 → 그 특옵이 나오는 부위에만 적용.</li>
+     *   <li>큐브로 안 나오는 스탯(옵션 자체가 없음) 범위 → 어느 부위에도 없으니 자동 제외(무시).</li>
+     * </ul>
+     * ep가 있으면 등급 무관 rollableStats(공용+그 부위 특옵)로, 없으면 현재 등급 슬롯 테이블에서 유도한다.
+     */
+    private static Map<String, double[]> partRanges(Map<String, double[]> ranges, EquipmentPotential ep,
+                                                    String part, List<List<PotentialDraw>> slots) {
+        if (ranges == null || ranges.isEmpty()) return ranges;
+        java.util.Set<String> rollable = new java.util.LinkedHashSet<>();
+        if (ep != null) rollable.addAll(ep.rollableStats(part));
+        else for (List<PotentialDraw> tbl : slots) for (PotentialDraw d : tbl) rollable.add(d.statId());
+        Map<String, double[]> out = new LinkedHashMap<>();
+        for (Map.Entry<String, double[]> e : ranges.entrySet())
+            if (rollable.contains(e.getKey())) out.put(e.getKey(), e.getValue());
+        return out;
     }
 
     /** opts가 requiredStats의 각 스탯을 '필요 개수만큼'(수치 무관) 포함하는지(멀티셋). */

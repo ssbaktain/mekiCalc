@@ -62,6 +62,15 @@ public final class EquipmentPotential {
 
     public List<String> grades() { return grades; }
     public java.util.Set<String> parts() { return parts.keySet(); }
+
+    /** 이 부위가 뽑을 수 있는 스탯 = 공용 옵션 전부 + 이 부위의 특옵(등급 무관). 범위를 부위별로 거르는 데 쓴다. */
+    public java.util.Set<String> rollableStats(String part) {
+        java.util.Set<String> out = new java.util.LinkedHashSet<>();
+        for (Common c : commons) out.add(c.stat);
+        PartSpecial ps = parts.get(part);
+        if (ps != null) out.add(ps.stat);
+        return out;
+    }
     public int gradeIndex(String grade) { return gradeIndex.getOrDefault(grade, -1); }
 
     /** 그 등급의 다음 등급(없으면 null). */
