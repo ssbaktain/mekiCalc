@@ -51,6 +51,8 @@ public final class StatsStore {
         PANEL_LABELS.put("recommend", "큐브 우선순위 추천");
         PANEL_LABELS.put("statcompare", "스탯 비교");
         PANEL_LABELS.put("gear", "장비 비교");
+        PANEL_LABELS.put("gear-ocr", "장비 OCR");   // /api/gear-ocr 실행 카운트(탭 진입 아님)
+        PANEL_LABELS.put("stat-ocr", "스탯 OCR");   // /api/stat-ocr-resolve 실행 카운트
     }
 
     private final Path accessFile;
@@ -118,6 +120,9 @@ public final class StatsStore {
                         if (PANEL_LABELS.containsKey(panel)) featureCount.merge(panel, 1L, Long::sum);
                         continue;
                     }
+                    // OCR 실행 카운트(기능 사용량에 포함) — 실행당 1회 호출되는 엔드포인트만(장비=이미지1장/실행, 스탯=resolve 1회/실행).
+                    if ("/api/gear-ocr".equals(path)) featureCount.merge("gear-ocr", 1L, Long::sum);
+                    else if ("/api/stat-ocr-resolve".equals(path)) featureCount.merge("stat-ocr", 1L, Long::sum);
 
                     String user = str(m.get("user"));
                     long bk = bucketKey(epoch, hourly);
