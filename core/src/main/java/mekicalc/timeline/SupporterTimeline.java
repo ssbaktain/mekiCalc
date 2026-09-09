@@ -193,12 +193,14 @@ public final class SupporterTimeline {
                 if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
                 if (e.toPlayer() || e.toEnemy() || !e.toCompanion()) continue;   // player/both/enemy는 위에서 수집됨 — 여기선 순수 동료
                 int period = s.periodMs() == null ? 0 : s.periodMs();
-                if (e.maxStacksOr1() > 1 && period > 0) {   // ★램프업 스택(나로 809470 최종뎀 1초당 +1.5% 최대 15중첩): 표시도 계산과 동일하게 스택별 램프(상수 +1.5% 아님)
+                if (e.maxStacksOr1() > 1 && period > 0) {   // ★램프업 스택(나로 809470 최종뎀 1초당 +1.5% 최대 15중첩): 표시도 계산과 동일하게 스택별 램프
                     int maxS = e.maxStacksOr1();
+                    boolean finalStack = "FinalDamage".equals(e.stat());   // 최종뎀 스택=곱적용(×(1+값)^스택), 그 외=합(값×스택)
                     for (int k = 1; k <= maxS; k++) {
                         int start = k * period; if (start >= windowMs) break;   // t∈[k·period,(k+1)·period) → stacks=min(max, t/period)=k
                         int end = k < maxS ? Math.min((k + 1) * period, windowMs) : windowMs;
-                        pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value() * k, start, end, false, "companion"));
+                        double dispVal = finalStack ? (Math.pow(1.0 + e.value() / 1000.0, k) - 1.0) * 1000.0 : e.value() * k;
+                        pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), dispVal, start, end, false, "companion"));
                     }
                 } else if (e.durationMs() != null && s.isActive()) {   // 액티브 시전마다 창
                     int dur = e.durationMs();
@@ -482,9 +484,8 @@ public final class SupporterTimeline {
             for (double[] st : stacking) {
                 int stacks = (int) Math.min((long) st[3], (long) (t / (int) st[2]));
                 if (stacks <= 0) continue;
-                double v = st[1] * stacks;
-                if (st[0] < 0) m.addFinalDmgSource(v);           // 스택 최종뎀 = (1 + 스택수×스택당) 단일 곱소스
-                else m.addStat(Stat.values()[(int) st[0]], v);
+                if (st[0] < 0) m.addFinalDmgSource(Math.pow(1.0 + st[1], stacks) - 1.0);   // ★스택 최종뎀 = 스택별 곱적용 ×(1+값)^스택. 클뜯 규명: FinalDamage=modifier별 곱(AccumMultCalculator)이고 809470엔 StackCount 플래그가 없어 스택 15개가 각각 별도 곱소스 → ×1.015¹⁵
+                else m.addStat(Stat.values()[(int) st[0]], st[1] * stacks);                // 그 외 스탯 = 합풀(스택수×스택당)
             }
         }
     }
