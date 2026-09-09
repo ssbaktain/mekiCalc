@@ -167,6 +167,10 @@ main {
 }
 .field input:focus { outline: none; border-color: var(--accent); }
 .field .unit { color: var(--muted); font-size: 12px; margin-left: 6px; min-width: 18px; }
+/* OCR 증감만 (초록 +n / 빨강 -n), 입력 박스 왼쪽 */
+.field .input-wrap .stat-prev { font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.field .input-wrap .stat-prev.sp-up { color: #6fcf97; }
+.field .input-wrap .stat-prev.sp-down { color: #e07a7a; }
 
 /* ── 빌드 화면(스탯+스킬 통합, B안: 내부 토글) ── */
 /* 820px 폭 그대로. 직업·대상·빌드 프리셋 공용 헤더 아래 [스탯/스킬] 토글로 한 번에 하나만(항상 짧게). */

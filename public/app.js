@@ -811,7 +811,7 @@ function toInfoHelp() {
     body.innerHTML = h.innerHTML;
     const info = mkInfo("ⓘ", body, true);
     const prev = h.previousElementSibling;
-    if (prev && prev.tagName === "H2") {   // 제목 바로 뒤 설명 → ⓘ를 제목 오른쪽(중앙)에 붙여 줄넘김 방지(설정 카드 등)
+    if (prev && (prev.tagName === "H2" || prev.classList.contains("backup-col-title"))) {   // 제목 바로 뒤 설명 → ⓘ를 제목 오른쪽에 붙여 줄넘김 방지(설정 카드·내보내기/불러오기 컬럼 등)
       prev.appendChild(document.createTextNode(" "));
       prev.appendChild(info);
       h.remove();
@@ -2524,7 +2524,9 @@ function fillStatOcr(data) {
   for (const id in vals) {
     const inp = $("f_" + id);
     if (!inp) continue;
+    const prev = statValueOf(inp);   // OCR 전(현재 폼) 값 — 바뀌었으면 '이전값 →' 표시
     setStatValue(inp, vals[id], unitOf(id));
+    showStatPrev(inp, prev, vals[id], unitOf(id));
     const m = mm[id] || {};
     anyWarn = anyWarn || !!(m.labelWarn || m.valueWarn || m.estimated);
     statOcrMarkWarn(inp, m);
@@ -2578,9 +2580,27 @@ function ocrConfTip(conf, msg) {
 // OCR 경고 초기화 — 프리셋 전환·재OCR 시 이전 주황/툴팁 제거.
 function clearStatOcrFlags() {
   document.querySelectorAll("#sub-build .ocr-warn").forEach((el) => ocrWarnEl(el, false));
+  document.querySelectorAll("#sub-build .stat-prev").forEach((el) => el.remove());   // OCR 이전값(초록 →) 표시 제거
   const box = $("stat-ocr-warn"); if (box) { box.hidden = true; box.textContent = ""; }
   const st = $("stat-ocr-status"); if (st) st.textContent = "";   // '인식 완료 — N개' 문구도 초기화
   ocrTipHide();
+}
+
+// OCR로 값이 바뀐 스탯은 입력 박스 왼쪽에 증감만 표시(증가 초록 (+n)·감소 빨강 (-n)).
+// 탭 이동·프리셋 변경 시 clearStatOcrFlags가 제거.
+function showStatPrev(inp, prev, cur, unit) {
+  const wrap = inp.closest(".input-wrap"); if (!wrap) return;
+  const old = wrap.querySelector(".stat-prev"); if (old) old.remove();
+  if (cur == null || !isFinite(cur)) return;
+  const pv = truncStat(prev || 0, unit), cv = truncStat(cur, unit);   // 표기(버림) 기준
+  if (pv === cv) return;   // 변화 없음 → 생략
+  const d = cv - pv;
+  const fmt = (x) => x.toLocaleString("ko-KR", { maximumFractionDigits: 1 });
+  const span = document.createElement("span");
+  span.className = "stat-prev " + (d >= 0 ? "sp-up" : "sp-down");
+  span.title = "OCR 전 대비 증감";
+  span.textContent = `(${d >= 0 ? "+" : "−"}${fmt(Math.abs(d))})`;
+  wrap.insertBefore(span, inp);   // 입력 박스 왼쪽
 }
 
 // 스탯 필드: 종류(라벨)·수치(입력) 각각 신뢰도에 따라 주황 표시(따로).
