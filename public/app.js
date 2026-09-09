@@ -2086,6 +2086,11 @@ function gcSpecials(prefix) {
 }
 // 부옵션 후보 스탯 = 공통 + 부위별 특옵.
 function gcSubPool(prefix) { return gearCfg.commonSub.concat(gcSpecials(prefix)); }
+// 부옵션 드롭다운 라벨(비딜 스탯은 '(딜 미반영)' 꼬리표).
+function gcSubLabel(s) {
+  const base = gearStatLabel(s);
+  return (gearCfg.nonDealLabels && gearCfg.nonDealLabels[s]) ? base + " (딜 미반영)" : base;
+}
 
 // ──────────────────── 스탯 비교(등가 환산) ────────────────────
 // 한 스탯에 값을 넣으면 그 스탯이 올려주는 딜과 같은 딜을 내는 다른 스탯의 필요량을 서버가 계산해 채운다.
@@ -2688,7 +2693,7 @@ function gcAddSubRow(prefix, stat, value, meta) {
   row.className = "gc-row gc-subrow";
   const sel = document.createElement("select");
   sel.className = "gc-substat";
-  for (const s of gcSubPool(prefix)) sel.add(new Option(statLabel(s), s));
+  for (const s of gcSubPool(prefix)) sel.add(new Option(gcSubLabel(s), s));
   if (stat) sel.value = stat;
   const inp = document.createElement("input");
   inp.type = "number"; inp.className = "gc-val"; inp.value = value != null ? value : "0";
@@ -2706,7 +2711,7 @@ function gcRefreshSub(prefix) {
   for (const sel of $(prefix + "-sub").querySelectorAll(".gc-substat")) {
     const cur = sel.value;
     sel.innerHTML = "";
-    for (const s of pool) sel.add(new Option(statLabel(s), s));
+    for (const s of pool) sel.add(new Option(gcSubLabel(s), s));
     if (pool.includes(cur)) sel.value = cur;
   }
 }

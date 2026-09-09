@@ -1,5 +1,5 @@
 {
-  "_comment": "장비 비교 전용 옵션 스펙. 프리셋 저장 안 함(단발 비교/변경). 값은 사용자 직접 입력 또는 이미지 인식(OCR). deal=딜 계산 포함 여부. 비딜 스탯(최대HP/방어력/회피/명중/최대MP)은 입력창만 띄우고 계산 제외. 부옵션(부스탯)=공통 딜 옵션 + 부위별 특옵.",
+  "_comment": "장비 비교 전용 옵션 스펙. 프리셋 저장 안 함(단발 비교/변경). 값은 사용자 직접 입력 또는 이미지 인식(OCR). deal=딜 계산 포함 여부. 부옵션(부스탯)=공통 옵션 + 부위별 특옵. ★출처=현재 패치 클뜯 GearTable→GearOptionGroupTable→GearOptionTable 전 등급 합집합(등급 무관 해당 부위에서 나올 수 있는 모든 옵션). ★특옵=해당 부위의 '랜덤 부옵션'(SubOptionGroupIndices) + 레이드/파티던전 '고정 부옵션'(FixedSubOptionGroupIndices) 합집합. 고정 예: 자쿰 투구=데미지·최종데미지·모든스킬레벨, 혼테일 목걸이=주스탯%, 핑크빈 눈장식=주스탯%·최종데미지. clt Type→statId: Attack→ATK_FLAT, AttackPower→DMG(인게임 '데미지'), AttackPowerToBoss→BOSS_DMG, AttackPowerExcludeBoss→NORMAL_DMG, CriticalChance→CRIT_RATE, CriticalPower→CRIT_DMG, JobStep1~4SkillLevel→SKILL_LEVEL_1~4, MinDamageRatio→MIN_DMG_MULT, MaxDamageRatio→MAX_DMG_MULT, PiercePower→DEF_PEN, SkillPower→SKILL_DMG, BaseAttackPower→BASIC_ATK_DMG, MainStat→MAIN_STAT_FLAT, MainStatR→MAIN_STAT_PCT, FinalDamage→FINAL_DMG, AllSkillLevel→SKILL_LEVELS, MaxHp→MAX_HP, Defence→DEF, MaxMp/MaxMpR→MAX_MP, AvoidChance→EVA, HitChance→ACC. 비딜 스탯(최대HP/방어력/회피/명중/최대MP)은 입력창만 띄우고 딜 계산 제외(0 기여).",
 
   "nonDealLabels": {
     "MAX_HP": "최대 HP",
@@ -9,7 +9,7 @@
     "MAX_MP": "최대 MP"
   },
 
-  "commonSub": ["ATK_FLAT", "CRIT_DMG", "CRIT_RATE", "SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "NORMAL_DMG", "BOSS_DMG"],
+  "commonSub": ["ATK_FLAT", "CRIT_DMG", "CRIT_RATE", "SKILL_LEVEL_1", "SKILL_LEVEL_2", "SKILL_LEVEL_3", "SKILL_LEVEL_4", "NORMAL_DMG", "BOSS_DMG", "MAX_HP", "DEF", "MAX_MP", "EVA", "ACC"],
 
   "parts": [
     { "part": "투구",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"DEF","deal":false}], "special": ["SKILL_LEVELS", "DMG", "FINAL_DMG"] },
@@ -20,12 +20,12 @@
     { "part": "장갑",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": [] },
     { "part": "벨트",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAX_MP","deal":false}], "special": [] },
     { "part": "신발",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAX_MP","deal":false}], "special": [] },
-    { "part": "반지",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["MIN_DMG_MULT", "MAX_DMG_MULT"] },
+    { "part": "반지",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
     { "part": "반지2",    "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["SKILL_DMG"] },
     { "part": "목걸이",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG", "MAIN_STAT_PCT"] },
-    { "part": "얼굴장식", "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["MIN_DMG_MULT", "MAX_DMG_MULT"] },
-    { "part": "눈장식",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DEF_PEN"] },
-    { "part": "귀고리",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["BASIC_ATK_DMG", "MAIN_STAT_PCT"] },
-    { "part": "포켓",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": ["DMG", "MAIN_STAT_PCT"] }
+    { "part": "얼굴장식", "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG", "MIN_DMG_MULT", "MAX_DMG_MULT"] },
+    { "part": "눈장식",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["DMG", "DEF_PEN", "FINAL_DMG", "MAIN_STAT_PCT"] },
+    { "part": "귀고리",   "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"MAIN_STAT_FLAT","deal":true}], "special": ["BASIC_ATK_DMG"] },
+    { "part": "포켓",     "main": [{"stat":"ATK_FLAT","deal":true}, {"stat":"MAX_HP","deal":false}, {"stat":"ACC","deal":false}], "special": ["DMG"] }
   ]
 }
