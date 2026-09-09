@@ -809,7 +809,15 @@ function toInfoHelp() {
     const body = document.createElement("span");
     body.className = "info-pop-body";
     body.innerHTML = h.innerHTML;
-    h.replaceWith(mkInfo("ⓘ", body, true));
+    const info = mkInfo("ⓘ", body, true);
+    const prev = h.previousElementSibling;
+    if (prev && prev.tagName === "H2") {   // 제목 바로 뒤 설명 → ⓘ를 제목 오른쪽(중앙)에 붙여 줄넘김 방지(설정 카드 등)
+      prev.appendChild(document.createTextNode(" "));
+      prev.appendChild(info);
+      h.remove();
+    } else {
+      h.replaceWith(info);
+    }
   });
 }
 toInfoHelp();

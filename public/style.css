@@ -1922,6 +1922,12 @@ body.notices-active .ad-slot { display: none !important; }
 #tl-exp-table { table-layout: fixed; }
 #tl-exp-table th:last-child, #tl-exp-table td:last-child { width: 34px; }
 #tl-exp-table select.tl-exp-stat, #tl-exp-table input.tl-exp-amt { width: 100%; min-width: 0; box-sizing: border-box; }
+/* 스킬 배치표: 긴 스킬명이 셀을 넘어 카드를 뚫고 나가지 않도록(모바일) — 고정 레이아웃 + 셀 안에서 축소 */
+#tl-table { table-layout: fixed; }
+#tl-table .tl-th-drag, #tl-table .tl-drag { width: 24px; }
+#tl-table th:nth-child(2), #tl-table td:nth-child(2) { width: 96px; }
+#tl-table th:last-child, #tl-table td:last-child { width: 40px; }
+#tl-table select.tl-skill, #tl-table input.tl-time { width: 100%; min-width: 0; box-sizing: border-box; }
 /* 유물 실험 */
 .tl-exp-relic-head { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; font-size: 13.5px; font-weight: 600; color: var(--text); }
 .tl-mini-btn { padding: 3px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--card); color: var(--muted); font-size: .82em; cursor: pointer; }
