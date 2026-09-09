@@ -742,14 +742,17 @@
       document.querySelectorAll('.admin-sec').forEach(s => s.hidden = (s.id !== 'sec-' + sec));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.sec === sec));
       closeSidebar();
-      if (sec === 'stats' && !statsLoaded) { statsLoaded = true; loadStats(); }
+      if (sec === 'stats') { if (!statsLoaded) { statsLoaded = true; loadStats(); } else scheduleAutoRefresh(); }
+      else if (statsTimer) { clearInterval(statsTimer); statsTimer = null; }   // 통계 화면 벗어나면 자동갱신 중지
       window.scrollTo(0, 0);
     }
     document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showSection(n.dataset.sec)));
 
     // ──────────────── 접속 통계 ────────────────
-    let curDays = 1, curAnchor = '';   // curAnchor='' → 오늘 기준(세 탭 공통 적용)
+    let curDays = 1, curAnchor = '', statsTimer = null;   // curAnchor='' → 오늘 기준. statsTimer=24시간 실시간 자동갱신
     const nf = n => (n || 0).toLocaleString('ko-KR');
+    const kstToday = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    const isLiveAnchor = () => !curAnchor || curAnchor >= kstToday();   // 미지정·오늘 이후 = 실시간(최근 24시간)
     $('#statSeg').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       curDays = parseInt(b.dataset.days, 10) || 1;
@@ -758,14 +761,25 @@
     });
     $('#statAnchor').addEventListener('change', e => { curAnchor = e.target.value || ''; loadStats(); });
     $('#statAnchorClear').addEventListener('click', () => { curAnchor = ''; $('#statAnchor').value = ''; loadStats(); });
-    async function loadStats(){
-      const err = $('#statErr'); err.hidden = true;
-      const tc = $('#trendChart'); tc.className = 'chart-empty'; tc.textContent = '불러오는 중…';
+    // 24시간(실시간) 뷰는 60초마다 조용히 자동 갱신(모든 차트). 다른 탭·과거 날짜·화면 이탈이면 중지.
+    function scheduleAutoRefresh(){
+      clearInterval(statsTimer); statsTimer = null;
+      if (curDays === 1 && isLiveAnchor() && !$('#sec-stats').hidden) {
+        statsTimer = setInterval(() => {
+          if ($('#sec-stats').hidden || curDays !== 1 || !isLiveAnchor()) { clearInterval(statsTimer); statsTimer = null; return; }
+          loadStats(true);   // silent = 로딩 표시 없이 갱신
+        }, 60000);
+      }
+    }
+    async function loadStats(silent){
+      const err = $('#statErr'); if (!silent) err.hidden = true;
+      const tc = $('#trendChart'); if (!silent) { tc.className = 'chart-empty'; tc.textContent = '불러오는 중…'; }
       try {
         const q = '/api/admin/stats?days=' + curDays + (curAnchor ? '&anchor=' + encodeURIComponent(curAnchor) : '');
         const d = await api('GET', q);
         renderStatCards(d); renderTrend(d); renderFeatures(d); renderLogin(d); renderJobs(d);
-      } catch (e) { err.textContent = '통계를 불러오지 못했습니다: ' + e.message; err.hidden = false; tc.textContent = '—'; }
+      } catch (e) { if (!silent) { err.textContent = '통계를 불러오지 못했습니다: ' + e.message; err.hidden = false; tc.textContent = '—'; } }
+      finally { scheduleAutoRefresh(); }
     }
     function renderStatCards(d){
       const s = d.summary || {}, win = d.days <= 1 ? '24시간' : ('최근 ' + d.days + '일');
@@ -776,7 +790,9 @@
     }
     function renderTrend(d){
       const b = d.buckets || [], box = $('#trendChart');
-      $('#trendGran').textContent = d.granularity === 'hour' ? '(시간별 · KST)' : '(일별 · KST)';
+      $('#trendGran').textContent = d.granularity === 'hour'
+        ? (d.live ? '(최근 24시간 · 실시간 자동 갱신)' : '(시간별 · KST)')
+        : '(일별 · KST)';
       if (!b.length) { box.className = 'chart-empty'; box.textContent = '데이터가 없습니다.'; $('#trendLegend').innerHTML = ''; return; }
       box.className = '';
       const W = 680, H = 210, pl = 34, pr = 34, pt = 14, pb = 42, iw = W - pl - pr, ih = H - pt - pb, n = b.length;

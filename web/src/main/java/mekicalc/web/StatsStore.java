@@ -87,12 +87,15 @@ public final class StatsStore {
         long unit = hourly ? 3600L : 86400L;
         long ks = KST.getTotalSeconds();
         long nowEpoch = OffsetDateTime.now(ZoneOffset.UTC).toEpochSecond();
-        long refEpoch = anchorRef(anchor, nowEpoch);             // 기준 시각(anchor 있으면 그 날 끝, 없으면 지금)
+        // 기준(anchor): 미지정이거나 오늘(이후)이면 '실시간'(현재 시각 기준), 과거 날짜면 그 날 끝 기준.
+        boolean live = isLive(anchor, nowEpoch);
+        long refEpoch = live ? nowEpoch : anchorRef(anchor, nowEpoch);
         long nowBucket = ((refEpoch + ks) / unit) * unit - ks;   // 기준 버킷 시작(UTC epoch)
-        // ★24시간(hourly) = 기준일 KST 00시~기준시각(시간별). N일 = 기준일 포함 최근 N일(일별). 둘 다 시작 버킷 정렬.
+        // ★24시간(hourly): 실시간=현재 시각부터 최근 24시간 롤링, 과거 날짜=그 날 00~23시. N일=기준일 포함 최근 N일(일별).
         long startBucket = hourly
-                ? ((refEpoch + ks) / 86400L) * 86400L - ks          // 기준일 KST 00:00
-                : nowBucket - (days - 1) * unit;                    // 기준일 포함 최근 days일
+                ? (live ? nowBucket - 23L * unit                     // 실시간: 최근 24시간(현재 시각 기준)
+                        : ((refEpoch + ks) / 86400L) * 86400L - ks)  // 과거 날짜: 그 날 KST 00:00
+                : nowBucket - (days - 1) * unit;                     // 기준일 포함 최근 days일
         long cutoff = startBucket;
 
         // 버킷: key(정렬용 epoch초) → 집계. ★방문자 = /api/bootstrap 고유 IP(=실제 앱 로드, §14). 스캐너·크롤러는
@@ -166,7 +169,8 @@ public final class StatsStore {
 
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("days", days);
-        out.put("anchor", anchor == null || anchor.isBlank() ? null : anchor);
+        out.put("anchor", live ? null : anchor);   // 실시간(오늘/미지정)이면 null → 프론트 '최근 24시간' 표기
+        out.put("live", live);
         out.put("granularity", hourly ? "hour" : "day");
         out.put("buckets", buckets);
         out.put("features", features);
@@ -220,6 +224,16 @@ public final class StatsStore {
                     j.put("job", e.getKey()); j.put("name", JOB_NAMES.getOrDefault(e.getKey(), "직업" + e.getKey()));
                     j.put("count", e.getValue()); out.add(j); });
         return out;
+    }
+
+    /** anchor 미지정·형식오류·오늘 이후(KST)면 '실시간'(현재 시각 기준). 과거 날짜만 그 날 고정 기준. */
+    private static boolean isLive(String anchor, long nowEpoch) {
+        if (anchor == null || anchor.isBlank()) return true;
+        try {
+            java.time.LocalDate d = java.time.LocalDate.parse(anchor.trim());
+            java.time.LocalDate today = OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(nowEpoch), KST).toLocalDate();
+            return !d.isBefore(today);   // 오늘 포함 이후면 실시간
+        } catch (Exception e) { return true; }
     }
 
     /** anchor="yyyy-MM-dd"(KST)면 그 날 끝(23:59:59, 단 현재 시각 초과 금지)을, 없거나 형식이 틀리면 현재 시각을 기준으로 반환. */
