@@ -1940,6 +1940,7 @@ function renderRecs(recs) {
     const card = document.createElement("div");
     card.className = "rec-card";
     const cross = r.crossGrade ? `<span class="cross">승급</span>` : "";
+    const constr = r.constrained ? `<span class="cross constrained" title="설정한 '추천 옵션 범위'를 지키느라 딜 개선이 없을 수 있어요. 범위를 만족하는 구성 중 딜이 가장 나은 것을 추천합니다(딜이 현재보다 낮을 수 있음).">범위 우선</span>` : "";
     // 슬롯 박스 비교(현재 → 추천). 열 제목에 등급도 표기(승급 시 좌우 등급이 다름).
     let rows = `<div class="sc-row sc-titles"><div class="sc-col-title">현재 · ${gradeText(r.curGrade)}</div><div class="sc-col-title">추천 · ${gradeText(r.grade)}</div></div>`;
     r.picks.forEach((p, i) => {
@@ -1950,10 +1951,10 @@ function renderRecs(recs) {
     });
     const avgTxt = r.recCubes == null ? "∞" : fmt(r.recCubes);
     card.innerHTML =
-      `<div class="rec-head"><span class="rank">${idx + 1}</span><b>${r.part} ${r.upper ? "윗잠" : "아랫잠"}</b>${cross}` +
+      `<div class="rec-head"><span class="rank">${idx + 1}</span><b>${r.part} ${r.upper ? "윗잠" : "아랫잠"}</b>${cross}${constr}` +
       `<span class="rec-avg" title="이 추천 옵션을 얻기까지 평균 큐브 수(승급 추천은 승급 비용까지 포함)">평균 <b>${avgTxt}</b>개</span></div>` +
       `<div class="rec-metrics">` +
-      `<span>딜 증가량 <b class="good">${signPct(r.dealDiff)}</b></span>` +
+      `<span>딜 증가량 <b class="${r.dealDiff >= 0 ? "good" : "bad"}">${signPct(r.dealDiff)}</b></span>` +
       `<span title="한 큐브 리롤로 지금 끼고 있는 옵션보다 딜이 높은 구성이 나올 확률">1회 리롤·현재보다↑ <b>${pct(r.totalProb)}</b></span>` +
       `<span title="한 큐브 리롤로 이 추천 옵션보다도 딜이 높은 구성이 나올 확률">1회 리롤·추천보다↑ <b>${pct(r.remainProb)}</b></span>` +
       `<span title="딜 증가량 × 등장 확률 ÷ 큐브 가격 — 큐브 소모 대비 딜 이득(가성비)">가성비 <b>${fmtScore(r.gainEff * 1e6)}</b></span>` +

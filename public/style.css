@@ -675,6 +675,7 @@ body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스�
   background: var(--accent2); color: #fff; font-size: 13px; font-weight: 700;
 }
 .cross { font-size: 12px; color: #e7c14a; }
+.cross.constrained { color: #7aa2e0; }   /* 범위 우선(딜 개선 없이 범위 유지) — 승급(amber)과 구분 */
 /* 평균 큐브 수: 부위명 라인 우측에 크게 강조(추천의 핵심 지표). */
 .rec-avg { margin-left: auto; font-size: 13px; color: var(--muted); font-weight: 400; white-space: nowrap; }
 .rec-avg b { font-size: 22px; color: #6fcf97; margin: 0 3px; letter-spacing: -0.3px; }

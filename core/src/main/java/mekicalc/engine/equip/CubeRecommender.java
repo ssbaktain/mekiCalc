@@ -35,7 +35,7 @@ public final class CubeRecommender {
                             PotentialDraw[] curDraws, double curDeal, double curProbSingle, double curProbSum,
                             List<OptSet> shown, double[] shownSuffix, double totalProb, int totalCount,
                             boolean[] locked, String curGrade,
-                            List<OptSet> all, double gEff, List<double[]> nextStep) {
+                            List<OptSet> all, double gEff, List<double[]> nextStep, boolean constrained) {
         /** 한 큐브 리롤로 deal보다 좋은(딜이 더 높은) 옵션이 나올 확률(승급 1단계 반영). 추천의 잔여확률과 동일 정의. */
         public double remainProbAbove(double deal) {
             double sameGt = 0, nextGt = 0;
@@ -51,7 +51,7 @@ public final class CubeRecommender {
                       double curDeal, double curProbSingle, double curProbSum,
                       double recDeal, double recProbSingle, double recProbSum,
                       double dealDiff, double totalProb, double remainProb,
-                      String grade, String curGrade) {
+                      String grade, String curGrade, boolean constrained) {
         public double curCubes() { return curProbSum > 0 ? 1.0 / curProbSum : Double.POSITIVE_INFINITY; }
         public double recCubes() { return recProbSum > 0 ? 1.0 / recProbSum : Double.POSITIVE_INFINITY; }
         public double curEff() { return curDeal * curProbSum / cost; }
@@ -130,12 +130,15 @@ public final class CubeRecommender {
         Map<String, Double> setDeal = new LinkedHashMap<>();
         Map<String, List<PotentialDraw>> setOpts = new LinkedHashMap<>();
         genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of());
-        // 잠금/현재 상태 때문에 범위를 만족하는 개선 후보가 하나도 없으면(잠금 > 범위 우선),
-        // 범위를 무시하고 다시 생성해 best-effort로 추천한다(정성적 스탯과 같은 취급).
+                new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of(), true);
+        // ★범위를 만족하는 '딜 개선' 후보가 하나도 없을 때: 범위를 무시하지 않는다(사용자가 강제로 챙기려는 스탯 존중).
+        // 대신 개선 요건만 풀어(requireImprove=false), 범위를 지키는 구성 중 딜이 가장 나은 것을 추천한다(딜이 현재보다 낮을 수 있음).
+        // (구: 범위를 통째로 무시하고 재생성 → 범위 밖 추천이 나오던 버그.)
+        boolean constrained = false;
         if (setDeal.isEmpty() && ranges != null && !ranges.isEmpty()) {
+            constrained = true;
             genSets(model, baseline, curBase, curDeal, pool, slots, 0, new PotentialDraw[pool.size()],
-                    new java.util.HashSet<>(), setDeal, setOpts, current, java.util.Map.of(), requiredOpts, java.util.List.of());
+                    new java.util.HashSet<>(), setDeal, setOpts, current, ranges, requiredOpts, java.util.List.of(), false);
         }
 
         List<OptSet> all = new ArrayList<>();
@@ -175,7 +178,7 @@ public final class CubeRecommender {
                 Map<String, Double> sd = new LinkedHashMap<>();
                 Map<String, List<PotentialDraw>> so = new LinkedHashMap<>();
                 genSets(model, baseFull, curBase, curDeal, java.util.List.of(0, 1, 2), tg, 0,
-                        new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, ranges, java.util.List.of(), keptStats);
+                        new PotentialDraw[3], new java.util.HashSet<>(), sd, so, current, ranges, java.util.List.of(), keptStats, !constrained);
                 for (Map.Entry<String, Double> e : sd.entrySet()) {
                     List<PotentialDraw> opts = so.get(e.getKey());
                     double pSum = arrangeSum(opts, tg);              // 정확구성(상호배타): nextStep·'1회 리롤'용
@@ -234,7 +237,7 @@ public final class CubeRecommender {
 
         return new EquipOpts(part, upper, cost, curDraws, curDeal, curProbSingle, curProbSum,
                 shown, shownSuffix, totalProb, n, locked != null ? locked : new boolean[3], curGrade,
-                all, gEff, nextStep);
+                all, gEff, nextStep, constrained);
     }
 
     /** 슬라이더 비율 f(0~1)에서 그 장비의 추천 1개. shown 비어있으면 null. */
@@ -245,7 +248,8 @@ public final class CubeRecommender {
         if (idx < 0) idx = 0; if (idx > c - 1) idx = c - 1;
         // ★안전장치: 추천 세트의 딜이 현재보다 높지 않으면(오류·비단조 아티팩트) 다음(더 높은 딜) 세트로 넘긴다.
         // shown은 딜 오름차순이라 idx++가 더 높은 딜. 개선 세트가 하나도 없으면 null(추천 없음).
-        while (idx < c && eo.shown().get(idx).deal() <= eo.curDeal() + 1e-12) idx++;
+        // 단, constrained(범위 제약 우선)면 딜이 현재보다 낮아도 범위를 지키는 구성을 그대로 추천한다(스킵 안 함).
+        while (idx < c && !eo.constrained() && eo.shown().get(idx).deal() <= eo.curDeal() + 1e-12) idx++;
         if (idx >= c) return null;
         OptSet set = eo.shown().get(idx);
 
@@ -276,7 +280,7 @@ public final class CubeRecommender {
                 eo.curDeal(), eo.curProbSingle(), eo.curProbSum(),
                 set.deal(), set.repProb(), set.probAppear(),
                 set.deal() - eo.curDeal(), eo.totalProb(), eo.shownSuffix()[idx],
-                set.grade(), eo.curGrade());
+                set.grade(), eo.curGrade(), eo.constrained());
     }
 
     /** 풀 슬롯마다 옵션-or-빈을 모두 시도해 딜증가 세트(비빈 옵션 멀티셋)를 dedup 수집. */
@@ -285,7 +289,7 @@ public final class CubeRecommender {
                                 java.util.Set<String> seen, Map<String, Double> setDeal,
                                 Map<String, List<PotentialDraw>> setOpts,
                                 StatBlock current, Map<String, double[]> ranges, List<PotentialDraw> required,
-                                List<String> requiredStats) {
+                                List<String> requiredStats, boolean requireImprove) {
         if (depth == pool.size()) {
             List<PotentialDraw> opts = new ArrayList<>();
             for (PotentialDraw d : chosen) if (d != null) opts.add(d);
@@ -300,16 +304,17 @@ public final class CubeRecommender {
             if (!withinRanges(combined, current, ranges)) return;   // 허용 범위 밖 후보 제외
             // increase()를 타서 곱배수 조합은 닫힌식(빠른 경로)으로 — output() 직접 호출은 닫힌식을 우회해 동료 포함 시 매우 느림.
             double deal = curBase > 0 ? model.increase(baseline, delta) : 0;
-            if (deal - curDeal <= 1e-12) return;
+            // requireImprove=false(범위 제약 fallback): 범위를 만족하면 딜 개선이 없어도 후보로 둔다(범위 우선 — 범위 무시 금지).
+            if (requireImprove && deal - curDeal <= 1e-12) return;
             setDeal.put(key, deal);
             setOpts.put(key, opts);
             return;
         }
         chosen[depth] = null;   // 이 풀 슬롯은 빈
-        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats);
+        genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats, requireImprove);
         for (PotentialDraw d : slots.get(pool.get(depth))) {
             chosen[depth] = d;
-            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats);
+            genSets(model, baseline, curBase, curDeal, pool, slots, depth + 1, chosen, seen, setDeal, setOpts, current, ranges, required, requiredStats, requireImprove);
         }
         chosen[depth] = null;
     }

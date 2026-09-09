@@ -2097,6 +2097,7 @@ public final class CalcService {
         m.put("grade", r.grade());
         m.put("curGrade", r.curGrade());
         m.put("crossGrade", r.grade() != null && !r.grade().equals(r.curGrade()));
+        m.put("constrained", r.constrained());   // 범위 제약 우선(딜 개선이 없어도 범위 지키는 구성 추천) — 프론트 안내용
         m.put("cost", r.cost());
         m.put("curDeal", safe(r.curDeal()));
         m.put("recDeal", safe(r.recDeal()));
