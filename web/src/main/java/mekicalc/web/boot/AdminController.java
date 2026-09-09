@@ -48,10 +48,12 @@ public class AdminController {
         this.stats = stats;
     }
 
-    /** 접속 통계(최근 days일). 시간/일별 추이·기능 사용량·로그인 비율·직업 분포. */
+    /** 접속 통계(기준일 anchor로부터 과거 days일). 시간/일별 추이·기능 사용량·로그인 비율·직업 분포.
+     *  anchor="yyyy-MM-dd"(KST) 선택 시 그 날 기준, 미지정이면 오늘 기준. */
     @GetMapping("/stats")
-    public Object stats(@org.springframework.web.bind.annotation.RequestParam(value = "days", defaultValue = "1") int days) {
-        return stats.stats(days);
+    public Object stats(@org.springframework.web.bind.annotation.RequestParam(value = "days", defaultValue = "1") int days,
+                        @org.springframework.web.bind.annotation.RequestParam(value = "anchor", required = false) String anchor) {
+        return stats.stats(days, anchor);
     }
 
     /** 방 목록(+권한). */

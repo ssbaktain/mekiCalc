@@ -147,6 +147,12 @@
     .seg { display: inline-flex; border: 1px solid var(--border, #2a3140); border-radius: 999px; overflow: hidden; margin-left: auto; }
     .seg button { background: transparent; border: 0; color: var(--muted, #8a94a6); padding: 6px 14px; font-size: 13px; cursor: pointer; }
     .seg button.active { background: #2b6cb0; color: #fff; font-weight: 700; }
+    .stat-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+    .stat-controls .seg { margin-left: 0; }
+    .stat-anchor { display: inline-flex; align-items: center; gap: 6px; color: var(--muted, #8a94a6); font-size: 13px; }
+    .stat-anchor input[type="date"] { cursor: pointer; color-scheme: dark; padding: 5px 8px; border: 1px solid var(--border, #2a3140); border-radius: 8px; background: #0f131b; color: #cbd3df; }
+    .btn-mini { background: transparent; border: 1px solid var(--border, #2a3140); color: var(--muted, #8a94a6); border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+    .btn-mini:hover { color: #cbd3df; border-color: #3a4560; }
     .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .stat-card { border: 1px solid var(--border, #2a3140); border-radius: 12px; padding: 14px 16px; background: var(--card, #171b24); }
     .stat-card .lbl { font-size: 12.5px; color: var(--muted, #8a94a6); }
@@ -177,7 +183,7 @@
       .chart-grid.two { grid-template-columns: 1fr; }
       .bar-row { grid-template-columns: 96px 1fr 46px; }
       .stat-head h2 { font-size: 18px; }
-      .stat-head .seg { margin-left: 0; }   /* 좁은 화면에선 자동밀기 해제 → 넘침 없이 아래로 감김 */
+      .stat-head .stat-controls { margin-left: 0; }   /* 좁은 화면에선 자동밀기 해제 → 넘침 없이 아래로 감김 */
     }
   </style>
 </head>
@@ -203,10 +209,16 @@
     <section class="admin-sec" id="sec-stats">
       <div class="stat-head">
         <h2>📊 접속 통계</h2>
-        <div class="seg" id="statSeg">
-          <button data-days="1" class="active">오늘</button>
-          <button data-days="7">7일</button>
-          <button data-days="30">30일</button>
+        <div class="stat-controls">
+          <div class="seg" id="statSeg">
+            <button data-days="1" class="active">24시간</button>
+            <button data-days="7">7일</button>
+            <button data-days="30">30일</button>
+          </div>
+          <label class="stat-anchor">기준일
+            <input id="statAnchor" type="date" title="기준 날짜(KST). 선택하면 그 날 기준 24시간/7일/30일 전까지, 비우면 오늘 기준.">
+            <button id="statAnchorClear" type="button" class="btn-mini" title="오늘 기준으로">오늘</button>
+          </label>
         </div>
       </div>
       <div id="statErr" class="err" hidden></div>
@@ -730,30 +742,34 @@
       document.querySelectorAll('.admin-sec').forEach(s => s.hidden = (s.id !== 'sec-' + sec));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.sec === sec));
       closeSidebar();
-      if (sec === 'stats' && !statsLoaded) { statsLoaded = true; loadStats(curDays); }
+      if (sec === 'stats' && !statsLoaded) { statsLoaded = true; loadStats(); }
       window.scrollTo(0, 0);
     }
     document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showSection(n.dataset.sec)));
 
     // ──────────────── 접속 통계 ────────────────
-    let curDays = 1;
+    let curDays = 1, curAnchor = '';   // curAnchor='' → 오늘 기준(세 탭 공통 적용)
     const nf = n => (n || 0).toLocaleString('ko-KR');
     $('#statSeg').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       curDays = parseInt(b.dataset.days, 10) || 1;
       $('#statSeg').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-      loadStats(curDays);
+      loadStats();
     });
-    async function loadStats(days){
+    $('#statAnchor').addEventListener('change', e => { curAnchor = e.target.value || ''; loadStats(); });
+    $('#statAnchorClear').addEventListener('click', () => { curAnchor = ''; $('#statAnchor').value = ''; loadStats(); });
+    async function loadStats(){
       const err = $('#statErr'); err.hidden = true;
       const tc = $('#trendChart'); tc.className = 'chart-empty'; tc.textContent = '불러오는 중…';
       try {
-        const d = await api('GET', '/api/admin/stats?days=' + days);
+        const q = '/api/admin/stats?days=' + curDays + (curAnchor ? '&anchor=' + encodeURIComponent(curAnchor) : '');
+        const d = await api('GET', q);
         renderStatCards(d); renderTrend(d); renderFeatures(d); renderLogin(d); renderJobs(d);
       } catch (e) { err.textContent = '통계를 불러오지 못했습니다: ' + e.message; err.hidden = false; tc.textContent = '—'; }
     }
     function renderStatCards(d){
-      const s = d.summary || {}, label = d.days <= 1 ? '오늘' : ('최근 ' + d.days + '일');
+      const s = d.summary || {}, win = d.days <= 1 ? '24시간' : ('최근 ' + d.days + '일');
+      const label = d.anchor ? (d.anchor + ' 기준 ' + (d.days <= 1 ? '24시간' : d.days + '일')) : win;
       $('#statCards').innerHTML = [
         ['방문자 (고유 IP)', s.visitors, 'a'], ['요청 수', s.requests, 'b'], ['로그인 방문자', s.loggedIn, 'c'],
       ].map(([l, v, c]) => `<div class="stat-card"><div class="lbl">${l} · ${label}</div><div class="val ${c}">${nf(v)}</div></div>`).join('');
@@ -807,7 +823,8 @@
       donut($('#jobChart'), j.map(x => ({ label: x.name, value: x.count, color: JOB_COLORS[x.job] || '#6fa3ff' })), '아직 직업 데이터가 없습니다.');
     }
 
-    loadStats(1);   // 기본 화면 = 통계
+    $('#statAnchor').max = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);   // KST 오늘까지만 선택
+    loadStats();   // 기본 화면 = 통계(24시간 · 오늘 기준)
     statsLoaded = true;
   </script>
 </body>

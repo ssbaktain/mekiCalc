@@ -57,36 +57,42 @@ public final class StatsStore {
 
     private final Path accessFile;
     private final Path usersDir;
-    private final Map<Integer, Map<String, Object>> cache = new HashMap<>();
-    private final Map<Integer, Long> cacheAt = new HashMap<>();
+    private final Map<String, Map<String, Object>> cache = new HashMap<>();
+    private final Map<String, Long> cacheAt = new HashMap<>();
 
     public StatsStore(Path dataDir) {
         this.accessFile = dataDir.resolveSibling("logs").resolve("access.jsonl");
         this.usersDir = dataDir.resolve("users");
     }
 
-    /** 최근 days일 접속 통계(캐시 60초). days≤1이면 시간별, 아니면 일별 버킷. */
-    public synchronized Map<String, Object> stats(int days) {
+    /**
+     * 기준일(anchor)로부터 과거 days일 접속 통계(캐시 60초). days≤1이면 기준일의 시간별, 아니면 기준일 포함 N일 일별.
+     * @param anchor "yyyy-MM-dd"(KST) — 선택하면 그 날을 끝으로, null/공백이면 오늘(현재 시각)을 끝으로 삼는다.
+     */
+    public synchronized Map<String, Object> stats(int days, String anchor) {
         int d = Math.max(1, Math.min(90, days));
+        String anchorNorm = (anchor == null ? "" : anchor.trim());
+        String key = d + "|" + anchorNorm;
         long now = System.currentTimeMillis();
-        Long at = cacheAt.get(d);
-        if (at != null && now - at < CACHE_MS && cache.containsKey(d)) return cache.get(d);
-        Map<String, Object> out = compute(d);
-        cache.put(d, out);
-        cacheAt.put(d, now);
+        Long at = cacheAt.get(key);
+        if (at != null && now - at < CACHE_MS && cache.containsKey(key)) return cache.get(key);
+        Map<String, Object> out = compute(d, anchorNorm);
+        cache.put(key, out);
+        cacheAt.put(key, now);
         return out;
     }
 
-    private Map<String, Object> compute(int days) {
+    private Map<String, Object> compute(int days, String anchor) {
         boolean hourly = days <= 1;
         long unit = hourly ? 3600L : 86400L;
         long ks = KST.getTotalSeconds();
         long nowEpoch = OffsetDateTime.now(ZoneOffset.UTC).toEpochSecond();
-        long nowBucket = ((nowEpoch + ks) / unit) * unit - ks;   // 현재 버킷 시작(UTC epoch)
-        // ★'오늘'(hourly) = KST 00시부터 지금까지(시간별). N일 = 오늘 포함 최근 N일(일별). 둘 다 시작 버킷 정렬.
+        long refEpoch = anchorRef(anchor, nowEpoch);             // 기준 시각(anchor 있으면 그 날 끝, 없으면 지금)
+        long nowBucket = ((refEpoch + ks) / unit) * unit - ks;   // 기준 버킷 시작(UTC epoch)
+        // ★24시간(hourly) = 기준일 KST 00시~기준시각(시간별). N일 = 기준일 포함 최근 N일(일별). 둘 다 시작 버킷 정렬.
         long startBucket = hourly
-                ? ((nowEpoch + ks) / 86400L) * 86400L - ks          // 오늘 KST 00:00
-                : nowBucket - (days - 1) * unit;                    // 오늘 포함 최근 days일
+                ? ((refEpoch + ks) / 86400L) * 86400L - ks          // 기준일 KST 00:00
+                : nowBucket - (days - 1) * unit;                    // 기준일 포함 최근 days일
         long cutoff = startBucket;
 
         // 버킷: key(정렬용 epoch초) → 집계. ★방문자 = /api/bootstrap 고유 IP(=실제 앱 로드, §14). 스캐너·크롤러는
@@ -160,6 +166,7 @@ public final class StatsStore {
 
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("days", days);
+        out.put("anchor", anchor == null || anchor.isBlank() ? null : anchor);
         out.put("granularity", hourly ? "hour" : "day");
         out.put("buckets", buckets);
         out.put("features", features);
@@ -213,6 +220,15 @@ public final class StatsStore {
                     j.put("job", e.getKey()); j.put("name", JOB_NAMES.getOrDefault(e.getKey(), "직업" + e.getKey()));
                     j.put("count", e.getValue()); out.add(j); });
         return out;
+    }
+
+    /** anchor="yyyy-MM-dd"(KST)면 그 날 끝(23:59:59, 단 현재 시각 초과 금지)을, 없거나 형식이 틀리면 현재 시각을 기준으로 반환. */
+    private static long anchorRef(String anchor, long nowEpoch) {
+        if (anchor == null || anchor.isBlank()) return nowEpoch;
+        try {
+            long dayStart = java.time.LocalDate.parse(anchor.trim()).atStartOfDay().toEpochSecond(KST);
+            return Math.min(dayStart + 86400L - 1L, nowEpoch);   // 그 날 23:59:59 (미래면 지금으로 클램프)
+        } catch (Exception e) { return nowEpoch; }
     }
 
     private static long bucketKey(long epochSec, boolean hourly) {
