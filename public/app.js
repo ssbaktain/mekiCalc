@@ -1891,8 +1891,10 @@ async function renderLine(part, lineName) {
 // 캐시해두고, 슬라이더·정렬·윗/아랫 필터는 renderCurrentRecs로 재fetch 없이 즉시 처리한다.
 let rcData = null;   // { maxDivisions, recsBySlider: [[recJson,...] (슬라이더0), ...] }
 
+let rcRunToken = 0;
 async function runRecommend(resetSlider) {
   if (!Object.keys(myCube).length) { $("rc-status").textContent = "먼저 '내 큐브' 탭에서 큐브 옵션을 입력하세요."; $("rc-list").innerHTML = ""; rcData = null; return; }
+  const token = ++rcRunToken;   // ★겹쳐 호출되면 최신 호출만 유효(오래된 응답·진행은 버림) → 로딩 오르내림 방지
   // OCR과 동일한 진행 모달 + '지금 무슨 계산을 하는지' 단계 문구(추천이 실제 거치는 순서).
   const prog = spDeferredStages("우선순위 추천 계산 중…", [
     [10, "빌드 딜 계산을 준비하고 있어요"],
@@ -1907,6 +1909,7 @@ async function runRecommend(resetSlider) {
       cubeState: myCube, ranges: myRanges, buffs: activeBuffs(), hitInterval: myHitInterval,
       ...effRelicCtx(), simMs: tlSimMs(),   // 나이트로드=신엔진(유물 조립) 추천. 실험실과 동일 sim 길이(순환/파생 유물 sim 의존)
     });
+    if (token !== rcRunToken) { prog.cancel(); return; }   // 더 최신 호출이 진행 중 → 이 결과·진행 버림
     rcData = { maxDivisions: data.maxDivisions || 1, recsBySlider: data.recsBySlider || [] };
     const slider = $("rc-slider");
     slider.max = Math.max(0, rcData.maxDivisions - 1);
@@ -1914,7 +1917,7 @@ async function runRecommend(resetSlider) {
     if (resetSlider || (parseInt(slider.value, 10) || 0) > slider.max) { slider.value = 0; $("rc-slider-val").textContent = "0"; }
     renderCurrentRecs();
     prog.done();
-  } catch (e) { prog.fail(); $("rc-status").textContent = "오류: " + e.message; }
+  } catch (e) { if (token !== rcRunToken) { prog.cancel(); return; } prog.fail(); $("rc-status").textContent = "오류: " + e.message; }
 }
 
 // 슬라이더·정렬·윗/아랫 변경 시 재fetch 없이 캐시(recsBySlider)에서 필터·정렬·렌더. sortKey 정의는 서버 sortValue와 동일.
@@ -2453,22 +2456,26 @@ function spAutoClose() { clearTimeout(spTimer); spTimer = setTimeout(spClose, 30
 const spSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 서버 단일 호출(세부 진행을 못 받는) 계산용 진행 표시. delayMs 뒤에(빠른 계산엔 안 뜸) 진행 모달을 열고
-// stages(=[[pct, 단계문구], …])를 시간 흐름에 맞춰 진행시킨다(문구는 실제 계산 단계, 막대는 추정). 반환 {done, fail}.
-let spStageTimer = null;
+// stages(=[[pct, 단계문구], …])를 시간 흐름에 맞춰 진행시킨다(문구는 실제 계산 단계, 막대는 추정).
+// ★겹쳐 호출돼도 막대는 단조 증가·모달 하나만 유지(새 호출이 이전 타이머를 정리, 이미 떠있으면 0%로 리셋 안 함). 반환 {done, fail, cancel}.
+let spStageTimer = null, spOpenTimer = null, spCurPct = 0;
 function spDeferredStages(title, stages, delayMs = 350) {
-  let shown = false, si = 0;
-  const openTimer = setTimeout(() => {
-    shown = true;
-    spOpen();
-    spSet(stages[0][0], stages[0][1], title);
-    si = 1;
-    const tick = () => { if (si < stages.length) { spSet(stages[si][0], stages[si][1], title); si++; spStageTimer = setTimeout(tick, 650); } };
-    spStageTimer = setTimeout(tick, 550);
+  clearTimeout(spOpenTimer); clearTimeout(spStageTimer); clearTimeout(spTimer);   // 이전 진행·자동닫힘 취소(겹침 방지)
+  const runStages = () => {
+    const rest = stages.filter((s) => s[0] > spCurPct + 0.5);   // 현재보다 높은 단계만 → 뒤로 안 감
+    let i = 0;
+    const tick = () => { if (i < rest.length) { spCurPct = rest[i][0]; spSet(spCurPct, rest[i][1], title); i++; spStageTimer = setTimeout(tick, 650); } };
+    if (rest.length) { spCurPct = rest[0][0]; spSet(spCurPct, rest[0][1], title); i = 1; spStageTimer = setTimeout(tick, 650); }
+  };
+  spOpenTimer = setTimeout(() => {
+    if ($("modal-stat-progress").hidden) { spOpen(); spCurPct = 0; }   // 안 떠있을 때만 새로 오픈(리셋). 이미 떠있으면 이어감
+    runStages();
   }, delayMs);
-  const clear = () => { clearTimeout(openTimer); clearTimeout(spStageTimer); };
+  const clear = () => { clearTimeout(spOpenTimer); clearTimeout(spStageTimer); };
   return {
-    done() { clear(); if (shown) { spSet(100, "완료", title); $("sp-spinner").style.visibility = "hidden"; spTimer = setTimeout(spClose, 450); } },   // 100% 잠깐 보인 뒤 닫혀 결과를 드러냄
-    fail(msg) { clear(); if (shown) { spFinish(msg || "오류가 발생했어요"); spAutoClose(); } },
+    done() { clear(); if (!$("modal-stat-progress").hidden) { spCurPct = 100; spSet(100, "완료", title); $("sp-spinner").style.visibility = "hidden"; spTimer = setTimeout(() => { spClose(); spCurPct = 0; }, 450); } },
+    fail(msg) { clear(); if (!$("modal-stat-progress").hidden) { spFinish(msg || "오류가 발생했어요"); spAutoClose(); spCurPct = 0; } },
+    cancel() { clear(); },   // 겹친 오래된 호출: 타이머만 정리(모달·완료는 최신 호출이 관리)
   };
 }
 
