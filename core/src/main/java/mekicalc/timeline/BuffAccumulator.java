@@ -63,7 +63,7 @@ public final class BuffAccumulator {
         // 1) 후반영 상시 패시브
         for (SkillIR s : book.skills()) {
             if (s.requireLevel() > charLv || !"passive".equals(s.type()) || !"onStart".equals(s.trigger())) continue;
-            BuffSource src = new BuffSource(s.name(), 0, simMs);
+            BuffSource src = new BuffSource(s.name(), 0, simMs).skill(s.idx());
             boolean any = false;
             for (EffectIR e : s.effects()) {
                 if (!"statUp".equals(e.role()) || e.durationMs() != null) continue;
@@ -77,7 +77,7 @@ public final class BuffAccumulator {
         for (SkillIR s : book.skills()) {
             if (s.requireLevel() > charLv || !isTimedBuff(s)) continue;
             for (int[] w : windowsFor(s, actions, firstAtk, simMs, sch.eventWindows())) {
-                BuffSource src = new BuffSource(s.name(), w[0], w[1]);
+                BuffSource src = new BuffSource(s.name(), w[0], w[1]).skill(s.idx());
                 for (EffectIR e : s.effects()) {
                     if ("statUp".equals(e.role()) || "debuff".equals(e.role()))
                         route(src, e.stat(), e.value(), e.growthSlot(), e.unit(), effOf(s.idx()));
@@ -97,13 +97,13 @@ public final class BuffAccumulator {
                 // 확률 누산기 윈도우(베놈)에서만 디버프 on(적용 다음 딜부터 = w0+1).
                 // ★빈 리스트 = 확률 미발동 → 약화 없음(폴백 금지). 폴백은 윈도우 자체가 없을(null) 때만.
                 for (int[] w : gw) {
-                    BuffSource src = new BuffSource(m.masteryName(), Math.min(w[0] + 1, simMs), w[1]);
+                    BuffSource src = new BuffSource(m.masteryName(), Math.min(w[0] + 1, simMs), w[1]).skill(m.gatedBy());
                     routeMastery(src, m);
                     sources.add(src);
                 }
             } else {
                 // 폴백: 윈도우 계산 자체가 없으면(null) 첫 공격 다음부터 연속(끝단 simMs 클립).
-                BuffSource src = new BuffSource(m.masteryName(), Math.min(firstAtk + 1, simMs), simMs);
+                BuffSource src = new BuffSource(m.masteryName(), Math.min(firstAtk + 1, simMs), simMs).skill(m.gatedBy());
                 routeMastery(src, m);
                 sources.add(src);
             }

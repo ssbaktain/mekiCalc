@@ -6617,8 +6617,46 @@ function tlFriendlyReason(raw) {
   return "아직 지원하지 않는 발동 방식이에요";
 }
 
+// ──────────────── 타임라인 툴팁 카드(통일 UI) ────────────────
+// 구조: [아이콘][이름(1줄)/유지·발생시간(2줄)] + 그 아래 피해/버프/디버프 한 줄씩. data-tip(innerHTML)에 삽입.
+// ★data-tip은 큰따옴표 속성 → 카드 구조는 작은따옴표, 동적 텍스트는 escAttr(큰따옴표·꺾쇠 escape). 효과 html(tlEffHtml)은 신뢰 생성물.
+function tlSkillIc(idx) { return idx ? `<img class='tlt-ic' src='/img/skill/${idx}.png' onerror='this.remove()'>` : ""; }
+function tlArtIc(id) { return (id != null && id !== "") ? `<img class='tlt-ic' src='/img/artifact/${id}.png' onerror='this.remove()'>` : ""; }
+function tlCompIc(cls) { return cls ? `<img class='tlt-ic' src='/img/companion/${cls}.png' onerror='this.remove()'>` : ""; }   // 동료 초상화(가슴 위 증명사진 풍)
+function tlGradeIc(level) {   // 등급 보너스 엠블럼 — 동료 레벨별 티어(5+ → I, 8+ → II, 10+ → III)
+  const t = level >= 10 ? 3 : level >= 8 ? 2 : 1;
+  return `<img class='tlt-ic' src='/img/skill/gradebonus${t}.png' onerror='this.remove()'>`;
+}
+// 한 효과(스탯±%) 줄 html — 무실효=취소선.
+function tlEffHtml(e) {
+  const txt = `${tlStatName(e.stat)} ${e.value >= 0 ? "+" : ""}${e.value}%`;
+  return e.dormant ? `<s>${escAttr(txt)}</s>` : escAttr(txt);
+}
+// lines = [{cls, html}]. icon=아이콘 html, name/sub=텍스트(escAttr됨),
+function tlTipCard(icon, name, sub, lines) {
+  const head = `<div class='tlt-h'>${icon || ""}<div class='tlt-ht'>` +
+    `<div class='tlt-nm'>${escAttr(name)}</div>` +
+    (sub ? `<div class='tlt-sb'>${escAttr(sub)}</div>` : "") + `</div></div>`;
+  const body = (lines && lines.length)
+    ? `<div class='tlt-b'>${lines.map((l) => `<div class='tlt-ln ${l.cls || ""}'>${l.html}</div>`).join("")}</div>` : "";
+  return `<div class='tlt'>${head}${body}</div>`;
+}
+// 버프/유물 막대 카드: label(+스택)·효과줄들·유지시간. isArt면 유물 아이콘, 아니면 스킬 아이콘(이름→idx).
+function tlBuffCard(label, w, isArt) {
+  const icon = isArt ? tlArtIc(_tlArtId[label]) : tlSkillIc(_tlNameIdx[label]);
+  const sub = w.always ? "상시" : `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
+  const nm = w.stacks != null ? `${label} (${w.stacks}스택)` : label;
+  const lines = (w.effects || []).map((e) => ({ cls: (e.value || 0) < 0 ? "ln-debuff" : "ln-buff", html: tlEffHtml(e) }));
+  return tlTipCard(icon, nm, sub, lines);
+}
+let _tlNameIdx = {}, _tlArtId = {};   // 이름→skillIdx(스킬버프 아이콘), 유물이름→id(유물 아이콘) — tlGantt에서 매 렌더 갱신
 function tlGantt(d) {
   const T = d.simMs || 1, pct = (ms) => (ms / T * 100);
+  _tlNameIdx = {}; _tlArtId = {};
+  for (const a of (d.actions || [])) if (a.idx && !_tlNameIdx[a.name]) _tlNameIdx[a.name] = a.idx;
+  for (const dl of (d.dealLines || [])) if (dl.idx && !_tlNameIdx[dl.name]) _tlNameIdx[dl.name] = dl.idx;
+  for (const b of (d.buffs || [])) if (b.idx && b.idx > 0 && !_tlNameIdx[b.label]) _tlNameIdx[b.label] = b.idx;   // 스킬/마스터리 버프(숙련된 표창술·베놈-약화 등) 아이콘
+  for (const a of (artifactCatalog.list || [])) _tlArtId[a.name] = a.id;
   // 그룹핑: 유물=인스턴스 인덱스(inst) 키로(중복 유물 오염방지), 없으면 이름. 스킬=이름. 상시 스킬버프는 숨김(클러터).
   const skill = {}, art = {};
   const pushSeg = (map, key, label, b) => { (map[key] = map[key] || { label, segs: [] }).segs.push(b); };
@@ -6629,10 +6667,9 @@ function tlGantt(d) {
   let act = "";
   for (const a of d.actions) {
     const l = pct(a.t).toFixed(3);
-    const dmg = a.dmg > 0 ? " · " + koreanUnit(a.dmg) : "";
-    act += a.basic
-      ? `<span class="tl-tick" style="left:${l}%" data-tip="${a.name} · ${fmtSec(a.t)}s${dmg}"></span>`
-      : `<span class="tl-cast" style="left:${l}%" data-tip="${a.name} · ${fmtSec(a.t)}s${dmg}"></span>`;
+    const lines = a.dmg > 0 ? [{ cls: "ln-dmg", html: "피해 " + escAttr(koreanUnit(a.dmg)) }] : [];
+    const tip = tlTipCard(tlSkillIc(a.idx), a.name, fmtSec(a.t) + "s", lines);
+    act += `<span class="tl-${a.basic ? "tick" : "cast"}" style="left:${l}%" data-tip="${tip}"></span>`;
   }
   const lanes = [{ label: "액션", labelCls: "", trackCls: "tl-track tl-track-sharp", tall: true, bars: act }];
   tlDealLines(d.dealLines, pct, lanes);   // 도트/주기/프록 딜: 옅은 막대(활성 구간)+진한 틱(실제 타격 시각)
@@ -6925,7 +6962,7 @@ function tlBuffLanes(byKey, pct, isArt, lanes, T) {
     let bars = "";
     for (let i = 0; i < merged.length; i++) {
       const w = merged[i];
-      const title = tlBuffTitle(label, w);
+      const title = tlBuffCard(label, w, isArt);
       const width = pct(w.end - w.start);   // 정확한 폭(최소폭 없음 — 은펜던트 등 짧은 유지도 실제 길이로, 확대하면 보임)
       let style = `left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%`;
       if (range > 0.01) style += `;--a:${(0.45 + 0.5 * ((vals[i] - vmin) / range)).toFixed(2)}`;   // 낮으면 옅게, 높으면 진하게(배경 알파 — opacity 속성 대신, 확대 시 미표시 방지)
@@ -6943,14 +6980,14 @@ function tlBuffLanes(byKey, pct, isArt, lanes, T) {
 function tlDealLines(dealLines, pct, lanes) {
   for (const dl of (dealLines || [])) {
     let bars = "";
-    for (const w of (dl.windows || [])) {   // 옅은 막대(뒤)
+    for (const w of (dl.windows || [])) {   // 옅은 막대(뒤) = 지속/설치 구간
       const width = pct(w.end - w.start);   // 정확한 폭(최소폭 없음)
       const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
-      bars += `<span class="tl-dwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${dl.name} 지속 · ${when}"></span>`;
+      bars += `<span class="tl-dwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tlTipCard(tlSkillIc(dl.idx), dl.name, "지속 " + when, [])}"></span>`;
     }
     for (const tk of (dl.ticks || [])) {     // 진한 틱(위). strong=즉발 첫타격 → 굵게
-      const dmg = tk.dmg > 0 ? " · " + koreanUnit(tk.dmg) : "";
-      bars += `<span class="tl-dtick${tk.strong ? " strong" : ""}" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${fmtSec(tk.t)}s${dmg}"></span>`;
+      const lines = tk.dmg > 0 ? [{ cls: "ln-dmg", html: "피해 " + escAttr(koreanUnit(tk.dmg)) }] : [];
+      bars += `<span class="tl-dtick${tk.strong ? " strong" : ""}" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${tlTipCard(tlSkillIc(dl.idx), dl.name, fmtSec(tk.t) + "s", lines)}"></span>`;
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-dot", trackCls: "tl-track tl-buff", bars });
   }
@@ -6971,15 +7008,15 @@ function tlCompanionLanes(c, pct, lanes, T) {
   for (const w of (c.summons || [])) {
     const width = pct(w.end - w.start);
     const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
-    sw += `<span class="tl-cwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${c.name} 소환 · ${when}"></span>`;
+    sw += `<span class="tl-cwin" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tlTipCard(tlCompIc(c.class), c.name + " 소환", when, [])}"></span>`;
   }
   lanes.push({ label: `▼ ${c.name} 소환`, labelCls: "tl-glabel-comp", trackCls: "tl-track tl-comp-lane", bars: sw });
   // 2) 동료 딜 lanes(스킬별 틱)
   for (const dl of (c.dealLines || [])) {
+    const ic = tlSkillIc(dl.idx);   // 소환(입장)=Portrait 매핑이라 812400.png이 초상화. 전 스킬 SkillIconPath로 아이콘 보유
     let bars = "";
     for (const tk of (dl.ticks || [])) {
-      const dmg = tk.dmg > 0 ? " · " + koreanUnit(tk.dmg) : "";
-      bars += `<span class="tl-ctick" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${dl.name} · ${fmtSec(tk.t)}s${dmg}"></span>`;
+      bars += `<span class="tl-ctick" style="left:${pct(tk.t).toFixed(3)}%" data-tip="${tlTipCard(ic, dl.name, fmtSec(tk.t) + "s", tk.dmg > 0 ? [{ cls: "ln-dmg", html: "피해 " + escAttr(koreanUnit(tk.dmg)) }] : [])}"></span>`;
     }
     lanes.push({ label: dl.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
@@ -6991,6 +7028,7 @@ function tlCompanionLanes(c, pct, lanes, T) {
   }
   for (const k of Object.keys(bySkill)) {
     const g = bySkill[k];
+    const gic = Number(k) > 0 ? tlSkillIc(k) : tlGradeIc(c.level);   // 패시브=SkillIconPath 아이콘. 등급 보너스(idx=-1)=레벨별 엠블럼
     const byWin = {};   // 같은 창(start-end)끼리 묶어 그 창의 스탯들 나열
     for (const b of g.items) { const wk = b.start + "-" + b.end; (byWin[wk] = byWin[wk] || { start: b.start, end: b.end, stats: [] }).stats.push(b); }
     let bars = "";
@@ -6998,12 +7036,13 @@ function tlCompanionLanes(c, pct, lanes, T) {
       const w = byWin[wk];
       const width = pct(w.end - w.start);
       const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
-      const statLines = w.stats.map((b) => {   // 효과별 줄바꿈 + 대상 태그(툴팁에만)
+      const lines = w.stats.map((b) => {   // 효과별 한 줄 + 대상 태그. 적 디버프=빨강, 버프=초록.
         const tgt = b.toEnemy ? "enemy" : (b.target || "player");
         const v = b.value / 10;   // 음수는 부호 그대로(예: 적 방어력 -15%)
-        return `${COMPANION_STAT_LABEL[b.stat] || b.stat} ${v >= 0 ? "+" : ""}${v.toFixed(1)}% · ${compBuffTargetLabel(tgt)}`;
+        const txt = `${COMPANION_STAT_LABEL[b.stat] || b.stat} ${v >= 0 ? "+" : ""}${v.toFixed(1)}% · ${compBuffTargetLabel(tgt)}`;
+        return { cls: tgt === "enemy" ? "ln-debuff" : "ln-buff", html: escAttr(txt) };
       });
-      const tip = [g.name, ...statLines, when].join("\n");
+      const tip = tlTipCard(gic, g.name, when, lines);
       bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tip}"></span>`;
     }
     lanes.push({ label: g.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });

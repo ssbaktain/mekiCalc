@@ -1171,6 +1171,7 @@ public final class CalcService {
                 tickObjs.add(tk);
             }
             Map<String, Object> row = new LinkedHashMap<>();
+            row.put("idx", idx);   // 스킬 아이콘(/img/skill/{idx}.png) 매핑용
             row.put("name", sk.name());
             row.put("ticks", tickObjs);
             row.put("windows", wins);
@@ -1241,6 +1242,7 @@ public final class CalcService {
             }
             Map<String, Object> c = new LinkedHashMap<>();
             c.put("code", companionCode);
+            c.put("class", sup == null ? null : sup.clazz());   // 소환창 툴팁 초상화(/img/companion/{class}.png)
             c.put("name", sup == null ? companionCode : sup.name());
             c.put("level", companionLevel <= 0 ? 1 : companionLevel);
             c.put("summonCount", comp.summonCount());
@@ -1387,6 +1389,8 @@ public final class CalcService {
         m.put("always", bs.startMs() == 0 && bs.endMs() >= simMs);   // 상시(숙련·페이크) 표시 구분용
         m.put("artifact", artifact);
         if (bs.inst() >= 0) m.put("inst", bs.inst());   // 유물 인스턴스 인덱스(프론트 그룹핑·오염방지 키)
+        if (bs.skillIdx() > 0) m.put("idx", bs.skillIdx());   // 툴팁 스킬 아이콘 매핑용
+
         if (bs.dormant()) m.put("dormant", true);       // 무실효(대상 불일치·마리수 미충족) — 흐리게 표시
         List<Map<String, Object>> effs = new ArrayList<>();
         for (var e : bs.adds().entrySet()) if (e.getValue() != 0) effs.add(statEff(e.getKey().name(), e.getValue()));

@@ -1874,6 +1874,22 @@ body.notices-active .ad-slot { display: none !important; }
   max-width: calc(100vw - 16px); box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); }   /* 좌우 8px 여백 확보(가로 스크롤 방지) */
 /* 툴팁 첫 줄(이름) 강조 · 마지막 줄(시간) 흐리게는 textContent라 불가 — 여러 줄만 지원 */
 .tl-tip[hidden] { display: none; }
+/* ── 통일 툴팁 카드: [아이콘][이름/시간 2줄] + 피해/버프/디버프 줄 ── */
+.tl-tip .tlt { white-space: normal; min-width: 140px; }
+.tl-tip .tlt-h { display: flex; align-items: center; gap: 9px; }
+.tl-tip .tlt-ic { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 7px; background: #0d1017;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .08); object-fit: cover; }
+.tl-tip .tlt-ht { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tl-tip .tlt-nm { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; letter-spacing: -.2px; }
+.tl-tip .tlt-sb { font-size: 11px; font-weight: 600; color: #9aa4b4; white-space: nowrap; }
+.tl-tip .tlt-b { margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .11);
+  display: flex; flex-direction: column; gap: 3px; }
+.tl-tip .tlt-ln { font-size: 12px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tl-tip .tlt-ln::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex: 0 0 auto; opacity: .8; }
+.tl-tip .tlt-ln.ln-dmg { color: #ffcf6b; font-weight: 800; }
+.tl-tip .tlt-ln.ln-buff { color: #6fcf97; }
+.tl-tip .tlt-ln.ln-debuff { color: #e0716a; }
+.tl-tip .tlt-ln s { opacity: .85; }
 /* 딜 라인(도트·주기·프록) — 회색 계열 + 그라데이션. 옅은 막대=활성 구간, 진한 세로줄=실제 딜 틱 */
 .tl-dwin { position: absolute; top: 3px; height: 10px; background: linear-gradient(180deg, rgba(185, 90, 82, .34), rgba(158, 66, 59, .34)); border-radius: 2px; cursor: help; }
 .tl-dtick { position: absolute; top: 0; width: 4px; height: 16px; background: linear-gradient(180deg, #b95a52, #9e423b); transform: translateX(-2px); cursor: help; }

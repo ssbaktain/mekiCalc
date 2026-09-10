@@ -20,6 +20,7 @@ public final class BuffSource {
     final Map<Stat, Double> adds = new EnumMap<>(Stat.class);
     double finalDmgFrac = 0.0;
     int inst = -1;   // 유물 인스턴스 인덱스(equipped 위치) — 중복 유물 오염방지·표시 그룹핑 키. 스킬 버프=-1.
+    int skillIdx = -1;   // 이 버프를 만든 스킬/마스터리 게이트 인덱스(툴팁 아이콘 /img/skill/{idx}.png). 유물=-1.
     boolean dormant = false;   // 활성이지만 현재 무실효(대상 불일치·마리수 미충족 등) — 딜 반영 제외, 표시는 흐리게
 
     BuffSource(String label, int startMs, int endMs) {
@@ -27,6 +28,8 @@ public final class BuffSource {
         this.startMs = startMs;
         this.endMs = endMs;
     }
+
+    BuffSource skill(int idx) { this.skillIdx = idx; return this; }   // 아이콘 매핑용 스킬 인덱스 지정(체이닝)
 
     void add(Stat s, double pct) { adds.merge(s, pct, Double::sum); }
 
@@ -36,6 +39,7 @@ public final class BuffSource {
     public int endMs()           { return endMs; }
     public double finalDmgFrac() { return finalDmgFrac; }
     public int inst()            { return inst; }
+    public int skillIdx()        { return skillIdx; }
     public boolean dormant()     { return dormant; }
     public Map<Stat, Double> adds() { return adds; }
 
