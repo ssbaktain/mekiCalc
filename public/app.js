@@ -5802,6 +5802,9 @@ async function tlLoadSupporters() {
   }
   for (const cls in tlSupByClass)
     tlSupByClass[cls].sort((a, b) => (TL_GRADE_ORDER[a.grade] ?? 9) - (TL_GRADE_ORDER[b.grade] ?? 9));
+  // 클래스(동료) 순서 = 동료 idx(코드 SUPPORTER_{N}_{step}의 N) 오름차순 — 드롭다운을 일정한 순서로 배치
+  const clsIdx = (cls) => { const m = /^SUPPORTER_(\d+)_/.exec(((tlSupByClass[cls] || [])[0] || {}).code || ""); return m ? parseInt(m[1], 10) : 9999; };
+  classOrder.sort((a, b) => clsIdx(a) - clsIdx(b));
   // 동료(클래스) 드롭다운: 값=클래스, 라벨=기본 한글명
   const curClass = sel.dataset.cls || "";
   sel.innerHTML = `<option value="">없음</option>` +
@@ -6662,12 +6665,15 @@ function tlTipCard(icon, name, sub, lines) {
     ? `<div class='tlt-b'>${lines.map((l) => `<div class='tlt-ln ${l.cls || ""}'>${l.html}</div>`).join("")}</div>` : "";
   return `<div class='tlt'>${head}${body}</div>`;
 }
+// 적 디버프 스탯(받피증·방깎·적크저항·적받크뎀) — 부호 무관 빨강. clt명·mekicalc키 둘 다 포함.
+const ENEMY_DEBUFF_STATS = new Set(["WEAKNESS", "DEF_REDUCE", "CRIT_RATE_ENEMY", "CRIT_DMG_ENEMY",
+  "Weakness", "Defence", "Defense", "CriticalResist", "EnemyCritResist", "EnemyRecvCritDmg"]);
 // 버프/유물 막대 카드: label(+스택)·효과줄들·유지시간. isArt면 유물 아이콘, 아니면 스킬 아이콘(이름→idx).
 function tlBuffCard(label, w, isArt) {
   const icon = isArt ? tlArtIc(_tlArtId[label]) : tlSkillIc(_tlNameIdx[label]);
   const sub = w.always ? "상시" : `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
   const nm = w.stacks != null ? `${label} (${w.stacks}스택)` : label;
-  const lines = (w.effects || []).map((e) => ({ cls: (e.value || 0) < 0 ? "ln-debuff" : "ln-buff", html: tlEffHtml(e) }));
+  const lines = (w.effects || []).map((e) => ({ cls: ENEMY_DEBUFF_STATS.has(e.stat) ? "ln-debuff" : "ln-buff", html: tlEffHtml(e) }));
   return tlTipCard(icon, nm, sub, lines);
 }
 let _tlNameIdx = {}, _tlArtId = {};   // 이름→skillIdx(스킬버프 아이콘), 유물이름→id(유물 아이콘) — tlGantt에서 매 렌더 갱신
@@ -7022,6 +7028,7 @@ const COMPANION_STAT_LABEL = {
   CriticalChance: "크리티컬 확률", AttackSpeed: "공격 속도", SkillPower: "스킬 데미지", DMG: "데미지",
   AttackPowerToBoss: "보스 몬스터 데미지", AttackPowerExcludeBoss: "일반 몬스터 데미지", BaseAttackPower: "기본 공격 데미지",
   Weakness: "적 받는 피해 증가", Defence: "적 방어력", Defense: "적 방어력",
+  CriticalResist: "적 크리티컬 저항 감소", EnemyCritResist: "적 크리티컬 저항 감소", EnemyRecvCritDmg: "적 받는 크리티컬 데미지 증가",
 };
 function tlCompanionLanes(c, pct, lanes, T) {
   if (!c) return;

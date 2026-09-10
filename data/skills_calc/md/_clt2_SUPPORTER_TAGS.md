@@ -178,3 +178,12 @@ supporter { code, class, grade, creatureIndex,
     - **설치기**(=마킹 대상): 장판(포이즌 미스트류)·주기 소환구름(OnTimer 독안개)·소환 정령(이프리트) 등 CreateProjectile 기반. 재설치 시 이전 것 제거(MaxProjectileCount).
     - **비-설치기**(=마킹 안 함, 소환 종료 후 잔존): **적 상태칸 도트**(`GetDotR`/`GetDamageR Dot`가 적 State에 거는 중독 등)·**버프**(플레이어 상태)·**디버프**(적 상태, 약화·방깎)·**즉발 타격**. 적/플레이어에 걸린 거라 소환과 무관하게 지속.
     - ★판별: clt op가 `CreateProjectile`(ExpireOnCreatureDie)면 설치기, `GetDotR`(적 State)·`ModStat`(버프/디버프)면 비-설치기.
+15b. **★디버프/버프 갱신(refresh) = op 위치로 판별**(2026-09-10 확정, 썬콜 프리징브레스 804440) — 디버프 op(`ModStat`)이 **틱 딜스킬**(설치기가 0.5s마다 발동하는 자식 딜, 예 804441)에 있으면 **매 타격마다 갱신** → manual effect에 **`refresh: true`**. 실효 창 = **설치dur(같은 스킬 딜 지속, `emitDeals` 기준) + op `durationMs`**(엔진 `collectPlayerBuffs`가 자동 계산, **값 하드코딩 금지**). op이 **액티브 스킬 자체**에 있으면 1회 발동 → `refresh` 없음(창 = `durationMs`).
+    - ★`durationMs`에는 **op 원본 지속**(프리징브레스=5000)을 넣고, 설치dur 합산은 엔진이 함(10000으로 미리 계산해 박지 말 것 — 그게 하드코딩). 다음에 같은 매커니즘(틱마다 디버프 갱신)이면 동일하게 `refresh:true`만.
+16. **★onAttack 확률 버프 = 확률 누산식**(2026-09-06 확정, [[_clt2_SIM_MODEL]] §79) — 딜 없는 onAttack proc 버프(팔라딘 홀리차지·히어로 콤보 등)는 **시간평균 스칼라(가동률×값) 금지**. 공격 스트림마다 chance(‰) 누산 → 1000 도달 시 발동, **발동마다 durMs 창**. 엔진 `SupporterTimeline.sharedStackSegments`/`procWindows`. manual: `trigger:"onAttack"`+`chance`(‰)+effect `durationMs`(+`maxStacks`). ~~procBuffUptime/procEffective(스칼라)는 폐기.~~
+17. **★중첩 지속방식 = 공유 타이머(기본) / 개별은 "개별 적용" 명시분만**(2026-09-06, 인게임 실측+클뜯 확정):
+    - **기본(공유 타이머, refresh)**: 재발동 시 타이머 전체 갱신+스택+1(캡 maxStacks), 만료 시 **전 스택 동시 소멸**(히어로 콤보 MaxStack5 실측: 5스택→한 번에 꺼짐). manual `maxStacks`만.
+    - **개별 지속(은펜던트식)**: 발동마다 독립 창, 겹침=스택, 개별 소멸(풀중첩 짧음). ★**게임 설명에 "지속시간은 개별 적용됩니다" 명시된 것만** → manual `individualDur:true`. (은펜던트 desc가 유일 근거 — 콤보 등 일반 스택엔 그 문구 없음=공유.)
+    - StackRule(None/Override/FollowOperation)은 스택 '개수' 규칙이지 지속 방식 아님(콤보=Override=공유). ★DLL StateChangerList(IStateChanger 리스트)만 보고 '개별'로 오독했다가(2026-09-06) 인게임 실측·게임설명으로 공유 확정 — **표시 테이블·구조보다 인게임 실측·설명 문구 우선**.
+18. **★FinalDamage 중첩 = 한 항 합산 vs 항별 곱**(2026-09-06 규명): 최종뎀은 **소스별 곱**(gradeBonus 3개 stateless op = ×1.25³ 인게임 검증)이지만, **같은 스택 상태(MaxStack N) 내 중첩은 한 소스 = value×스택 선형(한 항)**. 예 나로 809470(단일 상태 SupportNightLord_FinalDamageStack MaxStack15)=×(1+0.015×15)=×1.225 (×1.015¹⁵ 아님). ★구분: 스택 상태 내 중첩=한 항 / 별개 op·상태=항별 곱. 엔진 `applySelfBuffs` 스택 램프가 이미 한 항(value×stacks)으로 처리(정확).
+19. **동료 스킬명 = clt `SkillTable.ActionName`(내부 액션명) 음차** — 딜 스킬은 ActionName(FlameSweep→플레임스윕 등) 옮김, 액션명 숫자/None(패시브·enter)은 기능으로 명명. ★동료 스킬엔 `NameLocalKey`/`DescLocalKey`가 없어 공식 표기명 불가(내부 액션명이 정본 아님, 표시용). 진실원천은 스킬 idx.

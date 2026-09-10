@@ -268,18 +268,19 @@ public final class SupporterTimeline {
             } else if (e.isDot() || (e.tickMs() != null && e.durationMs() != null)) {
                 int tick = e.tickMs() == null ? 0 : e.tickMs();
                 int dur = e.durationMs() == null ? 0 : e.durationMs();
+                int off = e.tickStartMs() != null ? e.tickStartMs() : 0;   // 지연 소환(배틀십 3초 후 등장) — 지속창을 그만큼 뒤로
                 if (tick <= 0) continue;
                 for (int k = 1; (long) tick * k <= dur; k++) {
-                    int tt = t + tick * k;
+                    int tt = t + off + tick * k;
                     // ★적 상태 도트(설치기 아님)는 소환창(W) 이후에도 남은 지속을 계속 입히지만(인게임: 적에 걸린 지속딜은 소환 종료 후에도 유지),
                     //   설치기는 소환 해제와 함께 제거되므로 windowMs에서 절단. 어느 쪽이든 시뮬 경계(simCapMs) 밖 틱은 미포함.
                     //   W 초과 틱(적 상태 도트)은 applySelfBuffs가 동료 자기버프(최종뎀 스택·등급보너스)를 싣지 않고, 적 디버프(받피증·방깎)는 그대로 수혜.
                     if (tt >= cap) break;
                     tl.addDeal(tt, new DealEvent(s.idx(), DmgType.SKILL, frac, hits, 0.0, true));
                 }
-            } else if (t < cap) {
-                tl.addDeal(t, new DealEvent(s.idx(), type, frac, hits, 0.0, false));
-                anyInstant = true;
+            } else {   // 즉발(단발). tickStartMs 있으면 그만큼 지연(배틀십 소환 3초 후 등장 등).
+                int t0 = t + (e.tickStartMs() != null ? e.tickStartMs() : 0);
+                if (t0 < cap) { tl.addDeal(t0, new DealEvent(s.idx(), type, frac, hits, 0.0, false)); anyInstant = true; }
             }
         }
         if (anyInstant && attackTimes != null) attackTimes.add(t);
@@ -292,7 +293,18 @@ public final class SupporterTimeline {
             if (e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
             boolean enemy = e.toEnemy() || "debuff".equals(e.role());
             if (!e.toPlayer() && !enemy) continue;   // companion 자기버프는 applySelfBuffs
-            int useEnd = e.durationMs() != null ? (startMs + e.durationMs()) : windowMs;   // 시한부=지속만큼 / 무기한(상시)=소환창 끝
+            int useEnd;
+            if (e.durationMs() == null) {
+                useEnd = windowMs;   // 무기한(상시)=소환창 끝
+            } else if (e.refreshOn()) {
+                // ★매 틱 갱신(디버프 op이 틱 딜스킬에 있음): 실효창 = 같은 스킬 설치딜 지속(마지막 틱) + op 지속. clt 구조 기반, 값 하드코딩 아님.
+                int installerDur = 0;
+                for (SupporterEffectIR de : s.effects())
+                    if (de.isDeal() && de.durationMs() != null && de.tickMs() != null) installerDur = Math.max(installerDur, de.durationMs());
+                useEnd = startMs + installerDur + e.durationMs();
+            } else {
+                useEnd = startMs + e.durationMs();   // 1회(op이 액티브 자체)
+            }
             out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), startMs, useEnd, enemy, effTarget(e, enemy)));
         }
     }

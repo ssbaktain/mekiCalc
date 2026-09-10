@@ -59,8 +59,12 @@ public record SupporterEffectIR(
         Integer tickStartMs,
         Boolean tickBySpeed,
         Boolean expiresOnSummonEnd,
-        Boolean individualDur
+        Boolean individualDur,
+        Boolean refresh
 ) {
+    /** ★범용: 디버프 op이 틱 딜스킬에 있어 매 타격마다 갱신되는 경우(true). 실효 창 = 설치dur(같은 스킬 딜 지속) + durationMs(op 지속).
+     *  false/null = op이 액티브 자체에 있어 1회(창 = durationMs). clt에서 op이 틱 스킬 vs 액티브 어디 있는지로 판별. */
+    public boolean refreshOn() { return Boolean.TRUE.equals(refresh); }
     /** 발동 확률 배율(기댓값). chance 없으면 1.0. */
     public double chanceMult() { return chance == null ? 1.0 : chance / 1000.0; }
     /** ★중첩 지속 방식: true=발동마다 독립 창(은펜던트식, 게임설명 "지속시간은 개별 적용"). null/false=공유 타이머(기본, 재발동 시 전체 갱신+스택+1, 만료 시 전 스택 동시 소멸). */
@@ -93,7 +97,8 @@ public record SupporterEffectIR(
                 IRRead.intg(m, "tickStartMs"),
                 IRRead.bool(m, "tickBySpeed"),
                 IRRead.bool(m, "expiresOnSummonEnd"),
-                IRRead.bool(m, "individualDur")
+                IRRead.bool(m, "individualDur"),
+                IRRead.bool(m, "refresh")
         );
     }
 

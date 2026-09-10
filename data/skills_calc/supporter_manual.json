@@ -5255,6 +5255,1257 @@
           }
         ]
       }
+    },
+    {
+      "code": "SUPPORTER_12_1",
+      "class": "Captain",
+      "name": "캡틴(1차)",
+      "grade": "rare",
+      "creatureIndex": "9112",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "812110",
+          "name": "더블 파이어",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "812110 DoubleFire GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "812100",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 170,
+              "hits": 3,
+              "targetCount": 6,
+              "_seed": "812100 GetDamageR 170 hits3 maxHitCount6"
+            },
+            {
+              "role": "debuff",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "enter op Stun target Parent",
+              "_note": "입장 시 스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "812120",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 100,
+              "target": "both",
+              "_seed": "ModStat AttackSpeed 100 target Friend+Myself",
+              "_note": "플레이어+동료 공속 +10%(천분율100÷10). 고유 체감·상한150%."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_12_2",
+      "class": "Captain",
+      "name": "캡틴(2차)",
+      "grade": "epic",
+      "creatureIndex": "9212",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "812210",
+          "name": "매그넘 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "812210 MagnumShot GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "812200",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 500,
+              "hits": 3,
+              "targetCount": 8,
+              "_seed": "812200 GetDamageR 500 hits3 maxHitCount8"
+            },
+            {
+              "role": "debuff",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "enter op Stun target Parent",
+              "_note": "입장 시 스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "812220",
+          "name": "선원 소환",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 950,
+              "hits": 2,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812220->PROJ812221(dur20000 tick3000, ExpireOnCreatureDie)->812222 GetDamageR 950 hits2",
+              "_note": "소환 선원(설치형)=소환 해제 시 제거. 3초마다 950%×2, 최대 20초."
+            }
+          ]
+        },
+        {
+          "idx": "812230",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 100,
+              "target": "both",
+              "_seed": "ModStat AttackSpeed 100 target Friend+Myself",
+              "_note": "플레이어+동료 공속 +10%(천분율100÷10). 고유 체감·상한150%."
+            }
+          ]
+        },
+        {
+          "name": "공격력 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 100,
+              "target": "companion",
+              "_cltStat": "Attack(ModStatR)",
+              "_note": "동료 자기 공격력% +10%(별도 곱)."
+            }
+          ],
+          "idx": "812240"
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_12_3",
+      "class": "Captain",
+      "name": "캡틴(3차)",
+      "grade": "unique",
+      "creatureIndex": "9312",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "812310",
+          "name": "더블 배럴 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "812310 DoubleBarrelShot GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "812300",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1500,
+              "hits": 3,
+              "targetCount": 10,
+              "_seed": "812300 GetDamageR 1500 hits3 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "enter op Stun target Parent",
+              "_note": "입장 시 스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "812320",
+          "name": "선원 소환",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2800,
+              "hits": 2,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812320->PROJ812321(dur20000 tick3000)->812322 GetDamageR 2800 hits2",
+              "_note": "선원1(설치형). 3초마다 2800%×2, 최대 20초."
+            },
+            {
+              "role": "deal",
+              "coeff": 1900,
+              "hits": 3,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 4000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "cond": "companionLevel>=3",
+              "_seed": "812360(op2)->PROJ812361(dur20000 tick4000)->PROJ812362(tick200 dur300)->812363 GetDamageR 1900 hits3. 812360 패시브(open3) ModSkillEnabled 812320 op2가 해금",
+              "_note": "선원2(설치형). 동료레벨>=3에서 해금(812360). 4초마다 1900%×3. 저레벨 미발동(근사)."
+            }
+          ]
+        },
+        {
+          "idx": "812330",
+          "name": "시즈 보머",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 20000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 2,
+              "targetCount": 4,
+              "form": "dot",
+              "tickMs": 2500,
+              "durationMs": 30000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812330->PROJ812330(dur30000 tick2500 MaxProjectileCount2)->812331/812332 GetDamageR 2900 hits1 maxHitCount4(위치분기 택1)",
+              "_note": "시즈보머(설치형) 2기(MaxProjectileCount2)=2.5초마다 2900%×2기(hits2로 반영). 최대 30초."
+            }
+          ]
+        },
+        {
+          "idx": "812340",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 100,
+              "target": "both",
+              "_seed": "ModStat AttackSpeed 100 target Friend+Myself",
+              "_note": "플레이어+동료 공속 +10%(천분율100÷10). 고유 체감·상한150%."
+            }
+          ]
+        },
+        {
+          "name": "공격력 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 100,
+              "target": "companion",
+              "_cltStat": "Attack(ModStatR)",
+              "_note": "동료 자기 공격력% +10%(별도 곱)."
+            }
+          ],
+          "idx": "812350"
+        },
+        {
+          "idx": "812360",
+          "name": "선원 강화",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "utility",
+              "action": "enableSkill",
+              "used": false,
+              "_seed": "812360 ModSkillEnabled 812320 op2(선원2 해금)",
+              "_note": "딜은 812320 선원2 effect에 통합. 해금 트리거(딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_12_4",
+      "class": "Captain",
+      "name": "캡틴(4차)",
+      "grade": "legend",
+      "creatureIndex": "9412",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "812410",
+          "name": "퓨질레이드",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "812410 Fusillade GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "812400",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 5,
+              "targetCount": 10,
+              "_seed": "812400 GetDamageR 3000 hits5 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "enter op Stun target Parent",
+              "_note": "입장 시 스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "812420",
+          "name": "선원 소환",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 9500,
+              "hits": 2,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812420->PROJ812421(dur20000 tick3000)->812422 GetDamageR 9500 hits2",
+              "_note": "선원1(설치형). 3초마다 9500%×2, 최대 20초."
+            },
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 3,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 4000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "cond": "companionLevel>=2",
+              "_seed": "812470(op2)->PROJ812471(dur20000 tick4000)->PROJ812472(tick200 dur300)->812473 GetDamageR 10000 hits3. 812470 패시브(open2) ModSkillEnabled 812420 op2가 해금",
+              "_note": "선원2(설치형). 동료레벨>=2에서 해금. 4초마다 10000%×3."
+            }
+          ]
+        },
+        {
+          "idx": "812430",
+          "name": "시즈 보머",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 12000,
+              "hits": 2,
+              "targetCount": 4,
+              "form": "dot",
+              "tickMs": 2500,
+              "durationMs": 30000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812430->PROJ812430(dur30000 tick2500 MaxProjectileCount2)->812431/812432 GetDamageR 12000 hits1 maxHitCount4(위치분기 택1)",
+              "_note": "시즈보머(설치형) 2기=2.5초마다 12000%×2기(hits2). 최대 30초."
+            }
+          ]
+        },
+        {
+          "idx": "812440",
+          "name": "배틀십 보머",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 20000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 38000,
+              "hits": 2,
+              "targetCount": 1,
+              "tickStartMs": 3000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812440 child PROJ812443(tick500 dur900)->812443 GetDamageR 38000 hits2",
+              "_note": "배틀십 소환 3초 후 등장 → 초기 폭격 38000%×2(tickStartMs 3000). 동료 종료 전 등장해야 발동(설치형)."
+            },
+            {
+              "role": "deal",
+              "coeff": 33000,
+              "hits": 1,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 30000,
+              "tickStartMs": 3000,
+              "expiresOnSummonEnd": true,
+              "_seed": "812440->812441/812442(상태 교대)->PROJ812441(dur30000 tick3000)->812444 GetDamageR 33000 hits1",
+              "_note": "배틀십 시전 3초 후 등장 → 그때부터 30초 유지(tickStartMs 3000·dur 30000). 단 동료 소환 종료 시 모든 소환물과 함께 제거(expiresOnSummonEnd=true, 유저 확인). 상태 교대·자식투사체 복합이라 실측 검증 대상."
+            }
+          ]
+        },
+        {
+          "idx": "812450",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 100,
+              "target": "both",
+              "_seed": "ModStat AttackSpeed 100 target Friend+Myself",
+              "_note": "플레이어+동료 공속 +10%(천분율100÷10). 고유 체감·상한150%."
+            }
+          ]
+        },
+        {
+          "name": "공격력 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 100,
+              "target": "companion",
+              "_cltStat": "Attack(ModStatR)",
+              "_note": "동료 자기 공격력% +10%(별도 곱)."
+            }
+          ],
+          "idx": "812460"
+        },
+        {
+          "idx": "812470",
+          "name": "선원 강화",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "utility",
+              "action": "enableSkill",
+              "used": false,
+              "_seed": "812470 ModSkillEnabled 812420 op2(선원2 해금)",
+              "_note": "딜은 812420 선원2 effect에 통합. 해금 트리거(딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "812480",
+          "name": "스킬 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "SkillPower",
+              "value": 150,
+              "target": "both",
+              "_seed": "812480 ModStat SkillPower 150 target Friend+Myself",
+              "_note": "플레이어+동료 스킬 데미지 +15%."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_4_1",
+      "class": "ArchMageIL",
+      "name": "아크메이지(썬,콜)(1차)",
+      "grade": "rare",
+      "creatureIndex": "9104",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "804110",
+          "name": "에너지 볼트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "804110 EnergyBolt GetDamageR 260 hits2"
+            }
+          ]
+        },
+        {
+          "idx": "804100",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 100,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "804100 GetDamageR 100 hits5 maxHitCount6"
+            },
+            {
+              "role": "debuff",
+              "stat": "Frozen",
+              "target": "enemy",
+              "used": false,
+              "_seed": "804100 op Frozen target Parent 3000",
+              "_note": "입장 시 빙결(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "804120",
+          "name": "블링크",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "used": false,
+              "_seed": "804120 ModStatR RunSpeedMms(순간이동·챕터사냥 쿨감)",
+              "_note": "순간이동(이동속도·챕터사냥 쿨감). 딜 무관."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_4_2",
+      "class": "ArchMageIL",
+      "name": "아크메이지(썬,콜)(2차)",
+      "grade": "epic",
+      "creatureIndex": "9204",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "804210",
+          "name": "콜드 빔",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "804210 ColdBeam GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "804200",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 300,
+              "hits": 5,
+              "targetCount": 8,
+              "_seed": "804200 GetDamageR 300 hits5 maxHitCount8"
+            },
+            {
+              "role": "debuff",
+              "stat": "Frozen",
+              "target": "enemy",
+              "used": false,
+              "_seed": "804200 op Frozen target Parent 3000",
+              "_note": "입장 시 빙결(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "804220",
+          "name": "메디테이션",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 200,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "Attack(ModStatR)",
+              "_seed": "804220 op1 Attack 200 target Friend(플레이어) · op2 Attack 250 target Myself(동료) 15s. ★op2는 250이나 desc는 '동료/플레이어 동일%'라 툴팁/인게임 관측 = 둘 다 20%(value200). op2 250은 desc-op 불일치(향후 실측 검증).",
+              "_note": "15초간 플레이어+동료 공격력 +20%(별도 곱)."
+            }
+          ]
+        },
+        {
+          "idx": "804230",
+          "name": "블링크",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "used": false,
+              "_seed": "804230 ModStatR RunSpeedMms(순간이동·챕터사냥 쿨감)",
+              "_note": "순간이동(이동속도·챕터사냥 쿨감). 딜 무관."
+            }
+          ]
+        },
+        {
+          "idx": "804240",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "CriticalResist",
+              "value": 100,
+              "target": "enemy",
+              "used": true,
+              "_seed": "804240 ModStat CriticalResist -100 (적 크저항 10%↓). clt 원본 -100이나 엔진 CRIT_RATE_ENEMY(크확 이득)로 value 100 양수.",
+              "_note": "적 크리티컬 저항 -10% = 플레이어+동료 크확 +10%(적 디버프). ★CRIT_RATE 스탯 아님 → 크확 파생·증폭엔 미포함(DamageFormula 최종단계만 합류)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_4_3",
+      "class": "ArchMageIL",
+      "name": "아크메이지(썬,콜)(3차)",
+      "grade": "unique",
+      "creatureIndex": "9304",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "804310",
+          "name": "아이스 스트라이크",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "804310 IceStrike GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "804300",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 900,
+              "hits": 5,
+              "targetCount": 10,
+              "_seed": "804300 GetDamageR 900 hits5 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Frozen",
+              "target": "enemy",
+              "used": false,
+              "_seed": "804300 op Frozen target Parent 3000",
+              "_note": "입장 시 빙결(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "804320",
+          "name": "메디테이션",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 200,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "Attack(ModStatR)",
+              "_seed": "804320 op1 Attack 200 target Friend(플레이어) · op2 Attack 250 target Myself(동료) 15s. ★op2는 250이나 desc는 '동료/플레이어 동일%'라 툴팁/인게임 관측 = 둘 다 20%(value200). op2 250은 desc-op 불일치(향후 실측 검증).",
+              "_note": "15초간 플레이어+동료 공격력 +20%(별도 곱)."
+            }
+          ]
+        },
+        {
+          "idx": "804330",
+          "name": "썬더 스피어",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2000,
+              "hits": 3,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 2000,
+              "durationMs": 10000,
+              "expiresOnSummonEnd": true,
+              "_seed": "804330->PROJ804330(dur10000 tick2000 ExpireOnCreatureDie 이동형)->804331 GetDamageR 2000 hits3",
+              "_note": "번개 구체(설치형·이동). 2초마다 2000%×3, 최대 10초. 소환 해제 시 제거."
+            }
+          ]
+        },
+        {
+          "idx": "804340",
+          "name": "블링크",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "used": false,
+              "_seed": "804340 ModStatR RunSpeedMms(순간이동·챕터사냥 쿨감)",
+              "_note": "순간이동(이동속도·챕터사냥 쿨감). 딜 무관."
+            }
+          ]
+        },
+        {
+          "idx": "804350",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "CriticalResist",
+              "value": 100,
+              "target": "enemy",
+              "used": true,
+              "_seed": "804350 ModStat CriticalResist -100 (적 크저항 10%↓). clt 원본 -100이나 엔진 CRIT_RATE_ENEMY(크확 이득)로 value 100 양수.",
+              "_note": "적 크리티컬 저항 -10% = 플레이어+동료 크확 +10%(적 디버프). ★CRIT_RATE 스탯 아님 → 크확 파생·증폭엔 미포함(DamageFormula 최종단계만 합류)."
+            }
+          ]
+        },
+        {
+          "idx": "804360",
+          "name": "일반 몬스터 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackPowerExcludeBoss",
+              "value": 150,
+              "target": "player",
+              "_cltStat": "AttackPowerExcludeBoss→엔진 Stat.NORMAL_DMG(일반 몬스터 데미지). ★clt명 사용 필수: 엔진 toBuffSource엔 NORMAL_DMG 케이스 없음",
+              "_seed": "804360 ModStat AttackPowerExcludeBoss 150 target Friend. desc '플레이어 일반 몬스터 데미지 +15%' 일치.",
+              "_note": "플레이어 일반 몬스터 데미지 +15%."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
+    },
+    {
+      "code": "SUPPORTER_4_4",
+      "class": "ArchMageIL",
+      "name": "아크메이지(썬,콜)(4차)",
+      "grade": "legend",
+      "creatureIndex": "9404",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend). compareLevel=100. 공격력만 부분계승·나머지 100%.",
+      "skills": [
+        {
+          "idx": "804410",
+          "name": "체인 라이트닝",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "804410 ChainLightning GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "804400",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3000,
+              "hits": 5,
+              "targetCount": 10,
+              "_seed": "804400 GetDamageR 3000 hits5 maxHitCount10"
+            },
+            {
+              "role": "debuff",
+              "stat": "Frozen",
+              "target": "enemy",
+              "used": false,
+              "_seed": "804400 op Frozen target Parent 3000",
+              "_note": "입장 시 빙결(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "804420",
+          "name": "메디테이션",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 200,
+              "target": "both",
+              "durationMs": 15000,
+              "_cltStat": "Attack(ModStatR)",
+              "_seed": "804420 op1 Attack 200 target Friend(플레이어) · op2 Attack 250 target Myself(동료) 15s. ★op2는 250이나 desc는 '동료/플레이어 동일%'라 툴팁/인게임 관측 = 둘 다 20%(value200). op2 250은 desc-op 불일치(향후 실측 검증).",
+              "_note": "15초간 플레이어+동료 공격력 +20%(별도 곱)."
+            }
+          ]
+        },
+        {
+          "idx": "804430",
+          "name": "썬더 스피어",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 15000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6000,
+              "hits": 3,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 2000,
+              "durationMs": 10000,
+              "expiresOnSummonEnd": true,
+              "_seed": "804430->PROJ804430(dur10000 tick2000 ExpireOnCreatureDie 이동형)->804431 GetDamageR 6000 hits3",
+              "_note": "번개 구체(설치형·이동). 2초마다 6000%×3, 최대 10초. 소환 해제 시 제거."
+            }
+          ]
+        },
+        {
+          "idx": "804440",
+          "name": "프리징 브레스",
+          "role": [
+            "deal",
+            "debuff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 1,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 500,
+              "durationMs": 5000,
+              "expiresOnSummonEnd": true,
+              "_seed": "804440->PROJ804440(dur5000 tick500 ExpireOnCreatureDie)->804441 GetDamageR 8000 hits1",
+              "_note": "냉기 숨결(설치형). 0.5초마다 8000%%, 최대 5초. 소환 해제 시 제거."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "durationMs": 5000,
+              "refresh": true,
+              "used": true,
+              "_seed": "804441(틱 딜스킬, PROJ804440이 0.5s마다 발동) op ModStat Weakness 150 DurationMs 5000 target Parent. ★op이 틱 딜스킬에 있음 = 매 타격마다 갱신 → refresh:true. durationMs=op원본 5000, 엔진이 같은 스킬 설치dur(5000)를 더해 실효창 10초 계산(하드코딩 아님).",
+              "_note": "적 받는 피해 증가(약화) +15%. 설치기가 0.5초마다 약화를 갱신(첫 틱 발동, 마지막 틱부터 다시 5초). ★규약: 디버프 op이 틱 딜스킬에 있으면 refresh:true(창=설치dur+opdur), 액티브 자체면 refresh 없음(1회 opdur). 플레이어+동료 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "804450",
+          "name": "블링크",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "used": false,
+              "_seed": "804450 ModStatR RunSpeedMms(순간이동·챕터사냥 쿨감)",
+              "_note": "순간이동(이동속도·챕터사냥 쿨감). 딜 무관."
+            }
+          ]
+        },
+        {
+          "idx": "804460",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "CriticalResist",
+              "value": 100,
+              "target": "enemy",
+              "used": true,
+              "_seed": "804460 ModStat CriticalResist -100 (적 크저항 10%↓). clt 원본 -100이나 엔진 CRIT_RATE_ENEMY(크확 이득)로 value 100 양수.",
+              "_note": "적 크리티컬 저항 -10% = 플레이어+동료 크확 +10%(적 디버프). ★CRIT_RATE 스탯 아님 → 크확 파생·증폭엔 미포함(DamageFormula 최종단계만 합류)."
+            }
+          ]
+        },
+        {
+          "idx": "804470",
+          "name": "일반 몬스터 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackPowerExcludeBoss",
+              "value": 150,
+              "target": "player",
+              "_cltStat": "AttackPowerExcludeBoss→엔진 Stat.NORMAL_DMG(일반 몬스터 데미지). ★clt명 사용 필수: 엔진 toBuffSource엔 NORMAL_DMG 케이스 없음",
+              "_seed": "804470 ModStat AttackPowerExcludeBoss 150 target Friend. desc '플레이어 일반 몬스터 데미지 +15%' 일치.",
+              "_note": "플레이어 일반 몬스터 데미지 +15%."
+            }
+          ]
+        },
+        {
+          "idx": "804480",
+          "name": "냉기의 창",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "openLevel": 3,
+          "periodMs": 5000,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "804480 OnTimer 5000ms GetDamageR 8000 hits3 maxHitCount5 (냉기의 창 다수 낙하)",
+              "_note": "5초마다 임의 적에게 냉기의 창 8000%%×3(최대 5명)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [],
+        "equip": []
+      }
     }
   ]
 }
