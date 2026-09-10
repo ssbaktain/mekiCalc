@@ -6623,6 +6623,27 @@ function tlFriendlyReason(raw) {
 function tlSkillIc(idx) { return idx ? `<img class='tlt-ic' src='/img/skill/${idx}.png' onerror='this.remove()'>` : ""; }
 function tlArtIc(id) { return (id != null && id !== "") ? `<img class='tlt-ic' src='/img/artifact/${id}.png' onerror='this.remove()'>` : ""; }
 function tlCompIc(cls) { return cls ? `<img class='tlt-ic' src='/img/companion/${cls}.png' onerror='this.remove()'>` : ""; }   // 동료 초상화(가슴 위 증명사진 풍)
+// 툴팁에 쓰일 아이콘을 렌더 시점에 미리 로드(브라우저 캐시) → 최초 호버 시 지연 없이 즉시 표시.
+let _tlPreloaded = new Set();
+function tlPreloadIcons(d) {
+  const urls = new Set();
+  const add = (u) => { if (u && !_tlPreloaded.has(u)) urls.add(u); };
+  const sk = (i) => { if (i && Number(i) > 0) add(`/img/skill/${i}.png`); };
+  for (const a of (d.actions || [])) sk(a.idx);
+  for (const dl of (d.dealLines || [])) sk(dl.idx);
+  for (const b of (d.buffs || [])) {
+    if (b.idx) sk(b.idx);
+    if (b.artifact && _tlArtId[b.label] != null) add(`/img/artifact/${_tlArtId[b.label]}.png`);
+  }
+  const c = d.companion;
+  if (c) {
+    for (const dl of (c.dealLines || [])) sk(dl.idx);
+    for (const b of (c.buffs || [])) sk(b.skillIdx);
+    if (c.class) add(`/img/companion/${c.class}.png`);
+    add("/img/skill/gradebonus1.png"); add("/img/skill/gradebonus2.png"); add("/img/skill/gradebonus3.png");
+  }
+  for (const u of urls) { const im = new Image(); im.src = u; _tlPreloaded.add(u); }
+}
 function tlGradeIc(level) {   // 등급 보너스 엠블럼 — 동료 레벨별 티어(5+ → I, 8+ → II, 10+ → III)
   const t = level >= 10 ? 3 : level >= 8 ? 2 : 1;
   return `<img class='tlt-ic' src='/img/skill/gradebonus${t}.png' onerror='this.remove()'>`;
@@ -6657,6 +6678,7 @@ function tlGantt(d) {
   for (const dl of (d.dealLines || [])) if (dl.idx && !_tlNameIdx[dl.name]) _tlNameIdx[dl.name] = dl.idx;
   for (const b of (d.buffs || [])) if (b.idx && b.idx > 0 && !_tlNameIdx[b.label]) _tlNameIdx[b.label] = b.idx;   // 스킬/마스터리 버프(숙련된 표창술·베놈-약화 등) 아이콘
   for (const a of (artifactCatalog.list || [])) _tlArtId[a.name] = a.id;
+  tlPreloadIcons(d);   // 툴팁 아이콘 미리 로드 → 최초 호버 지연 제거
   // 그룹핑: 유물=인스턴스 인덱스(inst) 키로(중복 유물 오염방지), 없으면 이름. 스킬=이름. 상시 스킬버프는 숨김(클러터).
   const skill = {}, art = {};
   const pushSeg = (map, key, label, b) => { (map[key] = map[key] || { label, segs: [] }).segs.push(b); };
