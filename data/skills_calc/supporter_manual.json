@@ -6506,6 +6506,755 @@
         "collection": [],
         "equip": []
       }
+    },
+    {
+      "code": "SUPPORTER_10_1",
+      "class": "Shadower",
+      "name": "섀도어(1차)",
+      "grade": "rare",
+      "creatureIndex": "9110",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "810110",
+          "name": "크루얼 스탭",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "810110 GetDamageR 260 hits2 maxHitCount3 (replaceBaseAttack)"
+            }
+          ]
+        },
+        {
+          "idx": "810100",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "810100 op2 GetDamageR 800 hits2 (maxHitCount None=1)"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810100 op1 Dispel Random 1",
+              "_note": "적 버프 1개 무작위 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810120",
+          "name": "크리티컬 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 80,
+              "target": "player",
+              "_seed": "810120 ModStat CriticalPower 80 Target(player) state SupportShadower_CriticalPowerUp dur무한",
+              "_note": "플레이어 크리티컬 데미지 +8.0%(소환중 상시). CriticalPower=합산 크뎀(크리=1+크확x크뎀)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_10_2",
+      "class": "Shadower",
+      "name": "섀도어(2차)",
+      "grade": "epic",
+      "creatureIndex": "9210",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "810210",
+          "name": "크루얼 스탭",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "810210 GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "810200",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1200,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "810200 op2 GetDamageR 1200 hits3"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810200 op1 Dispel Random 1",
+              "_note": "적 버프 1개 무작위 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810220",
+          "name": "기습 준비",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "810220 active cd30000 State IgnoreBaseAttackDamage Friend 3000ms",
+              "_note": "clt: 액티브(cd 30000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+            }
+          ]
+        },
+        {
+          "idx": "810230",
+          "name": "크리티컬 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 120,
+              "target": "player",
+              "_seed": "810230 ModStat CriticalPower 120 Target(player)",
+              "_note": "플레이어 크리티컬 데미지 +12.0%(소환중 상시). CriticalPower=합산 크뎀(크리=1+크확x크뎀)."
+            }
+          ]
+        },
+        {
+          "idx": "810240",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "player",
+              "_seed": "810240 op1 ModStat AttackSpeed 150 Target(player)",
+              "_note": "플레이어 공격 속도 +15%(소환중 상시, 고유 체감식·상한150%)."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "player",
+              "used": false,
+              "_seed": "810240 op2 ModStatR RunSpeedMms 150",
+              "_note": "이동속도(유틸, 딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MIN_DMG_MULT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "MinDamageRatio"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_10_3",
+      "class": "Shadower",
+      "name": "섀도어(3차)",
+      "grade": "unique",
+      "creatureIndex": "9310",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "810310",
+          "name": "크루얼 스탭",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "810310 GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "810300",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2000,
+              "hits": 4,
+              "targetCount": 1,
+              "_seed": "810300 op2 GetDamageR 2000 hits4"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810300 op1 Dispel Random 2",
+              "_note": "적 버프 2개 무작위 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810320",
+          "name": "기습 준비",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "810320 active cd25000 State IgnoreBaseAttackDamage Friend 3000ms",
+              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+            }
+          ]
+        },
+        {
+          "idx": "810330",
+          "name": "어쌔신",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2700,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "810330 op1 GetDamageR 2700 hits3"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810330 op2 Stun Parent(enemy) 2000ms",
+              "_note": "스턴(CC). 딜 무관. ★810480(적 CC 시 발동) proc은 CC가 컨텐츠별로 복잡(보스 CC면역/월드보스 자동기절 등)이라 현재 미반영, 기록만."
+            }
+          ]
+        },
+        {
+          "idx": "810340",
+          "name": "크리티컬 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "player",
+              "_seed": "810340 ModStat CriticalPower 150 Target(player)",
+              "_note": "플레이어 크리티컬 데미지 +15.0%(소환중 상시). CriticalPower=합산 크뎀(크리=1+크확x크뎀)."
+            }
+          ]
+        },
+        {
+          "idx": "810350",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "player",
+              "_seed": "810350 op1 ModStat AttackSpeed 150 Target(player)",
+              "_note": "플레이어 공격 속도 +15%(소환중 상시, 고유 체감식·상한150%)."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "player",
+              "used": false,
+              "_seed": "810350 op2 ModStatR RunSpeedMms 150",
+              "_note": "이동속도(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810360",
+          "name": "급습",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 3000,
+          "openLevel": 3,
+          "chance": 200,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810360 op1 Dispel Random 1",
+              "_note": "적 버프 해제(미구현)."
+            },
+            {
+              "role": "deal",
+              "coeff": 2000,
+              "hits": 3,
+              "targetCount": 1,
+              "cond": "nonBoss",
+              "used": false,
+              "_seed": "810360 op2 GetDamageR 2000 hits3 (non-boss)"
+            },
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 3,
+              "targetCount": 1,
+              "cond": "boss",
+              "used": false,
+              "_seed": "810360 op3 GetDamageR 10000 hits3 (boss=5x)"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MIN_DMG_MULT",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "MinDamageRatio"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_10_4",
+      "class": "Shadower",
+      "name": "섀도어(4차)",
+      "grade": "legend",
+      "creatureIndex": "9410",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "810410",
+          "name": "크루얼 스탭",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "810410 CruelStab GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "810400",
+          "name": "소환 공격",
+          "role": [
+            "deal"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 5800,
+              "hits": 5,
+              "targetCount": 1,
+              "_seed": "810400 op2 GetDamageR 5800 hits5"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810400 op1 Dispel Random 2",
+              "_note": "적 버프 2개 무작위 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810420",
+          "name": "기습 준비",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "810420 active cd25000 State IgnoreBaseAttackDamage Friend 3000ms",
+              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+            }
+          ]
+        },
+        {
+          "idx": "810430",
+          "name": "어쌔신",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 19000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6500,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "810430 op1 GetDamageR 6500 hits3"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810430 op2 Stun Parent(enemy) 2000ms",
+              "_note": "스턴(CC). 딜 무관. ★810480(적 CC 시 발동) proc은 CC가 컨텐츠별로 복잡(보스 CC면역/월드보스 자동기절 등)이라 현재 미반영, 기록만."
+            }
+          ]
+        },
+        {
+          "idx": "810440",
+          "name": "암살",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 14000,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "810440 Assassination op1 GetDamageR 14000 hits2. op2 SetSkill NextSkillIndex->810442(1000ms 콤보창)."
+            },
+            {
+              "role": "deal",
+              "coeff": 30000,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "810442 AssassinationAdd_Bloody GetDamageR 30000 hits1(+Stun). 암살 후속 콤보타 — 자동시전 상시완성 가정, 같은 액티브(cd13000)에 통합.",
+              "_note": "암살 콤보: 1400%x2 -> 후속 3000%x1(+스턴). 후속타 스턴=CC(딜 무관, 810480 미반영). cd 13초."
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810442 op2 Stun Parent(enemy). 콤보 후속타 스턴.",
+              "_note": "스턴(CC). 딜 무관. ★810480(적 CC 시 발동) proc은 CC가 컨텐츠별로 복잡(보스 CC면역/월드보스 자동기절 등)이라 현재 미반영, 기록만."
+            }
+          ]
+        },
+        {
+          "idx": "810450",
+          "name": "크리티컬 데미지 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalPower",
+              "value": 150,
+              "target": "player",
+              "_seed": "810450 ModStat CriticalPower 150 Target(player)",
+              "_note": "플레이어 크리티컬 데미지 +15.0%(소환중 상시). CriticalPower=합산 크뎀(크리=1+크확x크뎀)."
+            }
+          ]
+        },
+        {
+          "idx": "810460",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "player",
+              "_seed": "810460 op1 ModStat AttackSpeed 150 Target(player)",
+              "_note": "플레이어 공격 속도 +15%(소환중 상시, 고유 체감식·상한150%)."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "player",
+              "used": false,
+              "_seed": "810460 op2 ModStatR RunSpeedMms 150",
+              "_note": "이동속도(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "810470",
+          "name": "급습",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 3000,
+          "openLevel": 2,
+          "chance": 200,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "810470 op1 Dispel Random 1",
+              "_note": "적 버프 해제(미구현)."
+            },
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 3,
+              "targetCount": 1,
+              "cond": "nonBoss",
+              "used": false,
+              "_seed": "810470 op2 GetDamageR 10000 hits3 (non-boss)"
+            },
+            {
+              "role": "deal",
+              "coeff": 50000,
+              "hits": 3,
+              "targetCount": 1,
+              "cond": "boss",
+              "used": false,
+              "_seed": "810470 op3 GetDamageR 50000 hits3 (boss=5x)"
+            }
+          ]
+        },
+        {
+          "idx": "810480",
+          "name": "그림자 처형",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onEnemyState",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 50000,
+              "hits": 1,
+              "targetCount": 1,
+              "used": false,
+              "_seed": "810480 OnEnemyState TriggerCondition $Trigger.StateFlag & StateAttrFlag.CC -> GetDamageR 50000 hits1. 적이 CC(기절 등) 진입 시 발동.",
+              "_note": "적이 CC 상태가 될 때 5000% 발동(50배 단타). ★현재 미반영: 보스 CC면역·컨텐츠별 CC 가부(월드보스 자동기절 등)로 발동이 컨텐츠 의존. 유저 지시로 기록만."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "MIN_DMG_MULT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "MinDamageRatio"
+          }
+        ]
+      }
     }
   ]
 }
