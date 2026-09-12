@@ -67,6 +67,8 @@ public record SupporterSkillIR(
     public boolean isEnter()         { return "enter".equals(trigger); }
     public boolean isPeriodic()      { return "periodic".equals(trigger); }
     public boolean isOnAttack()      { return "onAttack".equals(trigger); }
+    /** onHit = 타격(히트)마다 발동(clt OnHit) — onAttack(액션당1)과 달리 히트 수만큼 + 도트 틱(CanTriggerOnDot). 예 보우마 집중. */
+    public boolean isOnHit()         { return "onHit".equals(trigger); }
     /** onActiveSkill = 동료 액티브(=모든 액션) 편승 proc. 정령 재생성(윈드브레이커) 등. chance 없으면 100%(내부쿨로 캡). */
     public boolean isOnActiveSkill() { return "onActiveSkill".equals(trigger); }
 

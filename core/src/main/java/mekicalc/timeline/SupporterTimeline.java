@@ -86,6 +86,7 @@ public final class SupporterTimeline {
         while (cur < windowMs - 1e-9) {
             int ti = (int) Math.round(cur);
             double slotMs = slotMsAt(companionBase, skills, ti, activeCastTimes);   // ★가변: 이 시점 활성 공속으로 슬롯 간격
+            double adv = slotMs;
             SupporterSkillIR chosen = null;
             for (SupporterSkillIR a : actives) if (nextReady.get(a.idx()) <= ti) { chosen = a; break; }
             if (chosen != null) {
@@ -96,11 +97,14 @@ public final class SupporterTimeline {
                     stateWindows.computeIfAbsent(chosen.opensState(), k -> new ArrayList<>()).add(new int[]{ti, ti + chosen.opensStateMs()});
                 int cd = chosen.cooldownMs() == null ? 0 : chosen.cooldownMs();
                 nextReady.put(chosen.idx(), ti + Math.max(cd, (int) Math.round(slotMs)));
+                // ★채널링 액티브(송오브스카이·스톰애로우 등): 채널 지속만큼 로테이션 잠금 → 그동안 다른 액티브·평타 불가.
+                double lock = channelLockMs(chosen, slotMs / 1000.0);
+                if (lock > adv) adv = lock;
             } else if (basic != null) {
                 emitDeals(tl, basic, ti, DmgType.BASIC, simCapMs, windowMs, attackTimes, boss, stateWindows, slotMs / 1000.0);   // 빈 슬롯 = 평타
                 basicAttackTimes.add(ti);   // ★평타 시각(basicAttack-only proc용)
             }
-            cur += slotMs;
+            cur += adv;
         }
 
         // ── periodic 딜(배경 타이머, 액션 로테이션과 별개) + periodic 버프 ──
@@ -124,15 +128,22 @@ public final class SupporterTimeline {
             }
         }
 
-        // ── proc(onAttack / onActiveSkill): 트리거 시각마다 chance 누산, 내부쿨 캡 ──
-        //   트리거 스트림: triggerSkillIdx=특정스킬 시전(811480) / triggerBy basicAttack=평타만(씨서펜트버스트) / 그 외=전공격·전액션.
+        // ★onHit(per-hit) proc 트리거 스트림 = 지금까지(로테이션+periodic) 방출된 모든 딜의 개별 타격 시각(hits 수만큼 + 도트 틱). clt OnHit은 히트마다·도트틱마다(CanTriggerOnDot) 발동.
+        //   proc 딜은 제외(재귀 방지) — 이 시점 tl엔 로테이션·periodic 딜만 있음(proc 루프는 아래에서 실행).
+        List<Integer> hitTimes = new ArrayList<>();
+        for (var en : tl.slots().entrySet()) { int t = en.getKey(); for (DealEvent de : en.getValue().deals()) for (int h = 0; h < de.hits(); h++) hitTimes.add(t); }
+        Collections.sort(hitTimes);
+
+        // ── proc(onAttack / onHit / onActiveSkill): 트리거 시각마다 chance 누산, 내부쿨 캡 ──
+        //   트리거 스트림: triggerSkillIdx=특정스킬 시전(811480) / triggerBy basicAttack=평타만(씨서펜트버스트) / onHit=히트마다(hitTimes) / 그 외=전공격·전액션.
         //   onAttack=확률형(chance), onActiveSkill=편승(chance 없으면 100%·cd로만 캡). 딜은 stateWindows로 버스트↔어썰트 스왑.
         Collections.sort(attackTimes);
         for (SupporterSkillIR s : skills) {
-            boolean onAtk = s.isOnAttack(), onAct = s.isOnActiveSkill();
-            if ((!onAtk && !onAct) || !hasActiveDeal(s, boss)) continue;   // boss 전용 proc은 일반몹에서 미발동
+            boolean onAtk = s.isOnAttack(), onAct = s.isOnActiveSkill(), onHitT = s.isOnHit();
+            if ((!onAtk && !onAct && !onHitT) || !hasActiveDeal(s, boss)) continue;   // boss 전용 proc은 일반몹에서 미발동
             List<Integer> triggerTimes;
             if (s.triggerSkillIdx() != null) triggerTimes = activeCastTimes.getOrDefault(s.triggerSkillIdx(), List.of());   // 특정스킬 시전 편승
+            else if (onHitT) triggerTimes = hitTimes;                         // ★onHit=개별 타격마다(+도트틱, CanTriggerOnDot)
             else if (s.basicAttackOnly()) triggerTimes = basicAttackTimes;   // 평타 한정
             else triggerTimes = attackTimes;                                 // 전공격/전액션
             int chance = s.chance() == null ? (onAct ? 1000 : 0) : s.chance();   // onActiveSkill 기본 100%
@@ -153,10 +164,17 @@ public final class SupporterTimeline {
         //   공격마다 chance 누산 → 1000 도달 시 발동, 발동마다 durMs 독립 창(DLL 확인: 상태 스택=개별 SwapState 리스트=개별 지속).
         //   겹치는 창 수 = 스택(캡 maxStacks). 플레이어/적=스택 세그먼트 창 · 동료=슬롯별 스택. (딜 있는 onAttack proc은 위 proc path에서 처리.)
         //   ★모든 슬롯(로테 + periodic + proc딜) 생성 후 실행 — 동료 슬롯별 스택 반영 위해.
+        // onActiveSkill 버프-only proc(예 나이트워커 813470: 스킬 시전마다 플레이어 공속 스택) 트리거 스트림.
+        // ★clt OnActiveSkill 트리거는 평타에도 발동(OnActiveSkill.IsBaseAttack 필드). 평타(ReplaceBaseAttack)도 '스킬 시전'이라,
+        //   TriggerCondition으로 평타를 거르지 않는 한 평타 포함 전 스킬 시전마다 발동 → 스트림 = 평타 + 전 액티브 시전.
+        List<Integer> activeCastStream = new ArrayList<>(basicAttackTimes);
+        for (List<Integer> v : activeCastTimes.values()) activeCastStream.addAll(v);
+        Collections.sort(activeCastStream);
         for (SupporterSkillIR s : skills) {
-            if (!s.isOnAttack() || hasActiveDeal(s, boss)) continue;
-            int chance = s.chance() == null ? 0 : s.chance();
-            List<Integer> stream = s.basicAttackOnly() ? basicAttackTimes : attackTimes;   // 트리거 스트림(평타-only/전공격)
+            boolean onAtkB = s.isOnAttack(), onActB = s.isOnActiveSkill(), onHitB = s.isOnHit();
+            if ((!onAtkB && !onActB && !onHitB) || hasActiveDeal(s, boss)) continue;   // 딜 있는 proc은 위 proc path에서 처리
+            int chance = s.chance() == null ? (onActB ? 1000 : 0) : s.chance();   // onActiveSkill 기본 100%
+            List<Integer> stream = onHitB ? hitTimes : (onActB ? activeCastStream : (s.basicAttackOnly() ? basicAttackTimes : attackTimes));   // ★onHit=히트마다(집중) / 액티브시전 / 평타-only / 전공격
             for (SupporterEffectIR e : s.effects()) {
                 if (e.unused() || (!"statUp".equals(e.role()) && !"debuff".equals(e.role()))) continue;
                 if (e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
@@ -172,13 +190,18 @@ public final class SupporterTimeline {
                         pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value() * sg[2], sg[0], sg[1], enemy, effTarget(e, enemy)));
                 if (e.toCompanion()) {                                         // 동료: 딜슬롯 시각의 스택수만큼
                     double[] routed = routeSelf(e.stat(), e.value());
-                    if (routed != null)
+                    if (routed != null) {
                         for (var slotEn : tl.slots().entrySet()) {
                             int t = slotEn.getKey(); if (t > windowMs) continue;
                             int st = stackAtSeg(segs, t); if (st <= 0) continue;
                             if (routed[0] < 0) slotEn.getValue().mods().addFinalDmgSource(routed[1] * st);
                             else slotEn.getValue().mods().addStat(Stat.values()[(int) routed[0]], routed[1] * st);
                         }
+                        // ★표시: 스택 세그먼트별 창(value×스택) — 중첩 색 변화(값↑=진해짐, 은펜던트식). ★순수 동료버프(집중)만 — 'both'는 위 플레이어/적 브랜치가 이미 표시하므로 중복 금지.
+                        if (!e.toPlayer() && !enemy)
+                            for (int[] sg : segs)
+                                pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value() * sg[2], sg[0], Math.min(sg[1], windowMs), false, "companion"));
+                    }
                 }
             }
         }
@@ -188,7 +211,8 @@ public final class SupporterTimeline {
 
         // ── 동료 자기버프 '표시용' 창(딜은 applySelfBuffs로 이미 반영, 여기선 간트 바 target=companion만) ──
         //   ★durationMs 있는 액티브=시전마다 창 / enter=[0,dur] / 그 외(onStart)=창 전체. (applySelfBuffs 윈도잉과 동일)
-        for (SupporterSkillIR s : skills)
+        for (SupporterSkillIR s : skills) {
+            if (s.isOnAttack() || s.isOnHit()) continue;   // ★onAttack/onHit 동료버프(집중 등)는 위 proc 루프에서 스택 세그먼트로 표시됨 — 여기서 flat 중복 금지
             for (SupporterEffectIR e : s.effects()) {
                 if (e.unused() || !"statUp".equals(e.role()) || e.stat() == null || e.value() == null || !e.condActive(boss)) continue;
                 if (e.toPlayer() || e.toEnemy() || !e.toCompanion()) continue;   // player/both/enemy는 위에서 수집됨 — 여기선 순수 동료
@@ -199,7 +223,14 @@ public final class SupporterTimeline {
                     for (int k = 1; k <= maxS; k++) {
                         int start = k * period; if (start >= windowMs) break;   // t∈[k·period,(k+1)·period) → stacks=min(max, t/period)=k
                         int end = k < maxS ? Math.min((k + 1) * period, windowMs) : windowMs;
-                        double dispVal = finalStack ? (Math.pow(1.0 + e.value() / 1000.0, k) - 1.0) * 1000.0 : e.value() * k;
+                        double dispVal;
+                        if (finalStack) dispVal = (Math.pow(1.0 + e.value() / 1000.0, k) - 1.0) * 1000.0;   // 최종뎀=스택별 곱
+                        else {   // 감쇄 스탯(방관)=스택마다 감쇄 합성한 실효값 표시(효율 하락 반영), 합산 스탯=값×스택
+                            double[] routed = routeSelf(e.stat(), e.value());
+                            Stat ss = routed != null ? Stat.values()[(int) routed[0]] : null;
+                            if (ss != null && ss.diminishCap() > 0) { double eff = 0; for (int i = 0; i < k; i++) eff = ss.combine(eff, routed[1]); dispVal = eff * 10.0; }
+                            else dispVal = e.value() * k;
+                        }
                         pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), dispVal, start, end, false, "companion"));
                     }
                 } else if (e.durationMs() != null && s.isActive()) {   // 액티브 시전마다 창
@@ -211,6 +242,7 @@ public final class SupporterTimeline {
                     pbuffs.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, end, false, "companion"));
                 }
             }
+        }
         SupporterBook.GradeBonus gb = book.gradeBonus();   // 유니크/레전 동료자기 최종뎀 — ★각 +25%가 별도 스킬=곱적용(합 아님)
         if (gb != null && "FinalDamage".equals(gb.stat()) && "companion".equals(gb.target())
                 && (gb.grades() == null || gb.grades().contains(sup.grade()))) {
@@ -266,6 +298,7 @@ public final class SupporterTimeline {
                 }
                 anyInstant = true;   // 시전(캐스트) 자체는 공격 인스턴스로(proc 트리거 시각=t)
             } else if (e.isDot() || (e.tickMs() != null && e.durationMs() != null)) {
+                anyInstant = true;   // ★설치/도트 시전도 '동료 공격 액션'으로 카운트 → onAttack/OnHit proc(집중 등)이 애로우일루전 등 도트 액티브에도 발동
                 int tick = e.tickMs() == null ? 0 : e.tickMs();
                 int dur = e.durationMs() == null ? 0 : e.durationMs();
                 int off = e.tickStartMs() != null ? e.tickStartMs() : 0;   // 지연 소환(배틀십 3초 후 등장) — 지속창을 그만큼 뒤로
@@ -312,10 +345,10 @@ public final class SupporterTimeline {
     /** periodic 버프(target player) → dur>=period면 상시[0,W], 아니면 각 주기 창. cond 상시 가정. */
     private static void collectPeriodicPlayerBuffs(SupporterSkillIR s, int period, int windowMs, List<PlayerBuff> out, boolean boss) {
         for (SupporterEffectIR e : s.effects()) {
-            if (e.unused() || !"statUp".equals(e.role())) continue;
-            if (e.stat() == null || e.value() == null || (!e.toPlayer() && !e.toEnemy()) || !e.condActive(boss)) continue;
+            if (e.unused() || (!"statUp".equals(e.role()) && !"debuff".equals(e.role()))) continue;   // ★debuff도 수집(예 보우마 표창연사 약화) — 누락 원인이었음
+            boolean enemy = e.toEnemy() || "debuff".equals(e.role());
+            if (e.stat() == null || e.value() == null || (!e.toPlayer() && !enemy) || !e.condActive(boss)) continue;
             int dur = e.durationMs() == null ? 0 : e.durationMs();
-            boolean enemy = e.toEnemy();
             if (dur >= period) {   // 갱신형: 단일 창(스택X), 마지막 갱신(≤소환창) 후 dur까지 유지(종료 후에도)
                 int lastGrant = period > 0 ? (windowMs / period) * period : windowMs;
                 out.add(new PlayerBuff(s.idx(), s.name(), e.stat(), e.value(), 0, lastGrant + dur, enemy, effTarget(e, enemy)));
@@ -430,6 +463,21 @@ public final class SupporterTimeline {
         return sum;
     }
 
+    /** 채널링 액티브의 로테이션 잠금 시간(ms) = 마지막 틱까지(tickStart+(count-1)*tickMs). tickBySpeed면 공속 비례(sf) 압축.
+     *  채널 중엔 다른 액티브·평타를 못 쓴다(송오브스카이·스톰애로우). 채널 아니면 0. */
+    private static double channelLockMs(SupporterSkillIR s, double sf) {
+        double lock = 0;
+        for (SupporterEffectIR e : s.effects()) {
+            if (!e.isChanneled()) continue;
+            int interval = e.tickMs() == null ? 0 : e.tickMs();
+            int startMs = e.tickStartMs() != null ? e.tickStartMs() : interval;
+            double f = e.tickBySpeedOn() ? sf : 1.0;
+            double last = (startMs + (long) interval * (e.tickCount() - 1)) * f;
+            if (last > lock) lock = last;
+        }
+        return lock;
+    }
+
     /** 시점 t의 동료 슬롯(모션) 간격(ms) = 1000/(1+공속/100). 공속=계승 공속 ⊕ 그 시점 자기 공속(체감·상한150%). */
     private static double slotMsAt(Preset base, List<SupporterSkillIR> skills, int t, Map<Integer, List<Integer>> activeCastTimes) {
         double spd = Stat.ATK_SPEED.combine(base.atkSpeed(), selfAtkSpeedAt(skills, t, activeCastTimes));
@@ -497,7 +545,7 @@ public final class SupporterTimeline {
                 int stacks = (int) Math.min((long) st[3], (long) (t / (int) st[2]));
                 if (stacks <= 0) continue;
                 if (st[0] < 0) m.addFinalDmgSource(Math.pow(1.0 + st[1], stacks) - 1.0);   // ★스택 최종뎀 = 스택별 곱적용 ×(1+값)^스택. 클뜯 규명: FinalDamage=modifier별 곱(AccumMultCalculator)이고 809470엔 StackCount 플래그가 없어 스택 15개가 각각 별도 곱소스 → ×1.015¹⁵
-                else m.addStat(Stat.values()[(int) st[0]], st[1] * stacks);                // 그 외 스탯 = 합풀(스택수×스택당)
+                else { Stat ss = Stat.values()[(int) st[0]]; for (int i = 0; i < stacks; i++) m.addStat(ss, st[1]); }   // ★각 스택을 별도 모디파이어로 적용(clt ModStatOnTick=틱마다 AddStatModifier, 디스어셈블 확정). 감쇄 스탯(방관)은 스택마다 감쇄 합성→효율 하락, 합산 스탯은 합과 동일.
             }
         }
     }
@@ -515,6 +563,7 @@ public final class SupporterTimeline {
             case "SkillPower"             -> new double[]{Stat.SKILL_DMG.ordinal(), v / 10.0};
             case "BaseAttackPower"        -> new double[]{Stat.BASIC_ATK_DMG.ordinal(), v / 10.0};
             case "MaxDamageRatio"         -> new double[]{Stat.MAX_DMG_MULT.ordinal(), v / 10.0};
+            case "PiercePower"            -> new double[]{Stat.DEF_PEN.ordinal(), v / 10.0};   // 동료 자기 방어관통(보우마 관통의 화살 램프)
             case "Weakness"               -> new double[]{Stat.WEAKNESS.ordinal(), v / 10.0};
             case "AttackSpeed"            -> new double[]{Stat.ATK_SPEED.ordinal(), v / 10.0};   // 슬롯딜엔 무효(스케줄용)이나 보존
             default -> null;

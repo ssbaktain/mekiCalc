@@ -6674,9 +6674,10 @@
           "role": [
             "utility"
           ],
-          "type": "passive",
-          "trigger": "onStart",
+          "type": "active",
+          "trigger": "active",
           "openLevel": 1,
+          "cooldown": 30000,
           "effects": [
             {
               "role": "utility",
@@ -6684,7 +6685,7 @@
               "target": "player",
               "used": false,
               "_seed": "810220 active cd30000 State IgnoreBaseAttackDamage Friend 3000ms",
-              "_note": "clt: 액티브(cd 30000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+              "_note": "clt: 액티브(cd 30000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용. ★clt상 액티브(cd)로 모델(이전 onStart 재분류 정정). IgnoreBaseAttackDamage 효과 자체는 미모델(딜/스탯 무관 유틸)."
             }
           ]
         },
@@ -6825,9 +6826,10 @@
           "role": [
             "utility"
           ],
-          "type": "passive",
-          "trigger": "onStart",
+          "type": "active",
+          "trigger": "active",
           "openLevel": 1,
+          "cooldown": 25000,
           "effects": [
             {
               "role": "utility",
@@ -6835,7 +6837,7 @@
               "target": "player",
               "used": false,
               "_seed": "810320 active cd25000 State IgnoreBaseAttackDamage Friend 3000ms",
-              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용. ★clt상 액티브(cd)로 모델(이전 onStart 재분류 정정). IgnoreBaseAttackDamage 효과 자체는 미모델(딜/스탯 무관 유틸)."
             }
           ]
         },
@@ -7044,9 +7046,10 @@
           "role": [
             "utility"
           ],
-          "type": "passive",
-          "trigger": "onStart",
+          "type": "active",
+          "trigger": "active",
           "openLevel": 1,
+          "cooldown": 25000,
           "effects": [
             {
               "role": "utility",
@@ -7054,7 +7057,7 @@
               "target": "player",
               "used": false,
               "_seed": "810420 active cd25000 State IgnoreBaseAttackDamage Friend 3000ms",
-              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용."
+              "_note": "clt: 액티브(cd 25000ms) State IgnoreBaseAttackDamage → 플레이어 3000ms. 스탯/딜 기여 없는 유틸이라 로테이션 밖으로(미모델). 기록용. ★clt상 액티브(cd)로 모델(이전 onStart 재분류 정정). IgnoreBaseAttackDamage 효과 자체는 미모델(딜/스탯 무관 유틸)."
             }
           ]
         },
@@ -7252,6 +7255,3012 @@
             "value": 200.0,
             "used": false,
             "_cltStat": "MinDamageRatio"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_13_1",
+      "class": "NightWalker",
+      "name": "나이트워커(1차)",
+      "grade": "rare",
+      "creatureIndex": "9113",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "813110",
+          "name": "럭키 세븐",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "813110 LuckySeven GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "813100",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "CriticalResist",
+              "target": "player",
+              "used": false,
+              "_seed": "813100 op1 ModStat CriticalResist 150 Target(player) 10000",
+              "_note": "플레이어 크리티컬 저항(생존·딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "813100 op2 CreateShieldByMaxHpR 100 (실드)",
+              "_note": "최대HP 10% 실드(생존·딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813120",
+          "name": "독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 1,
+          "chance": 300,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 200,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813120 op1 GetDamageR 200 'Dot' hits1 (단발)",
+              "_note": "동료 공격 30% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.30."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813120 op2 ModStatR Attack -150 Parent(enemy) 3000",
+              "_note": "적 공격력 -15%(생존, 우리 딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_13_2",
+      "class": "NightWalker",
+      "name": "나이트워커(2차)",
+      "grade": "epic",
+      "creatureIndex": "9213",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "813210",
+          "name": "트리플 스로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "813210 TripleThrow GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "813200",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "CriticalResist",
+              "target": "player",
+              "used": false,
+              "_seed": "813200 op1 ModStat CriticalResist 150 Target(player) 10000",
+              "_note": "플레이어 크리티컬 저항(생존·딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "813200 op2 CreateShieldByMaxHpR 150 (실드)",
+              "_note": "최대HP 15% 실드(생존·딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813220",
+          "name": "스타 더스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 14000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1600,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "813220 StarDust op1 GetDamageR 1600 hits1 maxHitCount7"
+            },
+            {
+              "role": "deal",
+              "coeff": 2400,
+              "hits": 1,
+              "targetCount": 1,
+              "tickStartMs": 400,
+              "_seed": "813221 proj813220(dur500 tick400) GetDamageR 2400 hits1 (1틱)"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813220 Stun Parent(enemy) 1000ms",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813230",
+          "name": "독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 1,
+          "chance": 300,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 500,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813230 GetDamageR 500 'Dot' hits1",
+              "_note": "동료 공격 30% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.30."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813230 ModStatR Attack -200 Parent 3000",
+              "_note": "적 공격력 -20%(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "813240",
+          "name": "추가 독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 1000,
+          "openLevel": 3,
+          "chance": 500,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 600,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813240 op1 GetDamageR 600 'Dot' hits1",
+              "_note": "동료 공격 50% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.50."
+            },
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "companion",
+              "used": false,
+              "_seed": "813240 op2 UseSkill 813241 GetHealByMaxHpR 10",
+              "_note": "동료 자기 회복(유틸, 딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 6.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_13_3",
+      "class": "NightWalker",
+      "name": "나이트워커(3차)",
+      "grade": "unique",
+      "creatureIndex": "9313",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "813310",
+          "name": "쿼드러플 스로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "813310 QuadrupleThrow GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "813300",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "CriticalResist",
+              "target": "player",
+              "used": false,
+              "_seed": "813300 op1 ModStat CriticalResist 150 Target(player) 10000",
+              "_note": "플레이어 크리티컬 저항(생존·딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "813300 op2 CreateShieldByMaxHpR 200 (실드)",
+              "_note": "최대HP 20% 실드(생존·딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813320",
+          "name": "스타 더스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 14000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3600,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "813320 StarDust op1 GetDamageR 3600 hits1 maxHitCount7"
+            },
+            {
+              "role": "deal",
+              "coeff": 5400,
+              "hits": 1,
+              "targetCount": 1,
+              "tickStartMs": 400,
+              "_seed": "813321 proj813320(dur500 tick400) GetDamageR 5400 hits1"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813320 Stun Parent 1000ms",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813330",
+          "name": "다크니스 어센션",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 21000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 400,
+              "target": "player",
+              "durationMs": 8000,
+              "_cltStat": "Attack",
+              "_seed": "813330 DarknessAscension ModStatR Attack 400 Target(player) state 8000",
+              "_note": "플레이어 공격력 +40%%(ATK_PCT 별도 곱, 8초, 쿨 21초). DarknessAscension."
+            },
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "target": "player",
+              "used": false,
+              "_seed": "813330 op2 ModStat Toughness 150 Parent",
+              "_note": "강인함(CC저항, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813340",
+          "name": "독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 1,
+          "chance": 300,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1500,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813340 GetDamageR 1500 'Dot' hits1",
+              "_note": "동료 공격 30% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.30."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813340 ModStatR Attack -250 Parent 3000",
+              "_note": "적 공격력 -25%(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "813350",
+          "name": "추가 독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 1000,
+          "openLevel": 2,
+          "chance": 500,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1800,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813350 GetDamageR 1800 'Dot' hits1",
+              "_note": "동료 공격 50% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.50."
+            },
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "companion",
+              "used": false,
+              "_seed": "813350 UseSkill 813351 heal",
+              "_note": "동료 자기 회복(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "813360",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 50,
+              "target": "player",
+              "durationMs": 2000,
+              "maxStacks": 5,
+              "_seed": "813360 OnActiveSkill op2 AttackSpeed=$StateCount×50 Parent(player), state SupportNightWalker_AttackSpeedUp MaxStack5 Override 2000",
+              "_note": "동료 스킬 시전마다(★평타 포함 — clt OnActiveSkill은 ReplaceBaseAttack 평타에도 발동, IsBaseAttack 필드·필터 없음) 플레이어 공격 속도 스택+1(스택당 +5%%, 최대 5중첩=+25%%, 각 2초 공유 타이머·Override). 평타가 잦아 빠르게 5중첩 도달·소환창 내내 유지. clt AttackSpeed=$StateCount×50. 고유 체감식(상한150%%)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 12.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_13_4",
+      "class": "NightWalker",
+      "name": "나이트워커(4차)",
+      "grade": "legend",
+      "creatureIndex": "9413",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "813410",
+          "name": "퀸터플 스로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "813410 QuintupleThrow GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "813400",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "CriticalResist",
+              "target": "player",
+              "used": false,
+              "_seed": "813400 op1 ModStat CriticalResist 150 Target(player) 10000",
+              "_note": "플레이어 크리티컬 저항(생존·딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "813400 op2 CreateShieldByMaxHpR 250 (실드)",
+              "_note": "최대HP 25% 실드(생존·딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813420",
+          "name": "스타 더스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 14000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 14000,
+              "hits": 1,
+              "targetCount": 7,
+              "_seed": "813420 StarDust op1 GetDamageR 14000 hits1 maxHitCount7"
+            },
+            {
+              "role": "deal",
+              "coeff": 21000,
+              "hits": 1,
+              "targetCount": 1,
+              "tickStartMs": 400,
+              "_seed": "813421 proj813420(dur500 tick400) GetDamageR 21000 hits1"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813420 Stun Parent 1000ms",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813430",
+          "name": "다크니스 어센션",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 21000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 400,
+              "target": "player",
+              "durationMs": 8000,
+              "_cltStat": "Attack",
+              "_seed": "813430 DarknessAscension ModStatR Attack 400 Target(player) 8000",
+              "_note": "플레이어 공격력 +40%%(ATK_PCT 별도 곱, 8초, 쿨 21초). DarknessAscension."
+            },
+            {
+              "role": "utility",
+              "stat": "Toughness",
+              "target": "player",
+              "used": false,
+              "_seed": "813430 op2 Toughness 150",
+              "_note": "강인함(CC저항, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813440",
+          "name": "다크니스 이베이전",
+          "role": [
+            "buff"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 23000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 100,
+              "target": "player",
+              "durationMs": 15000,
+              "_seed": "813440 DarknessEvasion ModStat FinalDamage 100 Target(player) 15000",
+              "_note": "플레이어 최종 데미지 +10%%(15초, 쿨 23초). DarknessEvasion."
+            },
+            {
+              "role": "utility",
+              "stat": "Cleanse",
+              "target": "companion",
+              "used": false,
+              "_seed": "813440 op2 UsePassiveSkill 813441 Cleanse Last 3",
+              "_note": "디버프 제거(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "813450",
+          "name": "독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 1,
+          "chance": 300,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 5000,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813450 GetDamageR 5000 'Dot' hits1",
+              "_note": "동료 공격 30% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.30."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813450 ModStatR Attack -300 Parent 3000",
+              "_note": "적 공격력 -30%(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "813460",
+          "name": "추가 독칠",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 1000,
+          "openLevel": 1,
+          "chance": 500,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 6000,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813460 GetDamageR 6000 'Dot' hits1",
+              "_note": "동료 공격 50% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.50."
+            },
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "companion",
+              "used": false,
+              "_seed": "813460 UseSkill 813461 heal",
+              "_note": "동료 자기 회복(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "813470",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onActiveSkill",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 50,
+              "target": "player",
+              "durationMs": 2000,
+              "maxStacks": 5,
+              "_seed": "813470 OnActiveSkill op2 AttackSpeed=$StateCount×50 Parent(player), state SupportNightWalker_AttackSpeedUp MaxStack5 Override 2000",
+              "_note": "동료 스킬 시전마다(★평타 포함 — clt OnActiveSkill은 ReplaceBaseAttack 평타에도 발동, IsBaseAttack 필드·필터 없음) 플레이어 공격 속도 스택+1(스택당 +5%%, 최대 5중첩=+25%%, 각 2초 공유 타이머·Override). 평타가 잦아 빠르게 5중첩 도달·소환창 내내 유지. clt AttackSpeed=$StateCount×50. 고유 체감식(상한150%%)."
+            }
+          ]
+        },
+        {
+          "idx": "813480",
+          "name": "맹독",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "openLevel": 3,
+          "chance": 300,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "813480 op1 GetDamageR 8000 'Dot' hits1",
+              "_note": "동료 공격 30% 확률 추가 타격(독칠, GetDamageR Dot 플래그·단발 1히트). 기댓값=coeff×0.30."
+            },
+            {
+              "role": "utility",
+              "stat": "HpRecoverPower",
+              "target": "enemy",
+              "used": false,
+              "_seed": "813480 op2 ModStat HpRecoverPower -200 Parent(enemy) 5000",
+              "_note": "적 회복력 -20%(생존, 적 자힐 억제·우리 딜 무관)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 24.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_3_1",
+      "class": "DarkKnight",
+      "name": "다크나이트(1차)",
+      "grade": "rare",
+      "creatureIndex": "9103",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "803110",
+          "name": "슬래시 블라스트",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "803110 SlashBlast GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "803100",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "803100 State IgnoreBaseAttackDamage Target 2000",
+              "_note": "clt: enter op State IgnoreBaseAttackDamage Target(player) 2000ms. 딜/스탯 무관 유틸(미모델, 기록). 소환 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "803120",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 100,
+              "target": "companion",
+              "_seed": "803120 op1 ModStat AttackSpeed 100 Myself(동료) dur무한",
+              "_note": "동료 자기 공격 속도 +10%(소환중 상시). target Myself=동료 자신의 공격 빈도(고유 체감·상한150%). 플레이어 버프 아님."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "companion",
+              "used": false,
+              "_seed": "803120 op2 RunSpeedMms 100",
+              "_note": "동료 이동속도(유틸)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_3_2",
+      "class": "DarkKnight",
+      "name": "다크나이트(2차)",
+      "grade": "epic",
+      "creatureIndex": "9203",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "803210",
+          "name": "스피어 풀링",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "803210 SpearPulling GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "803200",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "803200 State IgnoreBaseAttackDamage 2500",
+              "_note": "clt: enter op State IgnoreBaseAttackDamage Target(player) 2500ms. 딜/스탯 무관 유틸(미모델, 기록). 소환 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "803220",
+          "name": "하이퍼 바디",
+          "role": [
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "player",
+              "used": false,
+              "_seed": "803220 GetHealByMaxHpR 200",
+              "_note": "플레이어 회복(생존, 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "MaxHp",
+              "target": "player",
+              "used": false,
+              "_seed": "803220 ModStatR MaxHp 200 state Support_HyperBody 10000",
+              "_note": "clt: 액티브(cd25000) 하이퍼바디 — 플레이어 회복 + 최대HP +20%%(Support_HyperBody 10s). 생존 버프, 딜 무관(미모델)."
+            }
+          ]
+        },
+        {
+          "idx": "803230",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "companion",
+              "_seed": "803230 ModStat AttackSpeed 150 Myself dur무한",
+              "_note": "동료 자기 공격 속도 +15%(소환중 상시). target Myself=동료 자신의 공격 빈도(고유 체감·상한150%). 플레이어 버프 아님."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "companion",
+              "used": false,
+              "_seed": "803230 RunSpeedMms 150",
+              "_note": "동료 이동속도(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "803240",
+          "name": "비홀더",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "used": true,
+              "_seed": "803240 CreateProjectile 803240(비홀더,ExpireOnCreatureDie)+803241. 803241 ModStat Weakness 150 state SupportDarkKnight_Beholder dur무한(touch-type).",
+              "_note": "비홀더(소환 눈알, ExpireOnCreatureDie) 유지 중 적 받는 피해 증가(약화) +15%% — 소환창 내내 연속(touch-type). 플레이어+동료 수혜. 비홀더 자체 타격은 803x70/360(onAttack 편승)."
+            },
+            {
+              "role": "utility",
+              "stat": "BeholderAttack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "803242 GetDamageR 400 hits6 (ChangeEffectOnFire — 2차엔 FireProjectile 스킬 없어 비홀더 타격 미발동, Weakness만)",
+              "_note": "2차 비홀더는 타격 스킬(onAttack 편승) 없음 → 약화만. 기록용."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 6.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_3_3",
+      "class": "DarkKnight",
+      "name": "다크나이트(3차)",
+      "grade": "unique",
+      "creatureIndex": "9303",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "803310",
+          "name": "라만챠 스피어",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "803310 LamanchaSpear GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "803300",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "803300 State IgnoreBaseAttackDamage 3000",
+              "_note": "clt: enter op State IgnoreBaseAttackDamage Target(player) 3000ms. 딜/스탯 무관 유틸(미모델, 기록). 소환 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "803320",
+          "name": "하이퍼 바디",
+          "role": [
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "player",
+              "used": false,
+              "_seed": "803320 GetHealByMaxHpR 200",
+              "_note": "플레이어 회복(생존, 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "MaxHp",
+              "target": "player",
+              "used": false,
+              "_seed": "803320 ModStatR MaxHp 200 Support_HyperBody 10000",
+              "_note": "clt: 액티브(cd25000) 하이퍼바디 — 플레이어 회복 + 최대HP +20%%(Support_HyperBody 10s). 생존 버프, 딜 무관(미모델)."
+            }
+          ]
+        },
+        {
+          "idx": "803330",
+          "name": "러시",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 7000,
+              "hits": 1,
+              "targetCount": 12,
+              "_seed": "803330 Rush GetDamageR 7000 hits1 maxHitCount12"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "803330 Dispel Random 3",
+              "_note": "적 버프 3개 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "803340",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 200,
+              "target": "companion",
+              "_seed": "803340 ModStat AttackSpeed 200 Myself dur무한",
+              "_note": "동료 자기 공격 속도 +20%(소환중 상시). target Myself=동료 자신의 공격 빈도(고유 체감·상한150%). 플레이어 버프 아님."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "companion",
+              "used": false,
+              "_seed": "803340 RunSpeedMms 200",
+              "_note": "동료 이동속도(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "803350",
+          "name": "비홀더",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "used": true,
+              "_seed": "803350 CreateProjectile 803350(비홀더)+803351. 803351 ModStat Weakness 150 SupportDarkKnight_Beholder dur무한(touch).",
+              "_note": "비홀더(소환 눈알, ExpireOnCreatureDie) 유지 중 적 받는 피해 증가(약화) +15%% — 소환창 내내 연속(touch-type). 플레이어+동료 수혜. 비홀더 자체 타격은 803x70/360(onAttack 편승)."
+            }
+          ]
+        },
+        {
+          "idx": "803360",
+          "name": "비홀더 타격",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 3000,
+          "openLevel": 3,
+          "chance": 200,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 6,
+              "targetCount": 1,
+              "_seed": "803360 OnAttack ratio200 cd3000 FireProjectile 803350 → 803352 GetDamageR 800 hits6 maxHitCount None=1",
+              "_note": "비홀더 타격 — 동료 공격 20% 확률(내부쿨 3초)로 비홀더가 800%×6 발사(FireProjectile). onAttack 편승(clt OnAttack ratio200 cd3000)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 12.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_3_4",
+      "class": "DarkKnight",
+      "name": "다크나이트(4차)",
+      "grade": "legend",
+      "creatureIndex": "9403",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "803410",
+          "name": "다크 임페일",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "803410 DarkImpale GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "803400",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "IgnoreBaseAttackDamage",
+              "target": "player",
+              "used": false,
+              "_seed": "803400 State IgnoreBaseAttackDamage 3500",
+              "_note": "clt: enter op State IgnoreBaseAttackDamage Target(player) 3500ms. 딜/스탯 무관 유틸(미모델, 기록). 소환 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "803420",
+          "name": "하이퍼 바디",
+          "role": [
+            "utility"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 25000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "HpRecover",
+              "target": "player",
+              "used": false,
+              "_seed": "803420 GetHealByMaxHpR 200",
+              "_note": "플레이어 회복(생존, 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "MaxHp",
+              "target": "player",
+              "used": false,
+              "_seed": "803420 ModStatR MaxHp 200 Support_HyperBody 10000",
+              "_note": "clt: 액티브(cd25000) 하이퍼바디 — 플레이어 회복 + 최대HP +20%%(Support_HyperBody 10s). 생존 버프, 딜 무관(미모델)."
+            }
+          ]
+        },
+        {
+          "idx": "803430",
+          "name": "러시",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 18000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 21000,
+              "hits": 1,
+              "targetCount": 12,
+              "_seed": "803430 Rush GetDamageR 21000 hits1 maxHitCount12"
+            },
+            {
+              "role": "utility",
+              "stat": "Dispel",
+              "target": "enemy",
+              "used": false,
+              "_seed": "803430 Dispel Random 3",
+              "_note": "적 버프 3개 해제(유틸, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "803440",
+          "name": "매직 크래시",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 17000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 36000,
+              "hits": 1,
+              "targetCount": 5,
+              "_seed": "803440 MagicCrash GetDamageR 36000 hits1 maxHitCount5 (FiredTargetPlatform)"
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "803440 Stun Parent(enemy) 2000ms",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "803450",
+          "name": "공격 속도 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 250,
+              "target": "companion",
+              "_seed": "803450 ModStat AttackSpeed 250 Myself dur무한",
+              "_note": "동료 자기 공격 속도 +25%(소환중 상시). target Myself=동료 자신의 공격 빈도(고유 체감·상한150%). 플레이어 버프 아님."
+            },
+            {
+              "role": "utility",
+              "stat": "RunSpeedMms",
+              "target": "companion",
+              "used": false,
+              "_seed": "803450 RunSpeedMms 250",
+              "_note": "동료 이동속도(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "803460",
+          "name": "비홀더",
+          "role": [
+            "debuff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 150,
+              "target": "enemy",
+              "used": true,
+              "_seed": "803460 CreateProjectile 803460(비홀더,mtc8)+803461. 803461 ModStat Weakness 150 SupportDarkKnight_Beholder dur무한(touch).",
+              "_note": "비홀더(소환 눈알, ExpireOnCreatureDie) 유지 중 적 받는 피해 증가(약화) +15%% — 소환창 내내 연속(touch-type). 플레이어+동료 수혜. 비홀더 자체 타격은 803x70/360(onAttack 편승)."
+            }
+          ]
+        },
+        {
+          "idx": "803470",
+          "name": "비홀더 타격",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 3000,
+          "openLevel": 2,
+          "chance": 200,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 6,
+              "targetCount": 1,
+              "_seed": "803470 OnAttack ratio200 cd3000 FireProjectile 803460 → 803462 GetDamageR 2900 hits6 maxHitCount None=1",
+              "_note": "비홀더 타격 — 동료 공격 20% 확률(내부쿨 3초)로 비홀더가 2900%×6 발사(FireProjectile). onAttack 편승(clt OnAttack ratio200 cd3000)."
+            }
+          ]
+        },
+        {
+          "idx": "803480",
+          "name": "비홀더의 복수",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "onAttack",
+          "cooldown": 5000,
+          "openLevel": 3,
+          "chance": 1000,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 2,
+              "targetCount": 1,
+              "_seed": "803481 OnAttack GetDamageR 10000 hits2 (+BeholdersRevenge_Off 5000). ★스킬 정체성·아이콘=803480(OnStart 패시브 BeholdersRevenge+UsePassiveSkill 803481), 실제 딜=자식 803481 OnAttack. 5초마다 공격 시 10000%×2.",
+              "_note": "비홀더의 복수 — 비홀더 보유 중 공격 시 10000%%×2 추가타(쿨 5초: BeholdersRevenge_Off 5s). onAttack 근사(clt 조건 '트리거스킬≠비홀더타격'은 근사 생략). openLevel3."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ACC",
+            "value": 24.0,
+            "used": false,
+            "_cltStat": "HitChance"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_7_1",
+      "class": "BowMaster",
+      "name": "보우마스터(1차)",
+      "grade": "rare",
+      "creatureIndex": "9107",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "807110",
+          "name": "트리플 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "807110 GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "807100",
+          "name": "소환",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "player",
+              "durationMs": 10000,
+              "_seed": "807100 ModStat AttackSpeed 150 Target(player) state SupportBowMaster_Summon 10000",
+              "_note": "소환 시 플레이어 공격 속도 +15%(10초). 고유 체감식(상한150%). 딜 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "807120",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 80,
+              "target": "both",
+              "_seed": "807120 op1 CriticalChance 80 Target(player) + op2 CriticalChance 80 Myself(동료) state SupportBowMaster_CriticalChanceUp dur무한",
+              "_note": "플레이어+동료 크리티컬 확률 +8%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_7_2",
+      "class": "BowMaster",
+      "name": "보우마스터(2차)",
+      "grade": "epic",
+      "creatureIndex": "9207",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "807210",
+          "name": "쿼드러플 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "807210 GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "807200",
+          "name": "소환",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 150,
+              "target": "player",
+              "durationMs": 15000,
+              "_seed": "807200 AttackSpeed 150 Target 15000",
+              "_note": "소환 시 플레이어 공격 속도 +15%(15초). 고유 체감식(상한150%). 딜 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "807220",
+          "name": "활 난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1200,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "807220 GetDamageR 1200 hits1 × op1 3틱(600/700/800) = 3회",
+              "_note": "활 난사 — 1200%×1이 틱 600·700·800에서 3회 발동(clt TickTimeMs op1[1]×3) = 총 3히트. + 적 방어력 -15%(10초)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "807220 op3 ModStatR Defence -150 Parent(enemy) state SupportBowMaster_DefenceDown 10000",
+              "_note": "적 방어력 -15%(10초). DEF_REDUCE, 플레이어+동료 수혜."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "807220 op2 DashFromMyself",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "807230",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 120,
+              "target": "both",
+              "_seed": "807230 CriticalChance 120 Target+Myself dur무한",
+              "_note": "플레이어+동료 크리티컬 확률 +12%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "807240",
+          "name": "표창 연사",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 1000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "807240 OnTimer 1000ms GetDamageR 400 hits1",
+              "_note": "주기딜 — 1초마다 400%×1(OnTimer 1000ms)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 50,
+              "target": "enemy",
+              "durationMs": 3000,
+              "used": true,
+              "_seed": "807240 op2 ModStat Weakness 50 Parent(enemy) state SupportBowMaster_Weakness 3000 (1초 주기로 재적용=연속)",
+              "_note": "적 받는 피해 증가(약화) +5%%(OnTimer가 1초마다 3초짜리 약화 재적용 → 소환창 내내 연속). 플레이어+동료 수혜."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_SPEED",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackSpeed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_7_3",
+      "class": "BowMaster",
+      "name": "보우마스터(3차)",
+      "grade": "unique",
+      "creatureIndex": "9307",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "807310",
+          "name": "윈드 애로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "807310 WindArrow2 GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "807300",
+          "name": "소환",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 200,
+              "target": "player",
+              "durationMs": 15000,
+              "_seed": "807300 AttackSpeed 200 Target 15000",
+              "_note": "소환 시 플레이어 공격 속도 +20%(15초). 고유 체감식(상한150%). 딜 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "807320",
+          "name": "활 난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3500,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "807320 GetDamageR 3500 hits1 × 3틱",
+              "_note": "활 난사 — 3500%×1이 틱 600·700·800에서 3회 발동(clt TickTimeMs op1[1]×3) = 총 3히트. + 적 방어력 -15%(10초)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "807320 Defence -150 10000",
+              "_note": "적 방어력 -15%(10초)."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "807320 Dash",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "807330",
+          "name": "애로우 일루전",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 5000,
+              "hits": 1,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "_seed": "807330 CreateProjectile 807330(dur20000 tick3000 ExpireOnCreatureDie) → 807331 GetDamageR 5000 hits1",
+              "_note": "애로우 일루전(설치 터렛) — 3초마다 5000%×1, 20초 지속(소환 종료 시 제거). cd30초."
+            }
+          ]
+        },
+        {
+          "idx": "807340",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "both",
+              "_seed": "807340 CriticalChance 150 Target+Myself dur무한",
+              "_note": "플레이어+동료 크리티컬 확률 +15%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "807350",
+          "name": "표창 연사",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 1000,
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "807350 OnTimer 1000ms GetDamageR 400 hits1",
+              "_note": "주기딜 — 1초마다 400%×1(OnTimer 1000ms)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 50,
+              "target": "enemy",
+              "durationMs": 3000,
+              "used": true,
+              "_seed": "807350 Weakness 50 3000(연속)",
+              "_note": "적 받는 피해 증가(약화) +5%%(OnTimer가 1초마다 3초짜리 약화 재적용 → 소환창 내내 연속). 플레이어+동료 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "807360",
+          "name": "집중",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onHit",
+          "openLevel": 3,
+          "chance": 100,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 15,
+              "target": "companion",
+              "durationMs": 10000,
+              "maxStacks": 100,
+              "_cltStat": "Attack",
+              "_seed": "807360 OnHit ratio100 ModStatR Attack 15 Myself state SupportBowMaster_AttackUp MaxStack100 10000",
+              "_note": "동료 타격마다 10%% 확률로 동료 자기 공격력 +1.5%%(10초, 최대 100중첩). ★clt OnHit=히트마다(액션당1 아님)+도트틱(CanTriggerOnDot, 디스어셈블 확정) → 평타(5히트)·활난사·스톰애로우(20)·소환공격·표창연사·애로우일루전 도트 전부. 동료 자체딜만 상승(self)."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_SPEED",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackSpeed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_7_4",
+      "class": "BowMaster",
+      "name": "보우마스터(4차)",
+      "grade": "legend",
+      "creatureIndex": "9407",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "807410",
+          "name": "언카운터블 애로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "807410 UncountableArrow GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "807400",
+          "name": "소환",
+          "role": [
+            "buff"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "AttackSpeed",
+              "value": 200,
+              "target": "player",
+              "durationMs": 20000,
+              "_seed": "807400 AttackSpeed 200 Target 20000",
+              "_note": "소환 시 플레이어 공격 속도 +20%(20초). 고유 체감식(상한150%). 딜 타격 없음."
+            }
+          ]
+        },
+        {
+          "idx": "807420",
+          "name": "활 난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "807420 GetDamageR 10000 hits1 × op1 3틱(600/700/800)",
+              "_note": "활 난사 — 10000%×1이 틱 600·700·800에서 3회 발동(clt TickTimeMs op1[1]×3) = 총 3히트. + 적 방어력 -15%(10초)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Defence",
+              "value": -150,
+              "target": "enemy",
+              "durationMs": 10000,
+              "used": true,
+              "_seed": "807420 Defence -150 10000",
+              "_note": "적 방어력 -15%(10초)."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "807420 Dash",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "807430",
+          "name": "애로우 일루전",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 30000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 14000,
+              "hits": 1,
+              "targetCount": 1,
+              "form": "dot",
+              "tickMs": 3000,
+              "durationMs": 20000,
+              "expiresOnSummonEnd": true,
+              "_seed": "807430 CreateProjectile 807430(dur20000 tick3000 ExpireOnCreatureDie) → 807431 GetDamageR 14000 hits1",
+              "_note": "애로우 일루전(설치 터렛) — 3초마다 14000%×1, 20초 지속(소환 종료 시 제거). cd30초."
+            }
+          ]
+        },
+        {
+          "idx": "807440",
+          "name": "스톰 애로우",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 23000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 8000,
+              "hits": 1,
+              "targetCount": 1,
+              "tickMs": 200,
+              "tickCount": 20,
+              "tickStartMs": 600,
+              "tickBySpeed": true,
+              "_seed": "807440 StormArrow GetDamageR 8000 hits1 × 20틱(0.6~4.4s, 0.2s간격, 대괄호없음=매틱 딜)",
+              "_note": "스톰 애로우(채널링) — 8000%%×1을 0.6초부터 0.2초 간격 20발 발사(clt 대괄호 없는 20틱=매 틱 딜). 총 20히트. cd23초."
+            }
+          ]
+        },
+        {
+          "idx": "807450",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "both",
+              "_seed": "807450 CriticalChance 150 Target+Myself dur무한",
+              "_note": "플레이어+동료 크리티컬 확률 +15%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "807460",
+          "name": "표창 연사",
+          "role": [
+            "deal"
+          ],
+          "type": "passive",
+          "trigger": "periodic",
+          "periodMs": 1000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1450,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "807460 OnTimer 1000ms GetDamageR 1450 hits1",
+              "_note": "주기딜 — 1초마다 1450%×1(OnTimer 1000ms)."
+            },
+            {
+              "role": "debuff",
+              "stat": "Weakness",
+              "value": 50,
+              "target": "enemy",
+              "durationMs": 3000,
+              "used": true,
+              "_seed": "807460 Weakness 50 3000(연속)",
+              "_note": "적 받는 피해 증가(약화) +5%%(OnTimer가 1초마다 3초짜리 약화 재적용 → 소환창 내내 연속). 플레이어+동료 수혜."
+            }
+          ]
+        },
+        {
+          "idx": "807470",
+          "name": "집중",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onHit",
+          "openLevel": 2,
+          "chance": 100,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "ATK_PCT",
+              "value": 15,
+              "target": "companion",
+              "durationMs": 10000,
+              "maxStacks": 100,
+              "_cltStat": "Attack",
+              "_seed": "807470 OnHit ratio100 ModStatR Attack 15 Myself MaxStack100 10000",
+              "_note": "동료 타격마다 10%% 확률로 동료 자기 공격력 +1.5%%(10초, 최대 100중첩). ★clt OnHit=히트마다(액션당1 아님)+도트틱(CanTriggerOnDot, 디스어셈블 확정) → 평타(5히트)·활난사·스톰애로우(20)·소환공격·표창연사·애로우일루전 도트 전부. 동료 자체딜만 상승(self)."
+            }
+          ]
+        },
+        {
+          "idx": "807480",
+          "name": "관통의 화살",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "periodMs": 1000,
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "PiercePower",
+              "value": 10,
+              "target": "companion",
+              "maxStacks": 99,
+              "_seed": "807480 OnStart ModStatOnTick PiercePower 10 99 Myself dur무한 — 1초마다 방어관통 +1%, 최대 99중첩(+99%)",
+              "_note": "동료 자기 방어 관통 램프업: 1초마다 +1%, 최대 99중첩. ModStatOnTick=주기 틱 → periodMs1000+maxStacks99로 모델(applySelfBuffs 램프). 동료 자체딜 방관만."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_SPEED",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "AttackSpeed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_8_1",
+      "class": "Marksman",
+      "name": "신궁(1차)",
+      "grade": "rare",
+      "creatureIndex": "9108",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 9
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][9]/10 (rare, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "808110",
+          "name": "더블 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 260,
+              "hits": 2,
+              "targetCount": 3,
+              "_seed": "808110 GetDamageR 260 hits2 maxHitCount3"
+            }
+          ]
+        },
+        {
+          "idx": "808100",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Cleanse",
+              "target": "player",
+              "used": false,
+              "_seed": "808100 op1 Cleanse Random 1",
+              "_note": "플레이어 디버프 1개 해제(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "ImmuneCc",
+              "target": "player",
+              "used": false,
+              "_seed": "808100 op2 State ImmuneCc 3000",
+              "_note": "CC 면역 3초(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "808120",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 80,
+              "target": "both",
+              "_seed": "808120 op1 CriticalChance 80 Target(player)+op2 Myself(동료) state SupportMarksman_CriticalChanceUp dur무한",
+              "_note": "플레이어+동료 크리티컬 확률 +8%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "ATK_PCT",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "Attack"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 500.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "ATK_PCT",
+            "value": 200.0,
+            "used": false,
+            "_cltStat": "Attack"
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_8_2",
+      "class": "Marksman",
+      "name": "신궁(2차)",
+      "grade": "epic",
+      "creatureIndex": "9208",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 10
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][10]/10 (epic, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "808210",
+          "name": "트리플 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 400,
+              "hits": 3,
+              "targetCount": 5,
+              "_seed": "808210 GetDamageR 400 hits3 maxHitCount5"
+            }
+          ]
+        },
+        {
+          "idx": "808200",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Cleanse",
+              "target": "player",
+              "used": false,
+              "_seed": "808200 Cleanse Random 1",
+              "_note": "플레이어 디버프 해제(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "ImmuneCc",
+              "target": "player",
+              "used": false,
+              "_seed": "808200 ImmuneCc 4000",
+              "_note": "CC 면역 4초(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "808220",
+          "name": "강화 조준",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 1200,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "808220 GetDamageR 1200 hits1 × op1 3틱(600/700/800)",
+              "_note": "강화 조준 — 1200%×1이 틱 600·700·800에서 3회 발동(clt op1[1]×3)=3히트. + 적 공격력 -15%(생존, 우리 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808220 op3 ModStatR Attack -150 enemy state SupportMarksman_AttackDown 10000",
+              "_note": "적 공격력 -15%(생존, 우리 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "808220 DashFromMyself",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "808230",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 120,
+              "target": "both",
+              "_seed": "808230 CriticalChance 120 Target+Myself",
+              "_note": "플레이어+동료 크리티컬 확률 +12%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "808240",
+          "name": "보호막",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "808240 OnAllyState cd11000 CreateShieldByMaxHpR 200 3000",
+              "_note": "OnAllyState 실드(최대HP 20%%, 3초). 생존, 딜 무관."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "MAIN_STAT_FLAT",
+            "value": 70.0,
+            "used": false,
+            "_cltStat": "MainStat"
+          },
+          {
+            "stat": "MaxHp",
+            "value": 1750.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerInCc",
+            "value": 80.0,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_8_3",
+      "class": "Marksman",
+      "name": "신궁(3차)",
+      "grade": "unique",
+      "creatureIndex": "9308",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 11
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][11]/10 (unique, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "808310",
+          "name": "쿼드러플 샷",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 800,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "808310 GetDamageR 800 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "808300",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Cleanse",
+              "target": "player",
+              "used": false,
+              "_seed": "808300 Cleanse Random 2",
+              "_note": "플레이어 디버프 2개 해제(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "ImmuneCc",
+              "target": "player",
+              "used": false,
+              "_seed": "808300 ImmuneCc 4000",
+              "_note": "CC 면역 4초(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "808320",
+          "name": "강화 조준",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 3500,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "808320 GetDamageR 3500 hits1 × op1 3틱",
+              "_note": "강화 조준 — 3500%×1이 틱 600·700·800에서 3회 발동(clt op1[1]×3)=3히트. + 적 공격력 -15%(생존, 우리 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808320 Attack -150 enemy 10000",
+              "_note": "적 공격력 -15%(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "808320 Dash",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "808330",
+          "name": "난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 16000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 4600,
+              "hits": 3,
+              "targetCount": 10,
+              "_seed": "808330 GetDamageR 4600 hits3 maxHitCount10",
+              "_note": "난사 — 4600%×3(1틱, 최대 10대상) + 스턴(CC)."
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808330 Stun Parent 1000",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "808340",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "both",
+              "_seed": "808340 CriticalChance 150 Target+Myself",
+              "_note": "플레이어+동료 크리티컬 확률 +15%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "808350",
+          "name": "보호막",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "808350 OnAllyState cd11000 Shield 200 3000",
+              "_note": "OnAllyState 실드(최대HP 20%%, 3초). 생존, 딜 무관."
+            }
+          ]
+        },
+        {
+          "idx": "808360",
+          "name": "집중 사격",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 200,
+              "target": "companion",
+              "_seed": "808360 ModStat FinalDamage 200 Myself(동료) 비아레나 / 400 아레나",
+              "_note": "동료 자기 최종 데미지 +20%%(소환중 상시). ★clt: 비아레나 +20%%(value200)·아레나 +40%%(value400) 분기 — 일반 컨텐츠는 +20%% 적용. 등급보너스와 별개 곱."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 50.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 100.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerInCc",
+            "value": 160.0,
+            "used": false
+          }
+        ]
+      }
+    },
+    {
+      "code": "SUPPORTER_8_4",
+      "class": "Marksman",
+      "name": "신궁(4차)",
+      "grade": "legend",
+      "creatureIndex": "9408",
+      "spawnDurationMs": 30000,
+      "summonCooldownMs": 90000,
+      "inherit": {
+        "baseRatio": 1000,
+        "levelFactor": 12
+      },
+      "_inheritNote": "계승% = inheritFactor[동료레벨][12]/10 (legend, 공격력만 부분·나머지 100%, 만렙16=90%캡). compareLevel=100.",
+      "skills": [
+        {
+          "idx": "808410",
+          "name": "인핸스 피어싱",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "basicAttack",
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 2900,
+              "hits": 5,
+              "targetCount": 6,
+              "_seed": "808410 EnhancePiercing GetDamageR 2900 hits5 maxHitCount6"
+            }
+          ]
+        },
+        {
+          "idx": "808400",
+          "name": "소환",
+          "role": [
+            "utility"
+          ],
+          "type": "enter",
+          "trigger": "enter",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Cleanse",
+              "target": "player",
+              "used": false,
+              "_seed": "808400 Cleanse Random 3",
+              "_note": "플레이어 디버프 3개 해제(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "ImmuneCc",
+              "target": "player",
+              "used": false,
+              "_seed": "808400 ImmuneCc 4000",
+              "_note": "CC 면역 4초(생존)."
+            }
+          ]
+        },
+        {
+          "idx": "808420",
+          "name": "강화 조준",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 13000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 10000,
+              "hits": 3,
+              "targetCount": 1,
+              "_seed": "808420 GetDamageR 10000 hits1 × op1 3틱(600/700/800)",
+              "_note": "강화 조준 — 10000%×1이 틱 600·700·800에서 3회 발동(clt op1[1]×3)=3히트. + 적 공격력 -15%(생존, 우리 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "Attack",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808420 Attack -150 enemy 10000",
+              "_note": "적 공격력 -15%(생존)."
+            },
+            {
+              "role": "utility",
+              "stat": "Dash",
+              "target": "companion",
+              "used": false,
+              "_seed": "808420 Dash",
+              "_note": "이동(유틸)."
+            }
+          ]
+        },
+        {
+          "idx": "808430",
+          "name": "난사",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 16000,
+          "openLevel": 1,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 13000,
+              "hits": 3,
+              "targetCount": 8,
+              "_seed": "808430 GetDamageR 13000 hits3 maxHitCount8",
+              "_note": "난사 — 13000%×3(1틱, 최대 8대상) + 스턴(CC)."
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808430 Stun Parent 1000",
+              "_note": "스턴(CC, 딜 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "808440",
+          "name": "강화 스나이핑",
+          "role": [
+            "deal"
+          ],
+          "type": "active",
+          "trigger": "active",
+          "cooldown": 12000,
+          "openLevel": 4,
+          "effects": [
+            {
+              "role": "deal",
+              "coeff": 42000,
+              "hits": 1,
+              "targetCount": 1,
+              "_seed": "808440 EnhanceSniping GetDamageR 42000 hits1",
+              "_note": "강화 스나이핑 — 42000%%×1 + 스턴/명중 저하(스나이핑 표식, 유틸). cd12초."
+            },
+            {
+              "role": "utility",
+              "stat": "Stun",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808440 Stun Parent 2000 (Sniping 2스택 시)",
+              "_note": "스턴(조건부, CC, 딜 무관)."
+            },
+            {
+              "role": "utility",
+              "stat": "AvoidChance",
+              "target": "enemy",
+              "used": false,
+              "_seed": "808440 ModStat AvoidChance -10 enemy state Support_Sniping 30000",
+              "_note": "적 회피 -10(명중 표식, 우리 딜%엔 무관)."
+            }
+          ]
+        },
+        {
+          "idx": "808450",
+          "name": "크리티컬 확률 증가",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "CriticalChance",
+              "value": 150,
+              "target": "both",
+              "_seed": "808450 CriticalChance 150 Target+Myself",
+              "_note": "플레이어+동료 크리티컬 확률 +15%(소환중 상시). op Target(player)+Myself(동료) 동일값 → both."
+            }
+          ]
+        },
+        {
+          "idx": "808460",
+          "name": "보호막",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "Shield",
+              "target": "player",
+              "used": false,
+              "_seed": "808460 OnAllyState cd11000 Shield 200 3000",
+              "_note": "OnAllyState 실드(최대HP 20%%, 3초). 생존, 딜 무관."
+            }
+          ]
+        },
+        {
+          "idx": "808470",
+          "name": "집중 사격",
+          "role": [
+            "buff"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 2,
+          "effects": [
+            {
+              "role": "statUp",
+              "stat": "FinalDamage",
+              "value": 200,
+              "target": "companion",
+              "_seed": "808470 ModStat FinalDamage 200 Myself 비아레나 / 400 아레나",
+              "_note": "동료 자기 최종 데미지 +20%%(소환중 상시). ★clt: 비아레나 +20%%(value200)·아레나 +40%%(value400) 분기 — 일반 컨텐츠는 +20%% 적용. 등급보너스와 별개 곱."
+            }
+          ]
+        },
+        {
+          "idx": "808480",
+          "name": "일루전 스텝",
+          "role": [
+            "utility"
+          ],
+          "type": "passive",
+          "trigger": "onStart",
+          "openLevel": 3,
+          "effects": [
+            {
+              "role": "utility",
+              "stat": "AvoidChance",
+              "target": "player",
+              "used": false,
+              "_seed": "808480 op1 ModStat AvoidChance 30 Target(player) state Support_IllusionStep + op2 Toughness + 808481(피격50회 카운트)",
+              "_note": "일루전 스텝 — 플레이어 회피 +30%%(+피격 50회마다 10초 해제). 생존, 딜 무관."
+            }
+          ]
+        }
+      ],
+      "options": {
+        "collection": [
+          {
+            "stat": "DMG",
+            "value": 100.0,
+            "used": false,
+            "_cltStat": "AttackPower"
+          },
+          {
+            "stat": "MaxHpR",
+            "value": 150.0,
+            "used": false
+          }
+        ],
+        "equip": [
+          {
+            "stat": "AttackPowerInCc",
+            "value": 320.0,
+            "used": false
           }
         ]
       }

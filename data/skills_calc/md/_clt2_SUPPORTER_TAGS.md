@@ -8,6 +8,18 @@
 
 ## 0. 대원칙
 
+- **★★착수 전 문서 정독(최우선).** 동료 작업 시작 전 이 문서 + [[_clt2_IR_TAGS]](특히 **trigger 표**)·[[_clt2_SIM_MODEL]]·[[_clt2_SUPPORTER_ENGINE]]를 전부 정독하고 **기존 선례와 대조**한다. 임의 판단·임의 분류 금지. (이 규칙을 어겨 나이트워커 onActiveSkill 오구현이 발생 — 2026-09-11.)
+- **★트리거 계약(스킬과 동일, [[_clt2_IR_TAGS]] §trigger 표 따름)**:
+  - `basicAttack`=평타(ReplaceBaseAttack, 행동슬롯 점유) · `active`=쿨 있는 액티브(점유) · `enter`=소환 순간 1회 · `onStart`=소환중 상시 패시브(점유X) · `periodic`=주기(periodMs).
+  - **`onActiveSkill`=내가 스킬을 발동하는 것에 편승 = ★평타 포함 모든 액티브 발동마다(쿨만 없을뿐 평타도 액티브). 단 `type:passive`로 자동 발동하는 패시브 proc은 "액티브 발동"이 아니라 제외.** (clt 근거: OnActiveSkill 트리거는 `SlotIndex`·`IsBaseAttack` 필드=슬롯 능동 사용 / 선례: 나로 아드레날린 93080 count5. 엔진: 평타+액티브 시전 스트림, proc 제외.)
+  - **`onAttack`=내 공격이 적을 때리는 것에 편승 = 공격 액션당 1번(히트/다단타 무관), chance·triggerBy 필터.** (엔진 attackTimes=액션당 1회.)
+  - ★`active`(cd 있는 clt 스킬)를 `onStart`/패시브로 임의 재분류 금지 — 딜/스탯 무관 유틸 액티브라도 clt 타입(`active`) 유지(IgnoreBaseAttackDamage 등).
+- **★★누락 방지 — 엔진 커버리지 규칙(2026-09-11, 반복 누락 근본원인)**: 엔진은 **(role × trigger × target × stat) 조합마다 전용 경로**가 있고, authoring이 미처리 조합에 떨어지면 **조용히 드롭**된다(과거 누락: periodic 디버프·버프-only onActiveSkill·routeSelf 미매핑 stat·ModStatOnTick). 저술 시 아래 경로·매핑 안에 있는지 확인:
+  - **deal**: trigger ∈ {basicAttack, active, enter, periodic, onAttack, onActiveSkill}만 방출(onStart deal 없음). 투사체/채널링/도트는 form·tickMs·tickCount로.
+  - **statUp/debuff → player/enemy/both**: `SupporterEngine.toBuffSource` 매핑 stat만(FinalDamage·ATK_PCT·DMG·Critical*·MaxDamageRatio·AttackPower*·SkillPower·BaseAttackPower·Weakness·Defence·EnemyCritResist/CriticalResist·EnemyRecvCritDmg·AttackSpeed). 트리거 수집경로: onStart(§상시루프)·periodic(collectPeriodicPlayerBuffs, **statUp+debuff 둘 다**)·enter/active(collectPlayerBuffs)·onAttack/onActiveSkill(확률누산/편승 루프).
+  - **statUp → companion(self)**: `SupporterTimeline.routeSelf` 매핑 stat만(+PiercePower=방관). applySelfBuffs가 상수/램프(periodMs+maxStacks)/시간창 적용. **routeSelf에 없는 stat은 동료 self에서 드롭** → 필요시 routeSelf에 추가.
+  - **채널링(tickCount)**: 채널 지속(tickStart+(count-1)*tickMs, tickBySpeed면 공속압축)만큼 **로테이션 잠금**(그동안 다른 액티브·평타 불가, channelLockMs). 송오브스카이·스톰애로우류.
+- **★저술 후 필수 검증 3종(매 동료)**: ①트리거 감사(manual trigger vs clt TriggerType, UsePassiveSkill/OnHit/ModStatOnTick 예외 포함) ②커버리지 감사(모든 used:true effect가 위 경로·매핑 안인지 = 잠재 드롭 0) ③계수 대조(coeff/hits/maxHitCount/버프값/쿨 vs clt, 투사체·틱 대괄호 발동수 포함). (dev/_scratch/_audit_triggers·_audit_coverage·_verify_* )
 - **동료 = 소환 개체로 직접 딜을 낸다.** (유물=스탯소스·딜0과 다름. 스킬과 유사하게 자기 스킬로 타격.)
 - **동료 딜의 두 축**:
   1. **계승(inheritance)** — 소환 시 플레이어 공격 스탯의 일정 비율을 물려받아 자기 공격력으로 삼음(§4).

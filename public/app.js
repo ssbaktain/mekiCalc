@@ -7027,7 +7027,7 @@ const COMPANION_STAT_LABEL = {
   ATK_PCT: "공격력", FinalDamage: "최종 데미지", MaxDamageRatio: "최대 데미지 배율", CriticalPower: "크리티컬 데미지",
   CriticalChance: "크리티컬 확률", AttackSpeed: "공격 속도", SkillPower: "스킬 데미지", DMG: "데미지",
   AttackPowerToBoss: "보스 몬스터 데미지", AttackPowerExcludeBoss: "일반 몬스터 데미지", BaseAttackPower: "기본 공격 데미지",
-  Weakness: "적 받는 피해 증가", Defence: "적 방어력", Defense: "적 방어력",
+  Weakness: "적 받는 피해 증가", Defence: "적 방어력", Defense: "적 방어력", PiercePower: "방어 관통력",
   CriticalResist: "적 크리티컬 저항 감소", EnemyCritResist: "적 크리티컬 저항 감소", EnemyRecvCritDmg: "적 받는 크리티컬 데미지 증가",
 };
 function tlCompanionLanes(c, pct, lanes, T) {
@@ -7060,9 +7060,14 @@ function tlCompanionLanes(c, pct, lanes, T) {
     const gic = Number(k) > 0 ? tlSkillIc(k) : tlGradeIc(c.level);   // 패시브=SkillIconPath 아이콘. 등급 보너스(idx=-1)=레벨별 엠블럼
     const byWin = {};   // 같은 창(start-end)끼리 묶어 그 창의 스탯들 나열
     for (const b of g.items) { const wk = b.start + "-" + b.end; (byWin[wk] = byWin[wk] || { start: b.start, end: b.end, stats: [] }).stats.push(b); }
+    const wins = Object.values(byWin);
+    // 중첩/램프 색 변화: 창 효과값 합 기준 최저~최고로 정규화해 농도(옅게~진하게) — 플레이어 버프 레인과 동일 방식(은펜던트식, 제네릭).
+    const sumOf = (w) => w.stats.reduce((s, b) => s + Math.abs(b.value || 0), 0);
+    const vals = wins.map(sumOf);
+    const vmin = vals.length ? Math.min(...vals) : 0, vmax = vals.length ? Math.max(...vals) : 0, vrange = vmax - vmin;
     let bars = "";
-    for (const wk of Object.keys(byWin)) {
-      const w = byWin[wk];
+    for (let i = 0; i < wins.length; i++) {
+      const w = wins[i];
       const width = pct(w.end - w.start);
       const when = `${fmtSec(w.start)}~${fmtSec(w.end)}s`;
       const lines = w.stats.map((b) => {   // 효과별 한 줄 + 대상 태그. 적 디버프=빨강, 버프=초록.
@@ -7072,7 +7077,9 @@ function tlCompanionLanes(c, pct, lanes, T) {
         return { cls: tgt === "enemy" ? "ln-debuff" : "ln-buff", html: escAttr(txt) };
       });
       const tip = tlTipCard(gic, g.name, when, lines);
-      bars += `<span class="tl-win tl-cbuff" style="left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%" data-tip="${tip}"></span>`;
+      let style = `left:${pct(w.start).toFixed(3)}%;width:${width.toFixed(3)}%`;
+      if (vrange > 0.01) style += `;--a:${(0.45 + 0.5 * ((vals[i] - vmin) / vrange)).toFixed(2)}`;   // 중첩별 색 차이(1중첩 옅음~최대중첩 진함)
+      bars += `<span class="tl-win tl-cbuff" style="${style}" data-tip="${tip}"></span>`;
     }
     lanes.push({ label: g.name, labelCls: "tl-glabel-comp tl-glabel-sub", trackCls: "tl-track tl-buff", bars });
   }
