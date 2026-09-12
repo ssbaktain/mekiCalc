@@ -51,6 +51,7 @@ import mekicalc.timeline.Schedule;
 import mekicalc.timeline.Scheduler;
 import mekicalc.timeline.Timeline;
 import mekicalc.timeline.ir.ArtifactBook;
+import mekicalc.timeline.ir.ArtifactIR;
 import mekicalc.timeline.ir.EffectIR;
 import mekicalc.timeline.ir.SkillBook;
 import mekicalc.timeline.ir.SkillIR;
@@ -1029,10 +1030,13 @@ public final class CalcService {
         simMs = tb.simMs();   // 기본(0)→실제 시뮬 길이 확정(동료·2차에 동일 적용)
 
         mekicalc.timeline.SupporterEngine.CompanionResult comp = null;
+        SummonArt sa = null;   // 뿔피리 등 동료 소환 중 유물 — 간트 표시(플레이어·동료 적용 라벨)에 재사용
         if (supporterAvailable(companionCode)) {   // 미검증 동료 코드는 무시(비숍만 계산)
             // ★계승 스냅샷·적 디버프는 1차 빌드 WindowSet에서 '정확한 시각' fold로 읽음(유물 직접누적 육각/파생/순환/약화 + 경계 정확).
+            sa = summonArtEffects(artifacts, tb.boss(), contentOverride);   // 뿔피리(동료 소환 중) — 동료 몫 곱소스 + self 소환창 주입
             comp = mekicalc.timeline.SupporterEngine.run(tb.preset(), tb.ws(), companionCode,
-                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg);
+                    companionLevel <= 0 ? 1 : companionLevel, Math.max(0, firstSummonMs), simMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg,
+                    sa.compFinal(), sa.selfPermil());
             // 동료→플레이어 버프 소스(파생 입력·데미지) + 공속 시간창(스케줄 공격빈도)
             List<BuffSource> compBuffs = new ArrayList<>();
             List<double[]> compSpd = new ArrayList<>();
@@ -1186,6 +1190,17 @@ public final class CalcService {
         for (BuffSource bs : sources) buffs.add(buffRow(bs, simMs, false));
         for (BuffSource bs : artRes.sources()) buffs.add(buffRow(bs, simMs, true));
         for (BuffSource bs : artRes.speedDisplay()) buffs.add(buffRow(bs, simMs, true));   // 유물 상시공속 표시(딜엔 preset으로 반영, 여기선 간트 바만)
+        if (comp != null && sa != null) for (mekicalc.timeline.SupporterTimeline.PlayerBuff b : comp.playerBuffInjections())
+            if (b.skillIdx() == 519) {   // 뿔피리 = 동료 버프 아닌 ★유물 버프(플레이어 레인). 단 ★특수 케이스라 동료 버프처럼 플레이어/동료 적용 둘 다 표시.
+                List<Map<String, Object>> effs = new ArrayList<>();
+                effs.add(statEffT("FINAL_DMG", b.value() / 10.0, "player"));       // 자신(소환창 동안, 챕터보스 ×2 반영)
+                for (double f : sa.compFinal()) effs.add(statEffT("FINAL_DMG", f * 100.0, "companion"));   // 동료(각 개체, 배수 없음)
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("label", b.skillName()); m.put("start", b.startMs()); m.put("end", b.endMs());
+                m.put("always", false); m.put("artifact", true);   // label="뿔피리" → 프론트 _tlArtId["뿔피리"]="horn" 아이콘 매칭
+                m.put("effects", effs);
+                buffs.add(m);
+            }
         buffs.addAll(derivedRows);   // 파생(라이브 크확·공속 후처리) 대표 효과 행
         buffs.addAll(cycleRows);     // 순환(크확 파티션) 창별 표시행 — 각 창의 실제 적용 효과(effects) 포함
         // 스택 세그먼트의 실효 효과값(스택 반영). 라벨→원본 스펙 매칭. 약화=value(‰)×스택, 육각=preset.dmg×value(‰)×스택.
@@ -1297,6 +1312,7 @@ public final class CalcService {
             // 간트: 동료→플레이어 버프 창(스탯별)
             List<Map<String, Object>> cBuffs = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff b : comp.playerBuffInjections()) {
+                if (b.skillIdx() == 519) continue;   // 뿔피리 self = 유물 버프(플레이어 버프 행)로 별도 표시 — 동료 레인 제외
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("skillIdx", b.skillIdx());
                 m.put("skillName", dispName.getOrDefault(b.skillIdx(), b.skillName()));
@@ -1361,9 +1377,11 @@ public final class CalcService {
         int sMs = tb.simMs();
         double compTotal = 0;
         if (supporterAvailable(companionCode)) {
+            SummonArt sa = summonArtEffects(artifacts, tb.boss(), contentOverride);
             mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
                     tb.preset(), tb.ws(), companionCode, companionLevel <= 0 ? 1 : companionLevel,
-                    Math.max(0, firstSummonMs), sMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg);
+                    Math.max(0, firstSummonMs), sMs, tb.boss(), tb.monDef(), supBook(), companionInstantFinalDmg,
+                    sa.compFinal(), sa.selfPermil());
             List<BuffSource> compBuffs = new ArrayList<>();
             List<double[]> compSpd = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {
@@ -1407,10 +1425,45 @@ public final class CalcService {
         return e;
     }
 
+    /** statEff + 대상 태그(player/companion/both/enemy) — 뿔피리처럼 한 유물이 플레이어·동료 양쪽에 적용될 때 줄별 표시. */
+    private static Map<String, Object> statEffT(String stat, double value, String target) {
+        Map<String, Object> e = statEff(stat, value);
+        e.put("target", target);
+        return e;
+    }
+
     /**
      * 요청 유물 배열 [{id, awaken}] → 타임라인 조립기 Equip 목록.
      * id는 카탈로그 슬러그("deadmans_charm") 또는 숫자 idx("301") 둘 다 허용(이름 조인으로 해소). 매칭 실패는 스킵.
      */
+    /** 동료 소환 중 유물(companionSummoned, 현재 뿔피리) 효과 = {동료 자기 FinalDamage 분율(effect1), self FinalDamage ‰(effect0, 챕터보스 ×2 반영)}. */
+    private record SummonArt(List<Double> compFinal, List<Double> selfPermil) {}
+
+    private SummonArt summonArtEffects(List<Map<String, Object>> artifacts, boolean boss, String contentOverride) {
+        List<Double> cf = new ArrayList<>(), sp = new ArrayList<>();
+        String artContent = (contentOverride != null && !contentOverride.isEmpty()) ? contentOverride : (boss ? "챕터보스" : "챕터사냥");
+        ArtifactBook book = nlArtBook();
+        for (ArtifactAssembler.Equip eq : toTimelineEquips(artifacts)) {
+            ArtifactIR a = book.artifact(eq.idx());
+            if (a == null) continue;
+            for (ArtifactIR.Effect e : a.effects()) {
+                String trig = e.trigger() != null ? e.trigger() : a.trigger();
+                if (!"companionSummoned".equals(trig) || !"FinalDamage".equals(e.stat())) continue;
+                Double v = e.valueAt(eq.awaken());
+                if (v == null) continue;
+                if ("companion".equals(e.target())) {
+                    cf.add(v / 1000.0);                          // 동료 자기 +10% 별도 곱소스(contentMult 없음=배수 안받음)
+                } else if ("self".equals(e.target())) {
+                    double ratio = 1.0;                          // 챕터보스 등 contentMult(effect0만) — self 2배
+                    for (ArtifactIR.ContentMult cm : e.contentMult())
+                        if (cm.content() != null && cm.content().contains(artContent) && cm.ratio() != null) ratio = cm.ratio();
+                    sp.add(v * ratio);
+                }
+            }
+        }
+        return new SummonArt(cf, sp);
+    }
+
     private List<ArtifactAssembler.Equip> toTimelineEquips(List<Map<String, Object>> artifacts) {
         List<ArtifactAssembler.Equip> out = new ArrayList<>();
         if (artifacts == null) return out;
@@ -1874,8 +1927,10 @@ public final class CalcService {
             if (baseArt == null) { baseArt = bt1.artRes(); expandResimStats(); }
             if (!compResolved) { compSup = supBook().supporter(companionCode); compLvl = companionLevel <= 0 ? 1 : companionLevel; compResolved = true; }
             // ★1차 빌드 WindowSet으로 계승 스냅샷·적 디버프(정확한 시각 fold, 유물 직접누적 + 경계 정확). 동료 버프는 미반영(1차).
+            SummonArt sa = summonArtEffects(artifacts, boss, contentOverride);
             mekicalc.timeline.SupporterEngine.CompanionResult comp = mekicalc.timeline.SupporterEngine.run(
-                    bt1.preset(), bt1.ws(), companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook(), companionInstantFinalDmg);
+                    bt1.preset(), bt1.ws(), companionCode, compLvl, Math.max(0, firstSummonMs), simMs, boss, monDef, supBook(), companionInstantFinalDmg,
+                    sa.compFinal(), sa.selfPermil());
             List<BuffSource> cb = new ArrayList<>();
             List<double[]> cs = new ArrayList<>();
             for (mekicalc.timeline.SupporterTimeline.PlayerBuff pb : comp.playerBuffInjections()) {

@@ -3626,7 +3626,7 @@ function saveRelic() { myRelic.equipped = (myRelic.equipped || []).filter((id) =
 
 // 정상 딜 반영 유물(compute·상시스탯 preReflected)은 표시 없음 — 주의가 필요한 예외 상태만 ⓘ로 표시.
 // 타임라인 엔진에 아직 미구현인 유물(상태 유물·동료 유물) — category는 compute지만 '지원 예정'으로 표시.
-const RELIC_PENDING = new Set(["burning_lava", "old_music_box", "horn"]);
+const RELIC_PENDING = new Set(["burning_lava", "old_music_box"]);
 function relicCatById(id) { return ((artifactCatalog.list || []).find((a) => a.id === id) || {}).category; }
 // 태그(딜 미반영·컨텐츠 전용·지원 예정)는 이름을 밀지 않도록 ⓘ 버튼 placeholder로 출력 → renderRelic()이 mkInfo로 치환.
 const RELIC_TAG_DESC = {
@@ -6651,9 +6651,10 @@ function tlGradeIc(level) {   // 등급 보너스 엠블럼 — 동료 레벨별
   const t = level >= 10 ? 3 : level >= 8 ? 2 : 1;
   return `<img class='tlt-ic' src='/img/skill/gradebonus${t}.png' onerror='this.remove()'>`;
 }
-// 한 효과(스탯±%) 줄 html — 무실효=취소선.
+// 한 효과(스탯±%) 줄 html — 무실효=취소선. target 있으면(뿔피리 등 특수 케이스) 동료 버프처럼 '· 플레이어/동료 적용' 태그.
 function tlEffHtml(e) {
-  const txt = `${tlStatName(e.stat)} ${e.value >= 0 ? "+" : ""}${e.value}%`;
+  const tgt = e.target ? ` · ${compBuffTargetLabel(e.target)}` : "";
+  const txt = `${tlStatName(e.stat)} ${e.value >= 0 ? "+" : ""}${e.value}%${tgt}`;
   return e.dormant ? `<s>${escAttr(txt)}</s>` : escAttr(txt);
 }
 // lines = [{cls, html}]. icon=아이콘 html, name/sub=텍스트(escAttr됨),

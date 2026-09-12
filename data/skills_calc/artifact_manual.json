@@ -866,7 +866,7 @@
    "desc": "동료가 소환되어 있는 동안 자신과 동료의 최종 데미지가 10% 증가합니다. [챕터 보스] 전투 시 자신에게 적용되는 효과가 2배로 적용됩니다.",
    "descMax": "동료가 소환되어 있는 동안 자신과 동료의 최종 데미지가 20% 증가합니다. [챕터 보스] 전투 시 자신에게 적용되는 효과가 2배로 적용됩니다.",
    "trigger": "companionSummoned",
-   "note": "뿔피리: FinalDamage 10%[5각20%]를 자신+동료 **양쪽** 부여. trigger=동료소환중(companionSummoned). ★유일하게 \"이미 소환돼 있는 동료\"에게 스탯을 주는 유물(동료 소환된 동안 상시). clt op=Myself(op1)+Parent(op3) 두 개라 effect도 분리: effect0 target:self(+챕터보스 selfMult ×2), effect1 target:companion(동료 각 개체 스탯풀에 FinalDamage 주입, selfMult 없음=동료는 배수 안받음). aw0 챕터보스=자신20%/동료10%, 타컨텐츠=둘다10%. ★2배는 clt op에 없음—desc 유래 컨텐츠 로직. ★동료몫 실제 주입은 동료엔진 조립 시(현재 유일 케이스 특례).",
+   "note": "뿔피리: FinalDamage 10%[5각20%]를 자신+동료 **양쪽** 부여. trigger=동료소환중(companionSummoned). ★유일하게 \"이미 소환돼 있는 동료\"에게 스탯을 주는 유물(동료 소환된 동안 상시). clt op=Myself(op1)+Parent(op3) 두 개라 effect도 분리: effect0 target:self(+챕터보스 selfMult ×2), effect1 target:companion(동료 각 개체 스탯풀에 FinalDamage 주입, selfMult 없음=동료는 배수 안받음). aw0 챕터보스=자신20%/동료10%, 타컨텐츠=둘다10%. ★2배는 clt op에 없음—desc 유래 컨텐츠 로직. ★구현(2026-09-12): companionSummoned는 ArtifactAssembler(플레이어 유물 경로)에서 여전히 스킵(1차 ws 미포함=동료 계승 제외) → SupporterEngine.run이 companionSummoned 유물을 읽어 effect0(self)=소환창마다 플레이어 FinalDamage 버프 주입(2패스라 동료 미계승), effect1(companion)=동료 자기 FinalDamage 별도 곱소스(+10%, 배수 없음). 동료 미소환이면 효과 0. 검증: 동료 ×1.10 정확·보스 self ×1.20·이중계산 없음.",
    "effects": [
     {
      "stat": "FinalDamage",

@@ -472,7 +472,11 @@ public final class ArtifactAssembler {
     private String classifyCommon(ArtifactIR a, ArtifactIR.Effect e, Ctx ctx, boolean derivedMode) {
         if (a.defer()) return "defer(유물): 상태의존→컨텐츠모드";
         if (e.defer()) return "defer(effect): 상태의존→컨텐츠모드";
-        if ("companion".equals(e.target())) return "companion→동료엔진(v3)";
+        if ("companion".equals(e.target())) return SILENT;   // 동료 몫은 SupporterEngine이 주입(플레이어 유물 경로 아님) — 미반영 목록 제외
+        {   // companionSummoned 트리거(뿔피리 등)는 SupporterEngine이 소환창에 반영 → 플레이어 유물 경로선 침묵(미구현 아님)
+            String trg = e.trigger() != null ? e.trigger() : a.trigger();
+            if ("companionSummoned".equals(trg)) return SILENT;
+        }
         if (e.priorityGroup() != null || e.require() != null) return "대상상태 require(v4)";
         if (e.critLt() != null || e.critGte() != null) return "라이브 크확 조건(v2b: 순환)";
         if (derivedMode) {

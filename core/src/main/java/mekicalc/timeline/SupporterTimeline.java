@@ -52,6 +52,15 @@ public final class SupporterTimeline {
      *                 계속 입히지만, 이 경계를 넘는 틱은 잘라낸다(시뮬 시간 밖 딜 미포함). windowMs≤simCapMs.
      */
     public static Result build(SupporterIR sup, int companionLevel, Preset companionBase, int windowMs, int simCapMs, SupporterBook book, boolean boss, boolean instantBonus) {
+        return build(sup, companionLevel, companionBase, windowMs, simCapMs, book, boss, instantBonus, java.util.List.of());
+    }
+
+    /**
+     * @param extraCompanionFinalSrcs 외부(유물) 동료 자기 FinalDamage 별도 곱소스(분율, 예 0.10). 뿔피리 effect1(동료 +10%) 등 —
+     *                                등급보너스처럼 ×(1+f) 별도 곱으로 적용(계승분과 무관한 동료 전용 소스).
+     */
+    public static Result build(SupporterIR sup, int companionLevel, Preset companionBase, int windowMs, int simCapMs, SupporterBook book, boolean boss, boolean instantBonus,
+                               java.util.List<Double> extraCompanionFinalSrcs) {
         Timeline tl = new Timeline();
         List<PlayerBuff> pbuffs = new ArrayList<>();
         List<SupporterSkillIR> skills = sup.unlockedSkills(companionLevel);
@@ -207,7 +216,7 @@ public final class SupporterTimeline {
         }
 
         // ── 동료 자기버프(상수 ModState): gradeBonus FinalDamage + target:companion statUp(onStart) + 인스턴트 보너스 ──
-        applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs, instantBonus, activeCastTimes, boss);
+        applySelfBuffs(tl, sup, companionLevel, skills, book, windowMs, instantBonus, activeCastTimes, boss, extraCompanionFinalSrcs);
 
         // ── 동료 자기버프 '표시용' 창(딜은 applySelfBuffs로 이미 반영, 여기선 간트 바 target=companion만) ──
         //   ★durationMs 있는 액티브=시전마다 창 / enter=[0,dur] / 그 외(onStart)=창 전체. (applySelfBuffs 윈도잉과 동일)
@@ -492,7 +501,8 @@ public final class SupporterTimeline {
     }
     private static void applySelfBuffs(Timeline tl, SupporterIR sup, int companionLevel,
                                        List<SupporterSkillIR> skills, SupporterBook book, int windowMs, boolean instantBonus,
-                                       Map<Integer, List<Integer>> activeCastTimes, boolean boss) {
+                                       Map<Integer, List<Integer>> activeCastTimes, boolean boss,
+                                       java.util.List<Double> extraCompanionFinalSrcs) {
         // 1) gradeBonus 동료 자기 최종뎀 — 도달한 각 레벨(+25%씩)을 ★별도 곱소스로(합산 아님: ×1.25×1.25×1.25).
         List<Double> selfFinalSources = new ArrayList<>();
         SupporterBook.GradeBonus gb = book.gradeBonus();
@@ -501,6 +511,8 @@ public final class SupporterTimeline {
             for (int[] lvVal : gb.byLevel()) if (companionLevel >= lvVal[0]) selfFinalSources.add(lvVal[1] / 1000.0);
         if (instantBonus)   // 추가 최종뎀(체크박스 ON) = 동료 무관 +25% 별도 곱소스(자유 세팅 비교용)
             selfFinalSources.add(INSTANT_FINAL_DMG / 1000.0);
+        if (extraCompanionFinalSrcs != null)   // 유물(뿔피리 effect1 등) 동료 자기 FinalDamage 별도 곱소스 — 소환창 동안 상시
+            selfFinalSources.addAll(extraCompanionFinalSrcs);
 
         // 2) target:companion statUp — 상수(합풀 selfAdds / FinalDamage 별도 곱소스) · 램프업 스택 · ★시간창(액티브/enter durationMs) 분리.
         List<double[]> selfAdds = new ArrayList<>();

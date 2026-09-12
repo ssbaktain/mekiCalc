@@ -23,6 +23,9 @@ public final class SupporterEngine {
 
     private SupporterEngine() {}
 
+    /** 뿔피리(idx 519) self 버프 주입용 표시 skillIdx(동료 스킬 아님, 유물). */
+    private static final int HORN_IDX = 519;
+
     public record CompanionResult(
             Map<Integer, Double> perSkillDamage,   // 동료 스킬 idx → 전 구간 총딜
             double totalDamage,
@@ -48,6 +51,20 @@ public final class SupporterEngine {
                                       String companionCode, int companionLevel,
                                       int firstSummonMs, int simMs, boolean boss, double monsterDef,
                                       SupporterBook book, boolean instantBonus) {
+        return run(playerBase, playerWindows, companionCode, companionLevel, firstSummonMs, simMs, boss, monsterDef,
+                book, instantBonus, List.of(), List.of());
+    }
+
+    /**
+     * 동료 소환 중 유물(companionSummoned) 반영 오버로드.
+     * @param companionFinalSrcs 동료 자기 FinalDamage 별도 곱소스(분율, 예 0.10) — 뿔피리 effect1(동료 +10%). 소환창 동안 상시 ×(1+f).
+     * @param selfFinalPermil     플레이어 self FinalDamage(‰) — 뿔피리 effect0(자신, 챕터보스 ×2 미리 반영). 소환창마다 플레이어 버프로 주입(계승 제외 — 2패스가 자연 분리).
+     */
+    public static CompanionResult run(Preset playerBase, WindowSet playerWindows,
+                                      String companionCode, int companionLevel,
+                                      int firstSummonMs, int simMs, boolean boss, double monsterDef,
+                                      SupporterBook book, boolean instantBonus,
+                                      List<Double> companionFinalSrcs, List<Double> selfFinalPermil) {
         SupporterIR sup = book.supporter(companionCode);
         if (sup == null) return new CompanionResult(Map.of(), 0, 0, List.of(), 0, List.of(), Map.of(), Map.of(), Map.of(), null, null);
         int cd = sup.summonCooldownMs();
@@ -72,7 +89,7 @@ public final class SupporterEngine {
             int usableW = Math.min(W, simMs - s);
             if (usableW <= 0) break;
 
-            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, simMs - s, book, boss, instantBonus);
+            SupporterTimeline.Result r = SupporterTimeline.build(sup, companionLevel, cbase, usableW, simMs - s, book, boss, instantBonus, companionFinalSrcs);
             // 적 디버프(약화·방깎·크확저항 등) → 동료 딜에도 적용(적에 붙은 디버프=모든 공격자 수혜, §5). 소스: 플레이어 윈도우 실효상태(절대시각) + 동료 자기 enemy 디버프.
             applyEnemyRecvDmg(r.timeline(), r.playerBuffs(), playerWindows, s);
             if (reprTl == null) { reprTl = r.timeline(); reprSnapshot = snap; }   // 첫 소환 = 큐브 닫힌식 평가 대표
@@ -86,6 +103,10 @@ public final class SupporterEngine {
             for (SupporterTimeline.PlayerBuff b : r.playerBuffs())
                 injections.add(new SupporterTimeline.PlayerBuff(b.skillIdx(), b.skillName(),
                         b.stat(), b.value(), s + b.startMs(), Math.min(s + b.endMs(), simMs), b.toEnemy(), b.target()));
+            // 뿔피리 effect0(자신 FinalDamage) = 소환창 동안 플레이어 버프로 주입. ★2패스가 계승과 자연 분리(1차 ws엔 없음→동료 미계승, 2차에만 플레이어 수혜).
+            for (double pv : selfFinalPermil)
+                injections.add(new SupporterTimeline.PlayerBuff(HORN_IDX, "뿔피리",
+                        "FinalDamage", pv, s, Math.min(s + usableW, simMs), false, "player"));
             // 간트용: 소환창 + 스킬별 딜 틱(절대 시각)
             summonWindows.add(new int[]{s, s + usableW});
             for (int idx : r.timeline().dealingSkills()) {
