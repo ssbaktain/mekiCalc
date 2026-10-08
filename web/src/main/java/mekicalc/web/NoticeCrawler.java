@@ -60,13 +60,22 @@ public final class NoticeCrawler {
     private static final int MAX_PAGE = 5;                 // blockSize=5 → 첫 블록 최대 5페이지
     private static final int DAILY_BACKFILL_BUDGET = 15;   // 과거 공지 요약: 하루 15건
     private static final int SUMMARIES_PER_TICK = 5;       // RPM 보호: 틱당 요약 상한(신규·백필 각각)
+    // ★봇 발송 나이 상한: 게시 후 이 시간이 지난 공지는 카톡 발송을 생략한다(웹 표시는 그대로).
+    // 크롤러가 장시간 죽었다 되살아날 때(예 selector-manager-closed 복구·재시작) 밀린 공지가 한꺼번에 발송되는 스팸을 막는다.
+    private static final long MAX_SEND_AGE_SEC = 6 * 3600;  // 6시간
 
     private final NoticeStore store;
     private final NoticeSummarizer summarizer;
     private final BotOutbox outbox;
     private final java.util.Set<String> pendingDeliver = new java.util.HashSet<>();   // 이번 세션 '신규 감지'된 글 → 추출되면 봇 큐에 넣을 대상
     private final java.util.Set<String> pendingReextract = new java.util.HashSet<>(); // 제목 변경(갱신) 감지된 글 → 재추출 + 발송 매트릭스
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    // ★self-heal: HttpClient의 selector manager가 한 번 닫히면("selector manager closed") 그 인스턴스로는
+    // 모든 요청이 영구 실패한다(2026-09-28 프로덕션 크롤 중단 원인). 죽으면 재생성하므로 final 불가(volatile).
+    private volatile HttpClient http = newHttpClient();
+
+    private static HttpClient newHttpClient() {
+        return HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    }
     private final ScheduledExecutorService scheduler =
             Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "notice-crawler");
@@ -471,9 +480,16 @@ public final class NoticeCrawler {
                 if (seenThisTick != null) seenThisTick.add(n.threadId);
                 NoticeStore.Upsert u = store.upsertMeta(n);
                 if (u == NoticeStore.Upsert.NEW && n.postedAt >= liveSince) {
-                    pendingDeliver.add(n.threadId);   // 추출되면 봇 큐(Outbox)로 배달
-                    System.out.println("[신규공지 감지] crawledAt=" + java.time.Instant.now()
-                            + " postedAt=" + n.postedAt + " board=" + category + " id=" + n.threadId + " title=" + n.title);
+                    // ★발송 나이 상한: 게시 후 6시간 넘은 신규 글은 웹엔 올리되 카톡 발송은 생략(밀림 스팸 방지).
+                    long ageSec = System.currentTimeMillis() / 1000 - n.postedAt;
+                    if (ageSec <= MAX_SEND_AGE_SEC) {
+                        pendingDeliver.add(n.threadId);   // 추출되면 봇 큐(Outbox)로 배달
+                        System.out.println("[신규공지 감지] crawledAt=" + java.time.Instant.now()
+                                + " postedAt=" + n.postedAt + " board=" + category + " id=" + n.threadId + " title=" + n.title);
+                    } else {
+                        System.out.println("[신규공지 감지·카톡발송생략] 게시후 " + (ageSec / 3600) + "h 경과(상한 "
+                                + (MAX_SEND_AGE_SEC / 3600) + "h) board=" + category + " id=" + n.threadId + " title=" + n.title);
+                    }
                 } else if (u == NoticeStore.Upsert.UPDATED) {
                     pendingReextract.add(n.threadId);   // 제목 변경 = 갱신 → 재추출 + 발송 매트릭스
                     System.out.println("[공지 갱신 감지] board=" + category + " id=" + n.threadId + " title=" + n.title);
@@ -538,11 +554,31 @@ public final class NoticeCrawler {
                 .header("User-Agent", UA)
                 .header("Accept", "application/json")
                 .GET().build();
-        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> resp;
+        try {
+            resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        } catch (java.io.IOException e) {
+            // selector manager가 닫힌 죽은 클라이언트면 새로 만들어 1회 재시도(영구 실패 자가치유).
+            // 그 외 일시적 I/O 오류도 재시도 1회는 무해 — 단, 죽은 클라이언트일 때만 교체한다.
+            if (isDeadClient(e)) {
+                http = newHttpClient();
+                System.err.println("공지 크롤러 HttpClient 재생성(사유: " + e + ")");
+            }
+            resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        }
         if (resp.statusCode() / 100 != 2) throw new Exception("HTTP " + resp.statusCode());
         Object parsed = Json.parse(resp.body());
         if (!(parsed instanceof Map)) throw new Exception("JSON 객체 아님");
         return Json.asMap(parsed);
+    }
+
+    /** HttpClient의 selector manager가 닫혀 영구 실패하는 상태인지(원인 체인까지 검사). */
+    private static boolean isDeadClient(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            String m = t.getMessage();
+            if (m != null && m.contains("selector manager closed")) return true;
+        }
+        return false;
     }
 
     /** 아주 단순한 HTML → 평문 변환(블록 태그는 줄바꿈, 나머지 태그 제거, 엔티티 디코드, 공백 정리). */
