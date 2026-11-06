@@ -29,6 +29,8 @@ import mekicalc.json.Json;
  *   <li>관리자 "지금 적용"(수동) + 새 쿠폰 감지 시 자동(스케줄러 {@code check()}).</li>
  *   <li>한 번에 하나의 배치만 실행(single-thread executor + running 가드).</li>
  *   <li>자동은 {@code processedPins}로 중복 입력 방지(사이드카 장애로 전건 실패면 미처리로 남겨 재시도).</li>
+ *   <li>최초 1회 baseline: 배포 시점의 현재 유효 쿠폰을 processed로 기록 → 이후 '새로 뜬' 쿠폰만 자동 입력.</li>
+ *   <li>신규 회원 등록 시(자동 on): 그 회원에게만 현재 유효 쿠폰 전부를 catch-up 입력(기존 회원은 이미 받음).</li>
  * </ul>
  */
 public final class CouponService {
@@ -48,6 +50,7 @@ public final class CouponService {
     private volatile boolean autoRedeem;
     private volatile int delayMinMs;
     private volatile int delayMaxMs;
+    private volatile boolean baselined;   // 최초 1회 현재 유효 쿠폰을 processed로 기록했는지(기존 백로그 대량 입력 방지)
     private final Set<String> processedPins = Collections.synchronizedSet(new LinkedHashSet<>());
 
     // 실행 상태
@@ -68,6 +71,7 @@ public final class CouponService {
         this.autoRedeem = cfg.autoRedeem;
         this.delayMinMs = Math.max(0, cfg.delayMinMs);
         this.delayMaxMs = Math.max(this.delayMinMs, cfg.delayMaxMs);
+        this.baselined = cfg.baselined;
         this.processedPins.addAll(cfg.processedPins);
     }
 
@@ -79,6 +83,7 @@ public final class CouponService {
             m.put("autoRedeem", autoRedeem);
             m.put("delayMinMs", delayMinMs);
             m.put("delayMaxMs", delayMaxMs);
+            m.put("baselined", baselined);
             List<String> pins; synchronized (processedPins) { pins = new ArrayList<>(processedPins); }
             m.put("processedPins", pins);
             Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
@@ -159,6 +164,14 @@ public final class CouponService {
         Map<String, Object> out = store.get(m.id).toClientMap();
         out.put("verified", valid);
         out.put("verifyMessage", v.get("message"));
+        // 최초 등록 catch-up: 자동 입력이 켜져 있으면 현재 유효 쿠폰 전부를 이 신규 회원에게만 입력(기존 회원은 이미 받음).
+        if (autoRedeem && sidecar.enabled()) {
+            List<String> pins = activeCouponCodes();
+            if (!pins.isEmpty()) {
+                try { startBatch(List.of(store.get(m.id)), pins, "register", false); out.put("catchup", pins.size()); }
+                catch (Exception e) { System.err.println("[coupon] 등록 catch-up 실패: " + e.getMessage()); }
+            }
+        }
         return out;
     }
 
@@ -169,73 +182,89 @@ public final class CouponService {
     // ─────────────────────────── 쿠폰 사용(배치) ───────────────────────────
 
     /**
-     * 모든 등록 회원코드에 쿠폰을 입력(비동기 배치). 이미 실행 중이면 거절한다.
+     * 수동 "지금 적용": 전 회원 × 단일 쿠폰. 진행 중이면 거절한다.
      * @param source "manual" | "auto"
-     * @return 시작 시점 상태 스냅샷
      */
     public Map<String, Object> redeemAll(String pin, String source) {
         String code = pin == null ? "" : pin.trim();
         if (code.isEmpty()) throw new IllegalArgumentException("쿠폰코드가 필요합니다.");
+        return startBatch(store.all(), List.of(code), source, true);
+    }
+
+    /**
+     * 배치 시작(비동기). targets × pins 모든 조합을 순서대로 입력하고 각 입력 사이에 딜레이를 둔다.
+     * rejectIfBusy=true면 진행 중일 때 예외(수동), false면 single-thread 큐에 넣어 뒤에 실행(자동·등록).
+     */
+    private Map<String, Object> startBatch(List<CouponMemberStore.Member> targets, List<String> pins,
+                                           String source, boolean rejectIfBusy) {
         if (!sidecar.enabled()) throw new IllegalStateException("쿠폰 사이드카가 설정되지 않았습니다.");
-        if (!running.compareAndSet(false, true)) throw new IllegalStateException("이미 쿠폰 입력이 진행 중입니다.");
-
-        List<CouponMemberStore.Member> targets = store.all();
-        Map<String, Object> st = new LinkedHashMap<>();
-        st.put("running", true);
-        st.put("pin", code);
-        st.put("source", source);
-        st.put("total", targets.size());
-        st.put("done", 0);
-        st.put("startedAt", (double) System.currentTimeMillis());
-        st.put("finishedAt", 0.0);
-        st.put("results", Collections.synchronizedList(new ArrayList<Map<String, Object>>()));
-        runState = st;
-
-        runner.submit(() -> runBatch(code, source, targets, st));
+        if (pins == null || pins.isEmpty()) throw new IllegalArgumentException("쿠폰코드가 필요합니다.");
+        if (targets == null || targets.isEmpty()) throw new IllegalArgumentException("대상 회원코드가 없습니다.");
+        if (rejectIfBusy && running.get()) throw new IllegalStateException("이미 쿠폰 입력이 진행 중입니다.");
+        final List<CouponMemberStore.Member> tg = new ArrayList<>(targets);
+        final List<String> ps = new ArrayList<>(pins);
+        runner.submit(() -> runBatch(tg, ps, source));
         return status();
     }
 
-    @SuppressWarnings("unchecked")
-    private void runBatch(String pin, String source, List<CouponMemberStore.Member> targets, Map<String, Object> st) {
-        List<Map<String, Object>> results = (List<Map<String, Object>>) st.get("results");
-        boolean anyDefinitive = false;   // 넥슨이 실제 응답(code!=null)한 건이 하나라도 있으면 processed 처리
+    /** 실제 배치 실행(단일 워커 스레드). pins × targets 각 조합을 입력, 각 사이 딜레이. */
+    private void runBatch(List<CouponMemberStore.Member> targets, List<String> pins, String source) {
+        running.set(true);
+        List<Map<String, Object>> results = Collections.synchronizedList(new ArrayList<Map<String, Object>>());
+        int totalSteps = pins.size() * targets.size();
+        Map<String, Object> st = new LinkedHashMap<>();
+        st.put("running", true);
+        st.put("pin", pins.size() == 1 ? pins.get(0) : (pins.size() + "개 쿠폰"));
+        st.put("pins", new ArrayList<>(pins));
+        st.put("source", source);
+        st.put("total", totalSteps);
+        st.put("done", 0);
+        st.put("startedAt", (double) System.currentTimeMillis());
+        st.put("finishedAt", 0.0);
+        st.put("results", results);
+        runState = st;
+        int done = 0;
         try {
-            for (int i = 0; i < targets.size(); i++) {
-                CouponMemberStore.Member mem = targets.get(i);
-                Map<String, Object> row = new LinkedHashMap<>();
-                row.put("id", mem.id);
-                row.put("nick", mem.nick);
-                row.put("npaCode", mem.npaCode);
-                String rcode = null, rmsg; boolean ok = false;
-                try {
-                    Map<String, Object> r = sidecar.redeem(mem.npaCode, pin);
-                    ok = Boolean.TRUE.equals(r.get("ok"));
-                    rcode = str(r.get("code"));
-                    rmsg = str(r.get("message"));
-                    anyDefinitive = true;
-                } catch (Exception e) {
-                    rmsg = "사이드카 오류: " + e.getMessage();
+            for (String pin : pins) {
+                boolean anyDefinitive = false;   // 넥슨이 실제 응답(code!=null)한 건이 하나라도 있는가
+                for (CouponMemberStore.Member mem : targets) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", mem.id);
+                    row.put("nick", mem.nick);
+                    row.put("npaCode", mem.npaCode);
+                    row.put("pin", pin);
+                    String rcode = null, rmsg; boolean ok = false;
+                    try {
+                        Map<String, Object> r = sidecar.redeem(mem.npaCode, pin);
+                        ok = Boolean.TRUE.equals(r.get("ok"));
+                        rcode = str(r.get("code"));
+                        rmsg = str(r.get("message"));
+                        anyDefinitive = true;
+                    } catch (Exception e) {
+                        rmsg = "사이드카 오류: " + e.getMessage();
+                    }
+                    row.put("ok", ok);
+                    row.put("code", rcode);
+                    row.put("message", rmsg);
+                    results.add(row);
+                    store.markRedeem(mem.id, pin, rcode, rmsg);
+                    st.put("done", ++done);
+                    if (done < totalSteps) sleepDelay();
                 }
-                row.put("ok", ok);
-                row.put("code", rcode);
-                row.put("message", rmsg);
-                results.add(row);
-                store.markRedeem(mem.id, pin, rcode, rmsg);
-                st.put("done", i + 1);
-
-                if (i < targets.size() - 1) {
-                    int lo = delayMinMs, hi = Math.max(lo, delayMaxMs);
-                    long wait = (hi > lo) ? ThreadLocalRandom.current().nextLong(lo, hi + 1L) : lo;
-                    try { Thread.sleep(wait); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
-                }
+                // 자동(새 쿠폰 전 회원 입력)만 processed로 기록 → 중복 방지. 수동·등록 catch-up은 기록하지 않는다.
+                if ("auto".equals(source) && anyDefinitive) { processedPins.add(pin); save(); }
             }
         } finally {
             st.put("running", false);
             st.put("finishedAt", (double) System.currentTimeMillis());
-            // 넥슨이 실제로 응답한 배치만 '처리 완료'로 기록(자동 중복 방지). 전건 사이드카 장애면 미처리로 남겨 재시도.
-            if (anyDefinitive) { processedPins.add(pin); save(); }
             running.set(false);
         }
+    }
+
+    private void sleepDelay() {
+        int lo = delayMinMs, hi = Math.max(lo, delayMaxMs);
+        long wait = (hi > lo) ? ThreadLocalRandom.current().nextLong(lo, hi + 1L) : lo;
+        try { Thread.sleep(wait); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
     }
 
     /** 현재/마지막 배치 상태(없으면 idle). */
@@ -246,6 +275,7 @@ public final class CouponService {
         out.put("probePin", probePin);
         out.put("delayMinMs", delayMinMs);
         out.put("delayMaxMs", delayMaxMs);
+        out.put("baselined", baselined);
         synchronized (processedPins) { out.put("processedPins", new ArrayList<>(processedPins)); }
         out.put("busy", running.get());
         out.put("run", runState);
@@ -254,22 +284,42 @@ public final class CouponService {
 
     // ─────────────────────────── 자동 트리거(스케줄러가 호출) ───────────────────────────
 
-    /** 새 쿠폰 감지 시 자동 입력. autoRedeem on·미실행·미처리 쿠폰이 있으면 한 건 시작. */
+    /**
+     * 스케줄러 주기 호출. 최초 1회는 현재 유효 쿠폰을 모두 '처리 완료'로 기록(baseline)만 하고 입력하지 않는다
+     * (배포 시점의 기존 백로그를 쏟아붓지 않기 위함). 이후엔 자동 on이면 '미처리(=새로 뜬)' 쿠폰 한 건을 전 회원에 입력.
+     */
     public void check() {
+        if (!baselined) { baselineNow(); return; }
         if (!autoRedeem || !sidecar.enabled() || running.get()) return;
-        for (Map<String, Object> c : activeCoupons()) {
-            Object codeO = c.get("code");
-            if (codeO == null) continue;
-            String code = codeO.toString().trim();
-            if (code.isEmpty() || processedPins.contains(code)) continue;
+        for (String code : activeCouponCodes()) {
+            if (processedPins.contains(code)) continue;
             try {
                 System.out.println("[coupon] 새 쿠폰 자동 입력 시작: " + code);
-                redeemAll(code, "auto");
+                startBatch(store.all(), List.of(code), "auto", false);
             } catch (Exception e) {
                 System.err.println("[coupon] 자동 입력 시작 실패(" + code + "): " + e.getMessage());
             }
-            return;   // 한 틱에 한 건만
+            return;   // 한 틱에 한 건만(부하 분산)
         }
+    }
+
+    /** 최초 1회: 현재 유효한 쿠폰 전부를 '처리 완료'로 기록 → 이후 새로 뜨는 쿠폰만 자동 입력된다. */
+    private synchronized void baselineNow() {
+        List<String> codes = activeCouponCodes();
+        processedPins.addAll(codes);
+        baselined = true;
+        save();
+        System.out.println("[coupon] baseline: 현재 유효 쿠폰 " + codes.size() + "개를 처리 완료로 기록(이후 새 쿠폰만 자동 입력)");
+    }
+
+    /** 현재 유효(활성) 쿠폰 코드 목록(공지 추적 소스). */
+    private List<String> activeCouponCodes() {
+        List<String> out = new ArrayList<>();
+        for (Map<String, Object> c : activeCoupons()) {
+            String code = str(c.get("code"));
+            if (code != null && !code.isBlank()) out.add(code.trim());
+        }
+        return out;
     }
 
     // ─────────────────────────── 설정 ───────────────────────────

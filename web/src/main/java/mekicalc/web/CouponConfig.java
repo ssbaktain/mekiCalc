@@ -31,6 +31,7 @@ public final class CouponConfig {
     public boolean autoRedeem = false;
     public int delayMinMs = 2000;
     public int delayMaxMs = 3000;
+    public boolean baselined = false;        // 최초 1회 현재 유효 쿠폰을 processed로 기록했는지
     public List<String> processedPins = new ArrayList<>();
 
     public static CouponConfig load(Path dataDir) {
@@ -46,6 +47,7 @@ public final class CouponConfig {
             c.autoRedeem = Boolean.TRUE.equals(m.get("autoRedeem"));
             c.delayMinMs = (int) Json.num(m, "delayMinMs", 2000);
             c.delayMaxMs = (int) Json.num(m, "delayMaxMs", 3000);
+            c.baselined = Boolean.TRUE.equals(m.get("baselined"));
             Object pp = m.get("processedPins");
             if (pp != null) for (Object o : Json.asList(pp)) if (o != null) c.processedPins.add(o.toString());
         } catch (Exception e) {
