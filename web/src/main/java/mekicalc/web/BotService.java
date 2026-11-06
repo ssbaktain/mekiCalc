@@ -88,11 +88,12 @@ public final class BotService {
             String code = str(c, "code");
             if (code == null || code.isBlank()) continue;
             String end = str(c, "end");
-            if (end == null || end.isBlank()) continue;   // 무기한(종료일 없음) 제외
             if (n >= MAX_LIST) break; n++;
-            sb.append("\n· ").append(code).append(" (~").append(end).append(")");
+            // 종료일 없으면 '상시'로 표기(무기한 쿠폰). end 있으면 '~종료일'. (activeCoupons가 이미 만료분 제외)
+            String when = (end == null || end.isBlank()) ? "상시" : "~" + end;
+            sb.append("\n· ").append(code).append(" (").append(when).append(")");
         }
-        if (n == 0) return "지금 (종료일 있는) 사용 가능한 쿠폰이 없어요.";
+        if (n == 0) return "지금 사용 가능한 쿠폰이 없어요.";
         return sb.toString();
     }
 
