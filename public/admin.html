@@ -350,17 +350,6 @@
       </div>
 
       <div class="send-box">
-        <h3>지금 적용(수동)</h3>
-        <p class="admin-sub" style="margin:2px 0 6px">쿠폰코드를 입력하고 적용하면 등록된 모든 회원코드에 순서대로 입력합니다.</p>
-        <div class="add-form">
-          <input class="cid" id="cpPin" placeholder="쿠폰코드" style="width:220px">
-          <button class="btn" id="cpRedeem">지금 적용</button>
-        </div>
-        <div id="cpProgress" hidden style="margin-top:10px"></div>
-        <div id="cpResults" style="margin-top:8px"></div>
-      </div>
-
-      <div class="send-box">
         <h3>회원코드 등록</h3>
         <div class="add-form">
           <input class="nm" id="cpNick" placeholder="표시명(선택)">
@@ -372,10 +361,30 @@
       </div>
 
       <table class="rooms" id="cpTable" hidden>
-        <thead><tr><th>표시명</th><th>회원코드</th><th class="center">검증</th><th>최근 결과</th><th class="center"></th></tr></thead>
+        <thead><tr><th class="center"><input type="checkbox" id="cpPickAll" title="전체 선택/해제"></th><th>표시명</th><th>회원코드</th><th class="center">검증</th><th>최근 결과</th><th class="center"></th></tr></thead>
         <tbody id="cpBody"></tbody>
       </table>
       <div class="empty" id="cpEmpty" hidden>등록된 회원코드가 없습니다.</div>
+
+      <div class="send-box">
+        <h3>수동 입력 (회원 · 쿠폰 선택)</h3>
+        <p class="admin-sub" style="margin:2px 0 6px">위 목록에서 <b>대상 회원을 체크</b>하고, 적용할 <b>유효 쿠폰을 선택</b>(복수 가능)한 뒤 적용하세요. 선택한 (회원 × 쿠폰) 조합을 설정된 딜레이로 하나씩 입력합니다.</p>
+        <div style="margin:6px 0 4px"><b>유효 쿠폰</b> <span class="admin-sub">(공지에서 추적 중)</span>
+          <button class="btn ghost btn-mini" id="cpCpnAll">전체</button>
+          <button class="btn ghost btn-mini" id="cpCpnNone">해제</button></div>
+        <div id="cpCpnList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div class="add-form" style="margin-top:8px">
+          <input class="cid" id="cpPin" placeholder="추가 쿠폰코드(목록에 없는 것, 공백 구분, 선택)" style="width:320px">
+        </div>
+        <div class="send-actions" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn ghost" id="cpMemAll">회원 전체 선택</button>
+          <button class="btn ghost" id="cpMemNone">회원 전체 해제</button>
+          <button class="btn" id="cpApply">선택 적용</button>
+          <span id="cpApplyMsg" class="send-status"></span>
+        </div>
+        <div id="cpProgress" hidden style="margin-top:10px"></div>
+        <div id="cpResults" style="margin-top:8px"></div>
+      </div>
     </section>
 
       </main>
@@ -795,6 +804,7 @@
     function renderCouponMembers(list){
       const body = $('#cpBody'), table = $('#cpTable'), empty = $('#cpEmpty');
       body.innerHTML = (list || []).map(m => `<tr data-id="${m.id}">
+        <td class="center" data-label="선택"><input type="checkbox" class="cp-pick" data-id="${m.id}"></td>
         <td data-label="표시명">${esc(m.nick)}</td>
         <td data-label="회원코드"><span class="cid">${esc(m.npaCode)}</span></td>
         <td class="center" data-label="검증">${cpBadge(m.valid)}</td>
@@ -802,6 +812,7 @@
         <td class="center act"><button class="btn ghost del">삭제</button></td></tr>`).join('');
       table.hidden = !(list && list.length); empty.hidden = !!(list && list.length);
       body.querySelectorAll('tr').forEach(tr => $('.del', tr).addEventListener('click', () => removeCoupon(tr.dataset.id)));
+      const pickAll = $('#cpPickAll'); if (pickAll) pickAll.checked = false;
     }
     function renderCouponStatus(st){
       if (!st) return;
@@ -848,6 +859,7 @@
         const d = await api('GET', '/api/admin/coupon/members');
         renderCouponMembers(d.members || []);
         renderCouponStatus(d.status);
+        loadAvailableCoupons();
         if (d.status && d.status.run && d.status.run.running && !couponTimer)
           couponTimer = setInterval(pollCoupon, 1500);
       } catch (e) { if (!silent) cpErr('쿠폰 정보를 불러오지 못했습니다: ' + e.message); }
@@ -885,16 +897,40 @@
       try { await api('DELETE', '/api/admin/coupon/members/' + encodeURIComponent(id)); loadCoupon(true); }
       catch (e) { cpErr('삭제 실패: ' + e.message); }
     }
-    async function redeemCouponNow(){
-      const pin = $('#cpPin').value.trim();
-      if (!pin) { cpErr('쿠폰코드를 입력하세요.'); return; }
-      if (!confirm('등록된 모든 회원코드에 쿠폰 "' + pin + '" 을 입력할까요?')) return;
-      const btn = $('#cpRedeem'); btn.disabled = true; cpErr('');
+    let availableCoupons = [];
+    async function loadAvailableCoupons(){
       try {
-        const st = await api('POST', '/api/admin/coupon/redeem', { pin });
+        const d = await api('GET', '/api/admin/coupon/available');
+        availableCoupons = d.coupons || [];
+        renderCouponList();
+      } catch (e) { /* 조용히 무시 — 유효 쿠폰 없거나 일시 오류 */ }
+    }
+    function renderCouponList(){
+      const box = $('#cpCpnList');
+      const prev = new Set([...box.querySelectorAll('.cp-cpn:checked')].map(i => i.value));   // 폴링 재렌더 시 선택 보존
+      if (!availableCoupons.length) { box.innerHTML = '<span class="admin-sub">현재 유효한 쿠폰이 없습니다. (아래 추가 쿠폰코드 입력으로 적용 가능)</span>'; return; }
+      box.innerHTML = availableCoupons.map(c => {
+        const code = c.code, when = c.end ? ('~' + c.end) : '상시';
+        return `<label style="display:inline-flex;align-items:center;gap:5px;border:1px solid #2a3140;border-radius:7px;padding:4px 9px;cursor:pointer">`
+          + `<input type="checkbox" class="cp-cpn" value="${esc(code)}"${prev.has(code) ? ' checked' : ''}>`
+          + `<b>${esc(code)}</b> <span class="admin-sub">${esc(when)}</span></label>`;
+      }).join('');
+    }
+    async function applySelected(){
+      const memberIds = [...document.querySelectorAll('#cpBody .cp-pick:checked')].map(i => parseInt(i.dataset.id, 10));
+      const checked = [...$('#cpCpnList').querySelectorAll('.cp-cpn:checked')].map(i => i.value);
+      const extra = $('#cpPin').value.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+      const pins = [...new Set([...checked, ...extra])];
+      if (!memberIds.length) { $('#cpApplyMsg').textContent = '대상 회원을 하나 이상 선택하세요.'; return; }
+      if (!pins.length) { $('#cpApplyMsg').textContent = '쿠폰을 하나 이상 선택/입력하세요.'; return; }
+      if (!confirm(`회원 ${memberIds.length}명 × 쿠폰 ${pins.length}개 = 총 ${memberIds.length * pins.length}건을 입력할까요?`)) return;
+      const btn = $('#cpApply'); btn.disabled = true; $('#cpApplyMsg').textContent = '적용 중…'; cpErr('');
+      try {
+        const st = await api('POST', '/api/admin/coupon/redeem-select', { memberIds, pins });
+        $('#cpApplyMsg').textContent = ''; $('#cpPin').value = '';
         renderCouponStatus(st);
         if (!couponTimer) couponTimer = setInterval(pollCoupon, 1500);
-      } catch (e) { cpErr('적용 실패: ' + e.message); }
+      } catch (e) { $('#cpApplyMsg').textContent = '적용 실패: ' + e.message; }
       finally { btn.disabled = false; }
     }
     async function saveCouponSettings(){
@@ -912,7 +948,12 @@
     }
     $('#cpAdd').addEventListener('click', addCoupon);
     $('#cpValidate').addEventListener('click', validateCoupon);
-    $('#cpRedeem').addEventListener('click', redeemCouponNow);
+    $('#cpApply').addEventListener('click', applySelected);
+    $('#cpCpnAll').addEventListener('click', () => $('#cpCpnList').querySelectorAll('.cp-cpn').forEach(i => i.checked = true));
+    $('#cpCpnNone').addEventListener('click', () => $('#cpCpnList').querySelectorAll('.cp-cpn').forEach(i => i.checked = false));
+    $('#cpMemAll').addEventListener('click', () => { $('#cpBody').querySelectorAll('.cp-pick').forEach(i => i.checked = true); $('#cpPickAll').checked = true; });
+    $('#cpMemNone').addEventListener('click', () => { $('#cpBody').querySelectorAll('.cp-pick').forEach(i => i.checked = false); $('#cpPickAll').checked = false; });
+    $('#cpPickAll').addEventListener('change', e => $('#cpBody').querySelectorAll('.cp-pick').forEach(i => i.checked = e.target.checked));
     $('#cpSaveSet').addEventListener('click', saveCouponSettings);
     $('#cpNpa').addEventListener('keydown', e => { if (e.key === 'Enter') addCoupon(); });
 

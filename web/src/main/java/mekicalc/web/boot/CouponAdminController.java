@@ -3,7 +3,9 @@ package mekicalc.web.boot;
 import static mekicalc.web.boot.Req.num;
 import static mekicalc.web.boot.Req.strOpt;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import mekicalc.web.CouponService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -71,12 +73,30 @@ public class CouponAdminController {
         return coupon.status();
     }
 
-    /** "지금 적용"(수동 배치 시작). body: {pin}. 이미 진행 중이면 409 성격의 오류. */
+    /** 현재 유효(활성) 쿠폰 목록(수동 선택 UI용). */
+    @GetMapping("/available")
+    public Object available() {
+        return Map.of("coupons", coupon.availableCoupons());
+    }
+
+    /** "지금 적용"(수동, 전 회원 × 단일 쿠폰). body: {pin}. 이미 진행 중이면 오류. */
     @PostMapping("/redeem")
     public Object redeem(@RequestBody Map<String, Object> req) {
         String pin = strOpt(req, "pin");
         if (pin == null || pin.isBlank()) throw new IllegalArgumentException("쿠폰코드가 필요합니다.");
         return coupon.redeemAll(pin, "manual");
+    }
+
+    /** 수동(세분화): 선택한 회원 × 선택한 쿠폰 입력. body: {memberIds:[long], pins:[string]}. */
+    @PostMapping("/redeem-select")
+    public Object redeemSelect(@RequestBody Map<String, Object> req) {
+        List<Long> ids = new ArrayList<>();
+        Object mi = req.get("memberIds");
+        if (mi instanceof List) for (Object o : (List<?>) mi) if (o instanceof Number) ids.add(((Number) o).longValue());
+        List<String> pins = new ArrayList<>();
+        Object pp = req.get("pins");
+        if (pp instanceof List) for (Object o : (List<?>) pp) if (o != null) pins.add(o.toString());
+        return coupon.redeemSelected(ids, pins);
     }
 
     /** 설정 변경. body: {autoRedeem?, probePin?, delayMinMs?, delayMaxMs?}. */

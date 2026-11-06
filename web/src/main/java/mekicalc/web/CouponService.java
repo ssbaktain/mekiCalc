@@ -179,6 +179,42 @@ public final class CouponService {
 
     public boolean removeMember(long id) { return store.remove(id); }
 
+    /** 현재 유효(활성) 쿠폰 목록(수동 선택 UI용). {code, end, title}. */
+    public List<Map<String, Object>> availableCoupons() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> c : activeCoupons()) {
+            String code = str(c.get("code"));
+            if (code == null || code.isBlank()) continue;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("code", code.trim());
+            m.put("end", c.get("end"));
+            m.put("title", c.get("title"));
+            out.add(m);
+        }
+        return out;
+    }
+
+    /**
+     * 수동(세분화): 선택한 회원 × 선택한 쿠폰 조합을 입력. 회원·쿠폰 모두 하나 이상 필요.
+     * 진행 중이면 거절. processedPins는 건드리지 않는다(자동 전체 입력만 기록).
+     */
+    public Map<String, Object> redeemSelected(List<Long> memberIds, List<String> pins) {
+        List<String> ps = new ArrayList<>();
+        if (pins != null) for (String p : pins) {
+            String t = p == null ? "" : p.trim();
+            if (!t.isEmpty() && !ps.contains(t)) ps.add(t);
+        }
+        if (ps.isEmpty()) throw new IllegalArgumentException("쿠폰을 하나 이상 선택하거나 입력하세요.");
+        if (memberIds == null || memberIds.isEmpty()) throw new IllegalArgumentException("대상 회원을 하나 이상 선택하세요.");
+        List<CouponMemberStore.Member> targets = new ArrayList<>();
+        for (Long id : memberIds) {
+            CouponMemberStore.Member m = store.get(id);
+            if (m != null) targets.add(m);
+        }
+        if (targets.isEmpty()) throw new IllegalArgumentException("선택한 회원을 찾을 수 없습니다.");
+        return startBatch(targets, ps, "manual", true);
+    }
+
     // ─────────────────────────── 쿠폰 사용(배치) ───────────────────────────
 
     /**
