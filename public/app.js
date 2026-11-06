@@ -241,6 +241,9 @@ function collectStats() {
 // 계산 JOB(job-sel)·버프 작업상태(myBuffJob)를 항상 같은 값으로 동기화한다.
 // 어느 화면에서 직업을 바꿔도 계산 JOB·스킬 목록·버프 선택이 함께 따라간다(직업 desync 버그 근본 해결).
 function currentJob() { return parseInt($("job-sel").value, 10) || 0; }
+// 신엔진(빌드 타임라인) 지원 직업 = 나이트로드(1)·비숍(3). 직업 추가 시 여기만 늘리면 빌드 탭이 열린다(서버 timelineJob과 일치).
+const TIMELINE_JOBS = new Set([1, 3]);
+function isTimelineJob(job) { return TIMELINE_JOBS.has(parseInt(job, 10) || 0); }
 // job으로 두 곳을 맞춘다. 직업이 실제로 바뀌면 myBuffs를 초기화(전부 체크)해 "버프는 항상 현재 직업용" 불변식 유지.
 // 반환: 직업이 바뀌었는가(호출부가 스킬 목록 재렌더 여부 판단).
 function setJob(job) {
@@ -249,12 +252,12 @@ function setJob(job) {
   $("job-sel").value = String(job);
   myBuffJob = job;
   if (changed) myBuffs = null;   // 직업 변경 → 스킬 선택 초기화(불변식). 일관 상태(동일 직업)면 no-op이라 선택 보존.
-  document.body.classList.toggle("job-nightlord", job === 1);   // 나이트로드=신엔진 → 구엔진 '데미지 분석(구)' 탭 숨김 + 스킬 프리셋 숨김(빌드 타임라인에서 스킬 배치)
-  if (job === 1) {   // 나이트로드는 스킬 프리셋 미사용 → 스탯 뷰로 고정(스탯/스킬 토글은 CSS로 숨김)
+  document.body.classList.toggle("job-newengine", isTimelineJob(job));   // 신엔진 직업(나로·비숍) → 구엔진 '데미지 분석(구)' 탭 숨김 + 스킬 프리셋 숨김(빌드 타임라인에서 스킬 배치)
+  if (isTimelineJob(job)) {   // 신엔진 직업은 스킬 프리셋 미사용 → 스탯 뷰로 고정(스탯/스킬 토글은 CSS로 숨김)
     document.querySelectorAll(".bv-tab").forEach((b) => b.classList.toggle("active", b.dataset.bv === "stat"));
     const bk = $("bv-skill"); if (bk) bk.hidden = true;
     const bs = $("bv-stat"); if (bs) bs.hidden = false;
-    if (currentSub === "ally") selectSub("build");   // ★동료 프리셋 보던 중 나이트로드로 전환 → 캐릭터로(동료 프리셋 숨김)
+    if (currentSub === "ally") selectSub("build");   // ★동료 프리셋 보던 중 신엔진 직업으로 전환 → 캐릭터로(동료 프리셋 숨김)
   }
   try { localStorage.setItem("mekicalc.job", String(job)); } catch (e) {}   // 다음 로드 첫 페인트 진입탭 결정용(head 스크립트가 읽음)
   return changed;
@@ -490,7 +493,7 @@ function applyLeaf(leaf, item, push) {
 function homeLeaf() {
   let job = currentJob();
   if (!job) { try { job = parseInt(localStorage.getItem("mekicalc.job"), 10) || 0; } catch (e) {} }
-  return job === 1 ? (allLeaves().find((l) => l.panel === "timeline") || MENU[0]) : MENU[0];
+  return isTimelineJob(job) ? (allLeaves().find((l) => l.panel === "timeline") || MENU[0]) : MENU[0];
 }
 
 function navigate(path, push) {
@@ -572,7 +575,7 @@ function selectLeaf(leaf, item) { applyLeaf(leaf, item, true); }
 // 프리셋 패널 안의 서브탭 선택. 쿼리는 #panel-presets로 한정 — 큐브 페이지의 route-link 서브탭(.cube-subtabs)까지
 // 건드리면 안 됨(그건 정적 active + 라우터가 담당). 전역 .subtab로 잡으면 큐브 앵커에 active가 잘못 퍼짐.
 function selectSub(name) {
-  if (name === "ally" && currentJob() === 1) name = "build";   // ★나이트로드=동료 프리셋 숨김(동료는 빌드에 있음) → 캐릭터로
+  if (name === "ally" && isTimelineJob(currentJob())) name = "build";   // ★신엔진 직업=동료 프리셋 숨김(동료는 빌드에 있음) → 캐릭터로
   currentSub = name;
   document.querySelectorAll("#panel-presets .subtab").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
   document.querySelectorAll(".subpanel").forEach((p) => { p.hidden = (p.id !== "sub-" + name); });
@@ -794,6 +797,8 @@ window.addEventListener("resize", repositionInfoPops);
 window.addEventListener("resize", () => {
   const g = document.getElementById("relic-grid");
   if (g && g.offsetParent && typeof setupRelicMarquee === "function") requestAnimationFrame(() => setupRelicMarquee(g));
+  const cb = document.getElementById("nt-coupon-banner");   // 접힘 쿠폰 마퀴 재평가(폭 변동 시)
+  if (cb && !cb.hidden && cb.querySelector(".nt-cpstrip") && typeof setupCouponMarquee === "function") requestAnimationFrame(() => setupCouponMarquee(cb));
 });
 // 설명글(접이식 panel-about + 인라인 힌트·안내 status/hint)을 i 버튼 호버 툴팁으로 접어 화면을 깔끔하게.
 // 경고성(.deal-warning·.relic-notice)·동적 상태(#id 있는 status)는 제외.
@@ -957,13 +962,18 @@ function makeFinalField(key, name) {
     `<div class="input-wrap"><input type="text" data-final="${key}" value="" readonly disabled /><span class="unit"></span></div>`;
   return f;
 }
-// 나이트로드 상시 공격력% 선반영 = 숙련된 표창술(+18%, growthSlot22=0.3%/lv). 서버 StatOcr.nightlordAtkReflectPct와 동일.
+// 직업별 상시 공격력% 선반영(스킬 유래 ATK% — 게임 본문엔 포함·ⓘ 상세엔 제외 → 엔진 적용·표시 가산).
+// 나이트로드=숙련된 표창술(+18%, growthSlot22=0.3%/lv). 비숍=힐-공격력 마스터리(+8% 고정, HP30%↑ 상시). 서버 StatOcr와 동일.
 function atkReflectPct() {
-  if (currentJob() !== 1) return 0;
-  const s = collectStats();
-  const lv = Math.round(s.LEVEL || 0), sk3 = Math.round(s.SKILL_LEVEL_3 || 0), skA = Math.round(s.SKILL_LEVELS || 0);
-  const eff3 = Math.max(0, 3 * (Math.min(lv, 100) - 60)) + sk3 + skA;   // Preset.effectiveSkillLevel(3)
-  return truncStat(18 * (1 + 0.003 * eff3), "PCT");   // 게임 표기규칙(소수 1자리 버림) = 29.664→29.6%
+  const job = currentJob();
+  if (job === 1) {
+    const s = collectStats();
+    const lv = Math.round(s.LEVEL || 0), sk3 = Math.round(s.SKILL_LEVEL_3 || 0), skA = Math.round(s.SKILL_LEVELS || 0);
+    const eff3 = Math.max(0, 3 * (Math.min(lv, 100) - 60)) + sk3 + skA;   // Preset.effectiveSkillLevel(3)
+    return truncStat(18 * (1 + 0.003 * eff3), "PCT");   // 게임 표기규칙(소수 1자리 버림) = 29.664→29.6%
+  }
+  if (job === 3) return 8;   // 비숍 힐-공격력 마스터리(60105): ModStatR Attack=80=+8% 고정(HP30%↑ 상시 충족). 별도 곱풀.
+  return 0;
 }
 // 최종 공격력=깡공×(1+공격력%)×(1+상시선반영%)  (게임 본문 공격력과 동일). 최종 주스탯=깡주×(1+주스탯%)(주스탯 상시패시브 없음).
 function updateStatFinals() {
@@ -973,8 +983,14 @@ function updateStatFinals() {
     const inp = document.querySelector('input[data-final="' + key + '"]');
     if (inp) inp.value = v > 0 ? (koreanUnit(Math.round(v)) || Math.round(v).toLocaleString()) : "";
   };
-  put("ATK", (s.ATK_FLAT || 0) * (1 + (s.ATK_PCT || 0) / 100) * (1 + rAtk / 100));
-  put("MAIN", (s.MAIN_STAT_FLAT || 0) * (1 + (s.MAIN_STAT_PCT || 0) / 100));
+  // 인빈서블/아이언 월(방어력→주스탯, 2차 패시브)은 ⓘ 상세엔 제외되나 본문엔 포함.
+  const sn = (id) => s[id] || 0;
+  const defEffMain = sn("DEFENSE") * defenseToMainRatio(sn);   // 방어력×변환계수 = 인빈서블 주스탯(주스탯% 미적용)
+  // 최종 주스탯 = 깡주스탯×(1+주스탯%) + 인빈서블 주스탯(% 바깥 flat 가산).
+  put("MAIN", (s.MAIN_STAT_FLAT || 0) * (1 + (s.MAIN_STAT_PCT || 0) / 100) + defEffMain);
+  // 최종 공격력 = (깡공 + 인빈서블 주스탯의 공격력 변환분[주스탯 1:1]) × (1+공격력%) × (1+선반영%).
+  //   인빈서블 주스탯→공격력도 ⓘ 깡공엔 제외돼 있어 깡공에 더해 계산(게임과 동일). 변환계수=1(clt ConversionRatioM 1000‰).
+  put("ATK", ((s.ATK_FLAT || 0) + defEffMain) * (1 + (s.ATK_PCT || 0) / 100) * (1 + rAtk / 100));
 }
 
 // 미환산(딜 무관) 스탯 정의 — data/display_stats.json과 동일(id·이름·단위). 딜 엔진 미투입, 프리셋에 기록/표시만.
@@ -5006,24 +5022,117 @@ function ntDate(sec) {
   return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
 
-// 쿠폰 고정 배너(목록 최상단): 유효 쿠폰만. 코드칩+복사+만료+보상 전체. 각 코드에 출처 공지 링크.
+// 쿠폰 고정 배너(목록 최상단): 유효 쿠폰만. 기본=접힘(한 줄, 넘치면 가로 마퀴), 펼침=카드 그리드.
+// 정렬: 기한 있는 쿠폰(짧은 순) → 무기한 쿠폰. 코드칩+복사+D-day 색배지+보상+출처.
+let ntCouponExpanded = false;   // 기본 접힘
 async function ntCouponBanner() {
   const box = $("nt-coupon-banner");
   if (!box) return;
   let cs = [];
   try { cs = (await (await fetch("/api/coupons")).json()).coupons || []; } catch (e) { /* 무시 */ }
   if (!cs.length) { box.hidden = true; box.innerHTML = ""; return; }
-  let h = '<h3>🎟️ 사용 가능한 쿠폰 <span class="nt-cpcount">' + cs.length + "</span></h3>";
-  for (const c of cs) {
-    h += '<div class="nt-cpchip"><button class="nt-copy" type="button" data-code="' + escAttr(c.code) + '" title="복사"><code>' + escNt(c.code) + "</code> ⧉</button>"
-      + (c.end ? '<span class="nt-cp-exp">~' + escNt(ntMd(c.end)) + "</span>" : "")
-      + (c.sourceUrl ? '<a class="nt-cp-src" href="' + escAttr(c.sourceUrl) + '" target="_blank" rel="noopener nofollow">출처 공지 ↗</a>' : "")
-      + "</div>";
-    if (c.rewards && c.rewards.length) h += '<ul class="nt-items nt-rw">' + c.rewards.map((r) => "<li>" + escNt(r) + "</li>").join("") + "</ul>";
+  // 긴박 순: 기한 있는 것 먼저(종료일 오름차순, ISO문자열 비교) → 무기한 뒤.
+  cs = cs.slice().sort((a, b) => {
+    const ae = a.end && String(a.end).trim(), be = b.end && String(b.end).trim();
+    if (ae && be) return ae < be ? -1 : ae > be ? 1 : 0;
+    if (ae) return -1;
+    if (be) return 1;
+    return 0;
+  });
+  box.hidden = false;              // ★먼저 보이게(숨김 상태면 스트립 폭이 0이라 마퀴 측정 실패)
+  ntRenderCouponBanner(box, cs);
+}
+
+// 종료일 → D-day 색배지 {cls,text}. 없으면 '상시'. D-3이내=긴박, 7일이내=임박, 그외=평범.
+function ntCouponBadge(end) {
+  if (!end || !String(end).trim()) return { cls: "cpb-ind", text: "상시" };
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(end));
+  if (!m) return { cls: "cpb-norm", text: "~" + ntMd(end) };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const ed = new Date(+m[1], +m[2] - 1, +m[3]); ed.setHours(0, 0, 0, 0);
+  const days = Math.round((ed - today) / 86400000);
+  if (days <= 3) return { cls: "cpb-urgent", text: days <= 0 ? "D-day" : "D-" + days };
+  if (days <= 7) return { cls: "cpb-soon", text: "~" + ntMd(end) };
+  return { cls: "cpb-norm", text: "~" + ntMd(end) };
+}
+function ntCouponRewardsText(c) {
+  return (c.rewards && c.rewards.length) ? c.rewards.join(", ") : "";
+}
+// 접힘 칩(한 줄): 코드+복사 · 배지 · 보상(인라인).
+function ntCouponChipHtml(c) {
+  const b = ntCouponBadge(c.end);
+  const rw = ntCouponRewardsText(c);
+  return '<span class="nt-cpchip2">'
+    + '<button class="nt-copy" type="button" data-code="' + escAttr(c.code) + '" title="복사"><code>' + escNt(c.code) + "</code> ⧉</button>"
+    + '<span class="cpb ' + b.cls + '">' + escNt(b.text) + "</span>"
+    + (rw ? '<span class="nt-cprw-inline">' + escNt(rw) + "</span>" : "")
+    + "</span>";
+}
+// 펼침 카드: 코드+복사 / 배지 / 보상 리스트 / 출처.
+function ntCouponCardHtml(c) {
+  const b = ntCouponBadge(c.end);
+  return '<div class="nt-cpcard">'
+    + '<div class="nt-cpcard-top">'
+    + '<button class="nt-copy" type="button" data-code="' + escAttr(c.code) + '" title="복사"><code>' + escNt(c.code) + "</code> ⧉</button>"
+    + '<span class="cpb ' + b.cls + '">' + escNt(b.text) + "</span>"
+    + "</div>"
+    + ((c.rewards && c.rewards.length) ? '<ul class="nt-cprw">' + c.rewards.map((r) => "<li>" + escNt(r) + "</li>").join("") + "</ul>" : "")
+    + (c.sourceUrl ? '<a class="nt-cp-src" href="' + escAttr(c.sourceUrl) + '" target="_blank" rel="noopener nofollow">출처 공지 ↗</a>' : "")
+    + "</div>";
+}
+function ntRenderCouponBanner(box, cs) {
+  const exp = ntCouponExpanded;
+  const timed = cs.filter((c) => c.end && String(c.end).trim());   // 기한 있음(짧은 순으로 이미 정렬됨)
+  const indef = cs.filter((c) => !(c.end && String(c.end).trim()));  // 무기한(상시)
+  let h = '<div class="nt-cpbar" role="button" tabindex="0" aria-expanded="' + exp + '">'
+    + '<span class="nt-cptitle">🎟️ 사용 가능한 쿠폰 <span class="nt-cpcount">' + cs.length + "</span></span>"
+    + '<span class="nt-cptoggle">' + (exp ? "접기 ▲" : "펼치기 ▼") + "</span></div>";
+  if (exp) {
+    if (timed.length) h += '<div class="nt-cpgrid">' + timed.map(ntCouponCardHtml).join("") + "</div>";
+    if (indef.length) {
+      if (timed.length) h += '<div class="nt-cpdiv"><span>상시 쿠폰</span></div>';   // 기한↔상시 구분선
+      h += '<div class="nt-cpgrid">' + indef.map(ntCouponCardHtml).join("") + "</div>";
+    }
+  } else {
+    let strip = timed.map(ntCouponChipHtml).join('<span class="nt-cpsep">·</span>');
+    if (indef.length) {
+      if (timed.length) strip += '<span class="nt-cpstrip-div">상시</span>';   // 한 줄 안 인라인 구분
+      strip += indef.map(ntCouponChipHtml).join('<span class="nt-cpsep">·</span>');
+    }
+    // 콘텐츠 1벌(copy). 넘치면 setupCouponMarquee가 1벌 더 복제해 끊김 없는 무한 루프를 만든다.
+    h += '<div class="nt-cpstrip"><div class="nt-cpstrip-track"><span class="nt-cpstrip-copy">' + strip + "</span></div></div>";
   }
   box.innerHTML = h;
-  box.hidden = false;
-  box.querySelectorAll(".nt-copy").forEach((b) => b.addEventListener("click", () => copyCoupon(b)));
+  const bar = box.querySelector(".nt-cpbar");
+  const toggle = () => { ntCouponExpanded = !ntCouponExpanded; ntRenderCouponBanner(box, cs); };
+  bar.addEventListener("click", toggle);
+  bar.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  box.querySelectorAll(".nt-copy").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); copyCoupon(b); }));
+  if (!exp) requestAnimationFrame(() => setupCouponMarquee(box));   // 레이아웃 확정 후 폭 측정
+}
+// 접힘 한 줄: 쿠폰이 많아 넘치면 콘텐츠를 한 벌 더 복제해 끊김 없는 무한 루프. 안 넘치면 정지(복제 안 함).
+const CP_MARQUEE_SPEED = 55;   // px/s (체감 스크롤 속도)
+function setupCouponMarquee(box) {
+  const strip = box.querySelector(".nt-cpstrip"), track = box.querySelector(".nt-cpstrip-track");
+  if (!strip || !track) return;
+  // ── 초기화: 복제본·꼬리 구분자·애니메이션 제거(리사이즈 재평가 시 중복 방지) ──
+  const copies = track.querySelectorAll(".nt-cpstrip-copy");
+  for (let i = 1; i < copies.length; i++) copies[i].remove();
+  track.classList.remove("marquee");
+  track.style.removeProperty("--marquee-dist"); track.style.removeProperty("--marquee-dur");
+  const copy1 = track.querySelector(".nt-cpstrip-copy");
+  if (!copy1) return;
+  copy1.querySelectorAll(".nt-cpsep-tail").forEach((e) => e.remove());
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  // 한 벌이 컨테이너에 다 들어오면 정지(마퀴 불필요)
+  if (copy1.scrollWidth <= strip.clientWidth + 1) return;
+  // ── 넘침 → 꼬리 구분자 추가 + 복제본 1벌 붙여 무한 루프 ──
+  copy1.insertAdjacentHTML("beforeend", '<span class="nt-cpsep nt-cpsep-tail">·</span>');
+  const w = copy1.getBoundingClientRect().width;   // 한 벌 너비(= 루프 이동 거리)
+  track.appendChild(copy1.cloneNode(true));
+  track.style.setProperty("--marquee-dist", (-w).toFixed(1) + "px");
+  track.style.setProperty("--marquee-dur", Math.max(8, w / CP_MARQUEE_SPEED).toFixed(2) + "s");
+  track.classList.add("marquee");
 }
 
 // "yyyy-MM-dd" → "M/D" (배너 만료 표기)
@@ -5057,7 +5166,7 @@ function ntHl(s) {
 }
 
 // ──────────────────── 정밀 타임라인 (나이트로드 · 베타) ────────────────────
-let tlMode = "auto", tlSkills = null, tlInited = false, tlBooting = true;   // tlBooting: init 초기화 동안 runTimeline 중복 억제(첫 renderTimeline이 해제)
+let tlMode = "auto", tlSkills = null, tlSkillsJob = 0, tlInited = false, tlBooting = true;   // tlBooting: init 초기화 동안 runTimeline 중복 억제(첫 renderTimeline이 해제). tlSkillsJob=스킬목록 캐시 직업
 
 function tlBig(n) {
   const u = [[1e16, "경"], [1e12, "조"], [1e8, "억"], [1e4, "만"]];
@@ -5066,12 +5175,15 @@ function tlBig(n) {
 }
 
 async function renderTimeline() {
-  if (!tlSkills) { try { tlSkills = await (await fetch("/api/nl-skills")).json(); } catch { tlSkills = []; } }
+  const job = currentJob();
+  if (isTimelineJob(job) && tlSkillsJob !== job) {   // 스킬 목록은 직업별 → 직업 바뀌면 재조회
+    try { tlSkills = await (await fetch("/api/nl-skills?job=" + job)).json(); tlSkillsJob = job; } catch { tlSkills = []; }
+  }
   if (!tlInited) { tlInitHandlers(); initBuildPresets(); fillBuildSel(); fillBuildPresetSelects(); bpApply(buildPresets.active); tlInited = true; }
   tlBooting = false;   // 초기화(프리셋 적용) 중 발동한 runTimeline은 억제됐고, 이제부터 실계산 허용
   tlSyncMode();
-  if (currentJob() !== 1) {
-    tlClearResult('<div class="tl-empty">정밀 타임라인은 현재 <b>나이트로드</b>만 지원해요.<br>캐릭터 직업을 나이트로드로 두고 다시 열어주세요.</div>');
+  if (!isTimelineJob(job)) {
+    tlClearResult('<div class="tl-empty">정밀 타임라인은 현재 <b>나이트로드·비숍</b>만 지원해요.<br>캐릭터 직업을 나이트로드 또는 비숍으로 두고 다시 열어주세요.</div>');
     return;
   }
   runTimeline();
@@ -5691,7 +5803,7 @@ function tlCollectCasts() {
 // 타임라인 패널이 열려 있을 때만 재계산(유물/잠재 편집 즉시 반영용). 다른 화면이면 no-op.
 function runTimelineIfActive() {
   const p = $("panel-timeline");
-  if (p && !p.hidden && currentJob() === 1) runTimeline();
+  if (p && !p.hidden && isTimelineJob(currentJob())) runTimeline();
 }
 // 타임라인 계산 payload(runTimeline·변경실험 공용). stats는 collectStats() 원본.
 // 유물·컨텐츠 설정 payload(타임라인 탭 UI 기준) — 타임라인/큐브 추천이 공유(같은 빌드 기준 딜).
@@ -6317,7 +6429,11 @@ function tlRenderExpDiff(box, baseD, modD, applied) {
 
 async function runTimeline() {
   if (tlBooting) return;   // init 초기화 중 중복 호출 억제(첫 renderTimeline이 tlBooting 해제)
-  if (currentJob() !== 1) return;
+  const job = currentJob();
+  if (!isTimelineJob(job)) return;
+  if (tlSkillsJob !== job) {   // 직업 바뀐 채로 runTimeline 진입(예: 빌드 탭에서 직업 전환) → 스킬 목록 최신화
+    try { tlSkills = await (await fetch("/api/nl-skills?job=" + job)).json(); tlSkillsJob = job; tlRenderSkillList(); } catch {}
+  }
   updateBuildWarn();
   if (buildJobMismatch()) return;   // 빌드 직업 ≠ 현재 직업 → 계산 차단(안내만)
   $("tl-manual").hidden = tlMode !== "manual";   // 정상 직업이면 배치표 복원(직전 차단으로 숨겨졌을 수 있음)

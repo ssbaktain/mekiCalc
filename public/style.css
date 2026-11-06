@@ -288,8 +288,8 @@ label.ocr-warn, .gc-name.ocr-warn { color: #e8a13a; text-decoration: underline d
 /* 프리셋 뒤 세로 구분선: 입력(데미지 분석·프리셋) ↔ 도구(큐브·비교·공지) 성격 구분. 살짝만. */
 .menu-divider { align-self: center; width: 2px; height: 24px; background: var(--muted); opacity: 0.6; border-radius: 1px; margin: 0 9px; flex: 0 0 auto; }
 /* 나이트로드(신엔진)면 구엔진 '데미지 분석(구)' 탭 숨김(데스크톱 메뉴·모바일 드로어 공통) */
-body.job-nightlord .menu-home { display: none !important; }
-body.job-nightlord #build-viewtabs { display: none; }   /* 나이트로드=스킬 프리셋 미사용 → 스탯/스킬 토글 숨김(스탯 뷰만) */
+body.job-newengine .menu-home { display: none !important; }
+body.job-newengine #build-viewtabs { display: none; }   /* 나이트로드=스킬 프리셋 미사용 → 스탯/스킬 토글 숨김(스탯 뷰만) */
 /* 실험값 적용 중 각 탭 메인 컨테이너 우측 상단 '실험실' 태그(실험값 적용 토글 ON 색과 동일) */
 .exp-host { position: relative; }
 .exp-tag { position: absolute; top: 10px; right: 12px; z-index: 6; background: #4fd1a1; color: #08312a; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 11px; letter-spacing: .02em; pointer-events: none; }
@@ -1397,14 +1397,14 @@ html.deep-route #panel-home { display: none !important; }
 .tl-relic-equip .status { flex: 1 1 100%; margin: 0; }
 .relic-slot { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
 /* ★나이트로드: 유물 세부 장착은 빌드(계산 설정)로 이동 → 유물 프리셋에선 장착 패널·장착 관련 주의 문구 숨김(보유 현황만), 동료 프리셋은 통째 숨김 */
-body.job-nightlord #sub-relic .relic-equip,
-body.job-nightlord #sub-relic .relic-notice { display: none; }
-body.job-nightlord #panel-presets .subtab[data-sub="ally"],
-body.job-nightlord .m-leaf-ally { display: none; }
+body.job-newengine #sub-relic .relic-equip,
+body.job-newengine #sub-relic .relic-notice { display: none; }
+body.job-newengine #panel-presets .subtab[data-sub="ally"],
+body.job-newengine .m-leaf-ally { display: none; }
 /* ★나이트로드: 대상 챕터/스테이지는 빌드 계산 설정에 있으므로 캐릭터 프리셋 박스의 챕터 셀렉터는 숨김(값은 계산 설정과 동기화 유지) */
-body.job-nightlord #build-chapter-cell { display: none; }
+body.job-newengine #build-chapter-cell { display: none; }
 /* ★나이트로드: 대상·프리셋 전환은 빌드 탭 안에서 하므로 우하단 ⚡ 빠른 전환 FAB는 숨김(코드는 유지, 나중 재활용) */
-body.job-nightlord #quick-presets { display: none; }
+body.job-newengine #quick-presets { display: none; }
 .relic-slot-n { flex: 0 0 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: var(--card); color: var(--muted); font-size: 12px; }
 .relic-slot select { flex: 1 1 auto; min-width: 0; padding: 6px 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; }
 .relic-sum { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
@@ -1637,13 +1637,47 @@ body.notices-active .ad-slot { display: none !important; }
 .nt-arch { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 
 /* 쿠폰 고정 배너 */
-.nt-coupon-banner { max-width: 820px; margin: 0 auto 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,190,100,.09); border: 1px solid rgba(255,190,100,.3); }
-.nt-coupon-banner h3 { margin: 0 0 8px; font-size: 15px; color: #ffc86b; }
+.nt-coupon-banner { max-width: 820px; margin: 0 auto 14px; padding: 10px 14px; border-radius: 12px; background: rgba(255,190,100,.09); border: 1px solid rgba(255,190,100,.3); }
 .nt-cpcount { font-size: 12px; opacity: .8; }
-.nt-cpchip { display: flex; align-items: center; gap: 10px; margin: 6px 0 2px; }
-.nt-cp-src { font-size: 12px; color: var(--accent); text-decoration: none; }
-.nt-coupon-banner .nt-rw { margin: 0 0 8px; padding-left: 6px; list-style: none; color: var(--text); font-size: 13px; }
-.nt-coupon-banner .nt-rw li::before { content: "· "; color: var(--muted); }
+.nt-cp-src { font-size: 12px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+/* 헤더 바(제목 + 펼침/접기 토글) */
+.nt-cpbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; user-select: none; }
+.nt-cptitle { font-size: 15px; color: #ffc86b; font-weight: 600; }
+.nt-cptoggle { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.nt-cpbar:hover .nt-cptoggle { color: #ffc86b; }
+.nt-coupon-banner .nt-copy { flex: none; }   /* 기존 .nt-copy 스타일 재사용(1605) + flex 축소 방지 */
+/* D-day 색배지 */
+.cpb { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; flex: none; }
+.cpb-urgent { background: rgba(230,80,80,.18); color: #ff8e8e; border: 1px solid rgba(230,80,80,.4); }
+.cpb-soon   { background: rgba(235,190,70,.16); color: #f2cf6e; border: 1px solid rgba(235,190,70,.38); }
+.cpb-norm   { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid rgba(255,255,255,.12); }
+.cpb-ind    { background: rgba(110,160,230,.15); color: #93b7e8; border: 1px solid rgba(110,160,230,.35); }
+/* 접힘: 한 줄 스트립(넘치면 가로 마퀴) */
+.nt-cpstrip { overflow: hidden; margin-top: 8px; }
+.nt-cpstrip-track { display: inline-block; white-space: nowrap; will-change: transform; }
+.nt-cpstrip-copy { display: inline-block; white-space: nowrap; }
+/* 넘칠 때만 .marquee 부여(복제본 2벌을 한 벌 너비만큼 선형 이동 → 끊김 없는 무한 루프) */
+.nt-cpstrip-track.marquee { animation: couponScroll var(--marquee-dur, 20s) linear 2s infinite; }   /* 2s = 시작 후 잠깐 멈췄다 회전 */
+.nt-cpstrip:hover .nt-cpstrip-track.marquee { animation-play-state: paused; }   /* 호버 시 정지 → 코드 복사 가능 */
+@keyframes couponScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--marquee-dist, 0)); }
+}
+.nt-cpchip2 { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.nt-cprw-inline { font-size: 12.5px; color: var(--text); opacity: .88; }
+.nt-cpsep { color: rgba(255,190,100,.4); margin: 0 12px; vertical-align: middle; }
+.nt-cpstrip-div { margin: 0 12px 0 16px; padding: 2px 9px; border-left: 2px solid rgba(110,160,230,.5); color: #93b7e8; font-size: 11px; font-weight: 700; vertical-align: middle; }
+@media (prefers-reduced-motion: reduce) { .nt-cpstrip-track.marquee { animation: none; } }
+/* 펼침: 기한 쿠폰 ↔ 상시 쿠폰 구분선(가운데 라벨) */
+.nt-cpdiv { display: flex; align-items: center; margin: 14px 0 2px; }
+.nt-cpdiv::before, .nt-cpdiv::after { content: ""; flex: 1; height: 1px; background: rgba(110,160,230,.28); }
+.nt-cpdiv span { padding: 0 10px; font-size: 12px; font-weight: 700; color: #93b7e8; white-space: nowrap; }
+/* 펼침: 카드 그리드(PC 다열·모바일 1열, 여백 자동 채움) */
+.nt-cpgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 10px; margin-top: 10px; }
+.nt-cpcard { border: 1px solid rgba(255,190,100,.22); border-radius: 10px; padding: 9px 11px; background: rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 6px; }
+.nt-cpcard-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nt-cprw { margin: 0; padding-left: 4px; list-style: none; color: var(--text); font-size: 12.5px; }
+.nt-cprw li::before { content: "· "; color: var(--muted); }
 
 /* 클릭 가능한 목록 카드 */
 .nt-item.nt-click { cursor: pointer; transition: border-color .12s, transform .06s, background .12s; }
