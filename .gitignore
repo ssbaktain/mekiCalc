@@ -87,6 +87,10 @@ data/bans.json
 data/inquiries.json
 data/inquiries.json.tmp
 data/inquiries/
+data/coupon.json
+data/coupon.json.tmp
+data/coupon_members.json
+data/coupon_members.json.tmp
 
 ### 공지 백업·마이그레이션 작업 산출물 (커밋 제외) ###
 data/notices.json.bak-*

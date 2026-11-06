@@ -153,4 +153,27 @@ public class BeanConfig {
     public NoticeCrawler noticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox) {
         return new NoticeCrawler(store, summarizer, outbox);
     }
+
+    // ──────────────── 쿠폰 자동 입력 ────────────────
+
+    /** 쿠폰 자동 입력 대상 회원코드 레지스트리(data/coupon_members.json). */
+    @Bean
+    public mekicalc.web.CouponMemberStore couponMemberStore(Path dataDir) {
+        return new mekicalc.web.CouponMemberStore(dataDir);
+    }
+
+    /** 쿠폰 사이드카(헤드리스 Chromium) 클라이언트. URL은 data/coupon.json(기본 localhost:8091). */
+    @Bean
+    public mekicalc.web.CouponSidecarClient couponSidecarClient(Path dataDir) {
+        return new mekicalc.web.CouponSidecarClient(mekicalc.web.CouponConfig.load(dataDir).sidecarUrl);
+    }
+
+    /** 쿠폰 자동 입력 오케스트레이터(검증·배치·자동 트리거). 스케줄은 {@link CouponLifecycle}가 관리. */
+    @Bean
+    public mekicalc.web.CouponService couponService(Path dataDir, mekicalc.web.CouponSidecarClient couponSidecarClient,
+                                                    mekicalc.web.CouponMemberStore couponMemberStore,
+                                                    NoticeService noticeService) {
+        return new mekicalc.web.CouponService(dataDir, couponSidecarClient, couponMemberStore,
+                noticeService, mekicalc.web.CouponConfig.load(dataDir));
+    }
 }

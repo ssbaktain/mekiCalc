@@ -1,0 +1,6 @@
+# mekiCalc 쿠폰 자동 입력 사이드카 의존성 (CPU 전용)
+# 설치 후 반드시: python -m playwright install chromium
+playwright>=1.48
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2

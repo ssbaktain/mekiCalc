@@ -202,6 +202,7 @@
         <a class="nav-item" data-sec="ban"><span class="nav-ico">⛔</span>계정 정지</a>
         <a class="nav-item" data-sec="rooms"><span class="nav-ico">💬</span>카카오봇 방</a>
         <a class="nav-item" data-sec="discord"><span class="nav-ico">🔔</span>디스코드 봇</a>
+        <a class="nav-item" data-sec="coupon"><span class="nav-ico">🎟</span>쿠폰 자동 입력</a>
         <a class="nav-item" data-sec="damage"><span class="nav-ico">🧮</span>예상 데미지</a>
       </nav>
       <main class="admin-main">
@@ -330,6 +331,51 @@
       <div id="banErr" class="err" hidden></div>
       <div id="banList" class="inq-adm-list"></div>
       <div class="empty" id="banEmpty" hidden>정지 이력이 없습니다.</div>
+    </section>
+
+    <section class="admin-card admin-sec" id="sec-coupon" hidden>
+      <h2>🎟 쿠폰 자동 입력</h2>
+      <p>등록한 <b>회원코드</b>에 새 쿠폰이 뜨면 넥슨 쿠폰 사이트로 자동 입력합니다. 입력 오류 방지를 위해 회원코드 사이에 2~3초 간격을 둡니다. 회원코드는 게임 <b>설정 → 계정 → 회원코드</b>에서 확인합니다.</p>
+      <div id="cpErr" class="err" hidden></div>
+
+      <div class="send-box">
+        <h3>설정 <span id="cpSidecar" class="src"></span></h3>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0">
+          <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="cpAuto"> <b>새 쿠폰 자동 입력</b> <span class="admin-sub">(끄면 수동으로만)</span></label>
+          <label style="display:flex;align-items:center;gap:6px">검증용 쿠폰(프로브) <input id="cpProbe" placeholder="비우면 자동" title="회원코드 유효성 검증에 쓰는 '이미 존재하는' 쿠폰코드. 비우면 현재 사용 가능한 상시 쿠폰 중 무작위로 사용합니다(반복 패턴 방지)." style="width:150px"></label>
+          <label style="display:flex;align-items:center;gap:6px">딜레이(ms) <input id="cpDMin" type="number" min="0" style="width:78px"> ~ <input id="cpDMax" type="number" min="0" style="width:78px"></label>
+          <button class="btn" id="cpSaveSet">설정 저장</button>
+        </div>
+        <div id="cpProcessed" class="muted-note"></div>
+      </div>
+
+      <div class="send-box">
+        <h3>지금 적용(수동)</h3>
+        <p class="admin-sub" style="margin:2px 0 6px">쿠폰코드를 입력하고 적용하면 등록된 모든 회원코드에 순서대로 입력합니다.</p>
+        <div class="add-form">
+          <input class="cid" id="cpPin" placeholder="쿠폰코드" style="width:220px">
+          <button class="btn" id="cpRedeem">지금 적용</button>
+        </div>
+        <div id="cpProgress" hidden style="margin-top:10px"></div>
+        <div id="cpResults" style="margin-top:8px"></div>
+      </div>
+
+      <div class="send-box">
+        <h3>회원코드 등록</h3>
+        <div class="add-form">
+          <input class="nm" id="cpNick" placeholder="표시명(선택)">
+          <input class="cid" id="cpNpa" placeholder="회원코드" style="width:200px">
+          <button class="btn ghost" id="cpValidate">검증</button>
+          <button class="btn" id="cpAdd">등록</button>
+        </div>
+        <div id="cpAddMsg" class="send-status"></div>
+      </div>
+
+      <table class="rooms" id="cpTable" hidden>
+        <thead><tr><th>표시명</th><th>회원코드</th><th class="center">검증</th><th>최근 결과</th><th class="center"></th></tr></thead>
+        <tbody id="cpBody"></tbody>
+      </table>
+      <div class="empty" id="cpEmpty" hidden>등록된 회원코드가 없습니다.</div>
     </section>
 
       </main>
@@ -732,6 +778,141 @@
     loadInquiries();
     loadBans();
 
+    // ──────────────── 쿠폰 자동 입력 ────────────────
+    let couponLoaded = false, couponTimer = null;
+    function cpErr(m){ const e = $('#cpErr'); e.textContent = m || ''; e.hidden = !m; }
+    function cpBadge(valid){
+      if (valid === true) return '<span style="color:#6fcf97;font-weight:700">유효</span>';
+      if (valid === false) return '<span style="color:#e5717a;font-weight:700">무효</span>';
+      return '<span style="color:#8a94a6">미검증</span>';
+    }
+    function cpResultCell(m){
+      if (!m.lastRedeemCode && !m.lastRedeemMsg) return '<span class="admin-sub">—</span>';
+      const ok = m.lastRedeemCode === '0';
+      return `<span style="color:${ok ? '#6fcf97' : '#e5717a'}">${esc(m.lastRedeemMsg || m.lastRedeemCode)}</span>`
+           + (m.lastRedeemPin ? ` <span class="admin-sub">(${esc(m.lastRedeemPin)})</span>` : '');
+    }
+    function renderCouponMembers(list){
+      const body = $('#cpBody'), table = $('#cpTable'), empty = $('#cpEmpty');
+      body.innerHTML = (list || []).map(m => `<tr data-id="${m.id}">
+        <td data-label="표시명">${esc(m.nick)}</td>
+        <td data-label="회원코드"><span class="cid">${esc(m.npaCode)}</span></td>
+        <td class="center" data-label="검증">${cpBadge(m.valid)}</td>
+        <td data-label="최근 결과">${cpResultCell(m)}</td>
+        <td class="center act"><button class="btn ghost del">삭제</button></td></tr>`).join('');
+      table.hidden = !(list && list.length); empty.hidden = !!(list && list.length);
+      body.querySelectorAll('tr').forEach(tr => $('.del', tr).addEventListener('click', () => removeCoupon(tr.dataset.id)));
+    }
+    function renderCouponStatus(st){
+      if (!st) return;
+      const sc = $('#cpSidecar');
+      sc.textContent = st.sidecarEnabled ? '● 사이드카 연결됨' : '● 사이드카 미설정';
+      sc.style.color = st.sidecarEnabled ? '#6fcf97' : '#e5717a';
+      if (!$('#cpAuto').dataset.init) {   // 입력 중 덮어쓰기 방지: 최초 1회만 세팅
+        $('#cpAuto').checked = !!st.autoRedeem;
+        $('#cpProbe').value = st.probePin || '';
+        $('#cpDMin').value = st.delayMinMs; $('#cpDMax').value = st.delayMaxMs;
+        $('#cpAuto').dataset.init = '1';
+      }
+      const pins = st.processedPins || [];
+      $('#cpProcessed').innerHTML = pins.length
+        ? '처리 완료(자동 중복 방지): ' + pins.map(p => `<code>${esc(p)}</code> <a href="#" class="cp-clear" data-pin="${esc(p)}">초기화</a>`).join(' · ')
+        : '자동 처리 완료 기록이 없습니다.';
+      $('#cpProcessed').querySelectorAll('.cp-clear').forEach(a =>
+        a.addEventListener('click', e => { e.preventDefault(); clearProcessed(a.dataset.pin); }));
+      renderCouponRun(st.run);
+    }
+    function renderCouponRun(run){
+      const box = $('#cpProgress'), res = $('#cpResults');
+      if (!run) { box.hidden = true; box.innerHTML = ''; res.innerHTML = ''; return; }
+      box.hidden = false;
+      const done = run.done || 0, total = run.total || 0, pct = total ? Math.round(100 * done / total) : 0;
+      const label = (run.source === 'auto' ? '자동' : '수동') + ' · 쿠폰 ' + esc(run.pin)
+        + (run.running ? ` · 진행 중 ${done}/${total}` : ` · 완료 ${done}/${total}`);
+      box.innerHTML = `<div style="font-size:12px;color:#8a94a6;margin-bottom:4px">${label}</div>`
+        + `<div style="height:8px;background:#2a3140;border-radius:5px;overflow:hidden"><span style="display:block;height:100%;background:#6fa3ff;transition:width .3s;width:${pct}%"></span></div>`;
+      const rows = run.results || [];
+      res.innerHTML = rows.length
+        ? '<table class="rooms"><thead><tr><th>표시명</th><th>회원코드</th><th>결과</th></tr></thead><tbody>'
+          + rows.map(r => `<tr><td>${esc(r.nick)}</td><td><span class="cid">${esc(r.npaCode)}</span></td>`
+            + `<td><span style="color:${r.ok ? '#6fcf97' : '#e5717a'}">${esc(r.message || r.code || '')}</span></td></tr>`).join('')
+          + '</tbody></table>'
+        : '';
+    }
+    async function loadCoupon(silent){
+      if (!silent) cpErr('');
+      try {
+        const d = await api('GET', '/api/admin/coupon/members');
+        renderCouponMembers(d.members || []);
+        renderCouponStatus(d.status);
+        if (d.status && d.status.run && d.status.run.running && !couponTimer)
+          couponTimer = setInterval(pollCoupon, 1500);
+      } catch (e) { if (!silent) cpErr('쿠폰 정보를 불러오지 못했습니다: ' + e.message); }
+    }
+    async function pollCoupon(){
+      try {
+        const st = await api('GET', '/api/admin/coupon/status');
+        renderCouponStatus(st);
+        if (!(st.run && st.run.running)) { clearInterval(couponTimer); couponTimer = null; loadCoupon(true); }
+      } catch { clearInterval(couponTimer); couponTimer = null; }
+    }
+    async function addCoupon(){
+      const npa = $('#cpNpa').value.trim();
+      if (!npa) { $('#cpAddMsg').textContent = '회원코드를 입력하세요.'; return; }
+      const btn = $('#cpAdd'); btn.disabled = true; $('#cpAddMsg').textContent = '검증·등록 중…';
+      try {
+        await api('POST', '/api/admin/coupon/members', { nick: $('#cpNick').value.trim(), npaCode: npa });
+        $('#cpNick').value = ''; $('#cpNpa').value = ''; $('#cpAddMsg').textContent = '등록되었습니다.';
+        loadCoupon(true);
+      } catch (e) { $('#cpAddMsg').textContent = '등록 실패: ' + e.message; }
+      finally { btn.disabled = false; }
+    }
+    async function validateCoupon(){
+      const npa = $('#cpNpa').value.trim();
+      if (!npa) { $('#cpAddMsg').textContent = '회원코드를 입력하세요.'; return; }
+      $('#cpAddMsg').textContent = '검증 중…';
+      try {
+        const r = await api('POST', '/api/admin/coupon/validate', { npaCode: npa });
+        $('#cpAddMsg').textContent = r.valid === true ? '✅ 유효한 회원코드입니다.'
+          : (r.valid === false ? ('❌ ' + (r.message || '무효한 회원코드')) : ('⚠ ' + (r.message || '지금은 검증할 수 없습니다.')));
+      } catch (e) { $('#cpAddMsg').textContent = '검증 실패: ' + e.message; }
+    }
+    async function removeCoupon(id){
+      if (!confirm('이 회원코드를 삭제할까요?')) return;
+      try { await api('DELETE', '/api/admin/coupon/members/' + encodeURIComponent(id)); loadCoupon(true); }
+      catch (e) { cpErr('삭제 실패: ' + e.message); }
+    }
+    async function redeemCouponNow(){
+      const pin = $('#cpPin').value.trim();
+      if (!pin) { cpErr('쿠폰코드를 입력하세요.'); return; }
+      if (!confirm('등록된 모든 회원코드에 쿠폰 "' + pin + '" 을 입력할까요?')) return;
+      const btn = $('#cpRedeem'); btn.disabled = true; cpErr('');
+      try {
+        const st = await api('POST', '/api/admin/coupon/redeem', { pin });
+        renderCouponStatus(st);
+        if (!couponTimer) couponTimer = setInterval(pollCoupon, 1500);
+      } catch (e) { cpErr('적용 실패: ' + e.message); }
+      finally { btn.disabled = false; }
+    }
+    async function saveCouponSettings(){
+      try {
+        const st = await api('POST', '/api/admin/coupon/settings', {
+          autoRedeem: $('#cpAuto').checked, probePin: $('#cpProbe').value.trim(),
+          delayMinMs: parseInt($('#cpDMin').value, 10) || 0, delayMaxMs: parseInt($('#cpDMax').value, 10) || 0 });
+        renderCouponStatus(st);
+        const b = $('#cpSaveSet'); b.textContent = '저장됨'; setTimeout(() => { b.textContent = '설정 저장'; }, 1200);
+      } catch (e) { cpErr('설정 저장 실패: ' + e.message); }
+    }
+    async function clearProcessed(pin){
+      try { renderCouponStatus(await api('POST', '/api/admin/coupon/processed/clear', { pin })); }
+      catch (e) { cpErr('초기화 실패: ' + e.message); }
+    }
+    $('#cpAdd').addEventListener('click', addCoupon);
+    $('#cpValidate').addEventListener('click', validateCoupon);
+    $('#cpRedeem').addEventListener('click', redeemCouponNow);
+    $('#cpSaveSet').addEventListener('click', saveCouponSettings);
+    $('#cpNpa').addEventListener('keydown', e => { if (e.key === 'Enter') addCoupon(); });
+
     // ──────────────── 사이드바 네비 + 모바일 햄버거 ────────────────
     const sidebar = $('#sidebar'), backdrop = $('#sbBackdrop');
     function closeSidebar(){ sidebar.classList.remove('open'); backdrop.classList.remove('show'); }
@@ -742,8 +923,12 @@
       document.querySelectorAll('.admin-sec').forEach(s => s.hidden = (s.id !== 'sec-' + sec));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.sec === sec));
       closeSidebar();
+      if (couponTimer && sec !== 'coupon') { clearInterval(couponTimer); couponTimer = null; }   // 쿠폰 화면 벗어나면 폴링 중지
       if (sec === 'stats') { if (!statsLoaded) { statsLoaded = true; loadStats(); } else scheduleAutoRefresh(); }
-      else if (statsTimer) { clearInterval(statsTimer); statsTimer = null; }   // 통계 화면 벗어나면 자동갱신 중지
+      else {
+        if (statsTimer) { clearInterval(statsTimer); statsTimer = null; }   // 통계 화면 벗어나면 자동갱신 중지
+        if (sec === 'coupon') { if (!couponLoaded) { couponLoaded = true; loadCoupon(); } else loadCoupon(true); }
+      }
       window.scrollTo(0, 0);
     }
     document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showSection(n.dataset.sec)));
