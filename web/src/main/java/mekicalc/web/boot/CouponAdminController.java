@@ -99,14 +99,15 @@ public class CouponAdminController {
         return coupon.redeemSelected(ids, pins);
     }
 
-    /** 설정 변경. body: {autoRedeem?, probePin?, delayMinMs?, delayMaxMs?}. */
+    /** 설정 변경. body: {autoRedeem?, registerCatchup?, probePin?, delayMinMs?, delayMaxMs?}. */
     @PostMapping("/settings")
     public Object settings(@RequestBody Map<String, Object> req) {
         Boolean auto = (req.get("autoRedeem") instanceof Boolean) ? (Boolean) req.get("autoRedeem") : null;
+        Boolean catchup = (req.get("registerCatchup") instanceof Boolean) ? (Boolean) req.get("registerCatchup") : null;
         String probe = req.containsKey("probePin") ? strOpt(req, "probePin") : null;
         Integer dMin = req.containsKey("delayMinMs") ? (int) num(req, "delayMinMs", 2000) : null;
         Integer dMax = req.containsKey("delayMaxMs") ? (int) num(req, "delayMaxMs", 3000) : null;
-        coupon.updateSettings(auto, probe, dMin, dMax);
+        coupon.updateSettings(auto, catchup, probe, dMin, dMax);
         return coupon.status();
     }
 

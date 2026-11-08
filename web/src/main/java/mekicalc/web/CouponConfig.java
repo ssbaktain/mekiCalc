@@ -29,6 +29,7 @@ public final class CouponConfig {
     public String sidecarUrl = DEFAULT_SIDECAR_URL;
     public String probePin = "";
     public boolean autoRedeem = false;
+    public boolean registerCatchup = true;   // 신규 회원 등록 시 현재 유효 쿠폰 전부 catch-up 입력(자동 on일 때)
     public int delayMinMs = 2000;
     public int delayMaxMs = 3000;
     public boolean baselined = false;        // 최초 1회 현재 유효 쿠폰을 processed로 기록했는지
@@ -45,6 +46,7 @@ public final class CouponConfig {
             if (m.containsKey("sidecarUrl")) c.sidecarUrl = s(m, "sidecarUrl", DEFAULT_SIDECAR_URL);
             c.probePin = s(m, "probePin", "");
             c.autoRedeem = Boolean.TRUE.equals(m.get("autoRedeem"));
+            c.registerCatchup = !m.containsKey("registerCatchup") || Boolean.TRUE.equals(m.get("registerCatchup"));   // 없으면 기본 on
             c.delayMinMs = (int) Json.num(m, "delayMinMs", 2000);
             c.delayMaxMs = (int) Json.num(m, "delayMaxMs", 3000);
             c.baselined = Boolean.TRUE.equals(m.get("baselined"));

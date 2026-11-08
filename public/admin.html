@@ -342,6 +342,7 @@
         <h3>설정 <span id="cpSidecar" class="src"></span></h3>
         <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0">
           <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="cpAuto"> <b>새 쿠폰 자동 입력</b> <span class="admin-sub">(끄면 수동으로만)</span></label>
+          <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="cpCatchup"> <b>신규 회원 등록 시 전체 쿠폰 입력</b> <span class="admin-sub">(끄면 새 회원은 이후 뜨는 쿠폰만)</span></label>
           <label style="display:flex;align-items:center;gap:6px">검증용 쿠폰(프로브) <input id="cpProbe" placeholder="비우면 자동" title="회원코드 유효성 검증에 쓰는 '이미 존재하는' 쿠폰코드. 비우면 현재 사용 가능한 상시 쿠폰 중 무작위로 사용합니다(반복 패턴 방지)." style="width:150px"></label>
           <label style="display:flex;align-items:center;gap:6px">딜레이(ms) <input id="cpDMin" type="number" min="0" style="width:78px"> ~ <input id="cpDMax" type="number" min="0" style="width:78px"></label>
           <button class="btn" id="cpSaveSet">설정 저장</button>
@@ -821,6 +822,7 @@
       sc.style.color = st.sidecarEnabled ? '#6fcf97' : '#e5717a';
       if (!$('#cpAuto').dataset.init) {   // 입력 중 덮어쓰기 방지: 최초 1회만 세팅
         $('#cpAuto').checked = !!st.autoRedeem;
+        $('#cpCatchup').checked = st.registerCatchup !== false;   // 없으면 기본 on
         $('#cpProbe').value = st.probePin || '';
         $('#cpDMin').value = st.delayMinMs; $('#cpDMax').value = st.delayMaxMs;
         $('#cpAuto').dataset.init = '1';
@@ -936,7 +938,7 @@
     async function saveCouponSettings(){
       try {
         const st = await api('POST', '/api/admin/coupon/settings', {
-          autoRedeem: $('#cpAuto').checked, probePin: $('#cpProbe').value.trim(),
+          autoRedeem: $('#cpAuto').checked, registerCatchup: $('#cpCatchup').checked, probePin: $('#cpProbe').value.trim(),
           delayMinMs: parseInt($('#cpDMin').value, 10) || 0, delayMaxMs: parseInt($('#cpDMax').value, 10) || 0 });
         renderCouponStatus(st);
         const b = $('#cpSaveSet'); b.textContent = '저장됨'; setTimeout(() => { b.textContent = '설정 저장'; }, 1200);

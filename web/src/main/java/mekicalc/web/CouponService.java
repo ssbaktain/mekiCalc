@@ -48,6 +48,7 @@ public final class CouponService {
     private volatile String sidecarUrl;
     private volatile String probePin;
     private volatile boolean autoRedeem;
+    private volatile boolean registerCatchup;   // 신규 회원 등록 시 현재 유효 쿠폰 전부 catch-up 입력(자동 on일 때)
     private volatile int delayMinMs;
     private volatile int delayMaxMs;
     private volatile boolean baselined;   // 최초 1회 현재 유효 쿠폰을 processed로 기록했는지(기존 백로그 대량 입력 방지)
@@ -69,6 +70,7 @@ public final class CouponService {
         this.sidecarUrl = cfg.sidecarUrl;
         this.probePin = cfg.probePin == null ? "" : cfg.probePin;
         this.autoRedeem = cfg.autoRedeem;
+        this.registerCatchup = cfg.registerCatchup;
         this.delayMinMs = Math.max(0, cfg.delayMinMs);
         this.delayMaxMs = Math.max(this.delayMinMs, cfg.delayMaxMs);
         this.baselined = cfg.baselined;
@@ -81,6 +83,7 @@ public final class CouponService {
             m.put("sidecarUrl", sidecarUrl);
             m.put("probePin", probePin);
             m.put("autoRedeem", autoRedeem);
+            m.put("registerCatchup", registerCatchup);
             m.put("delayMinMs", delayMinMs);
             m.put("delayMaxMs", delayMaxMs);
             m.put("baselined", baselined);
@@ -164,8 +167,8 @@ public final class CouponService {
         Map<String, Object> out = store.get(m.id).toClientMap();
         out.put("verified", valid);
         out.put("verifyMessage", v.get("message"));
-        // 최초 등록 catch-up: 자동 입력이 켜져 있으면 현재 유효 쿠폰 전부를 이 신규 회원에게만 입력(기존 회원은 이미 받음).
-        if (autoRedeem && sidecar.enabled()) {
+        // 최초 등록 catch-up: 자동 입력 + 등록 catch-up 설정이 켜져 있으면 현재 유효 쿠폰 전부를 이 신규 회원에게만 입력(기존 회원은 이미 받음).
+        if (autoRedeem && registerCatchup && sidecar.enabled()) {
             List<String> pins = activeCouponCodes();
             if (!pins.isEmpty()) {
                 try { startBatch(List.of(store.get(m.id)), pins, "register", false); out.put("catchup", pins.size()); }
@@ -308,6 +311,7 @@ public final class CouponService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("sidecarEnabled", sidecar.enabled());
         out.put("autoRedeem", autoRedeem);
+        out.put("registerCatchup", registerCatchup);
         out.put("probePin", probePin);
         out.put("delayMinMs", delayMinMs);
         out.put("delayMaxMs", delayMaxMs);
@@ -360,8 +364,9 @@ public final class CouponService {
 
     // ─────────────────────────── 설정 ───────────────────────────
 
-    public synchronized void updateSettings(Boolean auto, String probe, Integer dMin, Integer dMax) {
+    public synchronized void updateSettings(Boolean auto, Boolean catchup, String probe, Integer dMin, Integer dMax) {
         if (auto != null) autoRedeem = auto;
+        if (catchup != null) registerCatchup = catchup;
         if (probe != null) probePin = probe.trim();
         if (dMin != null) delayMinMs = Math.max(0, dMin);
         if (dMax != null) delayMaxMs = Math.max(delayMinMs, dMax);
