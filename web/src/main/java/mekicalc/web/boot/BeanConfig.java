@@ -148,10 +148,17 @@ public class BeanConfig {
         return new BotBridge(irisUrl, mock);
     }
 
+    /** mkk(랭킹 사이트) 공지 푸시 — 신규 공지 감지 시 제목+원문링크 전달(data/mkk.json). 없으면 no-op. */
+    @Bean
+    public mekicalc.web.MkkNoticePush mkkNoticePush(Path dataDir) {
+        return new mekicalc.web.MkkNoticePush(mekicalc.web.MkkConfig.load(dataDir));
+    }
+
     /** 공지 크롤러(넥슨 포럼 폴링·요약). 시작/종료는 {@link CrawlerLifecycle}가 관리. */
     @Bean
-    public NoticeCrawler noticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox) {
-        return new NoticeCrawler(store, summarizer, outbox);
+    public NoticeCrawler noticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox,
+                                       mekicalc.web.MkkNoticePush mkkPush) {
+        return new NoticeCrawler(store, summarizer, outbox, mkkPush);
     }
 
     // ──────────────── 쿠폰 자동 입력 ────────────────

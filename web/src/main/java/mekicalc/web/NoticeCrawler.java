@@ -67,6 +67,7 @@ public final class NoticeCrawler {
     private final NoticeStore store;
     private final NoticeSummarizer summarizer;
     private final BotOutbox outbox;
+    private final MkkNoticePush mkkPush;   // 신규 공지 감지 시 mkk 공지판으로 제목+원문링크 푸시(best-effort)
     private final java.util.Set<String> pendingDeliver = new java.util.HashSet<>();   // 이번 세션 '신규 감지'된 글 → 추출되면 봇 큐에 넣을 대상
     private final java.util.Set<String> pendingReextract = new java.util.HashSet<>(); // 제목 변경(갱신) 감지된 글 → 재추출 + 발송 매트릭스
     // ★self-heal: HttpClient의 selector manager가 한 번 닫히면("selector manager closed") 그 인스턴스로는
@@ -91,10 +92,11 @@ public final class NoticeCrawler {
     private final Map<String, Long> issueRefreshAt = new java.util.HashMap<>();   // 확인 중인 현상 threadId → 마지막 강제 재크롤 epoch
     private static final long ISSUE_REFRESH_SEC = 3600;   // 확인 중인 현상 재크롤 주기(1시간). 제목 무변경 수정 반영용
 
-    public NoticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox) {
+    public NoticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox, MkkNoticePush mkkPush) {
         this.store = store;
         this.summarizer = summarizer;
         this.outbox = outbox;
+        this.mkkPush = mkkPush;
         for (String b : BOARDS.keySet()) { backfillPage.put(b, 2); backfillDone.put(b, false); }   // 페이지1은 실시간이 담당
     }
 
@@ -480,6 +482,8 @@ public final class NoticeCrawler {
                 if (seenThisTick != null) seenThisTick.add(n.threadId);
                 NoticeStore.Upsert u = store.upsertMeta(n);
                 if (u == NoticeStore.Upsert.NEW && n.postedAt >= liveSince) {
+                    // ★mkk 공지판: 신규 감지 즉시 제목+원문링크 푸시(요약 전, best-effort). 카톡 6h 상한과 무관(웹 목록이라 전부 전달).
+                    mkkPush.push(n.title, n.sourceUrl, n.category, n.postedAt);
                     // ★발송 나이 상한: 게시 후 6시간 넘은 신규 글은 웹엔 올리되 카톡 발송은 생략(밀림 스팸 방지).
                     long ageSec = System.currentTimeMillis() / 1000 - n.postedAt;
                     if (ageSec <= MAX_SEND_AGE_SEC) {
