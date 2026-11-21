@@ -40,9 +40,13 @@ Note "gradle installDist exit=$buildCode"
 if ($buildCode -ne 0) { Note "BUILD FAILED (see gradle-build.log)"; Write-Error "빌드 실패"; exit 1 }
 
 # 이전 웹 서버 java 정리(포트 충돌 방지, 새 코드로 확실히 교체).
-Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+# ★mekiCalc 웹 java만 선별 종료 — 같은 미니PC에서 도는 다른 java(mkk 백엔드 MkkApi 등)를 collateral로 죽이지 않도록.
+#   (구: Get-Process java 전체 kill → mkk API까지 내려 2026-11-22 충돌 규명. 메인클래스로 한정.)
+Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -like '*mekicalc.web.boot.WebApplication*' } |
+    ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop } catch {} }
 Start-Sleep -Milliseconds 800
-Note "old java stopped, launching Spring on $Port"
+Note "old mekiCalc-web java stopped, launching Spring on $Port"
 
 $logFile = Join-Path $logDir ("server-{0}.log" -f (Get-Date -Format "yyyyMMdd"))
 $libGlob = Join-Path $root "web\build\install\web\lib\*"
