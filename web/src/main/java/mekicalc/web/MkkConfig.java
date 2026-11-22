@@ -24,10 +24,18 @@ import mekicalc.json.Json;
 public final class MkkConfig {
 
     public static final String DEFAULT_INGEST_URL = "http://127.0.0.1:8081/api/notices/ingest";
+    public static final String DEFAULT_COUPON_INGEST_URL = "http://127.0.0.1:8081/api/coupons/ingest";
 
     public boolean enabled = false;
     public String ingestUrl = DEFAULT_INGEST_URL;
     public String secret = "";
+
+    /** 쿠폰 ingest URL — 공지 ingestUrl에서 경로만 치환(같은 mkk 백엔드, 다른 엔드포인트). 설정 불필요(파생). */
+    public String couponIngestUrl() {
+        return ingestUrl.contains("/notices/ingest")
+            ? ingestUrl.replace("/notices/ingest", "/coupons/ingest")
+            : DEFAULT_COUPON_INGEST_URL;
+    }
 
     public static MkkConfig load(Path dataDir) {
         MkkConfig c = new MkkConfig();

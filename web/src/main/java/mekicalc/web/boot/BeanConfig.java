@@ -154,11 +154,17 @@ public class BeanConfig {
         return new mekicalc.web.MkkNoticePush(mekicalc.web.MkkConfig.load(dataDir));
     }
 
+    /** mkk 쿠폰 푸시 — 공지 요약 후 쿠폰정보(코드·보상·만료·출처) 전달(data/mkk.json 공유). 없으면 no-op. */
+    @Bean
+    public mekicalc.web.MkkCouponPush mkkCouponPush(Path dataDir) {
+        return new mekicalc.web.MkkCouponPush(mekicalc.web.MkkConfig.load(dataDir));
+    }
+
     /** 공지 크롤러(넥슨 포럼 폴링·요약). 시작/종료는 {@link CrawlerLifecycle}가 관리. */
     @Bean
     public NoticeCrawler noticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox,
-                                       mekicalc.web.MkkNoticePush mkkPush) {
-        return new NoticeCrawler(store, summarizer, outbox, mkkPush);
+                                       mekicalc.web.MkkNoticePush mkkPush, mekicalc.web.MkkCouponPush mkkCouponPush) {
+        return new NoticeCrawler(store, summarizer, outbox, mkkPush, mkkCouponPush);
     }
 
     // ──────────────── 쿠폰 자동 입력 ────────────────

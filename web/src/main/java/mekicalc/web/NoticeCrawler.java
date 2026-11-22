@@ -68,6 +68,7 @@ public final class NoticeCrawler {
     private final NoticeSummarizer summarizer;
     private final BotOutbox outbox;
     private final MkkNoticePush mkkPush;   // 신규 공지 감지 시 mkk 공지판으로 제목+원문링크 푸시(best-effort)
+    private final MkkCouponPush mkkCouponPush;   // ★요약 후(쿠폰정보 확정) mkk 쿠폰판으로 push — 공지와 다른 타이밍
     private final java.util.Set<String> pendingDeliver = new java.util.HashSet<>();   // 이번 세션 '신규 감지'된 글 → 추출되면 봇 큐에 넣을 대상
     private final java.util.Set<String> pendingReextract = new java.util.HashSet<>(); // 제목 변경(갱신) 감지된 글 → 재추출 + 발송 매트릭스
     // ★self-heal: HttpClient의 selector manager가 한 번 닫히면("selector manager closed") 그 인스턴스로는
@@ -92,11 +93,13 @@ public final class NoticeCrawler {
     private final Map<String, Long> issueRefreshAt = new java.util.HashMap<>();   // 확인 중인 현상 threadId → 마지막 강제 재크롤 epoch
     private static final long ISSUE_REFRESH_SEC = 3600;   // 확인 중인 현상 재크롤 주기(1시간). 제목 무변경 수정 반영용
 
-    public NoticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox, MkkNoticePush mkkPush) {
+    public NoticeCrawler(NoticeStore store, NoticeSummarizer summarizer, BotOutbox outbox,
+                         MkkNoticePush mkkPush, MkkCouponPush mkkCouponPush) {
         this.store = store;
         this.summarizer = summarizer;
         this.outbox = outbox;
         this.mkkPush = mkkPush;
+        this.mkkCouponPush = mkkCouponPush;
         for (String b : BOARDS.keySet()) { backfillPage.put(b, 2); backfillDone.put(b, false); }   // 페이지1은 실시간이 담당
     }
 
@@ -538,10 +541,21 @@ public final class NoticeCrawler {
             store.saveBody(n.threadId, text);     // 검색 전용 원문 저장(추출 성공 여부와 무관)
             NoticeData d = summarizer.extractStructured(n.category, n.title, text, n.sourceUrl);
             store.saveData(n.threadId, d, System.currentTimeMillis() / 1000);
+            pushCouponsToMkk(n, d);   // ★요약 후 쿠폰정보 확정 → mkk 쿠폰판 push(best-effort, 공지 push와 다른 타이밍)
             return true;
         } catch (Exception ex) {
             System.err.println("공지 구조화 추출 실패(thread=" + n.threadId + "): " + ex.getMessage());
             return false;
+        }
+    }
+
+    /** 요약으로 추출된 쿠폰을 mkk 쿠폰판으로 push(code dedup+갱신). 만료일 변환은 NoticeStore(applyStructured)와 동일 규칙. */
+    private void pushCouponsToMkk(NoticeStore.Notice n, NoticeData d) {
+        if (d == null || d.coupons == null || d.coupons.isEmpty()) return;
+        for (NoticeData.Coupon c : d.coupons) {
+            if (c.code == null || c.code.isBlank()) continue;
+            String expires = NoticeDates.toYmdFrom(c.expires, n.postedAt);   // 만료 연도=게시일 기준(NoticeStore와 동일)
+            mkkCouponPush.push(c.code.trim(), c.rewards, expires, n.title, n.sourceUrl, n.postedAt);
         }
     }
 
